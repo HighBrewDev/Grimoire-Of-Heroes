@@ -601,6 +601,15 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .mcBox h4{margin:4px 0 6px}
 .mcRow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.2fr) 64px auto;gap:6px;align-items:center;margin-bottom:6px}
 .mcRow input[type=number]{width:100%}
+.src.brew{background:var(--rubric)}
+.bwForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:4px 12px;align-items:end}
+.bwForm .bwWide{grid-column:1/-1}
+.bwForm .bwWide .row{gap:6px 14px}
+.bwForm textarea{width:100%;min-height:90px}
+.bwCheck{padding:8px 0 6px}
+.bwScores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.bwScores label{display:flex;flex-direction:column;font-size:12px;font-family:var(--f-display);letter-spacing:.06em;color:var(--ink2)}
+.bwScores input{width:100%}
 
 </style>
 <script src="config.js"></script>
@@ -630,6 +639,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
       </button>
       <button type="button" class="btn ghost" data-act="wizard">＋ New hero</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="library">Library</button>
+      <button type="button" class="btn ghost" data-act="go" data-arg="workshop" title="Make your own classes, spells, feats…">＋ Homebrew</button>
       <button type="button" class="iconBtn" id="soundBtn" data-act="sound" aria-pressed="false" aria-label="Page-turn sound" title="Page-turn sound">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
       </button>
@@ -779,7 +789,7 @@ function buildIndex(){
   ALL.forEach(e => { e.lc = norm(e.n); e.id = e.id || (e.src + ':' + e.cat + ':' + e.n + ':' + (e.o.cls || e.o.source || '')); });
   ALL.sort((a, b) => a.n.localeCompare(b.n));
 }
-const PRI = {SRD:0, Quick:2};
+const PRI = {SRD:0, Homebrew:1, Quick:2};
 function find(name, cat){
   const q = norm(name); if (!q) return null;
   const hits = ALL.filter(e => e.lc === q && (!cat || e.cat === cat));
@@ -973,7 +983,7 @@ const active = () => G.chars.find(c => c.id === G.activeId) || G.chars[0];
 
 /* ================================================================== rules helpers */
 const srdClass = c => (SRD.classes || []).find(k => k.n === c.class);
-const clsInfo = c => srdClass(c) || QUICK.classes.find(k => k.n === c.class) || {};
+const clsInfo = c => srdClass(c) || QUICK.classes.find(k => k.n === c.class) || brewClass(c.class) || {};
 const speciesInfo = c => (find(c.species, 'species') || {}).o || {};
 const bgInfo = c => (find(c.background, 'backgrounds') || {}).o || {};
 const hdSize = c => clsInfo(c).hd || 8;
@@ -1004,6 +1014,7 @@ const mcMeets = (c, cls) => { const r = mcNeed(cls); return !r.ids.length || (r.
 const MC_PROF = {Barbarian:'Shields, Martial weapons', Bard:'Light armor, one skill of your choice, one musical instrument', Cleric:'Light and Medium armor, Shields', Druid:'Light armor, Shields',
   Fighter:'Light and Medium armor, Shields, Martial weapons', Monk:'none', Paladin:'Light and Medium armor, Shields, Martial weapons', Ranger:'Light and Medium armor, Shields, Martial weapons, one skill from the Ranger list',
   Rogue:"Light armor, one skill from the Rogue list, Thieves' Tools", Sorcerer:'none', Warlock:'Light armor', Wizard:'none'};
+const mcProf = n => MC_PROF[n] ?? clsInfo({class:n}).mcProf ?? '';
 function hdPools(c){
   const m = {}; classList(c).forEach(e => { const d = hdSize(asClass(c, e)); m[d] = (m[d] || 0) + e.level; });
   return Object.entries(m).map(([d, n]) => ({d:+d, n, used:multi(c).length ? (c.hitDice.by?.[d] || 0) : (c.hitDice.used || 0)})).sort((a, b) => b.d - a.d);
@@ -1016,7 +1027,8 @@ function subclassOf(c){
   if (srd) return {...srd, src:'SRD 5.2.1'};
   const quick = QUICK.subclasses.find(s => norm(s.n) === q);
   if (quick) return {...quick, src:quick.srcBook};
-  const ext = EXT.find(e => e.cat === 'subclasses' && (norm(e.n) === q || norm(e.o.shortName) === q));
+  const ext = EXT.find(e => e.cat === 'subclasses' && (norm(e.n) === q || norm(e.o.shortName) === q || norm(shortSub(e.n)) === q));
+  if (ext?.src === 'Homebrew') return {...ext.o, src:'Homebrew'};
   if (ext) return {n:ext.n, src:ext.src, ext};
   return null;
 }
@@ -1069,7 +1081,7 @@ function multiSlots(c){
   let slots = padSlots([]);
   if (std.length === 1) slots = std[0].s.slots;
   else if (std.length > 1){
-    const lv = std.reduce((t, {e}) => t + (FULL_CASTERS.includes(e.class) ? e.level : HALF_CASTERS.includes(e.class) ? Math.ceil(e.level / 2) : Math.floor(e.level / 3)), 0);
+    const lv = std.reduce((t, {e}) => t + (FULL_CASTERS.includes(e.class) || clsInfo(e).caster === 'full' ? e.level : HALF_CASTERS.includes(e.class) || clsInfo(e).caster === 'half' ? Math.ceil(e.level / 2) : Math.floor(e.level / 3)), 0);
     slots = padSlots(FULL_SLOTS[clamp(lv, 1, 20) - 1]);
   }
   const base = {cantrips:sum('cantrips'), prepared:sum('prepared'), per:per.map(x => ({class:x.e.class, cantrips:x.s.cantrips, prepared:x.s.prepared}))};
@@ -1083,10 +1095,17 @@ function slotsFor(c){
   const row = srdClass(c)?.tbl?.[c.level - 1];
   if (row?.sp) return {type:c.class === 'Warlock' ? 'pact' : 'std', slots:pad(Array.from({length:9}, (_, i) => row.sp['spell_slots_level_' + (i + 1)] || 0)), cantrips:row.sp.cantrips_known, prepared:row.sp.prepared_spells};
   if (isThird(c)) return {type:'std', slots:pad(THIRD[c.level] || [])};
+  const kind = !srdClass(c) && clsInfo(c).caster;
+  if (kind === 'full') return {type:'std', slots:pad(FULL_SLOTS[c.level - 1])};
+  if (kind === 'half') return {type:'std', slots:pad(FULL_SLOTS[Math.ceil(c.level / 2) - 1])};
+  if (kind === 'third' && c.level >= 3) return {type:'std', slots:pad(THIRD[c.level] || [])};
+  const pact = kind === 'pact' && (SRD.classes || []).find(k => k.n === 'Warlock')?.tbl?.[c.level - 1]?.sp;
+  if (pact) return {type:'pact', slots:pad(Array.from({length:9}, (_, i) => pact['spell_slots_level_' + (i + 1)] || 0))};
   return {type:'none', slots:pad([])};
 }
 const isCaster = c => slotsFor(c).type !== 'none' || (c.spells?.known || []).length > 0;
-const spellAb = c => c.spellAbility || SPELL_AB[(classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class] || SPELL_AB[c.class] || 'int';
+const abFor = cls => SPELL_AB[cls] || clsInfo({class:cls}).spellAb || 'int';
+const spellAb = c => c.spellAbility || abFor((classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class);
 
 const RES_LABEL = {rage_count:'Rage', second_wind_uses:'Second Wind', channel_divinity_charges:'Channel Divinity', wild_shape_uses:'Wild Shape', focus_points:'Focus Points', sorcery_points:'Sorcery Points', lay_on_hands_pool:'Lay on Hands (HP)'};
 const SHORT_REST_RES = ['focus_points'];
@@ -1204,7 +1223,9 @@ const CHAPTERS = [
   {id:'pack', t:'Pack & Riches', s:'gear · arms · coin', h:'Pack & Riches'},
   {id:'chronicle', t:'Chronicle', s:'story · allies · notes', h:'Chronicle'},
   {id:'library', t:'Library', s:'the rules, offline', h:'Library of the Rules'},
+  {id:'workshop', t:'Workshop', s:'forge your own', h:'Homebrew Workshop'},
 ];
+const BOOKISH = id => id === 'library' || id === 'workshop';
 const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 
 function render(){ renderShelf(); renderTabs(); renderPage(); }
@@ -1225,14 +1246,14 @@ function renderTabs(){
 }
 function pageHTML(id){
   const c = active(), ch = CHAPTERS.find(x => x.id === id), i = CHAPTERS.indexOf(ch);
-  if (!c && id !== 'library') return `<header class="pageHead"><div><h2>An empty tome</h2><div class="sub">${me() ? 'Signed in as ' + esc(S.profile?.display_name || S.session.user.email) : 'No heroes yet'}</div></div></header>
+  if (!c && !BOOKISH(id)) return `<header class="pageHead"><div><h2>An empty tome</h2><div class="sub">${me() ? 'Signed in as ' + esc(S.profile?.display_name || S.session.user.email) : 'No heroes yet'}</div></div></header>
     <div class="pageBody"><div class="emptyTome"><p class="lead">Every legend starts on a blank page.</p><p>Create your hero, or import one you exported before. Party members' heroes appear here once they are in your party.</p>
       <div class="row">${act('wizard', undefined, '＋ Create a hero', 'btn')}${act('import', undefined, 'Import a hero', 'btn ghost')}${CLOUD ? act('account', undefined, me() ? 'Account & party' : 'Sign in', 'btn ghost') : ''}</div></div></div>
     <div class="folio">${ROMAN[i]}</div>`;
-  const body = (id === 'library' || id === 'encounter' ? '' : roBanner(c)) + PAGES[id](c);
+  const body = (BOOKISH(id) || id === 'encounter' ? '' : roBanner(c)) + PAGES[id](c);
   return `<header class="pageHead">
-      <div style="min-width:0"><h2>${id === 'library' ? '' : portrait(c, 'mini')} ${id === 'library' ? ch.h : esc(c.name) + ' · ' + ch.h}</h2>
-      <div class="sub">${id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
+      <div style="min-width:0"><h2>${BOOKISH(id) ? '' : portrait(c, 'mini')} ${BOOKISH(id) ? ch.h : esc(c.name) + ' · ' + ch.h}</h2>
+      <div class="sub">${id === 'workshop' ? 'Classes, subclasses, spells, feats, species, backgrounds, items and creatures of your own, in every menu' : id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
       <nav class="pageNav" aria-label="Turn page">
         <button type="button" class="btn small" data-act="prev" ${i <= 0 ? 'disabled' : ''} aria-label="Previous page">←</button>
         <button type="button" class="btn small" data-act="next" ${i >= CHAPTERS.length - 1 ? 'disabled' : ''} aria-label="Next page">→</button>
@@ -1397,7 +1418,8 @@ const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
 const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label ?? v)}</option>`;
 const names = cat => [...new Set(ALL.filter(e => e.cat === cat).map(e => e.n))].sort();
 const hpBar = c => `<div class="hpBar ${c.hp.cur <= c.hp.max / 2 ? 'low' : ''}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>`;
-const srcTag = e => e ? `<span class="src ${e.src === 'SRD' ? 'srd' : e.src === 'Quick' ? 'quick' : ''}" title="${e.src === 'Quick' ? 'Short table summary written for this tool' : e.src === 'SRD' ? 'System Reference Document 5.2.1 (CC-BY-4.0)' : 'Imported by you'}">${esc(e.src === 'Quick' ? 'Summary' : e.src)}</span>` : '';
+const NATIVE = e => e.src === 'SRD' || e.src === 'Quick' || e.src === 'Homebrew';
+const srcTag = e => e && e.src === 'Homebrew' ? '<span class="src brew" title="Made by you in the Workshop">Homebrew</span>' : e ? `<span class="src ${e.src === 'SRD' ? 'srd' : e.src === 'Quick' ? 'quick' : ''}" title="${e.src === 'Quick' ? 'Short table summary written for this tool' : e.src === 'SRD' ? 'System Reference Document 5.2.1 (CC-BY-4.0)' : 'Imported by you'}">${esc(e.src === 'Quick' ? 'Summary' : e.src)}</span>` : '';
 
 /* ---- inventory model: an item keeps its own fields; anything missing is read from the library entry ---- */
 const INV_CATS = ['Weapons', 'Armor & Shields', 'Magic Items', 'Potions & Consumables', 'Adventuring Gear', 'Tools & Kits', 'Ammunition', 'Treasure & Valuables', 'Quest & Misc'];
@@ -1605,7 +1627,7 @@ traits(c){
       ${card('Proficiencies', `
         ${kv('Saving throws', esc((cl.saves || []).join(', ')))}
         ${kv(multi(c).length ? esc(c.class) + ' training' : 'Training', esc((cl.prof || []).join(', ')))}
-        ${multi(c).map(m => kv(esc(m.class) + ' (multiclass)', esc(MC_PROF[m.class] || '—'))).join('')}
+        ${multi(c).map(m => kv(esc(m.class) + ' (multiclass)', esc(mcProf(m.class) || '—'))).join('')}
         ${multi(c).length ? '<p class="muted">Saving throw proficiencies come only from your first class.</p>' : ''}
         ${(cl.choice || []).map(x => `<p class="muted">${esc(x)}</p>`).join('')}
         <h4>Weapon Mastery</h4>
@@ -1622,7 +1644,7 @@ spells(c){
     return `<div class="kv"><span>Level ${i + 1}</span><span class="pips">${Array.from({length:tot}, (_, k) => `<button type="button" class="pip ${k < used ? 'used' : ''}" data-act="slot" data-arg="${i + 1}:${k}" aria-label="Level ${i + 1} slot ${k + 1}"></button>`).join('')}</span></div>`; }).join('') || (info.pact ? '' : '<p class="muted">Cantrips only at this level.</p>');
   const pactUsed = c.spells.pact?.used || 0;
   const pact = info.pact ? `<h4>Pact Magic <span class="muted">Warlock slots, all return on a Short Rest</span></h4><div class="kv"><span>Level ${info.pact.lv}</span><span class="pips">${Array.from({length:info.pact.n}, (_, k) => `<button type="button" class="pip ${k < pactUsed ? 'used' : ''}" data-act="pactSlot" data-arg="${k}" aria-label="Pact slot ${k + 1}"></button>`).join('')}</span></div>` : '';
-  const perClass = (info.per || []).length > 1 ? info.per.map(x => { const a = SPELL_AB[x.class] || 'int', am = mod(c.abilities[a]);
+  const perClass = (info.per || []).length > 1 ? info.per.map(x => { const a = abFor(x.class), am = mod(c.abilities[a]);
     return kv(esc(x.class), `${a.toUpperCase()} · DC ${8 + am + p} · ${fmt(am + p)} to hit${x.prepared !== undefined ? ` · ${x.prepared} prepared` : ''}`); }).join('') : '';
   const known = c.spells.known.map(n => ({n, e:find(n, 'spells')}));
   const groups = {};
@@ -1726,6 +1748,7 @@ chronicle(c){
   </div>`;
 },
 
+workshop(){ return workshopHTML(); },
 library(){
   const cats = CATS.filter(k => ALL.some(e => e.cat === k.id));
   const f = G.libF;
@@ -1770,7 +1793,7 @@ function renderLibList(){
 /* ---- entry rendering ---- */
 function entryMeta(e){
   const o = e.o;
-  if (e.src !== 'SRD' && e.src !== 'Quick') return extMeta(e);
+  if (!NATIVE(e)) return extMeta(e);
   switch (e.cat){
     case 'spells': return `${o.lv ? `Level ${o.lv} ${esc(o.sc)}` : `${esc(o.sc)} cantrip`}${o.cls ? ' (' + esc(o.cls.join(', ')) + ')' : ''}`;
     case 'feats': return `${esc(o.ty || '')} feat${o.pre ? ' · Prerequisite: ' + esc(o.pre) : ''}${o.rep ? ' · Repeatable' : ''}`;
@@ -1787,12 +1810,12 @@ function entryMeta(e){
 }
 function entryBody(e){
   const o = e.o;
-  if (e.src !== 'SRD' && e.src !== 'Quick') return extBody(e);
+  if (!NATIVE(e)) return extBody(e);
   const quick = e.src === 'SRD' ? quickFor(e.cat, e.n) : null;
   const tip = quick && quick.x ? `<p class="muted"><span class="src quick">In short</span> ${esc(quick.x)}</p>` : '';
   switch (e.cat){
     case 'spells': return `${kv('Casting Time', esc(o.t) + (o.rit ? ' or Ritual' : ''))}${kv('Range', esc(o.r))}${kv('Components', esc(o.c))}${kv('Duration', (o.conc && !/concentration/i.test(o.d) ? 'Concentration, ' : '') + esc(o.d))}${tip}${md(o.x)}${o.h ? `<div class="prose"><p><b><i>Using a Higher-Level Spell Slot.</i></b> ${inline(esc(o.h))}</p></div>` : ''}`;
-    case 'species': return `${tip}${o.x && e.src === 'Quick' ? `<p>${esc(o.x)}</p>` : ''}${(o.tr || []).map(t => `${t.n ? `<h4>${esc(t.n)}</h4>` : ''}${md(t.x)}`).join('')}${(o.subs || []).map(s => `<details class="fold"><summary>${esc(s.n)}</summary><div class="in">${s.tr.map(t => `<h4>${esc(t.n)}${t.l > 1 ? ` <span class="muted">level ${t.l}</span>` : ''}</h4>${md(t.x)}`).join('')}</div></details>`).join('')}`;
+    case 'species': return `${tip}${o.x && e.src !== 'SRD' ? `<p>${esc(o.x)}</p>` : ''}${(o.tr || []).map(t => `${t.n ? `<h4>${esc(t.n)}</h4>` : ''}${md(t.x)}`).join('')}${(o.subs || []).map(s => `<details class="fold"><summary>${esc(s.n)}</summary><div class="in">${s.tr.map(t => `<h4>${esc(t.n)}${t.l > 1 ? ` <span class="muted">level ${t.l}</span>` : ''}</h4>${md(t.x)}`).join('')}</div></details>`).join('')}`;
     case 'backgrounds': return `${kv('Ability Scores', esc((o.asi || []).join(', ')))}${kv('Feat', o.feat ? xref(o.feat) : '—')}${kv('Skills', esc((o.skills || []).join(', ')))}${kv('Tools', esc((o.tools || []).join(', ')))}${o.eq ? `<p><b>Equipment.</b> ${esc(o.eq)}</p>` : ''}${o.x ? `<p>${esc(o.x)}</p>` : ''}`;
     case 'classes': {
       const t = o.tbl ? `<details class="fold"><summary>Class table</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Lv</th><th>PB</th><th>Features</th></tr></thead><tbody>${o.tbl.map(r => `<tr><td>${r.l}</td><td>+${r.pb}</td><td class="wrap">${esc(r.f.join(', '))}</td></tr>`).join('')}</tbody></table></div></details>` : '';
@@ -1802,7 +1825,7 @@ function entryBody(e){
         ${(o.subs || []).map(s => `<details class="fold"><summary>Subclass · ${esc(s.n)}</summary><div class="in"><p><i>${esc(s.sum || '')}</i></p>${md(s.x)}${(s.f || []).map(f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${md(f.x)}`).join('')}</div></details>`).join('')}
         ${(o.subsQuick || []).length ? `<p class="muted">Subclasses: ${o.subsQuick.map(s => QUICK.subclasses.some(q => q.n === s) ? xref(s) : esc(s)).join(' · ')}</p>` : ''}`;
     }
-    case 'subclasses': return `${md(o.x)}${(o.f || []).map(f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${md(f.x)}`).join('')}`;
+    case 'subclasses': return `${o.sum && e.src === 'Homebrew' ? `<p><i>${esc(o.sum)}</i></p>` : ''}${md(o.x)}${(o.f || []).map(f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${md(f.x)}`).join('')}`;
     case 'equipment': return `${o.sum ? kv('Damage', esc(o.sum)) : ''}${o.ac ? kv('Armor Class', esc(o.ac)) : ''}${o.strmin ? kv('Strength', o.strmin) : ''}${o.stealth ? kv('Stealth', 'Disadvantage') : ''}${o.props ? kv('Properties', o.props.map(p => xref(p)).join(', ')) : ''}${o.m ? kv('Mastery', xref(o.m)) : ''}${md(o.x)}`;
     case 'monsters': return statblock(o);
     default: return `${tip}${md(o.x)}`;
@@ -1923,7 +1946,10 @@ let PACKS = [];
 async function loadPacks(){
   try { PACKS = await IDB.all(); } catch (e) { PACKS = []; }
   EXT.length = 0;
+  BREW_ITEMS = PACKS.find(p => p.id === BREW_ID)?.items || [];
+  PACKS = PACKS.filter(p => p.id !== BREW_ID);
   PACKS.forEach(p => ingest5(p.data, p.name).forEach(x => EXT.push(x)));
+  BREW_ITEMS.forEach(it => EXT.push(brewEntry(it)));
 }
 async function importJSON(text, name){
   let json;
@@ -1953,6 +1979,145 @@ function importPane(){
   </div>
   ${card('Imported sources', PACKS.length ? PACKS.map(p => `<div class="kv"><span><b>${esc(p.name)}</b> <span class="muted">${p.count} entries · ${new Date(p.added).toLocaleDateString()}</span></span>${act('delPack', p.id, 'Remove', 'sb x')}</div>`).join('') : '<p class="muted">Nothing imported yet.</p>', 'style="margin-top:14px"')}`;
 }
+
+/* ================================================================== homebrew workshop: your own classes, subclasses, spells… in the same shape as the SRD */
+const BREW_ID = 'homebrew', FREE_BREW = 3;
+const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+// one form per kind: [key, label, type, options/placeholder]
+const BREW = {
+  classes:{t:'Class', hint:'Appears in the class menus, in Level up and in multiclassing.', f:[
+    ['n', 'Name', 'text', 'e.g. Blood Hunter'], ['hd', 'Hit Die', 'select', ['6', '8', '10', '12']], ['prim', 'Primary ability', 'text', 'e.g. Intelligence, or Strength or Dexterity'],
+    ['saves', 'Saving throw proficiencies', 'abil'], ['prof', 'Armor, weapons and tools', 'text', 'Light armor, Simple weapons'], ['choice', 'Skills', 'text', 'Choose 2: Arcana, History, Insight'],
+    ['caster', 'Spellcasting', 'select', [['', 'None'], ['full', 'Full caster (slots like a Wizard)'], ['half', 'Half caster (like a Paladin)'], ['third', 'Third caster (from level 3)'], ['pact', 'Pact Magic (like a Warlock)']]],
+    ['spellAb', 'Spellcasting ability', 'select', [['', '—'], ['int', 'Intelligence'], ['wis', 'Wisdom'], ['cha', 'Charisma']]],
+    ['mcProf', 'Proficiencies when multiclassing into it', 'text', 'Light armor'], ['x', 'Description', 'area', 'What the class is about'],
+    ['f', 'Features', 'feats', '1 Hunter\'s Bane: You gain…\n2 Blood Maledict: …\n3 Subclass: choose an order.\n4 Ability Score Improvement']]},
+  subclasses:{t:'Subclass', hint:'Appears in the subclass menu of its class.', f:[
+    ['n', 'Name', 'text', 'e.g. Order of the Ghostslayer'], ['cls', 'Class', 'class'], ['sum', 'In one line', 'text', 'Hunters of the restless dead'], ['x', 'Description', 'area'],
+    ['f', 'Features', 'feats', '3 Rite of the Dawn: …\n7 Ethereal Step: …']]},
+  spells:{t:'Spell', hint:'Search it from the Spellbook; it shows on the lists of the classes you tick.', f:[
+    ['n', 'Name', 'text', 'e.g. Ember Lash'], ['lv', 'Level', 'select', [['0', 'Cantrip'], ...[1,2,3,4,5,6,7,8,9].map(n => [String(n), 'Level ' + n])]], ['sc', 'School', 'select', SCHOOLS],
+    ['t', 'Casting time', 'text', 'Action'], ['r', 'Range', 'text', '60 feet'], ['c', 'Components', 'text', 'V, S, M (a pinch of ash)'], ['d', 'Duration', 'text', 'Instantaneous'],
+    ['conc', 'Concentration', 'check'], ['rit', 'Ritual', 'check'], ['cls', 'Spell lists', 'classes'], ['x', 'Effect', 'area', 'Make a ranged spell attack… 2d8 Fire damage.'], ['h', 'Using a higher-level slot', 'area']]},
+  feats:{t:'Feat', hint:'Offered in Traits & Feats and at Ability Score Improvements.', f:[
+    ['n', 'Name', 'text'], ['ty', 'Category', 'select', ['Origin', 'General', 'Fighting Style', 'Epic Boon']], ['pre', 'Prerequisite', 'text', 'Level 4+'], ['rep', 'Repeatable', 'check'], ['x', 'Benefit', 'area']]},
+  species:{t:'Species', hint:'Appears in the species menu of the Hero page.', f:[
+    ['n', 'Name', 'text'], ['ty', 'Creature type', 'text', 'Humanoid'], ['size', 'Size', 'select', ['Medium', 'Small', 'Small or Medium', 'Large']], ['speed', 'Speed (feet)', 'number', '30'],
+    ['x', 'Description', 'area'], ['tr', 'Traits', 'traits', 'Darkvision: You see in dim light within 60 feet…\nStone Skin: …']]},
+  backgrounds:{t:'Background', hint:'Appears in the background menu of the Hero page.', f:[
+    ['n', 'Name', 'text'], ['asi', 'Ability scores', 'abil'], ['feat', 'Origin feat', 'feat'], ['skills', 'Skills', 'text', 'Insight, Religion'], ['tools', 'Tools', 'text', "Calligrapher's Supplies"],
+    ['eq', 'Equipment', 'text', '50 GP of gear'], ['x', 'Description', 'area']]},
+  items:{t:'Magic item', hint:'Add it to a pack from Pack & Riches or the Library.', f:[
+    ['n', 'Name', 'text'], ['cat', 'Type', 'select', ['Wondrous Item', 'Armor', 'Weapon', 'Ring', 'Rod', 'Staff', 'Wand', 'Potion', 'Scroll']], ['rar', 'Rarity', 'select', RARITIES.slice(1)],
+    ['att', 'Requires attunement', 'check'], ['x', 'Description', 'area']]},
+  monsters:{t:'Creature', hint:'Add it to fights from the Encounter page.', f:[
+    ['n', 'Name', 'text'], ['sz', 'Size', 'select', ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']], ['ty', 'Type', 'text', 'monstrosity'], ['al', 'Alignment', 'text', 'unaligned'],
+    ['ac', 'Armor Class', 'number', '13'], ['hp', 'Hit Points', 'text', '45 (6d10 + 12)'], ['spd', 'Speed', 'text', '30 ft., fly 60 ft.'], ['ab', 'Ability scores', 'scores'],
+    ['cr', 'Challenge rating', 'text', '3'], ['sen', 'Senses', 'text', 'darkvision 60 ft., passive Perception 12'], ['lang', 'Languages', 'text', '—'],
+    ['tr', 'Traits', 'traits', 'Keen Smell: Advantage on Wisdom (Perception) checks that rely on smell.'], ['act', 'Actions', 'traits', 'Bite: Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage.']]},
+};
+let BREW_ITEMS = [];
+const brewPack = () => ({id:BREW_ID, name:'Homebrew', kind:'brew', added:Date.now(), count:BREW_ITEMS.length, items:BREW_ITEMS});
+const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${o.lv} · ${o.sc}` : `Cantrip · ${o.sc}`) : cat === 'feats' ? o.ty : cat === 'subclasses' ? o.cls : cat === 'classes' ? `d${o.hd} · ${o.prim || ''}` : cat === 'items' ? o.rar : cat === 'monsters' ? 'CR ' + o.cr : '';
+const brewEntry = it => ({cat:it.cat, n:it.o.n, o:it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
+const brewClass = n => BREW_ITEMS.find(it => it.cat === 'classes' && it.o.n === n)?.o;
+async function saveBrew(){ try { await IDB.put(brewPack()); } catch (e) { toast('This browser blocked storage, so your homebrew lasts only until you close the page.'); } }
+function reloadBrew(){ for (let i = EXT.length - 1; i >= 0; i--) if (EXT[i].src === 'Homebrew') EXT.splice(i, 1); BREW_ITEMS.forEach(it => EXT.push(brewEntry(it))); buildIndex(); }
+
+const brewLines = s => String(s || '').split('\n').map(l => l.trim()).filter(Boolean);
+// "3 Name: text" ↔ {l, n, x}; "Name: text" ↔ {n, x}
+const parseFeats = s => brewLines(s).map(l => { const m = l.match(/^(\d{1,2})\s*[.)·-]?\s*([^:]+?)\s*(?::\s*(.*))?$/); return m ? {l:clamp(+m[1], 1, 20), n:m[2], x:m[3] || ''} : null; }).filter(Boolean).sort((a, b) => a.l - b.l);
+const parseTraits = s => brewLines(s).map(l => { const m = l.match(/^([^:]{1,60}):\s*(.*)$/); return m ? {n:m[1].trim(), x:m[2]} : {n:'', x:l}; });
+const featsText = f => (f || []).map(x => `${x.l} ${x.n}${x.x ? ': ' + x.x : ''}`).join('\n');
+const traitsText = t => (t || []).map(x => (x.n ? x.n + ': ' : '') + x.x).join('\n');
+
+function brewField([k, label, type, extra], o){
+  const id = 'bw_' + k, v = o[k];
+  const lab = `<label class="f" for="${id}">${esc(label)}</label>`;
+  switch (type){
+    case 'text': case 'number': return `<div>${lab}<input type="${type}" id="${id}" value="${esc(v ?? '')}" placeholder="${esc(extra || '')}" style="width:100%"></div>`;
+    case 'select': return `<div>${lab}<select id="${id}" style="width:100%">${extra.map(x => Array.isArray(x) ? opt(x[0], v ?? '', x[1]) : opt(x, v ?? '')).join('')}</select></div>`;
+    case 'class': return `<div>${lab}<select id="${id}" style="width:100%">${names('classes').map(n => opt(n, v)).join('')}</select></div>`;
+    case 'feat': return `<div>${lab}<select id="${id}" style="width:100%"><option value="">—</option>${names('feats').map(n => opt(n, v)).join('')}</select></div>`;
+    case 'check': return `<label class="row bwCheck"><input type="checkbox" id="${id}" ${v ? 'checked' : ''}> ${esc(label)}</label>`;
+    case 'abil': { const set = (v || []).map(a => String(a).slice(0, 3).toUpperCase());
+      return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="row">${ABIL.map(a => `<label class="row"><input type="checkbox" class="${id}" value="${a.id.toUpperCase()}" ${set.includes(a.id.toUpperCase()) ? 'checked' : ''}> ${a.id.toUpperCase()}</label>`).join('')}</div></div>`; }
+    case 'classes': return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="row">${names('classes').map(n => `<label class="row"><input type="checkbox" class="${id}" value="${esc(n)}" ${(v || []).includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></div>`;
+    case 'scores': { const ab = v || [10, 10, 10, 10, 10, 10];
+      return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="bwScores">${ABIL.map((a, i) => `<label>${a.id.toUpperCase()}<input type="number" class="${id}" min="1" max="30" value="${ab[i]}"></label>`).join('')}</div></div>`; }
+    case 'area': return `<div class="bwWide">${lab}<textarea id="${id}" placeholder="${esc(extra || '')}">${esc(v || '')}</textarea></div>`;
+    case 'feats': return `<div class="bwWide">${lab}<p class="muted small">One per line: the level, the name, a colon, then the text.</p><textarea id="${id}" style="min-height:140px" placeholder="${esc(extra)}">${esc(featsText(v))}</textarea></div>`;
+    case 'traits': return `<div class="bwWide">${lab}<p class="muted small">One per line: the name, a colon, then the text.</p><textarea id="${id}" placeholder="${esc(extra)}">${esc(traitsText(v))}</textarea></div>`;
+  }
+  return '';
+}
+function readBrew(cat){
+  const o = {};
+  for (const [k, , type] of BREW[cat].f){
+    const el = $('#bw_' + k), all = $$('.bw_' + k);
+    if (type === 'check') o[k] = !!el?.checked;
+    else if (type === 'abil' || type === 'classes') o[k] = all.filter(x => x.checked).map(x => x.value);
+    else if (type === 'scores') o[k] = all.map(x => clamp(parseInt(x.value, 10) || 10, 1, 30));
+    else if (type === 'feats') o[k] = parseFeats(el.value);
+    else if (type === 'traits') o[k] = parseTraits(el.value);
+    else o[k] = el.value.trim();
+  }
+  if (cat === 'classes'){ o.hd = +o.hd || 8; o.prof = o.prof ? o.prof.split(/,\s*/) : []; o.choice = o.choice ? [o.choice] : []; }
+  if (cat === 'spells') o.lv = +o.lv || 0;
+  if (cat === 'species') o.speed = +o.speed || 30;
+  if (cat === 'backgrounds'){ o.skills = o.skills ? o.skills.split(/,\s*/) : []; o.tools = o.tools ? [o.tools] : []; }
+  if (cat === 'monsters'){ o.cr = isNaN(+o.cr) ? o.cr : +o.cr; o.ac = o.ac || '10'; o.hp = o.hp || '10'; }
+  return o;
+}
+function workshopHTML(){
+  const cat = G.brewCat in BREW ? G.brewCat : 'classes', B = BREW[cat];
+  const editing = G.brewEdit && BREW_ITEMS.find(it => it.id === G.brewEdit), o = editing ? editing.o : {};
+  const mine = Object.keys(BREW).map(k => [k, BREW_ITEMS.filter(it => it.cat === k)]).filter(([, l]) => l.length);
+  const left = plusOK() ? '' : `<p class="muted small">Free plan: ${Math.max(0, FREE_BREW - BREW_ITEMS.length)} of ${FREE_BREW} creations left. ${act('plus', undefined, 'Unlimited with Grimoire+', 'sb')}</p>`;
+  return `<div class="libTabs" role="tablist">${Object.entries(BREW).map(([k, b]) => act('brewCat', k, `${esc(b.t)}${BREW_ITEMS.some(it => it.cat === k) ? ` <span class="muted">${BREW_ITEMS.filter(it => it.cat === k).length}</span>` : ''}`, 'sb' + (k === cat ? ' on' : ''), `role="tab" aria-selected="${k === cat}"`)).join('')}</div>
+  <div class="grid2" style="margin-top:12px">
+    ${card(`${editing ? 'Edit' : 'New'} ${esc(B.t.toLowerCase())}`, `<p class="muted">${esc(B.hint)}</p>
+      <div class="bwForm">${B.f.map(f => brewField(f, o)).join('')}</div>
+      <div class="row mt">${act('brewSave', undefined, editing ? 'Save changes' : `＋ Add ${B.t.toLowerCase()}`, 'btn')}${editing ? act('brewNew', undefined, 'Cancel', 'btn ghost') : ''}</div>${left}`)}
+    <div class="stack">
+      ${card(`Your creations <span class="muted">${BREW_ITEMS.length}</span>`, mine.length ? mine.map(([k, l]) => `<h4>${esc(BREW[k].t)}</h4>${l.map(it =>
+        `<div class="kv"><span><button type="button" class="xref" data-act="detailId" data-arg="brew:${esc(it.id)}">${esc(it.o.n)}</button> <span class="muted">${esc(brewKey(k, it.o) || '')}</span></span><span class="row">${act('brewEdit', it.id, 'Edit')}${act('brewDel', it.id, '✕', 'sb x', `aria-label="Delete ${esc(it.o.n)}"`)}</span></div>`).join('')}`).join('')
+        : '<p class="empty">Nothing forged yet. Pick a kind above, fill the form and it joins every menu of the tome.</p>')}
+      ${card('Share and back up', `<p class="muted">Your homebrew lives on this device. Export it to move it to another device or give it to your table; import a file to merge it here.</p>
+        <div class="row">${act('brewExport', undefined, 'Export homebrew', 'btn small')}<label class="btn small ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr"></div>
+        <p class="muted small">Community 5e JSON files go through Library → Import.</p>`)}
+    </div>
+  </div>`;
+}
+async function brewImport(file){
+  let j; try { j = JSON.parse(await file.text()); } catch (e) { toast('That file is not valid JSON.'); return; }
+  const items = Array.isArray(j?.grimoireHomebrew) ? j.grimoireHomebrew.filter(it => it && BREW[it.cat] && it.o?.n) : null;
+  if (!items){ toast('Not a Grimoire homebrew export. Community 5e JSON goes through Library → Import.'); return; }
+  let n = 0;
+  items.forEach(it => { const had = BREW_ITEMS.find(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n)); if (had) had.o = it.o; else { BREW_ITEMS.push({id:uid(), cat:it.cat, o:it.o}); n++; } });
+  await saveBrew(); reloadBrew(); renderPage(); toast(`${items.length} homebrew entries merged (${n} new).`);
+}
+const ACT_BREW = {
+  brewCat(k){ G.brewCat = k; G.brewEdit = null; renderPage(); },
+  brewNew(){ G.brewEdit = null; renderPage(); },
+  brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; G.brewCat = it.cat; G.brewEdit = id; renderPage(); $('#bw_n')?.focus(); },
+  async brewSave(){
+    const cat = G.brewCat in BREW ? G.brewCat : 'classes', o = readBrew(cat);
+    if (!o.n){ toast('Give it a name first.'); $('#bw_n')?.focus(); return; }
+    const editing = G.brewEdit && BREW_ITEMS.find(x => x.id === G.brewEdit);
+    if (!editing && !plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
+    if (BREW_ITEMS.some(x => x.cat === cat && norm(x.o.n) === norm(o.n) && x !== editing)){ toast(`You already have a ${BREW[cat].t.toLowerCase()} called ${o.n}.`); return; }
+    if (editing) editing.o = o; else BREW_ITEMS.push({id:uid(), cat, o});
+    G.brewEdit = null; await saveBrew(); reloadBrew(); render(); toast(`${o.n} ${editing ? 'updated' : 'joins the tome'}.`);
+  },
+  brewDel(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return;
+    confirmBox(`Delete ${it.o.n}? Heroes that use it keep its name.`, 'Delete', async () => { BREW_ITEMS = BREW_ITEMS.filter(x => x !== it); if (G.brewEdit === id) G.brewEdit = null; await saveBrew(); reloadBrew(); render(); }); },
+  brewExport(){
+    const txt = JSON.stringify({grimoireHomebrew:BREW_ITEMS.map(({cat, o}) => ({cat, o}))}, null, 1);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type:'application/json'})); a.download = 'grimoire-homebrew.json'; document.body.appendChild(a); a.click(); a.remove();
+    navigator.clipboard?.writeText(txt).then(() => toast('Downloaded, and copied to the clipboard too.'), () => {});
+  },
+};
 
 /* ================================================================== spell search on the spellbook page */
 function spellSearch(q){
@@ -2135,7 +2300,7 @@ function openLevelUp(keep){
   const html = `<div class="head"><h2>${esc(c.name)} reaches level ${P.N}</h2><span class="spacer"></span>${closeBtn()}</div>
     <div class="row">${clsSel}</div>
     ${blockers.length ? `<p class="muted small">Multiclassing needs 13 in the primary ability of every class you have: ${blockers.map(b => `${esc(b)} (${esc(mcNeed(b).text)})`).join(', ')}.</p>` : ''}
-    ${T.isNew ? `<p class="muted small"><b>New class.</b> You gain its level 1 features${MC_PROF[T.class] && MC_PROF[T.class] !== 'none' ? ` and these proficiencies: ${esc(MC_PROF[T.class])}` : ', but no extra proficiencies'}. Not its saving throws. Spell slots now follow the Multiclass Spellcaster table.</p>` : ''}
+    ${T.isNew ? `<p class="muted small"><b>New class.</b> You gain its level 1 features${mcProf(T.class) && mcProf(T.class) !== 'none' ? ` and these proficiencies: ${esc(mcProf(T.class))}` : ', but no extra proficiencies'}. Not its saving throws. Spell slots now follow the Multiclass Spellcaster table.</p>` : ''}
     <div class="meta">${esc(T.class)} ${P.CN}${T.subclass ? ' · ' + esc(T.subclass) : ''} · Proficiency Bonus ${fmt(P.pbOld)}${P.pbNew !== P.pbOld ? ` → <b>${fmt(P.pbNew)}</b>` : ''}</div>
     <div class="rule"></div>
     <h4>1 · Hit Points</h4>
@@ -2208,7 +2373,7 @@ function sheetHTML(c){
         <div class="sPanel"><h3>Weapons & Damage Cantrips</h3><table><thead><tr><th>Name</th><th>Atk / DC</th><th>Damage & Type</th><th>Notes</th></tr></thead><tbody>${c.attacks.map(a => `<tr><td>${esc(a.n)}</td><td>${fmt(+a.bonus || 0)}</td><td>${esc(a.dmg)}</td><td>${esc(a.note || '')}</td></tr>`).join('')}${'<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>'.repeat(Math.max(0, 4 - c.attacks.length))}</tbody></table></div>
         <div class="sPanel"><h3>Class Features</h3><p>${feats.join(' · ') || '&nbsp;'}</p></div>
         <div class="sPanel sHalf"><div><h3>Species Traits</h3><p>${(sp.tr || []).map(t => `<b>${esc(t.n)}</b>`).join(' · ') || '&nbsp;'}</p></div><div><h3>Feats</h3><p>${c.feats.map(f => `<b>${esc(f.n)}</b>`).join(' · ') || '&nbsp;'}</p></div></div>
-        <div class="sPanel"><h3>Equipment Training & Proficiencies</h3><p>${esc([...(cl.prof || []), ...multi(c).filter(m => MC_PROF[m.class] && MC_PROF[m.class] !== 'none').map(m => `${m.class}: ${MC_PROF[m.class]}`)].join(' · '))}</p></div>
+        <div class="sPanel"><h3>Equipment Training & Proficiencies</h3><p>${esc([...(cl.prof || []), ...multi(c).filter(m => mcProf(m.class) && mcProf(m.class) !== 'none').map(m => `${m.class}: ${mcProf(m.class)}`)].join(' · '))}</p></div>
       </div></div>
     <footer class="sFoot">Grimoire of Heroes · 2024 rules · ${esc(c.name)} · page 1</footer>
   </section>
@@ -2699,7 +2864,8 @@ const paywallOn = () => { if (S.bill) return !!S.bill.paywall; try { return !!JS
 const plusOK = () => !CLOUD || !paywallOn() || !!(me() && S.bill?.plus);
 const PLUS_WHY = {pdf:'The printable sheet and PDF are part of Grimoire+.', themes:'Night pages and the other themes are part of Grimoire+.',
   history:'Grimoire+ keeps a history of every hero, so you can bring back yesterday\'s sheet.', party:'Creating a party is part of Grimoire+. Joining one is free for everybody.',
-  sync:'A free account keeps one hero in the cloud. Grimoire+ syncs all of them, on every device.'};
+  sync:'A free account keeps one hero in the cloud. Grimoire+ syncs all of them, on every device.',
+  brew:`The free plan holds ${FREE_BREW} homebrew creations. Grimoire+ makes the Workshop unlimited.`};
 async function billing(body){
   if (S.session.expires_at - 60000 < Date.now()) await refresh();
   const r = await fetch(API('/functions/v1/billing'), {method:'POST', headers:{apikey:CFG.supabaseKey, Authorization:'Bearer ' + S.session.access_token, 'Content-Type':'application/json'},
@@ -2722,7 +2888,7 @@ function exePayModal(){
 }
 function plusModal(why){
   const b = S.bill || {}, left = b.founder_left ?? 0;
-  const perks = ['Every hero synced between PC, tablet and phone', 'History of each hero: restore an earlier sheet', 'Create a party: your companions join free and read each other\'s heroes', 'Printable sheet and PDF', 'Night pages and themes'];
+  const perks = ['Every hero synced between PC, tablet and phone', 'History of each hero: restore an earlier sheet', 'Create a party: your companions join free and read each other\'s heroes', 'Printable sheet and PDF', 'Night pages and themes', 'Unlimited homebrew in the Workshop'];
   const buy = (plan, label, cls) => me() ? act('checkout', plan, label, cls) : '';
   modal(`<div class="head"><h2>Grimoire<span class="plus">+</span></h2><span class="spacer"></span>${closeBtn()}</div>
     ${why && PLUS_WHY[why] ? `<p><b>${esc(PLUS_WHY[why])}</b></p>` : ''}
@@ -2852,6 +3018,7 @@ const ACT_CLOUD = {
     G.chars.push(...add); if (!G.activeId && add[0]) G.activeId = add[0].id; closeModal(); save(); render(); toast(`${add.length} hero${add.length === 1 ? '' : 'es'} moved into your account.`); },
 };
 Object.assign(ACT, ACT_CLOUD);
+Object.assign(ACT, ACT_BREW);
 function passwordModal(){
   modal(`<div class="head"><h2>Choose a new password</h2><span class="spacer"></span>${closeBtn()}</div>
     <label class="f" for="ac_newpw">New password</label><input type="password" id="ac_newpw" autocomplete="new-password" minlength="6" style="width:100%" autofocus>
@@ -2862,14 +3029,14 @@ function passwordModal(){
 const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack',
   'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','copyExport','downloadChar','import','doImport','enter','print','theme',
   ...Object.keys(ACT_CLOUD)]);
-const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^enc/.test(name) && !$('#modalBk .acct'); };
+const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew)/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
   return isMine(c) ? '' : `<div class="roNote">${portrait(c, 'mini')}<span><b>${esc(c.ownerName || 'A party member')}</b>'s hero: you can read it and roll its dice; only ${esc(c.ownerName || 'its owner')} can change it.</span>${act('duplicate', undefined, 'Make my own copy', 'sb')}</div>`;
 }
 function lockReadOnly(){
   const c = active(), ro = !!c && !isMine(c);
   $('#page').classList.toggle('ro', ro);
-  if (!ro || G.chapter === 'library' || G.chapter === 'encounter') return;
+  if (!ro || BOOKISH(G.chapter) || G.chapter === 'encounter') return;
   $$('#page .pageBody input, #page .pageBody select, #page .pageBody textarea').forEach(el => { if (!/^(spell_q|lib_q|gear_q|inv_q|spell_mine|gear_cat|gear_att|atk_w)$/.test(el.id)) el.disabled = true; });
 }
 function heroInfo(c){
@@ -2947,6 +3114,7 @@ function wire(){
     if (el.dataset.lib !== undefined){ G.libF[el.dataset.lib] = el.value; renderLibList(); return; }
     if (el.id === 'spell_mine'){ G.spellMine = el.checked; spellSearch($('#spell_q').value); }
     if (el.id === 'imp_file') importFiles([...el.files]);
+    if (el.id === 'brew_file' && el.files[0]) brewImport(el.files[0]);
     if (el.id === 'f_img' && el.files[0] && isMine(active())) shrinkImage(el.files[0]).then(d => mut(c => { c.img = d; })).catch(() => toast('That image could not be read.'));
     if (el.id === 'coverStart'){ G.coverOnStart = el.checked; save(); }
     if (el.id === 'gear_cat'){ G.gearCat = el.value; gearSearch(); }
