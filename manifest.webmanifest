@@ -1,0 +1,16 @@
+{
+  "name": "Grimoire of Heroes",
+  "short_name": "Grimoire",
+  "description": "Character tome for fifth edition (2024) rules, with the SRD 5.2.1 built in. Crafted by HighBrew.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#140c07",
+  "theme_color": "#24150d",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
