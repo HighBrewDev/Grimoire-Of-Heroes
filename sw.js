@@ -1,6 +1,6 @@
 // Grimoire of Heroes · offline cache. The app shell is served from the cache at once and refreshed in the
 // background, so the tome opens without a connection and picks up a new version on the next launch.
-const CACHE = 'grimoire-2341c377a4';
+const CACHE = 'grimoire-8e75c7832b';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
