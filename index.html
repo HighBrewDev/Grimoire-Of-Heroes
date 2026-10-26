@@ -987,6 +987,16 @@ function classList(c){
 const asClass = (c, e) => ({...c, class:e.class, subclass:e.subclass || '', level:e.level, multi:[]});
 const hasClass = (c, n) => classList(c).some(e => e.class === n);
 const classLabel = (c, subs) => multi(c).length ? classList(c).map(e => `${e.class}${subs && e.subclass ? ' (' + e.subclass + ')' : ''} ${e.level}`).join(' / ') : c.class + (subs && c.subclass ? ` (${c.subclass})` : '');
+// subclass picker: every subclass the tome knows for a class (SRD, summaries, imported), stored by its short name
+const shortSub = n => String(n).replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '');
+function subsFor(cls){
+  const list = [...ALL.filter(e => e.cat === 'subclasses' && (e.o.cls === cls || e.o.className === cls)).map(e => e.n), ...(QUICK.classes.find(k => k.n === cls)?.subsQuick || [])];
+  return [...new Map(list.map(n => [norm(shortSub(n)), n])).values()].sort((a, b) => shortSub(a).localeCompare(shortSub(b)));
+}
+function subSelect(attrs, cls, cur){
+  const list = subsFor(cls), same = n => cur && norm(shortSub(n)) === norm(shortSub(cur));
+  return `<select ${attrs}><option value="">${list.length ? '— choose a subclass —' : '— none in the library —'}</option>${list.map(n => `<option value="${esc(shortSub(n))}" ${same(n) ? 'selected' : ''}>${esc(n)}</option>`).join('')}${cur && !list.some(same) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : ''}<option value="__custom">Other: type its name…</option></select>`;
+}
 const AB_ID = {strength:'str', dexterity:'dex', constitution:'con', intelligence:'int', wisdom:'wis', charisma:'cha'};
 function mcNeed(cls){ const p = String(clsInfo({class:cls}).prim || ''); return {ids:(p.toLowerCase().match(/[a-z]+/g) || []).map(w => AB_ID[w]).filter(Boolean), any:/ or /i.test(p), text:p}; }
 const mcMeets = (c, cls) => { const r = mcNeed(cls); return !r.ids.length || (r.any ? r.ids.some(a => (c.abilities[a] || 10) >= 13) : r.ids.every(a => (c.abilities[a] || 10) >= 13)); };
@@ -1483,12 +1493,12 @@ hero(c){
         <div><label class="f" for="f_species">Species</label><select id="f_species" data-bind="species">${names('species').map(s => opt(s, c.species)).join('')}</select></div>
         <div><label class="f" for="f_bg">Background</label><select id="f_bg" data-bind="background">${names('backgrounds').map(s => opt(s, c.background)).join('')}</select></div>
         <div><label class="f" for="f_class">Class</label><select id="f_class" data-bind="class">${names('classes').map(s => opt(s, c.class)).join('')}</select></div>
-        <div><label class="f" for="f_sub">Subclass</label><input type="text" id="f_sub" data-bind="subclass" list="subList" value="${esc(c.subclass || '')}" placeholder="e.g. Champion"><datalist id="subList">${names('subclasses').map(s => `<option value="${esc(s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?|^(.*) (Domain|Patron|Sorcery)$/, (m, a, b, c2) => c2 || ''))}">`).join('')}${(cl.subsQuick || []).map(s => `<option value="${esc(s)}">`).join('')}</datalist></div>
+        <div><label class="f" for="f_sub">Subclass</label>${subSelect('id="f_sub" data-bind="subclass"', c.class, c.subclass)}</div>
         <div><label class="f" for="f_level">${multi(c).length ? 'Total level' : 'Level (1–20)'}</label><input type="number" id="f_level" data-bind="level" data-type="int" min="1" max="20" value="${c.level}"></div>
         <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" value="${c.xp || 0}"></div>
       </div>
       <div class="mcBox">${multi(c).length ? `<h4>Multiclass <span class="muted">${esc(c.class)} ${classList(c)[0].level} is the first class</span></h4>
-        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').map(s => opt(s, m.class)).join('')}</select><input type="text" data-mc="${i}:subclass" list="subList" value="${esc(m.subclass || '')}" placeholder="Subclass" aria-label="Subclass"><input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
+        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
         ${c.level < 20 ? `<div class="row">${act('mcAdd', undefined, '＋ Add a class (multiclass)', 'sb')}<span class="muted small">or take one from Level up, which checks the rules</span></div>` : ''}</div>
       <label class="row mt"><input type="checkbox" id="f_insp" data-bind="inspiration" ${c.inspiration ? 'checked' : ''}> <b>Heroic Inspiration</b> <span class="muted">reroll one D20; Humans regain it each Long Rest</span></label>
       <div class="rule"></div>
@@ -2134,7 +2144,7 @@ function openLevelUp(keep){
     ${extra ? `<p class="muted">${c.species === 'Dwarf' ? 'Dwarven Toughness +1. ' : ''}${hasFeat(c, 'Tough') ? 'Tough +2.' : ''}</p>` : ''}
     <h4>2 · New features</h4>
     ${[...P.feats, ...P.subFeats].map(f => `<details class="fold"><summary>${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`).join('') || '<p class="muted">No new class features listed at this level in the library.</p>'}
-    ${P.needSub ? `<h4>3 · Choose your subclass</h4><input type="text" id="lu_sub" list="luSubs" placeholder="Subclass name" style="width:100%"><datalist id="luSubs">${ALL.filter(e => e.cat === 'subclasses' && (!e.o.cls || e.o.cls === T.class || e.o.className === T.class)).map(e => `<option value="${esc(e.n)}">`).join('')}${(clsInfo(asClass(c, T)).subsQuick || []).map(s => `<option value="${esc(s)}">`).join('')}</datalist>` : ''}
+    ${P.needSub ? `<h4>3 · Choose your subclass</h4>${subSelect('id="lu_sub" style="width:100%"', T.class, '')}` : ''}
     ${P.asi || P.boon ? `<h4>${P.needSub ? 4 : 3} · ${P.boon ? 'Epic Boon or Ability Score Improvement' : 'Ability Score Improvement or feat'}</h4>
       <div class="stack" style="gap:6px">
         <label class="row"><input type="radio" name="lu_asi" value="two" checked> +2 to ${abSel('lu_a1')}</label>
@@ -2927,6 +2937,9 @@ function wire(){
   });
   document.addEventListener('change', e => {
     const el = e.target;
+    if (el.tagName === 'SELECT' && el.value === '__custom'){   // subclass picker: swap in a text field for one the library doesn't have
+      const t = document.createElement('input'); t.type = 'text'; for (const a of el.attributes) t.setAttribute(a.name, a.value);
+      t.placeholder = 'Type the subclass name'; el.replaceWith(t); t.focus(); return; }
     if (el.dataset.bind && !isMine(active())){ renderPage(); return; }
     if (el.dataset.mc !== undefined){ if (isMine(active())) mcValue(el); else renderPage(); return; }
     if (el.id === 'lu_cls'){ G.lu.cls = el.value; openLevelUp(true); return; }
