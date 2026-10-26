@@ -8,6 +8,6 @@
 window.GRIMOIRE_CONFIG = {
   supabaseUrl: 'https://obahrlbwbplqqgokjqhf.supabase.co',
   supabaseKey: 'sb_publishable_aGee4sOAIxKRW6Icmasztg_XfZjRbCy',
-  siteUrl: 'https://damianocannizzaro99.github.io/Grimoire-Of-Heroes/',
+  siteUrl: 'https://highbrewdev.github.io/Grimoire-Of-Heroes/',
   // prices: {monthly: '€1.99 / month', yearly: '€14.99 / year', founder: '€24.99 once'},
 };
