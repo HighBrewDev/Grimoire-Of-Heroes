@@ -141,7 +141,7 @@ button.chip:hover{filter:brightness(1.12)}
 .book::before{ /* page edges stacked under the current leaf */
   content:"";position:absolute;right:4px;top:14px;bottom:8px;width:8px;border-radius:0 4px 4px 0;
   background:repeating-linear-gradient(90deg,#f1e2bb 0 1px,#cdb27a 1px 2px)}
-.page,.leaf .face,.under{
+.page,.under{
   background:
     radial-gradient(ellipse at 60% 0%, var(--sheen), transparent 60%),
     linear-gradient(90deg, rgba(70,40,10,.32), rgba(70,40,10,.06) 3%, transparent 7%),
@@ -157,17 +157,6 @@ button.chip:hover{filter:brightness(1.12)}
 .folio{display:flex;justify-content:center;align-items:center;gap:12px;padding:4px 0 14px;color:var(--ink3);font-family:var(--f-display);font-size:12.5px;letter-spacing:.2em}
 .folio::before,.folio::after{content:"";height:1px;width:60px;background:linear-gradient(90deg,transparent,var(--gold3),transparent)}
 
-/* turning leaf */
-.leaf{position:absolute;left:0;top:0;width:100%;transform-origin:0 50%;transform-style:preserve-3d;z-index:6;pointer-events:none;will-change:transform}
-.leaf .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;border-radius:2px 10px 10px 2px}
-.leaf .face.back{transform:rotateY(180deg);background-color:var(--parchBack);
-  background-image:linear-gradient(270deg, rgba(70,40,10,.32), rgba(70,40,10,.05) 4%, transparent 8%),
-    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.25), transparent 70%),
-    linear-gradient(180deg,var(--parchBack),var(--parch2))}
-.leaf .face.back .ghost{position:absolute;inset:0;display:grid;place-items:center;opacity:.13;transform:scaleX(-1)}
-.leaf .face.back .ghost svg{width:42%;max-width:260px;stroke:var(--ink);fill:none;stroke-width:1}
-.leaf .light{position:absolute;inset:0;pointer-events:none;opacity:0;
-  background:linear-gradient(90deg, rgba(0,0,0,.05), rgba(40,20,5,.45) 70%, rgba(255,250,230,.35) 100%)}
 .under{position:absolute;left:0;top:0;width:100%;z-index:5;overflow:hidden;border-radius:2px 10px 10px 2px;pointer-events:none}
 .castShadow{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;border-radius:2px 10px 10px 2px;
   background:linear-gradient(90deg, rgba(20,10,0,.45), rgba(20,10,0,.12) 40%, transparent 75%)}
@@ -214,7 +203,7 @@ button.chip:hover{filter:brightness(1.12)}
 .row.mt{margin-top:8px}
 .spacer{flex:1}
 label.f{display:block;font-family:var(--f-display);font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--head);margin:8px 0 3px}
-input[type=text],input[type=number],input[type=search],select,textarea{
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=search],select,textarea{
   background:var(--field);border:1px solid var(--gold3);border-radius:8px;padding:6px 9px;color:var(--ink);font-size:15.5px;color-scheme:var(--fieldScheme);min-width:0}
 input[type=number]{width:84px}
 textarea{width:100%;min-height:84px;resize:vertical}
@@ -496,6 +485,8 @@ body{background-image:var(--grain),radial-gradient(1200px 600px at 50% -10%, #5a
 
 /* curling strips */
 .strip{position:absolute;transform-origin:0 50%;transform-style:preserve-3d;pointer-events:none;will-change:transform;z-index:6}
+.strip .face{contain:strict;will-change:opacity}
+.strip .shade{will-change:opacity}
 .strip .face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .strip .face.front > .page{min-height:0;height:100%;box-shadow:none}
 .strip .face.blank,.strip .face.back{background:var(--grain),linear-gradient(180deg,var(--parchBack),var(--parch2))}
@@ -578,6 +569,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .emptyTome .row{justify-content:center}
 .cover .maker{font-family:var(--f-display);letter-spacing:.22em;text-transform:uppercase;font-size:11.5px;color:var(--gold);margin:10px 0 4px}
 .cover .maker b{color:var(--gold2);letter-spacing:.26em}
+.cover .maker a{color:var(--gold2);letter-spacing:.12em}
 .cover .maker::before,.cover .maker::after{content:"";display:inline-block;width:34px;height:1px;background:var(--gold3);vertical-align:middle;margin:0 10px}
 /* touch screens: no sticky hover lifts */
 @media (hover:none){
@@ -677,7 +669,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
     <p class="stats">3 sample heroes · 339 spells · 341 creatures<br>243 magic items · the full SRD 5.2.1, offline</p>
     <button type="button" class="btn" style="font-size:18px;padding:12px 26px;margin-top:8px" data-act="enter">Open the Grimoire</button>
     <p style="font-size:13.5px">Turn pages with the arrows, ← → keys or a swipe.</p>
-    <p class="maker">Crafted by <b>HighBrew</b></p>
+    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a></p>
     <label class="coverOpt"><input type="checkbox" id="coverStart" checked> Show this cover each time the tome opens</label>
   </div>
 </div>
@@ -717,7 +709,6 @@ const ALIGN = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','Tru
 const XP_TABLE = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
 const SPELL_AB = {Wizard:'int',Cleric:'wis',Druid:'wis',Bard:'cha',Sorcerer:'cha',Warlock:'cha',Paladin:'cha',Ranger:'wis',Fighter:'int',Rogue:'int'};
 const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5c-.8 0-1.5.7-1.5 1.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5.7 1.5 1.5zM4 20.5V5.5M20 20.5V5.5"/></svg>';
-const ORNAMENT = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="30"/><path d="M50 10v80M10 50h80M22 22l56 56M78 22L22 78"/><circle cx="50" cy="50" r="8"/></svg>';
 
 /* ================================================================== data */
 const DND = window.DND || {};
@@ -1211,11 +1202,28 @@ function finishTurn(){
   $('#book').classList.remove('turning'); $('#book').style.minHeight = '';
   G.turning = null;
 }
-function snapshot(el){
+// Only the band of the page that is on screen turns. The copy keeps the boxes outside that band at their size
+// but empties them, so a long spell list or library costs no more to turn than a short page.
+function snapshot(el, band){
   const s = el.cloneNode(true);
   s.removeAttribute('id'); s.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
   s.style.boxShadow = 'none'; s.style.minHeight = '0';
+  if (band){ const y = el.getBoundingClientRect().top; prune(el, s, y + band.top - 40, y + band.top + band.h + 40, 0); s.style.marginTop = -band.top + 'px'; }
   return s;
+}
+function prune(src, dst, y0, y1, depth){
+  const a = src.children, b = dst.children;
+  for (let i = a.length - 1; i >= 0; i--){
+    const r = a[i].getBoundingClientRect(), d = b[i];
+    if (!d || !r.height) continue;
+    if (r.bottom < y0 || r.top > y1){ d.replaceChildren(); d.style.cssText += `;box-sizing:border-box;height:${r.height}px;overflow:hidden`; }
+    else if (depth < 8 && a[i].children.length) prune(a[i], d, y0, y1, depth + 1);
+  }
+}
+// the slice of the page between the top of the screen (or of the page) and the bottom of the screen
+function visibleBand(page, H = page.offsetHeight){
+  const r = page.getBoundingClientRect(), top = clamp(-r.top, 0, H - 1);
+  return {top, h:clamp(innerHeight - r.top, top + 1, H) - top};
 }
 // A turning page is cut into vertical strips laid edge to edge in the x–z plane, so the sheet can bend.
 // Each frame the spine angle and a curl term are integrated along the strips: the free edge leads while the
@@ -1224,6 +1232,7 @@ const smooth = t => t * t * t * (t * (t * 6 - 15) + 10);
 const curlAt = (t, K) => -K * Math.sin(2 * Math.PI * t) * (1 - .35 * t) - K * .45 * Math.sin(Math.PI * t);
 function curlLeaf(book, geo, content, {strips, delay = 0, dur = 1000, back = false, curl = 64, order = 0} = {}){
   const {top, left, w, h} = geo, sw = w / strips, els = [], segs = [];
+  const put = (el, k, v) => { if (el['_' + k] !== v){ el['_' + k] = v; el.style[k] = v; } };
   for (let i = 0; i < strips; i++){
     const s = document.createElement('div'); s.className = 'strip';
     s.style.cssText = `top:${top}px;left:${left}px;width:${Math.ceil(sw) + 1}px;height:${h}px`;
@@ -1253,13 +1262,13 @@ function curlLeaf(book, geo, content, {strips, delay = 0, dur = 1000, back = fal
       if (i){ const pa = A * Math.PI / 180; x += sw * Math.cos(pa); z += -sw * Math.sin(pa); A += c * wts[i]; }
       A = Math.max(-180, Math.min(0, A));
       const g = segs[i], ar = -A * Math.PI / 180;
-      g.s.style.visibility = hidden ? 'hidden' : 'visible'; g.s.style.zIndex = zi;
-      g.s.style.transform = `translate3d(${x.toFixed(2)}px,0,${(z + .5).toFixed(2)}px) rotateY(${A.toFixed(2)}deg)`;
+      put(g.s, 'visibility', hidden ? 'hidden' : 'visible'); put(g.s, 'zIndex', zi);
+      g.s.style.transform = `translate3d(${x.toFixed(1)}px,0,${(z + .5).toFixed(1)}px) rotateY(${A.toFixed(2)}deg)`;
       // there is no left-hand page in this book: a sheet fades as it sinks towards the left, so it never lies over the tabs
       const lit = Math.sin(ar), fade = clamp((A + 172) / 60, 0, 1).toFixed(3);
-      g.f.style.opacity = fade; g.b.style.opacity = fade;
-      g.shF.style.opacity = (A > -90 ? lit * .62 : 1).toFixed(3);
-      g.shB.style.opacity = (A < -90 ? lit * .45 : 1).toFixed(3);
+      put(g.f, 'opacity', fade); put(g.b, 'opacity', fade);
+      put(g.shF, 'opacity', (A > -90 ? lit * .62 : 1).toFixed(2));
+      put(g.shB, 'opacity', (A < -90 ? lit * .45 : 1).toFixed(2));
     }
     if (t < 1) raf = requestAnimationFrame(frame); else done();
   };
@@ -1273,43 +1282,45 @@ function turnTo(id){
   const dir = to > from ? 1 : -1, steps = Math.min(3, Math.abs(to - from));
   const book = $('#book'), page = $('#page');
   const bookTop = book.getBoundingClientRect().top;
-  if (bookTop < 0) window.scrollTo({top:window.scrollY + bookTop - 8, behavior:reduceMotion() ? 'auto' : 'smooth'});
+  if (bookTop < 0) window.scrollTo({top:window.scrollY + bookTop - 8, behavior:'auto'});
 
   if (reduceMotion()){ G.chapter = id; save(); renderTabs(); renderPage(); return; }
 
-  const oldH = page.offsetHeight;
-  const oldSnap = snapshot(page);
+  const oldH = page.offsetHeight, oldBand = visibleBand(page);
+  const oldSnap = snapshot(page, oldBand);
+  book.style.minHeight = book.offsetHeight + 'px';   // held before the new page renders, so a shorter page cannot pull the scroll up mid-turn
   G.chapter = id; save(); renderTabs(); renderPage();
-  const newH = page.offsetHeight, H = Math.max(oldH, newH);
-  book.style.minHeight = book.offsetHeight + 'px';
+  const band = visibleBand(page, Math.max(oldH, page.offsetHeight)), H = band.h;
+  oldSnap.style.marginTop = -band.top + 'px';
   book.classList.add('turning');
   rustle();
 
   // jumping several chapters turns them as one sheet (loose blank leaves crossing each other looked broken), just quicker
-  const narrow = page.offsetWidth < 640, strips = narrow ? 5 : 7, dur = (narrow ? 820 : 1050) * (steps > 1 ? .85 : 1);
-  const geo = {top:page.offsetTop, left:page.offsetLeft, w:page.offsetWidth, h:H};
+  const narrow = page.offsetWidth < 640, strips = narrow ? 4 : 6, dur = (narrow ? 820 : 1050) * (steps > 1 ? .85 : 1);
+  const geo = {top:page.offsetTop + band.top, left:page.offsetLeft, w:page.offsetWidth, h:H};
   const els = [], anims = [];
   const shadow = document.createElement('div'); shadow.className = 'castShadow';
   shadow.style.cssText = `top:${geo.top}px;left:${geo.left}px;width:${geo.w}px;height:${H}px`; book.appendChild(shadow); els.push(shadow);
   const add = l => { els.push(...l.els); anims.push(l); return l; };
   if (dir > 0){
-    const lead = add(curlLeaf(book, geo, oldSnap, {strips, dur}));
+    add(curlLeaf(book, geo, oldSnap, {strips, dur}));
   } else {
     const under = document.createElement('div'); under.className = 'under';
     under.style.cssText = `top:${geo.top}px;left:${geo.left}px;width:${geo.w}px;height:${H}px;z-index:4`; under.appendChild(oldSnap); book.appendChild(under); els.push(under);
-    add(curlLeaf(book, geo, snapshot(page), {strips, dur, back:true}));
+    add(curlLeaf(book, geo, snapshot(page, band), {strips, dur, back:true}));
   }
   anims.push(shadow.animate([{opacity:0}, {opacity:1, offset:.45}, {opacity:0}], {duration:dur, easing:'ease-in-out', fill:'both'}));
-  inkIn(page, dir > 0 ? dur * .35 : dur * .6);
+  inkIn(page, dur * (dir > 0 ? .55 : .7));
   G.turning = {els, anims};
   Promise.all(anims.map(a => a.finished.catch(() => {}))).then(() => { if (G.turning && G.turning.els === els) finishTurn(); });
 }
 // the new page's cards settle in like ink drying, one after another
 function inkIn(page, delay){
   if (reduceMotion()) return;
-  $$('.pageBody > *, .pageBody .grid2 > *, .pageBody .grid3 > *, .pageBody .stack > *', page).slice(0, 14).forEach((el, i) =>
-    el.animate([{opacity:.25, filter:'blur(1.6px)', transform:'translateY(5px)'}, {opacity:1, filter:'blur(0)', transform:'none'}],
-      {duration:620, delay:delay + i * 55, easing:'cubic-bezier(.2,.7,.2,1)', fill:'backwards'}));
+  // opacity and transform only: they run on the compositor and never compete with the turning sheet
+  $$('.pageBody > *, .pageBody .grid2 > *, .pageBody .grid3 > *, .pageBody .stack > *', page).slice(0, 10).forEach((el, i) =>
+    el.animate([{opacity:.3, transform:'translateY(4px)'}, {opacity:1, transform:'none'}],
+      {duration:480, delay:delay + i * 45, easing:'cubic-bezier(.2,.7,.2,1)', fill:'backwards'}));
 }
 function flipStep(d){ const o = CHAPTERS.map(x => x.id), i = o.indexOf(G.chapter) + d; if (i >= 0 && i < o.length) turnTo(o[i]); }
 
@@ -2284,9 +2295,25 @@ const ACT = {
     $('#impFile').onchange = async e => { const f = e.target.files[0]; if (f){ $('#impTxt').value = await f.text(); ACT.doImport(); } }; },
   doImport(){ try { const o = JSON.parse($('#impTxt').value); if (!o.name || !o.abilities) throw 0; LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete o[k]); o.id = uid(); G.chars.push(fixup(o)); G.activeId = o.id; save(); render(); closeModal(); toast(`${o.name} joins the tome.`); }
     catch (e) { toast('That is not a hero exported from this tome.'); } },
-  enter(){ const bk = $('#coverBk'); G.showCover = false; if (reduceMotion()){ bk.remove(); return; } rustle(); bk.classList.add('opening'); setTimeout(() => bk.remove(), 1100); },
+  enter(){ const bk = $('#coverBk'); G.showCover = false; if (reduceMotion()){ bk.remove(); welcome(); return; } rustle(); bk.classList.add('opening'); setTimeout(() => { bk.remove(); welcome(); }, 1100); },
+  welcome(){ $('#coverBk')?.remove(); welcome(true); },
 };
 Object.assign(ACT, ACT_EXTRA);
+// First-launch letter for beta readers: what the tome is, where it is going, and the Founder offer.
+const WELCOME_KEY = 'grimoire-welcome-beta1';
+function welcome(force){
+  try { if (!force && localStorage.getItem(WELCOME_KEY)) return; localStorage.setItem(WELCOME_KEY, '1'); } catch (e) { if (!force) return; }
+  const site = CFG.siteUrl || '';
+  modal(`<div class="head"><h2>Welcome to the beta</h2><span class="spacer"></span>${closeBtn()}</div>
+    <p>Thank you for opening the tome this early. <b>Grimoire of Heroes</b> is a character sheet that behaves like a book: every hero, spell and rule of the SRD 5.2.1 in one place, working offline, built for the table rather than for forms.</p>
+    <h4>What you can do today</h4>
+    <ul class="perks"><li>Build heroes with guided level up, spells, gear and notes</li><li>Run fights with the encounter tracker and the dice tray</li><li>Search the whole SRD from any page (Ctrl+K or /)</li><li>Sign in to keep your heroes in sync and share a party</li></ul>
+    <h4>Where it is going</h4>
+    <p>The tome stays free: unlimited heroes on your device, the full SRD and the combat tools. After the beta, <b>Grimoire<span class="plus">+</span></b> (${esc(PRICES.monthly)} or ${esc(PRICES.yearly)}) will add sync of every hero, hero history, parties, the printable sheet and themes. During the beta all of it is free.</p>
+    <div class="planBox founder" style="margin:12px 0"><span class="tag">First 100 only</span><b>Founder</b><span>${esc(PRICES.founder)}: Grimoire<span class="plus">+</span> for life, for the readers who believe in the tome first.</span></div>
+    <p class="muted small">This is a beta: things can break. Export heroes you care about, and tell HighBrew what to fix.${LEGAL ? ` <a href="${LEGAL}" target="_blank" rel="noopener">Terms and privacy</a>.` : ''}</p>
+    <div class="row mt">${act('close', undefined, 'Start writing', 'btn')}${CLOUD ? act('plus', undefined, 'See the Founder plan', 'btn ghost') : site ? `<span class="muted small">Founder plans open on <b>${esc(site)}</b></span>` : ''}</div>`, {label:'Welcome to the beta'});
+}
 function refreshAfterModalAction(){
   const m = $('#modalBk .modal'); const h = m?.querySelector('h2')?.textContent;
   renderPage();
@@ -2860,7 +2887,7 @@ async function boot(){
   buildIndex();
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
   applyTheme(); wire(); render(); syncTray(); cloudBoot();
-  if (!G.showCover && G.coverOnStart === false) $('#coverBk')?.remove();
+  if (!G.showCover && G.coverOnStart === false){ $('#coverBk')?.remove(); welcome(); }
   else { fillCover(); $('#coverBk').hidden = false; }
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
