@@ -597,6 +597,10 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .hist .kv b{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .hero .owner.local{background:transparent;color:var(--ink3);border:1px dashed var(--ink3)}
 .modal .row + h4{margin-top:16px}
+.mcBox{margin-top:10px}
+.mcBox h4{margin:4px 0 6px}
+.mcRow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.2fr) 64px auto;gap:6px;align-items:center;margin-bottom:6px}
+.mcRow input[type=number]{width:100%}
 
 </style>
 <script src="config.js"></script>
@@ -947,7 +951,8 @@ function fixup(c){
   ['conditions','attacks','feats','classFeats','inventory'].forEach(k => c[k] = c[k] || []);
   c.saves = c.saves || {}; c.skills = c.skills || {}; c.res = c.res || {};
   c.currency = c.currency || {cp:0,sp:0,ep:0,gp:0,pp:0}; c.notes = c.notes || {};
-  c.level = clamp(+c.level || 1, 1, 20); c.exhaustion = +c.exhaustion || 0;
+  c.multi = Array.isArray(c.multi) ? c.multi.filter(m => m && m.class).map(m => ({class:m.class, subclass:m.subclass || '', level:clamp(+m.level || 1, 1, 19)})) : [];
+  c.level = clamp(+c.level || 1, 1 + c.multi.reduce((t, m) => t + m.level, 0), 20); c.exhaustion = +c.exhaustion || 0;
   return c;
 }
 function save(){
@@ -972,6 +977,28 @@ const clsInfo = c => srdClass(c) || QUICK.classes.find(k => k.n === c.class) || 
 const speciesInfo = c => (find(c.species, 'species') || {}).o || {};
 const bgInfo = c => (find(c.background, 'backgrounds') || {}).o || {};
 const hdSize = c => clsInfo(c).hd || 8;
+
+/* multiclassing: c.class and c.subclass are the first class, c.level the total; c.multi holds the other classes */
+const multi = c => c.multi || [];
+function classList(c){
+  const rest = multi(c);
+  return [{class:c.class, subclass:c.subclass || '', level:Math.max(1, c.level - rest.reduce((t, m) => t + m.level, 0)), main:true}, ...rest.map((m, i) => ({...m, i}))];
+}
+const asClass = (c, e) => ({...c, class:e.class, subclass:e.subclass || '', level:e.level, multi:[]});
+const hasClass = (c, n) => classList(c).some(e => e.class === n);
+const classLabel = (c, subs) => multi(c).length ? classList(c).map(e => `${e.class}${subs && e.subclass ? ' (' + e.subclass + ')' : ''} ${e.level}`).join(' / ') : c.class + (subs && c.subclass ? ` (${c.subclass})` : '');
+const AB_ID = {strength:'str', dexterity:'dex', constitution:'con', intelligence:'int', wisdom:'wis', charisma:'cha'};
+function mcNeed(cls){ const p = String(clsInfo({class:cls}).prim || ''); return {ids:(p.toLowerCase().match(/[a-z]+/g) || []).map(w => AB_ID[w]).filter(Boolean), any:/ or /i.test(p), text:p}; }
+const mcMeets = (c, cls) => { const r = mcNeed(cls); return !r.ids.length || (r.any ? r.ids.some(a => (c.abilities[a] || 10) >= 13) : r.ids.every(a => (c.abilities[a] || 10) >= 13)); };
+// proficiencies a class grants when it isn't your first one (SRD 5.2.1, Multiclassing)
+const MC_PROF = {Barbarian:'Shields, Martial weapons', Bard:'Light armor, one skill of your choice, one musical instrument', Cleric:'Light and Medium armor, Shields', Druid:'Light armor, Shields',
+  Fighter:'Light and Medium armor, Shields, Martial weapons', Monk:'none', Paladin:'Light and Medium armor, Shields, Martial weapons', Ranger:'Light and Medium armor, Shields, Martial weapons, one skill from the Ranger list',
+  Rogue:"Light armor, one skill from the Rogue list, Thieves' Tools", Sorcerer:'none', Warlock:'Light armor', Wizard:'none'};
+function hdPools(c){
+  const m = {}; classList(c).forEach(e => { const d = hdSize(asClass(c, e)); m[d] = (m[d] || 0) + e.level; });
+  return Object.entries(m).map(([d, n]) => ({d:+d, n, used:multi(c).length ? (c.hitDice.by?.[d] || 0) : (c.hitDice.used || 0)})).sort((a, b) => b.d - a.d);
+}
+const hdText = c => hdPools(c).map(p => `${Math.max(0, p.n - p.used)} / ${p.n} d${p.d}`).join(' · ');
 function subclassOf(c){
   if (!c.subclass) return null;
   const q = norm(c.subclass);
@@ -1010,8 +1037,8 @@ function getAC(c){
   }
   let ac;
   if (body) ac = body.acb + (body.dexb ? (body.dexmax !== undefined ? Math.min(body.dexmax, dex) : dex) : 0);
-  else if (c.class === 'Barbarian') ac = 10 + dex + mod(c.abilities.con);
-  else if (c.class === 'Monk' && !shield) ac = 10 + dex + mod(c.abilities.wis);
+  else if (hasClass(c, 'Barbarian')) ac = 10 + dex + mod(c.abilities.con);
+  else if (hasClass(c, 'Monk') && !shield) ac = 10 + dex + mod(c.abilities.wis);
   else ac = 10 + dex;
   const att = (c.inventory || []).filter(it => it.attuned).map(it => norm(it.n));
   const magic = att.filter(n => /^(ring|cloak) of protection$/.test(n)).length + (att.includes('bracers of defense') && !body && !shield ? 2 : 0);
@@ -1020,19 +1047,47 @@ function getAC(c){
 
 const THIRD = {3:[2],4:[3],5:[3],6:[3],7:[4,2],8:[4,2],9:[4,2],10:[4,3],11:[4,3],12:[4,3],13:[4,3,2],14:[4,3,2],15:[4,3,2],16:[4,3,3],17:[4,3,3],18:[4,3,3],19:[4,3,3,1],20:[4,3,3,1]};
 const isThird = c => (c.class === 'Fighter' && /eldritch knight/i.test(c.subclass || '')) || (c.class === 'Rogue' && /arcane trickster/i.test(c.subclass || ''));
+const padSlots = a => Array.from({length:9}, (_, i) => a[i] || 0);
+const FULL_SLOTS = [[2],[3],[4,2],[4,3],[4,3,2],[4,3,3],[4,3,3,1],[4,3,3,2],[4,3,3,3,1],[4,3,3,3,2],[4,3,3,3,2,1],[4,3,3,3,2,1],[4,3,3,3,2,1,1],[4,3,3,3,2,1,1],[4,3,3,3,2,1,1,1],[4,3,3,3,2,1,1,1],[4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],[4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1]];
+const FULL_CASTERS = ['Bard', 'Cleric', 'Druid', 'Sorcerer', 'Wizard'], HALF_CASTERS = ['Paladin', 'Ranger'];
+// Multiclass Spellcaster: one shared table for every Spellcasting class, Pact Magic kept apart
+function multiSlots(c){
+  const per = classList(c).map(e => ({e, s:slotsFor(asClass(c, e))})).filter(x => x.s.type !== 'none');
+  const std = per.filter(x => x.s.type === 'std'), pact = per.find(x => x.s.type === 'pact');
+  const sum = k => per.some(x => x.s[k] !== undefined) ? per.reduce((t, x) => t + (x.s[k] || 0), 0) : undefined;
+  const pactInfo = pact ? {n:Math.max(...pact.s.slots), lv:pact.s.slots.findIndex(n => n > 0) + 1} : null;
+  let slots = padSlots([]);
+  if (std.length === 1) slots = std[0].s.slots;
+  else if (std.length > 1){
+    const lv = std.reduce((t, {e}) => t + (FULL_CASTERS.includes(e.class) ? e.level : HALF_CASTERS.includes(e.class) ? Math.ceil(e.level / 2) : Math.floor(e.level / 3)), 0);
+    slots = padSlots(FULL_SLOTS[clamp(lv, 1, 20) - 1]);
+  }
+  const base = {cantrips:sum('cantrips'), prepared:sum('prepared'), per:per.map(x => ({class:x.e.class, cantrips:x.s.cantrips, prepared:x.s.prepared}))};
+  if (std.length) return {type:'std', slots, pact:pactInfo, ...base};
+  if (pact) return {type:'pact', slots:pact.s.slots, ...base};
+  return {type:'none', slots, ...base};
+}
 function slotsFor(c){
-  const pad = a => Array.from({length:9}, (_, i) => a[i] || 0);
+  if (multi(c).length) return multiSlots(c);
+  const pad = padSlots;
   const row = srdClass(c)?.tbl?.[c.level - 1];
   if (row?.sp) return {type:c.class === 'Warlock' ? 'pact' : 'std', slots:pad(Array.from({length:9}, (_, i) => row.sp['spell_slots_level_' + (i + 1)] || 0)), cantrips:row.sp.cantrips_known, prepared:row.sp.prepared_spells};
   if (isThird(c)) return {type:'std', slots:pad(THIRD[c.level] || [])};
   return {type:'none', slots:pad([])};
 }
 const isCaster = c => slotsFor(c).type !== 'none' || (c.spells?.known || []).length > 0;
-const spellAb = c => c.spellAbility || SPELL_AB[c.class] || 'int';
+const spellAb = c => c.spellAbility || SPELL_AB[(classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class] || SPELL_AB[c.class] || 'int';
 
 const RES_LABEL = {rage_count:'Rage', second_wind_uses:'Second Wind', channel_divinity_charges:'Channel Divinity', wild_shape_uses:'Wild Shape', focus_points:'Focus Points', sorcery_points:'Sorcery Points', lay_on_hands_pool:'Lay on Hands (HP)'};
 const SHORT_REST_RES = ['focus_points'];
 function resources(c){
+  if (multi(c).length){
+    const pool = [], stats = [];
+    classList(c).forEach(e => { const r = resources(asClass(c, e));
+      r.pool.forEach(x => { const had = pool.find(y => y.k === x.k); had ? had.max = Math.max(had.max, x.max) : pool.push(x); });
+      r.stats.forEach(x => stats.some(y => y.k === x.k) || stats.push(x)); });
+    return {pool, stats};
+  }
   const cs = srdClass(c)?.tbl?.[c.level - 1]?.cs || {};
   const pool = [], stats = [];
   for (const [k, v] of Object.entries(cs)){
@@ -1149,7 +1204,7 @@ function renderShelf(){
       <span class="lv">Lv ${c.level}</span>
       <div class="p">${portrait(c)}</div>
       <div class="n">${esc(c.name)}</div>${!isMine(c) ? `<span class="owner" title="${esc(c.ownerName || 'Party member')}'s hero (read-only)">${esc(c.ownerName || 'Party')}</span>` : c._blocked && !plusOK() ? '<span class="owner local" title="Free accounts keep one hero in the cloud">on this device</span>' : ''}
-      <div class="s">${esc(c.species)} ${esc(c.class)}${c.subclass ? ' · ' + esc(c.subclass) : ''}</div>
+      <div class="s">${esc(c.species)} ${multi(c).length ? esc(classLabel(c)) : esc(c.class) + (c.subclass ? ' · ' + esc(c.subclass) : '')}</div>
       <div class="hp" title="HP ${c.hp.cur}/${c.hp.max}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>
     </button>`).join('') + act('wizard', undefined, '＋ New hero', 'shelfAdd');
   barsFrom($('#shelf'), 'shelf:');
@@ -1167,7 +1222,7 @@ function pageHTML(id){
   const body = (id === 'library' || id === 'encounter' ? '' : roBanner(c)) + PAGES[id](c);
   return `<header class="pageHead">
       <div style="min-width:0"><h2>${id === 'library' ? '' : portrait(c, 'mini')} ${id === 'library' ? ch.h : esc(c.name) + ' · ' + ch.h}</h2>
-      <div class="sub">${id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(c.class)}${c.subclass ? ' (' + esc(c.subclass) + ')' : ''} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
+      <div class="sub">${id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
       <nav class="pageNav" aria-label="Turn page">
         <button type="button" class="btn small" data-act="prev" ${i <= 0 ? 'disabled' : ''} aria-label="Previous page">←</button>
         <button type="button" class="btn small" data-act="next" ${i >= CHAPTERS.length - 1 ? 'disabled' : ''} aria-label="Next page">→</button>
@@ -1397,11 +1452,25 @@ function gearSearch(){
     (list.length > 14 ? `<p class="muted">${list.length - 14} more: refine the search.</p>` : '') || '<p class="muted">No match. Use “Custom item” to create it.</p>';
 }
 
+function classCards(c, mc){
+  const cl = clsInfo(c), sub = subclassOf(c), srd = srdClass(c);
+  const feat = f => `<details class="fold"><summary>Lv ${f.l} · ${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`;
+  const now = (cl.f || []).filter(f => f.l <= c.level), later = (cl.f || []).filter(f => f.l > c.level);
+  const subNow = sub?.f ? sub.f.filter(f => f.l <= c.level) : [];
+  const tbl = srd ? `<details class="fold"><summary>${esc(c.class)} progression table</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Lv</th><th>PB</th><th>Features</th>${Object.keys(srd.tbl[0].cs || {}).map(k => `<th>${esc(title(k))}</th>`).join('')}${srd.tbl[0].sp ? '<th>Slots</th>' : ''}</tr></thead><tbody>${srd.tbl.map(r => `<tr class="${r.l === c.level ? 'now' : ''}"><td>${r.l}</td><td>+${r.pb}</td><td class="wrap">${esc(r.f.join(', '))}</td>${Object.keys(srd.tbl[0].cs || {}).map(k => `<td>${esc(r.cs?.[k] ?? '')}</td>`).join('')}${r.sp ? `<td>${[1,2,3,4,5,6,7,8,9].map(i => r.sp['spell_slots_level_' + i]).filter(Boolean).join('·') || '—'}</td>` : ''}</tr>`).join('')}</tbody></table></div></details>` : '';
+  return `${card(`${esc(c.class)} features <span class="muted">level ${c.level}${mc ? ' · multiclass' : ''}</span> ${srcTag(find(c.class, 'classes'))}`, `
+        ${now.map(feat).join('') || '<p class="muted">Pick a class on the Hero page.</p>'}
+        ${later.length ? `<details class="fold"><summary>Coming at higher levels (${later.length})</summary><div class="in">${later.map(feat).join('')}</div></details>` : ''}
+        ${tbl}`)}
+      ${card(`${mc ? esc(c.class) + ' subclass' : 'Subclass'}${c.subclass ? ': ' + esc(c.subclass) : ''}`, sub ? (sub.ext ? `<p>${sub.ext ? act('detailId', sub.ext.id, 'Read ' + esc(sub.n), 'chip') : ''}</p>` :
+        `<p class="muted">${esc(sub.src || '')}${sub.sum ? ' · ' + esc(sub.sum) : ''}</p>${subNow.map(feat).join('') || '<p class="muted">No subclass features at this level yet.</p>'}`) :
+        `<p class="muted">${c.subclass ? `“${esc(c.subclass)}” isn't in the library. The SRD has one subclass per class; import more from the Library, or note its features below.` : 'No subclass chosen yet (most classes pick one at level 3).'}</p>`)}`;
+}
 const PAGES = {
 hero(c){
   const p = profFor(c.level), sp = speciesInfo(c), bg = bgInfo(c), cl = clsInfo(c);
   const intro = [bg.x || quickFor('backgrounds', c.background)?.x, sp.x || quickFor('species', c.species)?.x, cl.x || quickFor('classes', c.class)?.x].filter(Boolean).join(' ');
-  return `<p class="lead">Behold <b>${esc(c.name)}</b>, a <b>level ${c.level} ${esc(c.species)} ${esc(c.class)}</b>${c.subclass ? ` of the <i>${esc(c.subclass)}</i>` : ''}. ${esc(intro)}</p>
+  return `<p class="lead">Behold <b>${esc(c.name)}</b>, a <b>level ${c.level} ${esc(c.species)} ${esc(multi(c).length ? classLabel(c) : c.class)}</b>${c.subclass && !multi(c).length ? ` of the <i>${esc(c.subclass)}</i>` : ''}. ${esc(intro)}</p>
   <div class="rule"></div>
   <div class="grid2">
     ${card('Identity', `
@@ -1415,12 +1484,15 @@ hero(c){
         <div><label class="f" for="f_bg">Background</label><select id="f_bg" data-bind="background">${names('backgrounds').map(s => opt(s, c.background)).join('')}</select></div>
         <div><label class="f" for="f_class">Class</label><select id="f_class" data-bind="class">${names('classes').map(s => opt(s, c.class)).join('')}</select></div>
         <div><label class="f" for="f_sub">Subclass</label><input type="text" id="f_sub" data-bind="subclass" list="subList" value="${esc(c.subclass || '')}" placeholder="e.g. Champion"><datalist id="subList">${names('subclasses').map(s => `<option value="${esc(s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?|^(.*) (Domain|Patron|Sorcery)$/, (m, a, b, c2) => c2 || ''))}">`).join('')}${(cl.subsQuick || []).map(s => `<option value="${esc(s)}">`).join('')}</datalist></div>
-        <div><label class="f" for="f_level">Level (1–20)</label><input type="number" id="f_level" data-bind="level" data-type="int" min="1" max="20" value="${c.level}"></div>
+        <div><label class="f" for="f_level">${multi(c).length ? 'Total level' : 'Level (1–20)'}</label><input type="number" id="f_level" data-bind="level" data-type="int" min="1" max="20" value="${c.level}"></div>
         <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" value="${c.xp || 0}"></div>
       </div>
+      <div class="mcBox">${multi(c).length ? `<h4>Multiclass <span class="muted">${esc(c.class)} ${classList(c)[0].level} is the first class</span></h4>
+        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').map(s => opt(s, m.class)).join('')}</select><input type="text" data-mc="${i}:subclass" list="subList" value="${esc(m.subclass || '')}" placeholder="Subclass" aria-label="Subclass"><input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
+        ${c.level < 20 ? `<div class="row">${act('mcAdd', undefined, '＋ Add a class (multiclass)', 'sb')}<span class="muted small">or take one from Level up, which checks the rules</span></div>` : ''}</div>
       <label class="row mt"><input type="checkbox" id="f_insp" data-bind="inspiration" ${c.inspiration ? 'checked' : ''}> <b>Heroic Inspiration</b> <span class="muted">reroll one D20; Humans regain it each Long Rest</span></label>
       <div class="rule"></div>
-      ${kv('Proficiency Bonus', fmt(p))}${kv('Hit Die', 'd' + hdSize(c))}
+      ${kv('Proficiency Bonus', fmt(p))}${multi(c).length ? kv('Hit Dice', hdPools(c).map(p => p.n + 'd' + p.d).join(' + ')) : kv('Hit Die', 'd' + hdSize(c))}
       ${kv('Spellcasting', isCaster(c) ? spellAb(c).toUpperCase() + ' · DC ' + (8 + p + mod(c.abilities[spellAb(c)])) : '—')}
       <div class="rule"></div><h4>Record</h4>${heroInfo(c)}`)}
     ${card('At a glance', `
@@ -1467,7 +1539,7 @@ abilities(c){
 },
 
 combat(c){
-  const left = Math.max(0, c.level - (c.hitDice.used || 0)), sp = speciesInfo(c);
+  const sp = speciesInfo(c);
   const res = resources(c);
   const weapons = (SRD.equipment || []).filter(e => e.dmg);
   return `<div class="grid3">
@@ -1476,7 +1548,7 @@ combat(c){
       <div class="row mt"><label class="sr" for="hpAmt">Amount</label><input type="number" id="hpAmt" value="5" min="0">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
       <div class="rule"></div>
       <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" value="${c.hp.max}"></div>
-      ${kv('Hit Dice', `<span class="num">${left} / ${c.level} d${hdSize(c)}</span>`)}
+      ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
       <div class="row mt">${act('spendHD', undefined, 'Spend Hit Die')}${act('shortRest', undefined, 'Short Rest')}${act('longRest', undefined, 'Long Rest')}</div>
       <p class="muted">Short Rest: spend Hit Dice, each heals the roll + Con. Long Rest (2024): regain all HP and all Hit Dice, reduce Exhaustion by 1.</p>`)}
     ${card('Armor & motion', `
@@ -1496,7 +1568,7 @@ combat(c){
       ${kv('Successes', [1,2,3].map(n => act('setDeath', 's:' + n, n, 'sb' + ((c.death.s || 0) >= n ? ' on' : ''))).join(' '))}
       ${kv('Failures', [1,2,3].map(n => act('setDeath', 'f:' + n, n, 'sb' + ((c.death.f || 0) >= n ? ' on' : ''))).join(' '))}
       <div class="row mt">${act('rollDeath', undefined, 'Roll death save')}${act('setDeath', 'reset', 'Clear')}</div>
-      ${res.pool.length || res.stats.length ? `<div class="rule"></div><h4>${esc(c.class)} resources</h4>
+      ${res.pool.length || res.stats.length ? `<div class="rule"></div><h4>${multi(c).length ? 'Class' : esc(c.class)} resources</h4>
         ${res.pool.map(r => `<div class="kv"><span>${esc(r.n)}</span><span class="pips">${Array.from({length:r.max}, (_, k) => `<button type="button" class="pip ${k < (c.res[r.k] || 0) ? 'used' : ''}" data-act="usePip" data-arg="${r.k}:${k}" aria-label="${esc(r.n)} ${k + 1}"></button>`).join('')}</span></div>`).join('')}
         ${res.stats.map(s => kv(esc(s.n), esc(s.v))).join('')}` : ''}`)}
   </div>
@@ -1508,20 +1580,10 @@ combat(c){
 },
 
 traits(c){
-  const cl = clsInfo(c), sub = subclassOf(c), srd = srdClass(c);
-  const feat = f => `<details class="fold"><summary>Lv ${f.l} · ${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`;
-  const now = (cl.f || []).filter(f => f.l <= c.level), later = (cl.f || []).filter(f => f.l > c.level);
-  const subNow = sub?.f ? sub.f.filter(f => f.l <= c.level) : [];
-  const tbl = srd ? `<details class="fold"><summary>${esc(c.class)} progression table</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Lv</th><th>PB</th><th>Features</th>${Object.keys(srd.tbl[0].cs || {}).map(k => `<th>${esc(title(k))}</th>`).join('')}${srd.tbl[0].sp ? '<th>Slots</th>' : ''}</tr></thead><tbody>${srd.tbl.map(r => `<tr class="${r.l === c.level ? 'now' : ''}"><td>${r.l}</td><td>+${r.pb}</td><td class="wrap">${esc(r.f.join(', '))}</td>${Object.keys(srd.tbl[0].cs || {}).map(k => `<td>${esc(r.cs?.[k] ?? '')}</td>`).join('')}${r.sp ? `<td>${[1,2,3,4,5,6,7,8,9].map(i => r.sp['spell_slots_level_' + i]).filter(Boolean).join('·') || '—'}</td>` : ''}</tr>`).join('')}</tbody></table></div></details>` : '';
+  const cl = clsInfo(c);
   return `<div class="grid2">
     <div class="stack">
-      ${card(`${esc(c.class)} features <span class="muted">level ${c.level}</span> ${srcTag(find(c.class, 'classes'))}`, `
-        ${now.map(feat).join('') || '<p class="muted">Pick a class on the Hero page.</p>'}
-        ${later.length ? `<details class="fold"><summary>Coming at higher levels (${later.length})</summary><div class="in">${later.map(feat).join('')}</div></details>` : ''}
-        ${tbl}`)}
-      ${card(`Subclass${c.subclass ? ': ' + esc(c.subclass) : ''}`, sub ? (sub.ext ? `<p>${sub.ext ? act('detailId', sub.ext.id, 'Read ' + esc(sub.n), 'chip') : ''}</p>` :
-        `<p class="muted">${esc(sub.src || '')}${sub.sum ? ' · ' + esc(sub.sum) : ''}</p>${subNow.map(feat).join('') || '<p class="muted">No subclass features at this level yet.</p>'}`) :
-        `<p class="muted">${c.subclass ? `“${esc(c.subclass)}” isn't in the library. The SRD has one subclass per class; import more from the Library, or note its features below.` : 'No subclass chosen yet (most classes pick one at level 3).'}</p>`)}
+      ${classList(c).map(e => classCards(asClass(c, e), !e.main)).join('')}
       ${card('Custom features', `${c.classFeats.map((f, i) => `<div class="kv"><span>${esc(f)}</span>${act('delClassFeat', i, '✕', 'sb x', 'aria-label="Remove"')}</div>`).join('') || '<p class="muted">Anything the book doesn\'t cover: boons, blessings, homebrew.</p>'}
         <div class="row mt"><input type="text" id="cf_n" placeholder="Add a feature"> ${act('addClassFeat', undefined, '＋ Add')}</div>`)}
     </div>
@@ -1532,7 +1594,9 @@ traits(c){
         <div class="row mt"><input type="text" id="feat_custom" placeholder="Or a custom feat">${act('addFeatCustom', undefined, '＋ Custom')}</div>`)}
       ${card('Proficiencies', `
         ${kv('Saving throws', esc((cl.saves || []).join(', ')))}
-        ${kv('Training', esc((cl.prof || []).join(', ')))}
+        ${kv(multi(c).length ? esc(c.class) + ' training' : 'Training', esc((cl.prof || []).join(', ')))}
+        ${multi(c).map(m => kv(esc(m.class) + ' (multiclass)', esc(MC_PROF[m.class] || '—'))).join('')}
+        ${multi(c).length ? '<p class="muted">Saving throw proficiencies come only from your first class.</p>' : ''}
         ${(cl.choice || []).map(x => `<p class="muted">${esc(x)}</p>`).join('')}
         <h4>Weapon Mastery</h4>
         <div>${(SRD.mastery || []).map(m => `<button type="button" class="chip light" data-act="detail" data-arg="${esc(m.n)}">${esc(m.n)}</button>`).join('')}</div>`)}
@@ -1542,10 +1606,14 @@ traits(c){
 
 spells(c){
   const info = slotsFor(c), ab = spellAb(c), m = mod(c.abilities[ab]), p = profFor(c.level);
-  if (!isCaster(c)) return card('Spellbook', `<p><b>${esc(c.name)}</b> is a ${esc(c.class)} without spellcasting at this level.${c.class === 'Fighter' || c.class === 'Rogue' ? ' Eldritch Knights and Arcane Tricksters gain slots at level 3: set the subclass on the Hero page.' : ''} You can still keep spells from feats (Magic Initiate) here.</p>
+  if (!isCaster(c)) return card('Spellbook', `<p><b>${esc(c.name)}</b> is a ${esc(classLabel(c))} without spellcasting at this level.${hasClass(c, 'Fighter') || hasClass(c, 'Rogue') ? ' Eldritch Knights and Arcane Tricksters gain slots at level 3: set the subclass on the Hero page.' : ''} You can still keep spells from feats (Magic Initiate) here.</p>
     <div class="searchBar row mt"><input type="search" id="spell_q" placeholder="Search spells to add…" style="flex:1"></div><div id="spellResults"></div>`);
   const slots = info.slots.map((tot, i) => { if (!tot) return ''; const used = c.spells.slots[i + 1]?.used || 0;
-    return `<div class="kv"><span>Level ${i + 1}</span><span class="pips">${Array.from({length:tot}, (_, k) => `<button type="button" class="pip ${k < used ? 'used' : ''}" data-act="slot" data-arg="${i + 1}:${k}" aria-label="Level ${i + 1} slot ${k + 1}"></button>`).join('')}</span></div>`; }).join('') || '<p class="muted">Cantrips only at this level.</p>';
+    return `<div class="kv"><span>Level ${i + 1}</span><span class="pips">${Array.from({length:tot}, (_, k) => `<button type="button" class="pip ${k < used ? 'used' : ''}" data-act="slot" data-arg="${i + 1}:${k}" aria-label="Level ${i + 1} slot ${k + 1}"></button>`).join('')}</span></div>`; }).join('') || (info.pact ? '' : '<p class="muted">Cantrips only at this level.</p>');
+  const pactUsed = c.spells.pact?.used || 0;
+  const pact = info.pact ? `<h4>Pact Magic <span class="muted">Warlock slots, all return on a Short Rest</span></h4><div class="kv"><span>Level ${info.pact.lv}</span><span class="pips">${Array.from({length:info.pact.n}, (_, k) => `<button type="button" class="pip ${k < pactUsed ? 'used' : ''}" data-act="pactSlot" data-arg="${k}" aria-label="Pact slot ${k + 1}"></button>`).join('')}</span></div>` : '';
+  const perClass = (info.per || []).length > 1 ? info.per.map(x => { const a = SPELL_AB[x.class] || 'int', am = mod(c.abilities[a]);
+    return kv(esc(x.class), `${a.toUpperCase()} · DC ${8 + am + p} · ${fmt(am + p)} to hit${x.prepared !== undefined ? ` · ${x.prepared} prepared` : ''}`); }).join('') : '';
   const known = c.spells.known.map(n => ({n, e:find(n, 'spells')}));
   const groups = {};
   known.forEach(k => { const lv = k.e?.o?.lv ?? k.e?.o?.level ?? 99; (groups[lv] = groups[lv] || []).push(k); });
@@ -1555,20 +1623,21 @@ spells(c){
       <div class="in">${e ? entryBody(e) : '<p class="muted">Not in the library: add a note in the Chronicle or import a source.</p>'}
       <div class="row">${act('cast', n, 'Cast', 'btn small')}${act('prep', n, prep ? '★ Prepared' : 'Prepare', 'sb' + (prep ? ' on' : ''), `aria-pressed="${prep}"`)}${act('unlearn', n, 'Remove', 'sb x')}</div></div></details>`; }).join('')).join('');
   return `<div class="grid2">
-    ${card(`Spellcasting · ${esc(c.class)}`, `
+    ${card(`Spellcasting · ${esc(multi(c).length ? (info.per || []).map(x => x.class).join(' / ') : c.class)}`, `
       ${c.conc ? `<div class="row" style="margin-bottom:6px"><span class="muted">Concentrating:</span>${concChip(c)}</div>` : ''}
       ${kv('Spell attack', `${fmt(m + p)} ${act('rollSpellAtk', undefined, 'Roll')}`)}
       ${kv('Save DC', `<span class="big num">${8 + m + p}</span>`)}
       <div class="kv"><label for="f_spellab">Casting ability</label><select id="f_spellab" data-bind="spellAbility">${['int','wis','cha'].map(a => opt(a, ab, a.toUpperCase())).join('')}</select></div>
+      ${perClass ? `<div class="rule"></div>${perClass}` : ''}
       ${info.cantrips !== undefined ? kv('Cantrips known', info.cantrips) : ''}
       ${info.prepared !== undefined ? kv('Prepared spells', `${c.spells.prep.length} / ${info.prepared}`) : ''}
       <div class="rule"></div>
       <h4>Spell slots ${info.type === 'pact' ? '<span class="muted">Pact Magic: all return on a Short Rest</span>' : '<span class="muted">tap to spend</span>'}</h4>
-      ${slots}
+      ${slots}${pact}
       <div class="row mt">${act('resetSlots', undefined, 'Restore all slots')}</div>`)}
     ${card(`Known & prepared <span class="muted">${known.length} spells</span>`, `
       <div class="row"><label class="sr" for="spell_q">Search spells</label><input type="search" id="spell_q" placeholder="Search spells to add… (fire, heal, teleport)" style="flex:1">
-      <label class="row muted"><input type="checkbox" id="spell_mine" ${G.spellMine !== false ? 'checked' : ''}> ${esc(c.class)} list</label></div>
+      <label class="row muted"><input type="checkbox" id="spell_mine" ${G.spellMine !== false ? 'checked' : ''}> ${esc(multi(c).length ? (info.per || []).map(x => x.class).join(' / ') : c.class)} list</label></div>
       <div id="spellResults"></div>
       ${list || '<p class="empty">No spells yet. Search above and tap ＋ to inscribe one.</p>'}`)}
   </div>`;
@@ -1881,7 +1950,7 @@ function spellSearch(q){
   q = norm(q);
   if (!q){ box.innerHTML = ''; return; }
   const c = active(), mine = $('#spell_mine')?.checked;
-  const list = ALL.filter(e => e.cat === 'spells' && (e.lc.includes(q) || norm(e.o.sc || '').includes(q)) && (!mine || !e.o.cls || e.o.cls.includes(c.class))).slice(0, 10);
+  const list = ALL.filter(e => e.cat === 'spells' && (e.lc.includes(q) || norm(e.o.sc || '').includes(q)) && (!mine || !e.o.cls || classList(c).some(x => e.o.cls.includes(x.class)))).slice(0, 10);
   box.innerHTML = list.map(e => `<div class="entry"><div class="row"><button type="button" class="chip" data-act="detailId" data-arg="${esc(e.id)}">${esc(e.n)}</button><span class="meta">${esc(e.k)}</span> ${e.src !== 'SRD' ? srcTag(e) : ''}<span class="spacer"></span>${c.spells.known.includes(e.n) ? '<span class="muted">known</span>' : act('learn', e.n, '＋ Learn')}</div></div>`).join('') || '<p class="muted">No match.</p>';
 }
 
@@ -1946,7 +2015,8 @@ function castSpell(c, name){
   const conc = !!(o.conc || /concentration/i.test(o.d || '') || (o.duration || []).some?.(d => d.concentration));
   let used = 0;
   if (lv > 0){
-    const info = slotsFor(c);
+    const info = slotsFor(c), pk = c.spells.pact = c.spells.pact || {used:0};
+    if (info.pact && lv <= info.pact.lv && pk.used < info.pact.n){ pk.used++; used = info.pact.lv; }
     for (let L = lv; L <= 9 && !used; L++){
       const tot = info.slots[L - 1] || 0, s = c.spells.slots[L] = c.spells.slots[L] || {used:0};
       if (s.used < tot){ s.used++; used = L; }
@@ -2017,28 +2087,46 @@ PAGES.encounter = function(c){
 
 /* ================================================================== guided level up */
 const ASI_LEVELS = {Fighter:[4,6,8,12,14,16,19], Rogue:[4,8,10,12,16,19]};
+function luTarget(c){
+  const list = classList(c), pick = String(G.lu?.cls ?? '0');
+  if (pick.startsWith('new:')) return {class:pick.slice(4), subclass:'', level:0, isNew:true};
+  return list[+pick] || list[0];
+}
+function afterLevel(c, t){
+  const x = {...c, level:c.level + 1, multi:multi(c).map(m => ({...m}))};
+  if (t.isNew) x.multi.push({class:t.class, subclass:'', level:1}); else if (!t.main) x.multi[t.i].level++;
+  return x;
+}
 function levelPlan(c){
-  const N = c.level + 1, cl = clsInfo(c), srd = srdClass(c), sub = subclassOf(c);
+  const T = luTarget(c), v = asClass(c, T), N = T.level + 1, cl = clsInfo(v), srd = srdClass(v), sub = subclassOf(v);
   const feats = (cl.f || []).filter(f => f.l === N);
   const subFeats = (sub?.f || []).filter(f => f.l === N);
-  const asi = feats.some(f => /ability score improvement/i.test(f.n)) || (!srd && (ASI_LEVELS[c.class] || [4,8,12,16,19]).includes(N));
+  const asi = feats.some(f => /ability score improvement/i.test(f.n)) || (!srd && (ASI_LEVELS[T.class] || [4,8,12,16,19]).includes(N));
   const boon = feats.some(f => /epic boon/i.test(f.n)) || (!srd && N === 19);
-  const needSub = !c.subclass && (feats.some(f => /subclass/i.test(f.n)) || (!srd && N === 3));
-  const old = slotsFor(c), nx = slotsFor({...c, level:N});
+  const needSub = !T.subclass && (feats.some(f => /subclass/i.test(f.n)) || (!srd && N === 3));
+  const old = slotsFor(c), nx = slotsFor(afterLevel(c, T));
   const ro = srd?.tbl?.[N - 2]?.cs || {}, rn = srd?.tbl?.[N - 1]?.cs || {};
   const resDiff = Object.keys(rn).filter(k => rn[k] !== ro[k]).map(k => `${title(k.replace(/_count$|_uses$/, ''))}: ${ro[k] ?? '—'} → ${rn[k]}`);
-  return {N, feats, subFeats, asi, boon, needSub, old, nx, resDiff, pbOld:profFor(c.level), pbNew:profFor(N)};
+  return {T, CN:N, N:c.level + 1, feats, subFeats, asi, boon, needSub, old, nx, resDiff, pbOld:profFor(c.level), pbNew:profFor(c.level + 1)};
 }
-function openLevelUp(){
+function openLevelUp(keep){
   const c = active(); if (c.level >= 20){ toast(`${c.name} is already level 20.`); return; }
-  const P = levelPlan(c), hd = hdSize(c), con = mod(c.abilities.con), avg = Math.floor(hd / 2) + 1;
+  if (!keep || !G.lu) G.lu = {roll:null, cls:'0'}; else G.lu.roll = null;
+  const P = levelPlan(c), T = P.T, hd = hdSize(asClass(c, T)), con = mod(c.abilities.con), avg = Math.floor(hd / 2) + 1;
   const extra = (c.species === 'Dwarf' ? 1 : 0) + (hasFeat(c, 'Tough') ? 2 : 0);
-  G.lu = {roll:null};
   const slotRows = P.nx.slots.map((n, i) => n !== P.old.slots[i] ? `<tr><td>Level ${i + 1}</td><td>${P.old.slots[i] || 0}</td><td><b>${n}</b></td></tr>` : '').join('');
   const abSel = id => `<select id="${id}">${ABIL.map(a => `<option value="${a.id}">${a.n} (${c.abilities[a.id]})</option>`).join('')}</select>`;
   const featList = ALL.filter(e => { if (e.cat !== 'feats') return false; const k = e.k || e.o.ty || ''; return !/fighting style/i.test(k) && !/^ability score improvement$/i.test(e.n) && (P.boon || !/epic boon/i.test(k)); });
-  modal(`<div class="head"><h2>${esc(c.name)} reaches level ${P.N}</h2><span class="spacer"></span>${closeBtn()}</div>
-    <div class="meta">${esc(c.class)}${c.subclass ? ' · ' + esc(c.subclass) : ''} · Proficiency Bonus ${fmt(P.pbOld)}${P.pbNew !== P.pbOld ? ` → <b>${fmt(P.pbNew)}</b>` : ''}</div>
+  const list = classList(c), blockers = list.filter(e => !mcMeets(c, e.class)).map(e => e.class);
+  const others = names('classes').filter(n => !list.some(e => e.class === n));
+  const clsSel = `<label class="sr" for="lu_cls">Class to advance</label><select id="lu_cls">${list.map((e, i) => `<option value="${i}" ${String(G.lu.cls) === String(i) ? 'selected' : ''}>${esc(e.class)} ${e.level} → ${e.level + 1}</option>`).join('')}
+    ${others.length ? `<optgroup label="Multiclass into a new class">${others.map(n => { const ok = !blockers.length && mcMeets(c, n);
+      return `<option value="new:${esc(n)}" ${ok ? '' : 'disabled'} ${G.lu.cls === 'new:' + n ? 'selected' : ''}>${esc(n)} 1${ok ? '' : ' · needs 13 ' + esc(mcNeed(n).text)}</option>`; }).join('')}</optgroup>` : ''}</select>`;
+  const html = `<div class="head"><h2>${esc(c.name)} reaches level ${P.N}</h2><span class="spacer"></span>${closeBtn()}</div>
+    <div class="row">${clsSel}</div>
+    ${blockers.length ? `<p class="muted small">Multiclassing needs 13 in the primary ability of every class you have: ${blockers.map(b => `${esc(b)} (${esc(mcNeed(b).text)})`).join(', ')}.</p>` : ''}
+    ${T.isNew ? `<p class="muted small"><b>New class.</b> You gain its level 1 features${MC_PROF[T.class] && MC_PROF[T.class] !== 'none' ? ` and these proficiencies: ${esc(MC_PROF[T.class])}` : ', but no extra proficiencies'}. Not its saving throws. Spell slots now follow the Multiclass Spellcaster table.</p>` : ''}
+    <div class="meta">${esc(T.class)} ${P.CN}${T.subclass ? ' · ' + esc(T.subclass) : ''} · Proficiency Bonus ${fmt(P.pbOld)}${P.pbNew !== P.pbOld ? ` → <b>${fmt(P.pbNew)}</b>` : ''}</div>
     <div class="rule"></div>
     <h4>1 · Hit Points</h4>
     <div class="row"><label class="row"><input type="radio" name="lu_hp" value="avg" checked> Take the average: ${avg} ${fmt(con)} Con${extra ? ` +${extra}` : ''} = <b>${Math.max(1, avg + con) + extra}</b></label></div>
@@ -2046,7 +2134,7 @@ function openLevelUp(){
     ${extra ? `<p class="muted">${c.species === 'Dwarf' ? 'Dwarven Toughness +1. ' : ''}${hasFeat(c, 'Tough') ? 'Tough +2.' : ''}</p>` : ''}
     <h4>2 · New features</h4>
     ${[...P.feats, ...P.subFeats].map(f => `<details class="fold"><summary>${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`).join('') || '<p class="muted">No new class features listed at this level in the library.</p>'}
-    ${P.needSub ? `<h4>3 · Choose your subclass</h4><input type="text" id="lu_sub" list="luSubs" placeholder="Subclass name" style="width:100%"><datalist id="luSubs">${ALL.filter(e => e.cat === 'subclasses' && (!e.o.cls || e.o.cls === c.class || e.o.className === c.class)).map(e => `<option value="${esc(e.n)}">`).join('')}${(clsInfo(c).subsQuick || []).map(s => `<option value="${esc(s)}">`).join('')}</datalist>` : ''}
+    ${P.needSub ? `<h4>3 · Choose your subclass</h4><input type="text" id="lu_sub" list="luSubs" placeholder="Subclass name" style="width:100%"><datalist id="luSubs">${ALL.filter(e => e.cat === 'subclasses' && (!e.o.cls || e.o.cls === T.class || e.o.className === T.class)).map(e => `<option value="${esc(e.n)}">`).join('')}${(clsInfo(asClass(c, T)).subsQuick || []).map(s => `<option value="${esc(s)}">`).join('')}</datalist>` : ''}
     ${P.asi || P.boon ? `<h4>${P.needSub ? 4 : 3} · ${P.boon ? 'Epic Boon or Ability Score Improvement' : 'Ability Score Improvement or feat'}</h4>
       <div class="stack" style="gap:6px">
         <label class="row"><input type="radio" name="lu_asi" value="two" checked> +2 to ${abSel('lu_a1')}</label>
@@ -2058,16 +2146,19 @@ function openLevelUp(){
       ${P.nx.prepared !== P.old.prepared && P.nx.prepared !== undefined ? `<tr><td>Prepared spells</td><td>${P.old.prepared ?? 0}</td><td><b>${P.nx.prepared}</b></td></tr>` : ''}</tbody></table></div>
       <p class="muted">After levelling, pick the new spells on the Spellbook page.</p>` : ''}
     ${P.resDiff.length ? `<h4>Class resources</h4><p>${P.resDiff.map(esc).join(' · ')}</p>` : ''}
-    <div class="row mt">${act('luApply', undefined, `Become level ${P.N}`, 'btn')}${act('close', undefined, 'Not yet', 'btn ghost')}</div>`, {label:'Level up'});
+    <div class="row mt">${act('luApply', undefined, `Become level ${P.N}`, 'btn')}${act('close', undefined, 'Not yet', 'btn ghost')}</div>`;
+  const open = keep && $('#modalBk .modal');
+  if (open) open.innerHTML = html; else modal(html, {label:'Level up'});
 }
 function applyLevelUp(){
-  const c = active(), P = levelPlan(c), hd = hdSize(c), con = mod(c.abilities.con);
+  const c = active(), P = levelPlan(c), T = P.T, hd = hdSize(asClass(c, T)), con = mod(c.abilities.con);
   const extra = (c.species === 'Dwarf' ? 1 : 0) + (hasFeat(c, 'Tough') ? 2 : 0);
   const mode = $('input[name="lu_hp"]:checked')?.value;
   if (mode === 'roll' && G.lu.roll == null){ toast('Press Roll first, or take the average.'); return; }
   const gain = Math.max(1, (mode === 'roll' ? G.lu.roll : Math.floor(hd / 2) + 1) + con) + extra;
   const notes = [`+${gain} HP`];
-  if (P.needSub){ const s = $('#lu_sub').value.trim(); if (s){ c.subclass = s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, ''); notes.push(c.subclass); } }
+  if (P.needSub){ const s = $('#lu_sub').value.trim(); if (s){ const sc = s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '');
+    if (T.isNew) T.subclass = sc; else if (T.main) c.subclass = sc; else c.multi[T.i].subclass = sc; notes.push(sc); } }
   if (P.asi || P.boon){
     const m = $('input[name="lu_asi"]:checked')?.value, cap = P.boon ? 30 : 20;
     const up = (ab, n) => { c.abilities[ab] = Math.min(cap, (c.abilities[ab] || 10) + n); };
@@ -2075,6 +2166,8 @@ function applyLevelUp(){
     else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } up(a, 1); up(b, 1); notes.push(`${a.toUpperCase()} +1, ${b.toUpperCase()} +1`); }
     else if (m === 'feat'){ const f = $('#lu_feat').value; c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
   }
+  if (T.isNew){ c.multi = multi(c); c.multi.push({class:T.class, subclass:T.subclass || '', level:1}); notes.unshift(`${T.class} 1`); }
+  else if (!T.main) c.multi[T.i].level++;
   c.level = P.N; c.hp.max += gain; c.hp.cur += gain;
   if ((c.xp || 0) < XP_TABLE[c.level - 1]) c.xp = XP_TABLE[c.level - 1];
   save(); closeModal(); render();
@@ -2092,19 +2185,20 @@ function sheetHTML(c){
       <div class="sSk"><span class="dotP ${c.saves?.[a.id] ? 'on' : ''}"></span><span class="num">${fmt(saveBonus(c, a.id))}</span> Saving Throw</div>
       ${sk.map(s => { const lv = c.skills?.[s.id] || 0; return `<div class="sSk"><span class="dotP ${lv ? 'on' : ''} ${lv === 2 ? 'ex' : ''}"></span><span class="num">${fmt(skillBonus(c, s))}</span> ${esc(s.n)}</div>`; }).join('')}</div>`;
   }).join('');
-  const feats = [...(cl.f || []).filter(f => f.l <= c.level).map(f => `<b>${esc(f.n)}</b> <i>(${f.l})</i>`), ...(subclassOf(c)?.f || []).filter(f => f.l <= c.level).map(f => `<b>${esc(f.n)}</b> <i>(${esc(c.subclass)} ${f.l})</i>`), ...c.classFeats.map(esc)];
+  const feats = [...classList(c).flatMap(e => { const v = asClass(c, e), tag = multi(c).length ? e.class + ' ' : '';
+    return [...(clsInfo(v).f || []).filter(f => f.l <= v.level).map(f => `<b>${esc(f.n)}</b> <i>(${esc(tag)}${f.l})</i>`), ...(subclassOf(v)?.f || []).filter(f => f.l <= v.level).map(f => `<b>${esc(f.n)}</b> <i>(${esc(v.subclass)} ${f.l})</i>`)]; }), ...c.classFeats.map(esc)];
   const spells = c.spells.known.map(n => { const o = find(n, 'spells')?.o || {}; return {n, lv:+(o.lv ?? o.level ?? 0), t:String(o.t || '').split(',')[0], r:o.r || '', cr:(o.conc ? 'C' : '') + (o.rit ? 'R' : ''), prep:c.spells.prep.includes(n)}; }).sort((a, b) => a.lv - b.lv || a.n.localeCompare(b.n));
   const attuned = c.inventory.filter(i => i.attuned);
   return `<section class="sPage">
     <header class="sHead"><div class="sName"><div class="sVal">${esc(c.name)}</div><div class="sLab">Character Name${c.player ? ' · Player: ' + esc(c.player) : ''}</div></div>
-      ${box('Background', esc(c.background))}${box('Class', esc(c.class))}${box('Species', esc(c.species))}${box('Subclass', esc(c.subclass || '—'))}${box('Level', c.level, 'sm')}${box('XP', (c.xp || 0).toLocaleString('en'), 'sm')}</header>
-    <div class="sRow">${box('Armor Class', getAC(c), 'shield')}${box('Hit Points', `${c.hp.cur} / ${c.hp.max}${c.hp.temp ? ' (+' + c.hp.temp + ')' : ''}`, 'wide')}${box('Hit Dice', `${c.level - (c.hitDice.used || 0)} / ${c.level} d${hdSize(c)}`)}${box('Death Saves', `✓ ${'○'.repeat(3)}  ✗ ${'○'.repeat(3)}`)}${box('Prof. Bonus', fmt(p), 'sm')}${box('Initiative', fmt(initBonus(c)), 'sm')}${box('Speed', esc(c.speedOverride || (sp.speed ? sp.speed + ' ft.' : '30 ft.')), 'sm')}${box('Size', esc(sp.size || 'Medium'), 'sm sz')}${box('Passive Perc.', passive(c, 'perception'), 'sm')}</div>
+      ${box('Background', esc(c.background))}${box('Class', esc(classLabel(c)))}${box('Species', esc(c.species))}${box('Subclass', esc(classList(c).map(e => e.subclass).filter(Boolean).join(' / ') || '—'))}${box('Level', c.level, 'sm')}${box('XP', (c.xp || 0).toLocaleString('en'), 'sm')}</header>
+    <div class="sRow">${box('Armor Class', getAC(c), 'shield')}${box('Hit Points', `${c.hp.cur} / ${c.hp.max}${c.hp.temp ? ' (+' + c.hp.temp + ')' : ''}`, 'wide')}${box('Hit Dice', hdText(c))}${box('Death Saves', `✓ ${'○'.repeat(3)}  ✗ ${'○'.repeat(3)}`)}${box('Prof. Bonus', fmt(p), 'sm')}${box('Initiative', fmt(initBonus(c)), 'sm')}${box('Speed', esc(c.speedOverride || (sp.speed ? sp.speed + ' ft.' : '30 ft.')), 'sm')}${box('Size', esc(sp.size || 'Medium'), 'sm sz')}${box('Passive Perc.', passive(c, 'perception'), 'sm')}</div>
     <div class="sCols"><div class="sLeft">${abil}<div class="sAb">${box('Heroic Inspiration', c.inspiration ? '◆' : '◇', 'flat')}</div></div>
       <div class="sRight">
         <div class="sPanel"><h3>Weapons & Damage Cantrips</h3><table><thead><tr><th>Name</th><th>Atk / DC</th><th>Damage & Type</th><th>Notes</th></tr></thead><tbody>${c.attacks.map(a => `<tr><td>${esc(a.n)}</td><td>${fmt(+a.bonus || 0)}</td><td>${esc(a.dmg)}</td><td>${esc(a.note || '')}</td></tr>`).join('')}${'<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>'.repeat(Math.max(0, 4 - c.attacks.length))}</tbody></table></div>
         <div class="sPanel"><h3>Class Features</h3><p>${feats.join(' · ') || '&nbsp;'}</p></div>
         <div class="sPanel sHalf"><div><h3>Species Traits</h3><p>${(sp.tr || []).map(t => `<b>${esc(t.n)}</b>`).join(' · ') || '&nbsp;'}</p></div><div><h3>Feats</h3><p>${c.feats.map(f => `<b>${esc(f.n)}</b>`).join(' · ') || '&nbsp;'}</p></div></div>
-        <div class="sPanel"><h3>Equipment Training & Proficiencies</h3><p>${esc((cl.prof || []).join(' · '))}</p></div>
+        <div class="sPanel"><h3>Equipment Training & Proficiencies</h3><p>${esc([...(cl.prof || []), ...multi(c).filter(m => MC_PROF[m.class] && MC_PROF[m.class] !== 'none').map(m => `${m.class}: ${MC_PROF[m.class]}`)].join(' · '))}</p></div>
       </div></div>
     <footer class="sFoot">Grimoire of Heroes · 2024 rules · ${esc(c.name)} · page 1</footer>
   </section>
@@ -2135,7 +2229,7 @@ function applyTheme(){ document.documentElement.dataset.book = G.theme === 'nigh
 /* ================================================================== cover */
 function fillCover(){
   const c = active(), box = $('#coverHero'); if (!box || !c) return;
-  box.innerHTML = `<div class="coverFrame">${portrait(c, 'big')}</div><p class="coverWho"><b>${esc(c.name)}</b><br><span>Level ${c.level} ${esc(c.species)} ${esc(c.class)}</span></p>`;
+  box.innerHTML = `<div class="coverFrame">${portrait(c, 'big')}</div><p class="coverWho"><b>${esc(c.name)}</b><br><span>Level ${c.level} ${esc(c.species)} ${esc(classLabel(c))}</span></p>`;
   const chk = $('#coverStart'); if (chk) chk.checked = G.coverOnStart !== false;
 }
 
@@ -2146,7 +2240,7 @@ const ACT_EXTRA = {
   cast(n){ castSpell(active(), n); },
   concSave(){ const c = active(); const d = num('concDmg'); if (!c.conc){ toast('Not concentrating.'); return; } concCheck(c, Math.max(1, d)); save(); renderPage(); },
   levelUp(){ openLevelUp(); },
-  luRoll(){ const r = rollExpr('1d' + hdSize(active())); G.lu.roll = r.total; $('#luRolled').textContent = `rolled ${r.total}`; const rb = $('input[name="lu_hp"][value="roll"]'); if (rb) rb.checked = true; },
+  luRoll(){ const c = active(), r = rollExpr('1d' + hdSize(asClass(c, luTarget(c)))); G.lu.roll = r.total; $('#luRolled').textContent = `rolled ${r.total}`; const rb = $('input[name="lu_hp"][value="roll"]'); if (rb) rb.checked = true; },
   luApply(){ applyLevelUp(); },
   print(){ if (!plusOK()) return plusModal('pdf'); printSheet(); },
   theme(){ if (G.theme !== 'night' && !plusOK()) return plusModal('themes'); G.theme = G.theme === 'night' ? 'day' : 'night'; save(); applyTheme(); },
@@ -2216,14 +2310,21 @@ const ACT = {
     else { c.death.f = Math.min(3, (c.death.f || 0) + 1); logRoll('Death save', `[${r}]`, `failure ${c.death.f}/3${c.death.f >= 3 ? ' · the hero has fallen' : ''}`, 'fumble'); }
     save(); renderPage(); },
   usePip(arg){ const [k, i] = arg.split(':'); mut(c => { const used = c.res[k] || 0; c.res[k] = +i < used ? +i : +i + 1; }, false); },
-  spendHD(){ const c = active(); if (c.level - (c.hitDice.used || 0) <= 0){ toast('No Hit Dice left. They return on a Long Rest.'); return; }
-    const r = rollExpr('1d' + hdSize(c)), heal = Math.max(1, r.total + mod(c.abilities.con));
+  spendHD(){ const c = active(), p = hdPools(c).find(x => x.n - x.used > 0); if (!p){ toast('No Hit Dice left. They return on a Long Rest.'); return; }
+    const r = rollExpr('1d' + p.d), heal = Math.max(1, r.total + mod(c.abilities.con));
+    if (multi(c).length){ c.hitDice.by = c.hitDice.by || {}; c.hitDice.by[p.d] = (c.hitDice.by[p.d] || 0) + 1; }
     c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(c.hp.max, c.hp.cur + heal); save(); render();
     logRoll('Hit Die', `${r.parts} ${fmt(mod(c.abilities.con))} Con`, `+${heal} HP`); },
-  shortRest(){ mut(c => { if (c.class === 'Warlock') c.spells.slots = {}; SHORT_REST_RES.forEach(k => delete c.res[k]); }); toast('Short Rest: spend Hit Dice to heal.' + (active().class === 'Warlock' ? ' Pact slots restored.' : '')); },
-  longRest(){ mut(c => { c.hp.cur = c.hp.max; c.hp.temp = 0; c.hitDice.used = 0; c.spells.slots = {}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
+  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
+  longRest(){ mut(c => { c.hp.cur = c.hp.max; c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
   slot(arg){ const [lv, k] = arg.split(':').map(Number); mut(c => { const s = c.spells.slots[lv] = c.spells.slots[lv] || {used:0}; s.used = k < s.used ? k : k + 1; }, false); },
-  resetSlots(){ mut(c => c.spells.slots = {}, false); },
+  resetSlots(){ mut(c => { c.spells.slots = {}; c.spells.pact = {used:0}; }, false); },
+  mcAdd(){ const c = active(); if (c.level >= 20){ toast('Level 20 is the most a hero can reach.'); return; }
+    const pick = names('classes').find(n => !hasClass(c, n)); if (!pick) return;
+    mut(c => { c.multi = multi(c); c.multi.push({class:pick, subclass:'', level:1}); c.level++; }); toast(`${pick} 1 added: total level ${active().level}. Change the class in the list.`); },
+  mcDel(i){ const c = active(), m = multi(c)[+i]; if (!m) return;
+    confirmBox(`Remove ${m.class} ${m.level}? The total level drops by ${m.level}.`, 'Remove', () => mut(c => { c.multi.splice(+i, 1); c.level = Math.max(1, c.level - m.level); })); },
+  pactSlot(k){ mut(c => { const s = c.spells.pact = c.spells.pact || {used:0}; s.used = +k < s.used ? +k : +k + 1; }, false); },
   prep(n){ mut(c => { const i = c.spells.prep.indexOf(n); i >= 0 ? c.spells.prep.splice(i, 1) : c.spells.prep.push(n); }, false); },
   unlearn(n){ mut(c => { c.spells.known = c.spells.known.filter(x => x !== n); c.spells.prep = c.spells.prep.filter(x => x !== n); }, false); },
   learn(n){ const c = active(); if (!c.spells.known.includes(n)){ c.spells.known.push(n); save(); } toast(`${n} added to ${c.name}'s spellbook.`); refreshAfterModalAction(); },
@@ -2268,7 +2369,6 @@ const ACT = {
   delItem(i){ mut(c => c.inventory.splice(+i, 1), false); },
   wear(i){ mut(c => { const it = c.inventory[+i]; it.worn = it.worn === false; }, false); },
   addXP(v){ mut(c => c.xp = (c.xp || 0) + +v, false); },
-  levelUp(){ mut(c => { const avg = Math.floor(hdSize(c) / 2) + 1 + mod(c.abilities.con); c.level = Math.min(20, c.level + 1); c.hp.max += Math.max(1, avg); c.hp.cur += Math.max(1, avg); }); toast(`${active().name} reaches level ${active().level}! Max HP raised by the average roll.`); },
   libCat(id){ G.libCat = id; G.libQ = ''; G.libF = {}; G.libSel = null; save(); renderPage(); },
   libPick(id){ G.libSel = id; const d = $('#libDetail'); d.innerHTML = entryCard(byId(id)); $$('#libList [aria-selected="true"]').forEach(b => b.setAttribute('aria-selected', 'false'));
     const b = $(`#libList [data-arg="${CSS.escape(id)}"]`); if (b) b.setAttribute('aria-selected', 'true');
@@ -2802,12 +2902,19 @@ function bindValue(el){
   const c = active(), path = el.dataset.bind;
   let v = el.type === 'checkbox' ? el.checked : el.value;
   if (el.dataset.type === 'int') v = parseInt(v, 10) || 0;
-  if (path === 'level') v = clamp(v, 1, 20);
+  if (path === 'level') v = clamp(v, 1 + multi(c).reduce((t, m) => t + m.level, 0), 20);
   if (path === 'hp.max'){ v = Math.max(1, v); c.hp.cur = Math.min(c.hp.cur, v); }
   if (path === 'name' && !String(v).trim()) return;
   if (path === 'class' && v !== c.class) c.subclass = '';
   setPath(c, path, v);
   save();
+}
+function mcValue(el){
+  const [i, k] = el.dataset.mc.split(':');
+  mut(c => { const m = c.multi[+i]; if (!m) return;
+    if (k === 'level'){ const first = classList(c)[0].level, rest = c.multi.reduce((t, x, j) => t + (j === +i ? 0 : x.level), 0);
+      m.level = clamp(parseInt(el.value, 10) || 1, 1, Math.max(1, 20 - first - rest)); c.level = first + rest + m.level; }
+    else { m[k] = el.value.trim(); if (k === 'class') m.subclass = ''; } });
 }
 function wire(){
   document.addEventListener('click', e => {
@@ -2821,6 +2928,8 @@ function wire(){
   document.addEventListener('change', e => {
     const el = e.target;
     if (el.dataset.bind && !isMine(active())){ renderPage(); return; }
+    if (el.dataset.mc !== undefined){ if (isMine(active())) mcValue(el); else renderPage(); return; }
+    if (el.id === 'lu_cls'){ G.lu.cls = el.value; openLevelUp(true); return; }
     if (el.dataset.bind){ bindValue(el); const quiet = el.tagName === 'TEXTAREA' || /^currency\.|^notes\./.test(el.dataset.bind); quiet ? null : render(); return; }
     if (el.dataset.lib !== undefined){ G.libF[el.dataset.lib] = el.value; renderLibList(); return; }
     if (el.id === 'spell_mine'){ G.spellMine = el.checked; spellSearch($('#spell_q').value); }
