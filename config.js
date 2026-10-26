@@ -6,8 +6,8 @@
 //   prices      : (optional) only the labels the app shows; the real prices live in Stripe.
 // Leave the placeholders as they are and the tome simply works on this device only, without accounts.
 window.GRIMOIRE_CONFIG = {
-  supabaseUrl: 'https://YOUR-PROJECT.supabase.co',
-  supabaseKey: 'YOUR-ANON-OR-PUBLISHABLE-KEY',
+  supabaseUrl: 'https://obahrlbwbplqqgokjqhf.supabase.co',
+  supabaseKey: 'sb_publishable_aGee4sOAIxKRW6Icmasztg_XfZjRbCy',
   siteUrl: 'https://damianocannizzaro99.github.io/Grimoire-Of-Heroes/',
   // prices: {monthly: '€1.99 / month', yearly: '€14.99 / year', founder: '€24.99 once'},
 };
