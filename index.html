@@ -786,8 +786,8 @@ function buildIndex(){
   const base = srdEntries().concat(EXT);
   const have = new Set(base.map(e => e.cat + '|' + norm(e.n)));
   ALL = base.concat(quickEntries(have));
-  ALL.forEach(e => { e.lc = norm(e.n); e.id = e.id || (e.src + ':' + e.cat + ':' + e.n + ':' + (e.o.cls || e.o.source || '')); });
-  ALL.sort((a, b) => a.n.localeCompare(b.n));
+  ALL.forEach(e => { if (typeof e.n !== 'string') e.n = toTxt(e.n, 120); e.lc = norm(e.n); e.id = e.id || (e.src + ':' + e.cat + ':' + e.n + ':' + (e.o.cls || e.o.source || '')); });
+  ALL.sort((a, b) => String(a.n).localeCompare(String(b.n)));
 }
 const PRI = {SRD:0, Homebrew:1, Quick:2};
 function find(name, cat){
@@ -954,15 +954,30 @@ function sampleChars(){
      notes:{look:'Curly chestnut hair, lucky copper coin behind ear.', story:'Ran a shell game in Port Merrow; now runs from a mark gone wrong.', allies:'Contact: Fen, fence in the Docks.', extra:'Always pays debts.'}},
   ];
 }
+const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+const objOr = (x, d) => isObj(x) ? x : d;
+const toNum = (x, d) => { const v = +x; return Number.isFinite(v) ? v : d; };
+const toTxt = (x, max = 200) => (typeof x === 'string' ? x : typeof x === 'number' && Number.isFinite(x) ? String(x) : '').slice(0, max);
+const objList = x => Array.isArray(x) ? x.filter(isObj).map(o => (typeof o.n === 'string' ? o : {...o, n:toTxt(o.n, 120)})) : [];
+const txtList = x => Array.isArray(x) ? x.map(v => toTxt(v, 200)).filter(Boolean) : [];
 function fixup(c){
-  c.abilities = c.abilities || {str:10,dex:10,con:10,int:10,wis:10,cha:10};
-  c.hp = c.hp || {cur:10,max:10,temp:0}; c.hitDice = c.hitDice || {used:0}; c.death = c.death || {s:0,f:0};
-  c.spells = c.spells || {}; c.spells.known = c.spells.known || []; c.spells.prep = c.spells.prep || []; c.spells.slots = c.spells.slots || {};
-  ['conditions','attacks','feats','classFeats','inventory'].forEach(k => c[k] = c[k] || []);
-  c.saves = c.saves || {}; c.skills = c.skills || {}; c.res = c.res || {};
-  c.currency = c.currency || {cp:0,sp:0,ep:0,gp:0,pp:0}; c.notes = c.notes || {};
-  c.multi = Array.isArray(c.multi) ? c.multi.filter(m => m && m.class).map(m => ({class:m.class, subclass:m.subclass || '', level:clamp(+m.level || 1, 1, 19)})) : [];
-  c.level = clamp(+c.level || 1, 1 + c.multi.reduce((t, m) => t + m.level, 0), 20); c.exhaustion = +c.exhaustion || 0;
+  const ab = objOr(c.abilities, {});
+  c.abilities = Object.fromEntries(['str','dex','con','int','wis','cha'].map(k => [k, clamp(Math.round(toNum(ab[k], 10)), 1, 30)]));
+  const hp = objOr(c.hp, {cur:10, max:10, temp:0}), max = Math.max(1, Math.round(toNum(hp.max, 10)));
+  c.hp = {...hp, max, cur:Math.max(0, Math.round(toNum(hp.cur, max))), temp:Math.max(0, Math.round(toNum(hp.temp, 0)))};
+  c.hitDice = objOr(c.hitDice, {used:0}); c.death = objOr(c.death, {s:0,f:0});
+  c.spells = objOr(c.spells, {}); c.spells.known = txtList(c.spells.known); c.spells.prep = txtList(c.spells.prep); c.spells.slots = objOr(c.spells.slots, {});
+  ['attacks','feats','inventory'].forEach(k => c[k] = objList(c[k]));
+  ['conditions','classFeats'].forEach(k => c[k] = txtList(c[k]));
+  ['saves','skills','res','notes'].forEach(k => c[k] = objOr(c[k], {}));
+  c.currency = objOr(c.currency, {cp:0,sp:0,ep:0,gp:0,pp:0});
+  c.name = toTxt(c.name, 80).trim() || 'Nameless';
+  ['class','subclass','species','background','alignment'].forEach(k => { if (typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
+  ['player','portrait'].forEach(k => { if (c[k] != null && typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
+  let room = 19; const multi = [];
+  (Array.isArray(c.multi) ? c.multi : []).forEach(m => { if (!isObj(m) || !toTxt(m.class) || room < 1) return; const level = clamp(Math.round(toNum(m.level, 1)) || 1, 1, room); room -= level; multi.push({class:toTxt(m.class, 80), subclass:toTxt(m.subclass, 80), level}); });
+  c.multi = multi;
+  c.level = clamp(Math.round(toNum(c.level, 1)) || 1, 1 + c.multi.reduce((t, m) => t + m.level, 0), 20); c.exhaustion = clamp(Math.round(toNum(c.exhaustion, 0)), 0, 6);
   return c;
 }
 function save(){
@@ -972,7 +987,7 @@ function save(){
 async function load(){
   let data = null;
   try { const raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) {}
-  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
+  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
   G.chars.forEach(c => { if (!c._sig) c._sig = sigOf(c); });
@@ -1946,7 +1961,7 @@ let PACKS = [];
 async function loadPacks(){
   try { PACKS = await IDB.all(); } catch (e) { PACKS = []; }
   EXT.length = 0;
-  BREW_ITEMS = PACKS.find(p => p.id === BREW_ID)?.items || [];
+  BREW_ITEMS = cleanBrew(PACKS.find(p => p.id === BREW_ID)?.items);
   PACKS = PACKS.filter(p => p.id !== BREW_ID);
   PACKS.forEach(p => ingest5(p.data, p.name).forEach(x => EXT.push(x)));
   BREW_ITEMS.forEach(it => EXT.push(brewEntry(it)));
@@ -2019,6 +2034,8 @@ const BREW = {
 let BREW_ITEMS = [];
 const brewPack = () => ({id:BREW_ID, name:'Homebrew', kind:'brew', added:Date.now(), count:BREW_ITEMS.length, items:BREW_ITEMS});
 const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${o.lv} · ${o.sc}` : `Cantrip · ${o.sc}`) : cat === 'feats' ? o.ty : cat === 'subclasses' ? o.cls : cat === 'classes' ? `d${o.hd} · ${o.prim || ''}` : cat === 'items' ? o.rar : cat === 'monsters' ? 'CR ' + o.cr : '';
+const cleanBrew = list => (Array.isArray(list) ? list : []).filter(it => isObj(it) && typeof it.cat === 'string' && Object.hasOwn(BREW, it.cat) && isObj(it.o) && typeof it.o.n === 'string' && it.o.n.trim())
+  .map(it => ({...it, o:{...it.o, n:it.o.n.trim().slice(0, 80)}}));
 const brewEntry = it => ({cat:it.cat, n:it.o.n, o:it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
 const brewClass = n => BREW_ITEMS.find(it => it.cat === 'classes' && it.o.n === n)?.o;
 async function saveBrew(){ try { await IDB.put(brewPack()); } catch (e) { toast('This browser blocked storage, so your homebrew lasts only until you close the page.'); } }
@@ -2091,11 +2108,12 @@ function workshopHTML(){
 }
 async function brewImport(file){
   let j; try { j = JSON.parse(await file.text()); } catch (e) { toast('That file is not valid JSON.'); return; }
-  const items = Array.isArray(j?.grimoireHomebrew) ? j.grimoireHomebrew.filter(it => it && BREW[it.cat] && it.o?.n) : null;
-  if (!items){ toast('Not a Grimoire homebrew export. Community 5e JSON goes through Library → Import.'); return; }
+  if (!Array.isArray(j?.grimoireHomebrew)){ toast('Not a Grimoire homebrew export. Community 5e JSON goes through Library → Import.'); return; }
+  const items = cleanBrew(j.grimoireHomebrew), bad = j.grimoireHomebrew.length - items.length;
+  if (!items.length){ toast(`No usable entries in that file${bad ? ` (${bad} skipped: each needs a known kind and a text name)` : ''}.`); return; }
   let n = 0;
   items.forEach(it => { const had = BREW_ITEMS.find(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n)); if (had) had.o = it.o; else { BREW_ITEMS.push({id:uid(), cat:it.cat, o:it.o}); n++; } });
-  await saveBrew(); reloadBrew(); renderPage(); toast(`${items.length} homebrew entries merged (${n} new).`);
+  await saveBrew(); reloadBrew(); renderPage(); toast(`${items.length} homebrew entries merged (${n} new)${bad ? `, ${bad} skipped (each needs a known kind and a text name)` : ''}.`);
 }
 const ACT_BREW = {
   brewCat(k){ G.brewCat = k; G.brewEdit = null; renderPage(); },
@@ -2570,8 +2588,13 @@ const ACT = {
       <label class="sr" for="impTxt">Character JSON</label><textarea id="impTxt" style="min-height:160px"></textarea>
       <div class="row mt">${act('doImport', undefined, 'Import', 'btn small')}<label class="btn small ghost" for="impFile">Choose file</label><input type="file" id="impFile" accept=".json" class="sr"></div>`, {label:'Import'});
     $('#impFile').onchange = async e => { const f = e.target.files[0]; if (f){ $('#impTxt').value = await f.text(); ACT.doImport(); } }; },
-  doImport(){ try { const o = JSON.parse($('#impTxt').value); if (!o.name || !o.abilities) throw 0; LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete o[k]); o.id = uid(); G.chars.push(fixup(o)); G.activeId = o.id; save(); render(); closeModal(); toast(`${o.name} joins the tome.`); }
-    catch (e) { toast('That is not a hero exported from this tome.'); } },
+  doImport(){
+    let o; try { o = JSON.parse($('#impTxt').value); } catch (e) {}
+    if (!isObj(o) || o.name == null || o.name === '' || !isObj(o.abilities)){ toast('That is not a hero exported from this tome.'); return; }
+    const prev = G.activeId;
+    try { LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete o[k]); o.id = uid(); G.chars.push(fixup(o)); G.activeId = o.id; render(); }
+    catch (e) { console.warn('Import rejected', e); G.chars = G.chars.filter(h => h.id !== o.id); G.activeId = prev; render(); toast('That hero file is damaged, so nothing was imported.'); return; }
+    save(); closeModal(); toast(`${o.name} joins the tome.`); },
   enter(){ const bk = $('#coverBk'); G.showCover = false; if (reduceMotion()){ bk.remove(); welcome(); return; } rustle(); bk.classList.add('opening'); setTimeout(() => { bk.remove(); welcome(); }, 1100); },
   welcome(){ $('#coverBk')?.remove(); welcome(true); },
 };
@@ -2626,7 +2649,7 @@ function doWizard(){
   const sorted = [...arr].sort((a, b) => b - a), abilities = {};
   pri.forEach((ab, i) => abilities[ab] = sorted[i]);
   const bgE = find($('#w_b').value, 'backgrounds'), bg = bgE?.o || {};
-  const c = fixup({id:uid(), owner:me() || undefined, player:S.profile?.display_name || '', portrait:$('#w_p').value, name:$('#w_name').value.trim() || 'Nameless', class:cls, subclass:'', level:clamp(+$('#w_l').value || 1, 1, 20),
+  const c = fixup({id:uid(), owner:me() || undefined, player:S.profile?.display_name || '', portrait:$('#w_p').value, name:$('#w_name').value.trim() || 'Nameless', class:cls, subclass:'', level:clamp(Math.round(+$('#w_l').value) || 1, 1, 20),
     species:$('#w_s').value, background:$('#w_b').value, alignment:'True Neutral', xp:0, inspiration:false, abilities, hp:{cur:10,max:10,temp:0},
     feats:bg.feat ? [{n:bg.feat, src:'Background'}] : [], inventory:[{n:'Traveler’s Clothes',q:1,d:''},{n:'Rations',q:5,d:''},{n:'Pouch',q:1,d:''}], currency:{cp:0,sp:0,ep:0,gp:15,pp:0}});
   c.xp = XP_TABLE[c.level - 1];
