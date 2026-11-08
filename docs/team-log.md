@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-08 · team leader
+- Controllo app live (Playwright 1440x900 e 390x844): i fix di ieri sono online; copertina, nuovo eroe e level up 1→2 ok; console pulita a parte Supabase; a 390 px ancora 10 px di scroll orizzontale.
+- Obiettivo della settimana (7–13/11), confermato: nessuna perdita di dati. Chiusi B-001/B-003; restano B-002 e B-004.
+- Oggi: sviluppo → B-004 (avviso di memoria piena persistente) e `maxlength` sul Nome (B-009) su main, poi B-002 (due schede) come PR. Stasera: power user su prestazioni con 20+ eroi e verifica dei fix sul sito live.
+
 ## 2026-11-07 · sviluppo
 - **Fatto**: B-001 e B-003 come da piano, più B-007, B-008 e B-010 (stessa zona: import/fixup). Nessun CSS toccato.
   - Homebrew: nuova `cleanBrew` usata sia dall'import sia all'avvio (IndexedDB), accetta solo categoria nota (`Object.hasOwn`, quindi niente `__proto__`) e nome testo ≤80 caratteri; il toast dice quante voci ha scartato. Sort di ALL tollerante.
