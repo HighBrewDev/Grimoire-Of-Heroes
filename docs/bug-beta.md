@@ -6,20 +6,13 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 ## Aperti
 
 ### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
+- **In PR 2026-11-08**: [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (unione per id tra schede via evento `storage`), in attesa di Capo.
 - Trovato da: distruttore · 2026-11-06
 - Dove: qualsiasi capitolo, due schede/finestre (o app installata + browser) sullo stesso sito
 - Passi: 1. Apri il sito nella scheda A e nella scheda B. 2. In A crea l'eroe "EroeTabA". 3. In B crea l'eroe "EroeTabB". 4. Torna in A e modifica qualsiasi cosa (ogni modifica salva). 5. Apri una terza scheda.
 - Atteso: entrambi gli eroi presenti, o almeno un avviso che un'altra scheda ha modificato i dati.
 - Ottenuto: dopo il passo 3 esiste solo EroeTabB (EroeTabA sparito); dopo il passo 4 esiste solo EroeTabA (EroeTabB sparito). Ogni scheda riscrive l'intera lista che ha in memoria (`writeLocal`, index.html:2790); non c'è ascolto dell'evento `storage` né BroadcastChannel.
 - Console: nessun errore.
-
-### B-004 [alta] Memoria piena: il nuovo eroe sembra salvato ma sparisce alla ricarica
-- Trovato da: distruttore · 2026-11-06
-- Dove: Nuovo eroe, 1440x900
-- Passi: 1. Riempi il localStorage del sito (in un caso reale: tanti eroi con note lunghe o import enormi). 2. Crea un nuovo eroe "PienoStorage". 3. Ricarica.
-- Atteso: un avviso visibile che il salvataggio non è riuscito.
-- Ottenuto: compare solo "PienoStorage joins the tome."; l'avviso "This device is out of storage space for the tome." di `writeLocal` viene subito sovrascritto dal toast di `doWizard`. Alla ricarica l'eroe non c'è più. Lo stesso succede con Import e con ogni modifica.
-- Console: nessun errore (l'eccezione di quota viene catturata).
 
 ### B-005 [media] Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
 - Trovato da: distruttore · 2026-11-06
@@ -35,15 +28,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Passi: 1. Valeria (32/32 PF). 2. Scrivi `-50` e premi Damage. 3. Scrivi `-100` e premi Heal.
 - Atteso: valori negativi ignorati o trattati come positivi.
 - Ottenuto: dopo il passo 2 ha 50 PF temporanei; dopo il passo 3 ha -68/32 PF, salvati anche dopo ricarica. `applyDamage` (index.html:2181) e `heal` (index.html:2476) non controllano il segno.
-- Console: nessun errore.
-
-### B-009 [bassa] Nome eroe senza limite di lunghezza: pagina larga 358.000 px
-- Nota sviluppo 2026-11-07: dal wizard e dall'import il nome ora viene tagliato a 80 caratteri da `fixup`; resta da mettere `maxlength` sul campo Nome della scheda (modifica diretta).
-- Trovato da: distruttore · 2026-11-06
-- Dove: Nuovo eroe e campo Nome, 1440x900
-- Passi: 1. Nuovo eroe con un nome di 20.000 caratteri (incollato).
-- Atteso: limite di lunghezza (es. 80 caratteri) o testo che va a capo.
-- Ottenuto: `document.documentElement.scrollWidth` = 358.897 px: scroll orizzontale enorme su tutta l'app. Nessun `maxlength` su `#w_name`.
 - Console: nessun errore.
 
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
@@ -64,6 +48,25 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-004 [alta] Memoria piena: il nuovo eroe sembra salvato ma sparisce alla ricarica
+- **Risolto 2026-11-08** in [8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163): se il salvataggio fallisce resta in basso un avviso "Not saved" con il pulsante Try again, che sparisce solo quando un salvataggio riesce; Nuovo eroe e Import non dicono più "joins the tome".
+- Trovato da: distruttore · 2026-11-06
+- Dove: Nuovo eroe, 1440x900
+- Passi: 1. Riempi il localStorage del sito (in un caso reale: tanti eroi con note lunghe o import enormi). 2. Crea un nuovo eroe "PienoStorage". 3. Ricarica.
+- Atteso: un avviso visibile che il salvataggio non è riuscito.
+- Ottenuto: compare solo "PienoStorage joins the tome."; l'avviso "This device is out of storage space for the tome." di `writeLocal` viene subito sovrascritto dal toast di `doWizard`. Alla ricarica l'eroe non c'è più. Lo stesso succede con Import e con ogni modifica.
+- Console: nessun errore (l'eccezione di quota viene catturata).
+
+### B-009 [bassa] Nome eroe senza limite di lunghezza: pagina larga 358.000 px
+- **Risolto 2026-11-08** in [8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163): `maxlength="80"` su `#w_name` e `#f_name`.
+- Nota sviluppo 2026-11-07: dal wizard e dall'import il nome ora viene tagliato a 80 caratteri da `fixup`; resta da mettere `maxlength` sul campo Nome della scheda (modifica diretta).
+- Trovato da: distruttore · 2026-11-06
+- Dove: Nuovo eroe e campo Nome, 1440x900
+- Passi: 1. Nuovo eroe con un nome di 20.000 caratteri (incollato).
+- Atteso: limite di lunghezza (es. 80 caratteri) o testo che va a capo.
+- Ottenuto: `document.documentElement.scrollWidth` = 358.897 px: scroll orizzontale enorme su tutta l'app. Nessun `maxlength` su `#w_name`.
+- Console: nessun errore.
 
 ### B-001 [critica] Homebrew importato con nome numerico blocca l'app a ogni avvio
 - Trovato da: distruttore · 2026-11-06

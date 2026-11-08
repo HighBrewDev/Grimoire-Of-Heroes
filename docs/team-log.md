@@ -1,5 +1,14 @@
 # Diario del team
 
+## 2026-11-08 · sviluppo
+- **Fatto**: i due passi del piano.
+  1. **B-004 e B-009 su main** ([8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163)): `writeLocal` imposta `G.saveFailed`; se il salvataggio fallisce compare in basso un avviso `role="alert"` ("Not saved… Try again") separato dal toast, quindi `toast()` non lo copre né lo sostituisce; sparisce appena un salvataggio riesce (anche da sola, alla prossima modifica). Nuovo eroe e Import dicono "is on the page but could not be saved" invece di "joins the tome". `maxlength="80"` su `#w_name` e `#f_name`.
+  2. **B-002 come PR** [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1): ogni scheda ricorda l'ultima lista letta/scritta; all'evento `storage` (e prima di ogni salvataggio, se la lista salvata è cambiata) unisce per `id`: nuovi da entrambe le parti tenuti, cancellati restano cancellati, stesso eroe cambiato in due schede → vince l'ultima modifica con avviso. Supabase non toccato.
+- **CSS**: nessuna regola nuova; l'avviso riusa le classi `toast fumble` con uno stile inline (in basso, larghezza `min(640px, 92vw)`). Nota prudenza: su telefono copre la barra dadi finché il salvataggio fallisce, scelto apposta perché è un'emergenza.
+- **File**: index.html, docs/bug-beta.md, docs/team-log.md.
+- **Test** (Playwright/Chromium, server locale, service worker bloccato, 1440x900 e 390x844): B-004 riprodotto su main prima del fix (solo "PienoStorage joins the tome.", eroe perso); dopo: avviso visibile anche dopo 3,5 s e un altro toast, liberato lo spazio → "Try again" → avviso sparito, eroe presente dopo la ricarica. B-002 riprodotto prima del fix (passo 3 solo EroeTabB, passo 4 solo EroeTabA); con la PR: entrambi presenti nelle tre schede, eroe cancellato in C non risorge, corsa simulata con avviso. Console senza errori. scrollWidth a 390 px ancora 400 (problema già noto, non toccato).
+- **Prossima sessione**: B-005 (ASI sopra 20) e B-006 (danni/cure negativi), oppure la versione di `CACHE` in sw.js per far arrivare subito i fix.
+
 ## 2026-11-08 · team leader
 - Controllo app live (Playwright 1440x900 e 390x844): i fix di ieri sono online; copertina, nuovo eroe e level up 1→2 ok; console pulita a parte Supabase; a 390 px ancora 10 px di scroll orizzontale.
 - Obiettivo della settimana (7–13/11), confermato: nessuna perdita di dati. Chiusi B-001/B-003; restano B-002 e B-004.
@@ -28,4 +37,5 @@
 - Oggi: sviluppo → scroll orizzontale a 390 px; designer → barra dadi e toast su telefono + note-design.md; distruttore → wizard e import/export.
 
 ## In attesa di Capo
-- Nessuna PR aperta dallo sviluppo. Bozze promo: nessuna.
+- **PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1)** · B-002 due schede (tocca il salvataggio dei dati utenti): da rivedere e unire.
+- Bozze promo: nessuna.
