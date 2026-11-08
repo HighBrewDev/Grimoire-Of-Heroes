@@ -5,15 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
-- **In PR 2026-11-08**: [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (unione per id tra schede via evento `storage`), in attesa di Capo.
-- Trovato da: distruttore · 2026-11-06
-- Dove: qualsiasi capitolo, due schede/finestre (o app installata + browser) sullo stesso sito
-- Passi: 1. Apri il sito nella scheda A e nella scheda B. 2. In A crea l'eroe "EroeTabA". 3. In B crea l'eroe "EroeTabB". 4. Torna in A e modifica qualsiasi cosa (ogni modifica salva). 5. Apri una terza scheda.
-- Atteso: entrambi gli eroi presenti, o almeno un avviso che un'altra scheda ha modificato i dati.
-- Ottenuto: dopo il passo 3 esiste solo EroeTabB (EroeTabA sparito); dopo il passo 4 esiste solo EroeTabA (EroeTabB sparito). Ogni scheda riscrive l'intera lista che ha in memoria (`writeLocal`, index.html:2790); non c'è ascolto dell'evento `storage` né BroadcastChannel.
-- Console: nessun errore.
-
 ### B-005 [media] Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
 - Trovato da: distruttore · 2026-11-06
 - Dove: Level up (livello 4, Ability Score Improvement), 1440x900
@@ -48,6 +39,15 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
+- **Risolto 2026-11-08** con la PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (commit [55d1dda](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/55d1dda), unita da Capo): le schede uniscono le liste per `id` tramite l'evento `storage` e prima di ogni salvataggio.
+- Trovato da: distruttore · 2026-11-06
+- Dove: qualsiasi capitolo, due schede/finestre (o app installata + browser) sullo stesso sito
+- Passi: 1. Apri il sito nella scheda A e nella scheda B. 2. In A crea l'eroe "EroeTabA". 3. In B crea l'eroe "EroeTabB". 4. Torna in A e modifica qualsiasi cosa (ogni modifica salva). 5. Apri una terza scheda.
+- Atteso: entrambi gli eroi presenti, o almeno un avviso che un'altra scheda ha modificato i dati.
+- Ottenuto: dopo il passo 3 esiste solo EroeTabB (EroeTabA sparito); dopo il passo 4 esiste solo EroeTabA (EroeTabB sparito). Ogni scheda riscrive l'intera lista che ha in memoria (`writeLocal`, index.html:2790); non c'è ascolto dell'evento `storage` né BroadcastChannel.
+- Console: nessun errore.
 
 ### B-004 [alta] Memoria piena: il nuovo eroe sembra salvato ma sparisce alla ricarica
 - **Risolto 2026-11-08** in [8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163): se il salvataggio fallisce resta in basso un avviso "Not saved" con il pulsante Try again, che sparisce solo quando un salvataggio riesce; Nuovo eroe e Import non dicono più "joins the tome".
