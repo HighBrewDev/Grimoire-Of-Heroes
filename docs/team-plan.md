@@ -33,6 +33,7 @@
 ## Regole per tutti
 - Solo contenuti SRD 5.2.1 pubblici; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo l'attribuzione CC-BY).
 - Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**, mai su main. Avvisi e validazione locali (B-004, B-009) vanno su main.
+- **Unione automatica delle PR** (confermata da Capo il 2026-11-08): chi apre una PR la unisce da solo quando i test passano (bug riprodotto prima, assente dopo, desktop e telefono, console pulita) e annota nel log il link e i test. Eccezione: le PR che toccano **pagamenti/Stripe, Supabase, `schema.sql` o le funzioni edge** aspettano ancora l'ok di Capo in "In attesa di Capo", a meno che Capo non dica diversamente.
 - Nessuna pubblicazione su Reddit/Discord: lo fa Capo.
 - Sviluppo e designer non modificano la stessa parte di index.html nello stesso giorno.
 - Ogni agente lascia almeno una voce in docs/team-log.md, anche se non ha concluso nulla.
