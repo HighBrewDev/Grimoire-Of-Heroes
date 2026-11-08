@@ -986,11 +986,13 @@ function save(){
 }
 async function load(){
   let data = null;
-  try { const raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) {}
+  let raw = null;
+  try { raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) {}
   if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
   G.chars.forEach(c => { if (!c._sig) c._sig = sigOf(c); });
+  markBase(data?.chars ? raw : null);
   try { Object.assign(G, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
 }
@@ -2811,10 +2813,60 @@ async function pull(){
   if (changed){ if (!G.turning && !$('#modalBk') && !isTyping()) render(); else G.needRender = true; }
 }
 const isTyping = () => /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) && !!document.activeElement.closest('#page');
+/* ---- several tabs on one device (B-002) ----
+   Every tab keeps the whole hero list in memory and writes it whole. To stop one tab wiping heroes made in another,
+   each tab remembers the list it last read or wrote (the base). When the stored list changes under it, the two are
+   merged by hero id: heroes that are new on either side are kept, heroes that were in the base and are gone on one
+   side were deleted there, and a hero changed on both sides keeps its latest edit, with a warning. */
+let baseRaw = null, baseSig = new Map();
+function markBase(raw){
+  baseRaw = raw; baseSig = new Map();
+  try { (JSON.parse(raw || 'null')?.chars || []).forEach(c => { if (isObj(c) && c.id) baseSig.set(c.id, c._sig || ''); }); } catch (e) {}
+}
+function mergeStored(raw){
+  let data = null; try { data = JSON.parse(raw); } catch (e) {}
+  if (!isObj(data) || !Array.isArray(data.chars)) return {changed:false, clash:[]};
+  const fresh = baseRaw == null && !G.chars.some(c => c.createdAt);   // this tab never saved: only untouched samples to lose
+  const theirs = new Map(data.chars.filter(c => isObj(c) && c.id).map(c => [c.id, c])), clash = [], next = [];
+  let changed = false;
+  for (const c of fresh ? [] : G.chars){
+    const t = theirs.get(c.id);
+    if (!t){ if (baseSig.has(c.id)) changed = true; else next.push(c); continue; }   // deleted in the other tab, or new here
+    theirs.delete(c.id);
+    if (t._sig === c._sig){ next.push(c); continue; }
+    const mineChanged = c._sig !== baseSig.get(c.id), theirsChanged = t._sig !== baseSig.get(c.id);
+    if (mineChanged && theirsChanged) clash.push(c.name);
+    if (mineChanged && (!theirsChanged || (c.updatedAt || 0) > (t.updatedAt || 0))){ next.push(c); continue; }
+    let h; try { h = fixup(t); h._sig = t._sig; } catch (e) { next.push(c); continue; }
+    next.push(h); changed = true;
+  }
+  for (const t of theirs.values()){                       // new in the other tab (or deleted here, if it was in the base)
+    if (!fresh && baseSig.has(t.id)) continue;
+    try { const h = fixup(t); h._sig = t._sig; next.push(h); changed = true; } catch (e) {}
+  }
+  if (fresh) changed = true;
+  G.chars = next;
+  if (!G.chars.some(c => c.id === G.activeId)) G.activeId = (fresh && data.activeId) || G.chars[0]?.id || null;
+  return {changed, clash};
+}
+const renderSoon = () => { if (G.needRender && !G.turning && !$('#modalBk') && !isTyping()){ G.needRender = false; setTimeout(render, 0); } };
+function otherTabSaved(e){
+  if (e.storageArea !== localStorage || e.key !== heroKey() || e.newValue == null || e.newValue === baseRaw) return;
+  const r = mergeStored(e.newValue); markBase(e.newValue);
+  if (r.clash.length) toast(`${r.clash.join(', ')} changed in another tab too: the latest edit is kept.`, 'fumble');
+  if (r.changed){ G.needRender = true; renderSoon(); }
+}
+addEventListener('storage', otherTabSaved);
+document.addEventListener('focusout', () => setTimeout(renderSoon, 0));
 function writeLocal(){
-  try { localStorage.setItem(heroKey(), JSON.stringify({chars:G.chars, activeId:G.activeId})); G.saveFailed = false; }
+  try {
+    const now = localStorage.getItem(heroKey());   // another tab wrote since we last looked (and its event has not arrived yet)
+    if (now != null && now !== baseRaw){ const r = mergeStored(now); if (r.clash.length) toast(`${r.clash.join(', ')} changed in another tab too: the latest edit is kept.`, 'fumble'); if (r.changed) G.needRender = true; }
+  } catch (e) {}
+  const raw = JSON.stringify({chars:G.chars, activeId:G.activeId});
+  try { localStorage.setItem(heroKey(), raw); G.saveFailed = false; markBase(raw); }
   catch (e) { console.warn('Hero save failed', e); G.saveFailed = true; }
-  saveWarn(); return !G.saveFailed;
+  saveWarn(); if (G.needRender) setTimeout(renderSoon, 0); return !G.saveFailed;
 }
 /* A failed save stays on screen until a save succeeds: toasts never cover or replace it. */
 function saveWarn(){
@@ -2846,6 +2898,7 @@ async function switchStore(){
   let data = null;
   try { data = JSON.parse(localStorage.getItem(heroKey()) || 'null'); } catch (e) {}
   G.chars = (data?.chars || []).map(fixup); G.activeId = data?.activeId || G.chars[0]?.id || null;
+  try { markBase(data?.chars ? localStorage.getItem(heroKey()) : null); } catch (e) { markBase(null); }
   render(); syncBadge();
 }
 function offerMigration(before){
