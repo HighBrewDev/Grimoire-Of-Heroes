@@ -5,6 +5,38 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-012 [media] Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
+- Trovato da: power user · 2026-11-08
+- Dove: salvataggio automatico ed Export, 1440x900 e 390x844 (sito live)
+- Passi: 1. Importa 24 eroi di livello 10–20 con 80 oggetti, ~50 incantesimi e note lunghe (33 eroi in tutto). 2. Leggi `grimoire-heroes-v1` in localStorage. 3. Su un eroe: Export → guarda il testo.
+- Atteso: ogni eroe salvato una volta; l'export contiene solo i dati dell'eroe.
+- Ottenuto: 1.460.000 caratteri in localStorage, di cui 749.600 (51%) sono il campo `_sig` (l'eroe intero ri-serializzato come stringa). `writeLocal` (index.html ~2866) salva `G.chars` così com'è, senza togliere i `LOCAL_FIELDS`. Con il limite misurato di ~5,24 milioni di caratteri ci stanno circa 118 eroi così invece di ~230: l'avviso "Not saved" (B-004) arriva al doppio della velocità. Anche l'Export (`export`/`downloadChar`, ~2581) include `_sig`, `updatedAt`, `editedOn` (nome del dispositivo) e `createdAt`: file da 60.789 caratteri, 29.555 sono `_sig`. Il re-import funziona (dati identici).
+- Console: nessun errore.
+
+### B-013 [media] Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
+- Trovato da: power user · 2026-11-08
+- Dove: VII Pack & Riches, 1440x900 e 390x844
+- Passi: 1. Importa un eroe con oggetti personalizzati che hanno `"cat":"Treasure"` (es. `{"n":"Trophy 1","q":1,"custom":true,"cat":"Treasure","d":"…"}`; succede con file scritti a mano, da altri strumenti o da versioni con nomi di categoria diversi). 2. Apri Pack & Riches. 3. Scrivi "trophy" nel filtro.
+- Atteso: gli oggetti compaiono (in "Quest & Misc" o con la categoria normalizzata da `fixup`).
+- Ottenuto: l'intestazione dice "Inventory 80 entries · 482.5 / 165 lb" ma le righe sono 55: i 25 oggetti "Treasure" non compaiono in nessun gruppo, il filtro dice "Nothing matches this filter.", il loro peso conta per il sovraccarico e non c'è modo di modificarli o cancellarli dall'app. Il render raggruppa solo per `INV_CATS` (index.html ~1714) e `fixup` non controlla `it.cat` (il nome giusto sarebbe "Treasure & Valuables").
+- Console: nessun errore.
+
+### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
+- Trovato da: power user · 2026-11-08
+- Dove: scaffale degli eroi, 390x844 (anche 1440x900)
+- Passi: 1. Tomo con 33 eroi. 2. Su telefono cerca il trentesimo eroe.
+- Atteso: un filtro per nome o la possibilità di riordinare/fissare gli eroi in uso.
+- Ottenuto: scaffale orizzontale con `scrollWidth` 7.410 px su 356 visibili: il 30° eroe è a 6.600 px, solo scorrendo. Gli eroi restano nell'ordine di creazione; non esistono riordino, ordinamento o ricerca (la ricerca Ctrl+K cerca solo le regole).
+- Console: nessun errore.
+
+### B-015 [bassa] [UX] Nessun backup di tutti gli eroi insieme
+- Trovato da: power user · 2026-11-08
+- Dove: I Eroe → Export / Import
+- Passi: 1. Tomo con 33 eroi. 2. Cerca un modo per salvarli tutti prima di liberare spazio (come chiede l'avviso "Not saved… Export your heroes").
+- Atteso: "Esporta tutti" in un file e import dello stesso file.
+- Ottenuto: Export e Download .json lavorano un eroe alla volta: servono 33 export e 33 import. L'homebrew invece ha già "Export homebrew" in blocco. Con l'avviso di memoria piena è la prima cosa che l'utente cerca.
+- Console: nessun errore.
+
 ### B-005 [media] Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
 - Trovato da: distruttore · 2026-11-06
 - Dove: Level up (livello 4, Ability Score Improvement), 1440x900
@@ -116,3 +148,4 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 ## Diario dei test
 
 - 2026-11-06 · distruttore · Prima sessione (Playwright/Chromium, server locale, stesso codice del sito live). Import eroe con 15 JSON malformati (tipi sbagliati, null, valori enormi, multiclasse oltre 20, XSS in nome/classe/specie/note); wizard con nomi vuoti, di soli spazi, da 20.000 caratteri, emoji composte, HTML, livelli -1/0/21/2.7/abc/1e3; PF con danni/cure/temporanei negativi; due schede aperte insieme; level up 1→20 per tutte le 12 classi alternando ASI e talenti; doppio clic su "Become level"; ASI su punteggio sopra 20; import homebrew con nome numerico/oggetto, campi del tipo sbagliato, XSS, 50 voci, categorie `__proto__`/`constructor`; offline con service worker; localStorage pieno; ripristino da eroe rotto. Nessun XSS riuscito (tutto passa da `esc`), offline ok, doppio clic non applica due livelli, level up fino a 20 senza errori. Trovati B-001…B-011.
+- 2026-11-08 · power user · Sito live, Playwright/Chromium, 1440x900 e 390x844, anche CPU 4x. Tomo con 33 eroi: 3 di esempio, 6 dal wizard (livelli 11–20), 24 importati dalla finestra Import (livelli 10–20, 80 oggetti, 45–60 incantesimi, 8 attacchi, note da ~6.500 caratteri). Numeri (desktop / telefono, mediana): apertura del tomo fino allo scaffale completo 0,81 s / 0,79 s, con CPU 4x 2,0 s / 2,0 s; cambio eroe 65–105 ms / 42–61 ms (CPU 4x 210–290 ms, Zaino il più lento fino a 490 ms); cambio capitolo 140–220 ms / 90–120 ms (CPU 4x 410–690 ms); level up apertura 129 ms, conferma 149 ms (CPU 4x 115 / 269 ms); wizard 90 ms; import di un eroe pesante 94 ms; cancellazione 55 ms; filtro dello zaino 37–90 ms a tasto. Memoria JS 4 MB a vuoto → 11,3 MB con 33 eroi, stabile dopo 200 cambi eroe (nessuna perdita). localStorage 1,46 milioni di caratteri (~44 KB per eroe pesante), libero 3,78 milioni: limite ~5,24 milioni, circa 118 eroi così; IndexedDB 72 KB. Verificati sul live: B-004 (avviso "Not saved" resta, Try again lo toglie, eroi presenti dopo ricarica), B-003 (4 JSON rotti, tutti i capitoli aperti, nessun errore), B-001 (voce `n:42` scartata, tomo ok dopo ricarica), B-002 (EroeTabA ed EroeTabB entrambi presenti nella terza scheda). Export → re-import identico; 20 eroi cancellati, ricarica ok. Console pulita. Ancora 10 px di scroll orizzontale a 390 px (già nel backlog). Trovati B-012…B-015.
