@@ -1521,7 +1521,7 @@ hero(c){
   <div class="rule"></div>
   <div class="grid2">
     ${card('Identity', `
-      <label class="f" for="f_name">Hero name</label><input type="text" id="f_name" data-bind="name" value="${esc(c.name)}" style="width:100%">
+      <label class="f" for="f_name">Hero name</label><input type="text" id="f_name" data-bind="name" maxlength="80" value="${esc(c.name)}" style="width:100%">
       <label class="f" for="f_player">Player</label><input type="text" id="f_player" data-bind="player" value="${esc(c.player || '')}" placeholder="${esc(S.profile?.display_name || 'Who plays this hero')}" style="width:100%">
       <div class="fields">
         <div><label class="f" for="f_portrait">Portrait</label><select id="f_portrait" data-bind="portrait">${PORTRAITS.map(e => opt(e, c.portrait)).join('')}</select></div>
@@ -2594,7 +2594,8 @@ const ACT = {
     const prev = G.activeId;
     try { LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete o[k]); o.id = uid(); G.chars.push(fixup(o)); G.activeId = o.id; render(); }
     catch (e) { console.warn('Import rejected', e); G.chars = G.chars.filter(h => h.id !== o.id); G.activeId = prev; render(); toast('That hero file is damaged, so nothing was imported.'); return; }
-    save(); closeModal(); toast(`${o.name} joins the tome.`); },
+    save(); closeModal(); toast(G.saveFailed ? `${o.name} is on the page but could not be saved.` : `${o.name} joins the tome.`, G.saveFailed ? 'fumble' : ''); },
+  retrySave(){ save(); toast(G.saveFailed ? 'Still no room: free some space and try again.' : 'Saved. Your heroes are safe again.', G.saveFailed ? 'fumble' : ''); },
   enter(){ const bk = $('#coverBk'); G.showCover = false; if (reduceMotion()){ bk.remove(); welcome(); return; } rustle(); bk.classList.add('opening'); setTimeout(() => { bk.remove(); welcome(); }, 1100); },
   welcome(){ $('#coverBk')?.remove(); welcome(true); },
 };
@@ -2628,7 +2629,7 @@ function syncTray(){
 /* ---- new hero ---- */
 function openWizard(){
   modal(`<div class="head"><h2>Summon a new hero</h2><span class="spacer"></span>${closeBtn()}</div>
-    <label class="f" for="w_name">Name</label><input type="text" id="w_name" value="Bryn the Bold" style="width:100%" autofocus>
+    <label class="f" for="w_name">Name</label><input type="text" id="w_name" maxlength="80" value="Bryn the Bold" style="width:100%" autofocus>
     <div class="fields">
       <div><label class="f" for="w_p">Portrait</label><select id="w_p">${PORTRAITS.map(e => opt(e, '')).join('')}</select></div>
       <div><label class="f" for="w_s">Species</label><select id="w_s">${names('species').map(s => opt(s, 'Human')).join('')}</select></div>
@@ -2658,7 +2659,7 @@ function doWizard(){
   const hd = hdSize(c), con = mod(abilities.con);
   c.hp.max = Math.max(1, hd + con + (c.level - 1) * Math.max(1, Math.floor(hd / 2) + 1 + con)); c.hp.cur = c.hp.max;
   c.spellAbility = SPELL_AB[cls] || 'int';
-  G.chars.push(c); G.activeId = c.id; closeModal(); save(); render(); toast(`${c.name} joins the tome.`);
+  G.chars.push(c); G.activeId = c.id; closeModal(); save(); render(); toast(G.saveFailed ? `${c.name} is on the page but could not be saved.` : `${c.name} joins the tome.`, G.saveFailed ? 'fumble' : '');
   if (G.chapter !== 'hero') turnTo('hero');
 }
 
@@ -2810,7 +2811,21 @@ async function pull(){
   if (changed){ if (!G.turning && !$('#modalBk') && !isTyping()) render(); else G.needRender = true; }
 }
 const isTyping = () => /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) && !!document.activeElement.closest('#page');
-function writeLocal(){ try { localStorage.setItem(heroKey(), JSON.stringify({chars:G.chars, activeId:G.activeId})); } catch (e) { toast('This device is out of storage space for the tome.'); } }
+function writeLocal(){
+  try { localStorage.setItem(heroKey(), JSON.stringify({chars:G.chars, activeId:G.activeId})); G.saveFailed = false; }
+  catch (e) { console.warn('Hero save failed', e); G.saveFailed = true; }
+  saveWarn(); return !G.saveFailed;
+}
+/* A failed save stays on screen until a save succeeds: toasts never cover or replace it. */
+function saveWarn(){
+  let w = $('#saveWarn');
+  if (!G.saveFailed){ w?.remove(); return; }
+  if (w) return;
+  w = document.createElement('div'); w.id = 'saveWarn'; w.className = 'toast fumble'; w.setAttribute('role', 'alert');
+  w.style.cssText = 'top:auto;bottom:max(12px, env(safe-area-inset-bottom, 0px));z-index:96;width:min(640px, 92vw)';
+  w.innerHTML = `<b>Not saved.</b> This device is out of storage space for the tome, so your latest changes will be lost when you close the page. Export your heroes, delete ones you no longer need, then ${act('retrySave', undefined, 'Try again', 'btn small')}`;
+  document.body.appendChild(w);
+}
 function saveTomb(){ try { localStorage.setItem(tombKey(), JSON.stringify(S.tomb)); } catch (e) {} }
 function loadTomb(){ try { S.tomb = JSON.parse(localStorage.getItem(tombKey()) || '[]'); } catch (e) { S.tomb = []; } }
 
@@ -3050,7 +3065,7 @@ function passwordModal(){
 
 /* ---- read-only heroes: party members' sheets can be read and rolled, never changed ---- */
 const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack',
-  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','copyExport','downloadChar','import','doImport','enter','print','theme',
+  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
   ...Object.keys(ACT_CLOUD)]);
 const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew)/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
