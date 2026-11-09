@@ -3285,6 +3285,8 @@ function renderOmni(){
 /* ================================================================== actions */
 function mut(fn, full = true){ const c = active(); fn(c); save(); full ? render() : renderPage(); }
 const num = id => parseInt($('#' + id)?.value, 10) || 0;
+/* HP amounts are never negative (B-006): "-50" damage or healing does nothing. */
+const hpNum = id => Math.max(0, num(id));
 function weaponAttack(c, w){
   const props = (w.props || []).map(norm);
   const finesse = props.includes('finesse'), ranged = /ranged/i.test(w.cat || '');
@@ -3475,9 +3477,11 @@ function applyLevelUp(){
     if (T.isNew) T.subclass = sc; else if (T.main) c.subclass = sc; else c.multi[T.i].subclass = sc; notes.push(sc); } }
   if (P.asi || P.boon){
     const m = $('input[name="lu_asi"]:checked')?.value, cap = P.boon ? 30 : 20;
-    const up = (ab, n) => { c.abilities[ab] = Math.min(cap, (c.abilities[ab] || 10) + n); };
-    if (m === 'two'){ const a = $('#lu_a1').value; up(a, 2); notes.push(`${a.toUpperCase()} +2`); }
-    else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } up(a, 1); up(b, 1); notes.push(`${a.toUpperCase()} +1, ${b.toUpperCase()} +1`); }
+    /* never lowers a score already above the cap (B-005) */
+    const up = (ab, n) => { const v = c.abilities[ab] || 10; c.abilities[ab] = Math.max(v, Math.min(cap, v + n)); return c.abilities[ab] - v; };
+    const gained = (ab, g) => g ? `${ab.toUpperCase()} +${g}` : `${ab.toUpperCase()} already ${c.abilities[ab]}`;
+    if (m === 'two'){ const a = $('#lu_a1').value; notes.push(gained(a, up(a, 2))); }
+    else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } notes.push(gained(a, up(a, 1)) + ', ' + gained(b, up(b, 1))); }
     else if (m === 'feat'){ const f = $('#lu_feat').value; c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
   }
   if (T.isNew){ c.multi = multi(c); c.multi.push({class:T.class, subclass:T.subclass || '', level:1}); notes.unshift(`${T.class} 1`); }
@@ -3574,10 +3578,10 @@ const ACT_EXTRA = {
   encPrev(){ const E = G.enc; if (!E.list.length) return; E.turn--; if (E.turn < 0){ E.turn = E.list.length - 1; E.round = Math.max(1, E.round - 1); } saveEnc(); renderPage(); },
   encClear(){ confirmBox('Clear the encounter?', 'Clear', () => { G.enc = {round:1, turn:0, list:[]}; saveEnc(); renderPage(); }); },
   encDel(id){ const i = G.enc.list.findIndex(r => r.id === id); G.enc.list.splice(i, 1); if (G.enc.turn >= G.enc.list.length) G.enc.turn = 0; saveEnc(); renderPage(); },
-  encDmg(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = num('amt_' + id), h = heroOf(r); if (!a) return;
+  encDmg(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = hpNum('amt_' + id), h = heroOf(r); if (!a) return;
     if (h){ applyDamage(h, a); save(); } else { const soak = Math.min(r.temp || 0, a); r.temp = (r.temp || 0) - soak; r.hp = Math.max(0, r.hp - (a - soak)); if (r.hp === 0) toast(`${r.n} drops!`); }
     saveEnc(); render(); },
-  encHeal(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = num('amt_' + id), h = heroOf(r); if (!a) return;
+  encHeal(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = hpNum('amt_' + id), h = heroOf(r); if (!a) return;
     if (h){ h.hp.cur = Math.min(h.hp.max, h.hp.cur + a); save(); } else r.hp = Math.min(r.max, r.hp + a); saveEnc(); render(); },
   encAddCond(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, h = heroOf(r), n = $('#cn_' + id).value, rd = $('#cr_' + id).value === '' ? null : Math.max(1, num('cr_' + id));
     if (h){ if (!h.conditions.includes(n)) h.conditions.push(n); h.condDur = h.condDur || {}; if (rd) h.condDur[n] = rd; else delete h.condDur[n]; save(); }
@@ -3611,9 +3615,9 @@ const ACT = {
   rollSpellAtk(){ const c = active(); testRoll('Spell attack', mod(c.abilities[spellAb(c)]) + profFor(c.level)); },
   toggleSave(ab){ mut(c => c.saves[ab] = c.saves[ab] ? 0 : 1, false); },
   cycleSkill(id){ mut(c => c.skills[id] = ((c.skills[id] || 0) + 1) % 3, false); },
-  damage(){ mut(c => applyDamage(c, num('hpAmt'))); },
-  heal(){ mut(c => { c.hp.cur = Math.min(c.hp.max, c.hp.cur + num('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
-  tempHP(){ mut(c => c.hp.temp = Math.max(c.hp.temp || 0, num('hpAmt'))); },
+  damage(){ mut(c => applyDamage(c, hpNum('hpAmt'))); },
+  heal(){ mut(c => { c.hp.cur = Math.min(c.hp.max, c.hp.cur + hpNum('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
+  tempHP(){ mut(c => c.hp.temp = Math.max(c.hp.temp || 0, hpNum('hpAmt'))); },
   setExh(n){ mut(c => c.exhaustion = +n, false); },
   toggleCond(n){ mut(c => { const i = c.conditions.indexOf(n); if (i >= 0){ c.conditions.splice(i, 1); if (c.condDur) delete c.condDur[n]; } else c.conditions.push(n); }, false); },
   setDeath(arg){ mut(c => { if (arg === 'reset') { c.death = {s:0, f:0}; return; } const [k, n] = arg.split(':'); c.death[k] = (c.death[k] || 0) === +n ? +n - 1 : +n; }, false); },
@@ -3702,15 +3706,23 @@ const ACT = {
   export(){ const c = active(), txt = JSON.stringify(heroData(c));
     modal(`<div class="head"><h2>Export ${esc(c.name)}</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Copy this text, or download it, then use Import on any device.</p>
       <label class="sr" for="expTxt">Character JSON</label><textarea id="expTxt" style="min-height:180px" readonly>${esc(txt)}</textarea>
-      <div class="row mt">${act('copyExport', undefined, 'Copy', 'btn small')}${act('downloadChar', undefined, 'Download .json', 'btn small ghost')}</div>`, {label:'Export'}); },
+      <div class="row mt">${act('copyExport', undefined, 'Copy', 'btn small')}${act('downloadChar', undefined, 'Download .json', 'btn small ghost')}</div>
+      <h4 class="mt">Back up every hero</h4><p class="muted">One file with all ${backupHeroes().length} of your heroes. Import it on any device to bring them all back.</p>
+      <div class="row">${act('exportAll', undefined, `Export all heroes (${backupHeroes().length})`, 'btn small ghost')}</div>`, {label:'Export'}); },
+  exportAll(){ const list = backupHeroes(); if (!list.length){ toast('There are no heroes of yours to back up.'); return; }
+    const file = {grimoire:'heroes', version:1, exported:new Date().toISOString(), heroes:list.map(heroData)};
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 1)], {type:'application/json'}));
+    a.download = 'grimoire-heroes-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); a.remove();
+    toast(`${list.length} hero${list.length === 1 ? '' : 'es'} saved in one file.`); },
   async copyExport(){ const t = $('#expTxt'); try { await navigator.clipboard.writeText(t.value); toast('Copied.'); } catch (e) { t.select(); toast('Selected: press Ctrl+C / ⌘C to copy.'); } },
   downloadChar(){ const c = active(); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(heroData(c), null, 2)], {type:'application/json'})); a.download = c.name.replace(/\W+/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove(); },
-  import(){ modal(`<div class="head"><h2>Import a hero</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Paste exported JSON, or choose a .json file.</p>
+  import(){ modal(`<div class="head"><h2>Import a hero</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Paste exported JSON, or choose a .json file. A backup made with "Export all heroes" brings back every hero in it.</p>
       <label class="sr" for="impTxt">Character JSON</label><textarea id="impTxt" style="min-height:160px"></textarea>
       <div class="row mt">${act('doImport', undefined, 'Import', 'btn small')}<label class="btn small ghost" for="impFile">Choose file</label><input type="file" id="impFile" accept=".json" class="sr"></div>`, {label:'Import'});
     $('#impFile').onchange = async e => { const f = e.target.files[0]; if (f){ $('#impTxt').value = await f.text(); ACT.doImport(); } }; },
   doImport(){
     let o; try { o = JSON.parse($('#impTxt').value); } catch (e) {}
+    if (Array.isArray(o) || (isObj(o) && Array.isArray(o.heroes))){ importBackup(Array.isArray(o) ? o : o.heroes); return; }
     if (!isObj(o) || o.name == null || o.name === '' || !isObj(o.abilities)){ toast('That is not a hero exported from this tome.'); return; }
     const prev = G.activeId;
     try { LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete o[k]); o.id = uid(); G.chars.push(fixup(o)); G.activeId = o.id; render(); }
@@ -3800,6 +3812,27 @@ const tombKey = () => 'grimoire-tomb-v1:' + me();
 const deviceName = () => /iPad/.test(navigator.userAgent) || /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1 ? 'iPad'
   : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : /Windows/.test(navigator.userAgent) ? 'Windows PC' : /Mac/.test(navigator.userAgent) ? 'Mac' : 'browser';
 const LOCAL_FIELDS = ['_sig', '_dirty', '_rev', '_blocked', 'ownerName', 'updatedAt', 'editedOn'];
+/* Backups (B-015): every hero of yours in one file; importing it adds them as new heroes, skipping exact copies already in the tome. */
+const backupHeroes = () => G.chars.filter(c => isMine(c));
+const sameHeroKey = c => { const o = heroData(c); ['id', 'owner', 'createdAt'].forEach(k => delete o[k]); return sigHash(JSON.stringify(o)); };
+function importBackup(list){
+  const have = new Set(G.chars.map(sameHeroKey)), prev = G.activeId, added = [];
+  let bad = 0, same = 0;
+  for (const raw of list){
+    if (!isObj(raw) || raw.name == null || raw.name === '' || !isObj(raw.abilities)){ bad++; continue; }
+    let h; try { h = JSON.parse(JSON.stringify(raw)); LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete h[k]); h.id = uid(); fixup(h); }
+    catch (e) { console.warn('Backup hero rejected', e); bad++; continue; }
+    const k = sameHeroKey(h); if (have.has(k)){ same++; continue; }
+    have.add(k); added.push(h);
+  }
+  if (!added.length){ toast(same ? `Every hero in that file is already in the tome${bad ? `; ${bad} damaged entr${bad === 1 ? 'y' : 'ies'} skipped` : ''}.` : 'That file has no heroes this tome can read.', same ? '' : 'fumble'); if (same) closeModal(); return; }
+  try { G.chars.push(...added); G.activeId = added[0].id; render(); }
+  catch (e) { console.warn('Backup import rejected', e); const ids = new Set(added.map(h => h.id)); G.chars = G.chars.filter(h => !ids.has(h.id)); G.activeId = prev; render(); toast('That backup is damaged, so nothing was imported.', 'fumble'); return; }
+  save(); closeModal();
+  const extra = [same && `${same} already here`, bad && `${bad} damaged skipped`].filter(Boolean).join(', ');
+  const n = `${added.length} hero${added.length === 1 ? '' : 'es'}`;
+  toast(G.saveFailed ? `${n} on the page but not saved: no room on this device.` : `${n} back in the tome${extra ? ` (${extra})` : ''}.`, G.saveFailed ? 'fumble' : '');
+}
 const heroData = c => { const o = {}; for (const k in c) if (!LOCAL_FIELDS.includes(k)) o[k] = c[k]; return o; };
 /* _sig is a short fingerprint of the hero's data (two 53-bit cyrb53 hashes), not a second copy of the hero:
    it only answers "did this hero change?". Saves made before kept the whole hero as text (starting with "{"):
@@ -4006,7 +4039,7 @@ function saveWarn(){
   if (w) return;
   w = document.createElement('div'); w.id = 'saveWarn'; w.className = 'toast fumble'; w.setAttribute('role', 'alert');
   w.style.cssText = 'top:auto;bottom:max(12px, env(safe-area-inset-bottom, 0px));z-index:96;width:min(640px, 92vw)';
-  w.innerHTML = `<b>Not saved.</b> This device is out of storage space for the tome, so your latest changes will be lost when you close the page. Export your heroes, delete ones you no longer need, then ${act('retrySave', undefined, 'Try again', 'btn small')}`;
+  w.innerHTML = `<b>Not saved.</b> This device is out of storage space for the tome, so your latest changes will be lost when you close the page. Export your heroes, delete ones you no longer need, then ${act('retrySave', undefined, 'Try again', 'btn small')} ${act('exportAll', undefined, 'Export all heroes', 'btn small ghost')}`;
   document.body.appendChild(w);
 }
 function saveTomb(){ try { localStorage.setItem(tombKey(), JSON.stringify(S.tomb)); } catch (e) {} }
@@ -4249,7 +4282,7 @@ function passwordModal(){
 
 /* ---- read-only heroes: party members' sheets can be read and rolled, never changed ---- */
 const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack',
-  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
+  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
   ...Object.keys(ACT_CLOUD)]);
 const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew)/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
