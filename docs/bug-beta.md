@@ -5,6 +5,56 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
+- Trovato da: distruttore · 2026-11-09
+- Sezione: import/export (salvataggio con più schede)
+- Dove: I Eroe (campo Nome) e VIII Cronaca (note), 1440x900, due schede sullo stesso sito
+- Passi: 1. Apri il sito nelle schede A e B, entrambe su Valeria Thorne. 2. In B apri Chronicle e scrivi qualcosa nella storia di Valeria (o cambia il Nome nella scheda Eroe senza uscire dal campo). 3. In A cancella Valeria (Delete → conferma). 4. Torna in B e continua a scrivere, poi esci dal campo.
+- Atteso: B si accorge che Valeria non c'è più (avviso, il testo non viene salvato su nessun altro eroe) oppure Valeria resta perché era in modifica.
+- Ottenuto: la storia di **Eldrin** diventa "A city guardsman who took up the adventuring road. scrive ancora" (testo di Valeria + quello scritto): la sua storia vera ("Apprentice of the Spire.") è persa senza avviso. Con il Nome: Eldrin si chiama "Valeria EDITATA in B". La pagina di B mostra ancora "Valeria Thorne · Chronicle". Causa probabile: `otherTabSaved`/`mergeStored` (index.html ~4015) tolgono l'eroe e spostano `G.activeId` sul primo eroe mentre si scrive (`isTyping` rimanda solo il render), poi `bindValue` (~4333) scrive su `active()`, che ora è un altro eroe.
+- Console: nessun errore.
+- Test: `importexport` "B-016 …" (2 test).
+
+### B-017 [bassa] Monete negative accettate nello Zaino
+- Trovato da: distruttore · 2026-11-09
+- Sezione: zaino
+- Dove: VII Pack & Riches → monete, 1440x900
+- Passi: 1. Scrivi `-100` in GP e `-3` in PP.
+- Atteso: valore portato a 0 (o rifiutato).
+- Ottenuto: salvati `gp:-100, pp:-3`. Anche l'import accetta `"currency":{"sp":-5}` e `"gp":1e308` (mostrato "≈ 1e+308 gp"). `bindValue` con `data-type="int"` non ha minimo; stessa cosa per XP (`-5000` salvato).
+- Console: nessun errore.
+- Test: `zaino` "B-017 …".
+
+### B-018 [bassa] CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
+- Trovato da: distruttore · 2026-11-09
+- Sezione: combattimento
+- Dove: III Combattimento, 1440x900
+- Passi: 1. AC adjustment `-999`. 2. Oppure Import `{"name":"Enorme","abilities":{"str":10},"class":"Fighter","level":20,"hp":{"cur":1e308,"max":1e308,"temp":1e308}}`. 3. Oppure PF massimi `999999999999` nel campo.
+- Atteso: CA mai sotto 0 e PF entro un massimo ragionevole (B-007 ha messo solo i minimi).
+- Ottenuto: CA mostrata -981; PF "1e+308 / 1e+308 · 1e+308 temp" (i danni non li scalfiscono); 999999999999 accettato dal campo.
+- Console: nessun errore.
+- Test: `combattimento` "B-018 …".
+
+### B-019 [media] Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
+- Trovato da: distruttore · 2026-11-09
+- Sezione: telefono
+- Dove: VII Pack & Riches e III Combattimento, 390x844
+- Passi: 1. Pack & Riches → Custom → nome "Mappa", descrizione `Vedi https://example.com/mappe/abcdefghij…` (un link di ~180 caratteri) → Add. 2. Guarda la larghezza della pagina.
+- Atteso: il testo va a capo (`overflow-wrap:anywhere`), nessuno scroll orizzontale.
+- Ottenuto: `scrollWidth` 1.054 px dall'interfaccia (1.400 px con un link di 200 caratteri). Stessa cosa con un nome di attacco di 80 caratteri senza spazi (Combattimento 1.291 px), un nome di oggetto (Zaino 1.325 px), una nota di attacco con link (1.365 px), e con specie o sottoclasse homebrew di 80 caratteri (tutti i capitoli ~1.190–1.290 px; lo scaffale `.hero` è largo 1.225 px). Note e talenti invece vanno a capo bene.
+- Console: nessun errore.
+- Test: `telefono` "B-019 …" (2 test).
+
+### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
+- Trovato da: distruttore · 2026-11-09
+- Sezione: workshop
+- Dove: X Workshop → Import file, 1440x900
+- Passi: 1. File `{"spell":[…]}` con N incantesimi validi e diversi. 2. Import file.
+- Atteso: tempo che cresce in proporzione alle voci (o un limite con messaggio).
+- Ottenuto: 1.000 voci 0,38 s, 2.000 0,9 s, 4.000 2,5 s, 20.000 **109 s** prima della finestra di scelta (pagina ferma). I file veri di 5etools (fino a ~1.800 voci) restano sotto il secondo, quindi gravità bassa. Il resto dell'import ha retto: liste non array, `null`, nomi numerici/oggetto/HTML, tag `{@` non chiusi, 3.000 tag annidati, `entries` annidate 5.000 volte, `_copy` circolari, chiavi `__proto__`: nessun errore.
+- Console: nessun errore.
+- Test: `workshop` "B-020 …".
+
 ### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
 - Trovato da: power user · 2026-11-08
 - Dove: scaffale degli eroi, 390x844 (anche 1440x900)
@@ -156,3 +206,5 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 - 2026-11-06 · distruttore · Prima sessione (Playwright/Chromium, server locale, stesso codice del sito live). Import eroe con 15 JSON malformati (tipi sbagliati, null, valori enormi, multiclasse oltre 20, XSS in nome/classe/specie/note); wizard con nomi vuoti, di soli spazi, da 20.000 caratteri, emoji composte, HTML, livelli -1/0/21/2.7/abc/1e3; PF con danni/cure/temporanei negativi; due schede aperte insieme; level up 1→20 per tutte le 12 classi alternando ASI e talenti; doppio clic su "Become level"; ASI su punteggio sopra 20; import homebrew con nome numerico/oggetto, campi del tipo sbagliato, XSS, 50 voci, categorie `__proto__`/`constructor`; offline con service worker; localStorage pieno; ripristino da eroe rotto. Nessun XSS riuscito (tutto passa da `esc`), offline ok, doppio clic non applica due livelli, level up fino a 20 senza errori. Trovati B-001…B-011.
 - 2026-11-08 · power user · Sito live, Playwright/Chromium, 1440x900 e 390x844, anche CPU 4x. Tomo con 33 eroi: 3 di esempio, 6 dal wizard (livelli 11–20), 24 importati dalla finestra Import (livelli 10–20, 80 oggetti, 45–60 incantesimi, 8 attacchi, note da ~6.500 caratteri). Numeri (desktop / telefono, mediana): apertura del tomo fino allo scaffale completo 0,81 s / 0,79 s, con CPU 4x 2,0 s / 2,0 s; cambio eroe 65–105 ms / 42–61 ms (CPU 4x 210–290 ms, Zaino il più lento fino a 490 ms); cambio capitolo 140–220 ms / 90–120 ms (CPU 4x 410–690 ms); level up apertura 129 ms, conferma 149 ms (CPU 4x 115 / 269 ms); wizard 90 ms; import di un eroe pesante 94 ms; cancellazione 55 ms; filtro dello zaino 37–90 ms a tasto. Memoria JS 4 MB a vuoto → 11,3 MB con 33 eroi, stabile dopo 200 cambi eroe (nessuna perdita). localStorage 1,46 milioni di caratteri (~44 KB per eroe pesante), libero 3,78 milioni: limite ~5,24 milioni, circa 118 eroi così; IndexedDB 72 KB. Verificati sul live: B-004 (avviso "Not saved" resta, Try again lo toglie, eroi presenti dopo ricarica), B-003 (4 JSON rotti, tutti i capitoli aperti, nessun errore), B-001 (voce `n:42` scartata, tomo ok dopo ricarica), B-002 (EroeTabA ed EroeTabB entrambi presenti nella terza scheda). Export → re-import identico; 20 eroi cancellati, ricarica ok. Console pulita. Ancora 10 px di scroll orizzontale a 390 px (già nel backlog). Trovati B-012…B-015.
+- 2026-11-09 · distruttore · Sessione serale sul salvataggio nuovo (Playwright/Chromium, server locale = stesso codice di main a814a69). Suite completa 164/165 (resta solo B-014): B-005, B-006, B-012, B-013, B-015 e i test del telefono reggono. Tecniche nuove: tre schede con 60 operazioni casuali (crea, cancella, danni, cambio capitolo) → nessun eroe perso né resuscitato, 4ª scheda identica; memoria piena in due schede → avviso in entrambe, liberato lo spazio in B "Try again" salva, A unisce e alla modifica successiva salva anche il suo eroe (nessuna perdita); cancellazione in una scheda mentre l'altra sta scrivendo → **B-016**. "Export all"/import di backup con `[]`, `{"heroes":[]}`, `[null,5,"x"]`, doppioni nel file, id già presenti, nome `__proto__`, JSON annidato 3.000 livelli, valori 1e308: nessun errore, doppioni saltati. Import 5etools con 11 file malformati e fino a 20.000 voci (**B-020**). Campi numerici con negativi ed enormi (**B-017**, **B-018**). Telefono 390 px con testi lunghi senza spazi in ogni campo (**B-019**). Tastiera: Esc annulla la conferma di cancellazione, Invio ripetuto non cancella. Console pulita in tutte le prove. Nota: un eroe singolo con un campo `heroes:[]` viene letto come backup vuoto ("no heroes"), caso improbabile e non registrato.
+

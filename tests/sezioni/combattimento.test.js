@@ -105,4 +105,14 @@ module.exports = {sezione:'combattimento', test:[
     const h = await app.hero();
     assert.ok(h.hp.cur >= 0, `PF ${h.hp.cur}/32 dopo cura -100`);
   }],
+  ['B-018 CA e PF restano in un intervallo sensato (regolazione -999, PF 1e308 da import)', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.set('#f_acb', '-999');
+    const v = parseInt(await ac(app), 10);
+    assert.ok(v >= 0, `CA mostrata ${v}`);
+    await app.click('import'); await app.page.fill('#impTxt', JSON.stringify({name:'Enorme', abilities:{str:10}, class:'Fighter', level:20, hp:{cur:1e308, max:1e308, temp:1e308}})); await app.click('doImport');
+    await app.go('combat');
+    const t = await app.text('#page');
+    assert.ok(!/e\+\d/.test(t), 'PF in notazione esponenziale: ' + (t.match(/.{0,20}e\+\d+.{0,20}/) || [''])[0]);
+  }],
 ]};

@@ -110,4 +110,22 @@ module.exports = {sezione:'importexport', test:[
     const found = await app.page.evaluate(() => [...document.querySelectorAll('button, a')].some(b => /export all|all heroes|every hero|esporta tutti|backup/i.test(b.textContent)));
     assert.ok(found, 'nessun pulsante per esportare tutti gli eroi insieme');
   }],
+  ["B-016 due schede: se A cancella l'eroe che B sta scrivendo, le note di un altro eroe non cambiano", async ({open}) => {
+    const a = await open(); const b = await a.newTab();
+    await b.go('chronicle');
+    const before = (await b.heroById('teldrin')).notes.story;
+    await b.page.click('[data-bind="notes.story"]'); await b.page.keyboard.type(' e poi');
+    await a.click('deleteChar'); await a.confirm(); await a.page.waitForTimeout(300);
+    await b.page.keyboard.type(' ancora'); await b.page.keyboard.press('Tab'); await b.page.waitForTimeout(300);
+    const e = await b.heroById('teldrin');
+    assert.strictEqual(e.notes.story, before, 'storia di Eldrin sovrascritta: ' + JSON.stringify(e.notes.story).slice(0, 120));
+  }],
+  ["B-016 due schede: se A cancella l'eroe che B sta rinominando, nessun altro eroe prende quel nome", async ({open}) => {
+    const a = await open(); const b = await a.newTab();
+    await b.page.fill('#f_name', 'Nome scritto in B');
+    await a.click('deleteChar'); await a.confirm(); await a.page.waitForTimeout(300);
+    await b.page.keyboard.press('Tab'); await b.page.waitForTimeout(300);
+    const names = (await b.store()).chars.map(c => c.name);
+    assert.deepStrictEqual(names, ['Eldrin Moonwhisper', 'Kessa Quickpaw']);
+  }],
 ]};

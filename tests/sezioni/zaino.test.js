@@ -84,4 +84,10 @@ module.exports = {sezione:'zaino', test:[
     await app.click('delItem', '0');
     assert.strictEqual((await app.hero()).inventory.length, 5);
   }],
+  ['B-017 monete: un valore negativo non viene salvato', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    await app.set('#coin_gp', '-100'); await app.set('#coin_pp', '-3');
+    const c = (await app.hero()).currency;
+    assert.ok(c.gp >= 0 && c.pp >= 0, `monete salvate: ${c.gp} gp, ${c.pp} pp`);
+  }],
 ]};

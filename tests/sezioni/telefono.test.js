@@ -39,4 +39,18 @@ module.exports = {sezione:'telefono', test:[
     const bad = await app.page.$$eval('#page input[type=text], #page input[type=number], #page select, #omni', els => els.filter(e => e.getBoundingClientRect().width > 0 && parseFloat(getComputedStyle(e).fontSize) < 16).map(e => (e.id || e.tagName) + ' ' + getComputedStyle(e).fontSize));
     assert.deepStrictEqual(bad, [], bad.slice(0, 6).join(', '));
   }],
+  ['B-019 390 px: un link lungo nella descrizione di un oggetto non allarga la pagina', async ({open}) => {
+    const app = await open(PHONE); await app.go('pack');
+    await app.click('addTab', 'custom');
+    await app.page.fill('#it_n', 'Mappa'); await app.page.fill('#it_d', 'Vedi https://example.com/mappe/' + 'abcdefghij'.repeat(15));
+    await app.click('addCustom');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
+  ['B-019 390 px: nome lungo senza spazi di un attacco non allarga Combattimento', async ({open}) => {
+    const h = fx.hero(fx.VALERIA); h.attacks = (h.attacks || []).concat([{n:'W'.repeat(80), bonus:5, dmg:'1d6', note:''}]);
+    const app = await open({...PHONE, heroes:[h]}); await app.go('combat');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
 ]};
