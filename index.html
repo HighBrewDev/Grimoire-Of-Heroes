@@ -606,6 +606,10 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .bwForm .bwWide{grid-column:1/-1}
 .bwForm .bwWide .row{gap:6px 14px}
 .bwForm textarea{width:100%;min-height:90px}
+.b5List{max-height:min(52vh,460px);overflow:auto;margin-top:8px;padding-right:4px}
+.b5List h4{margin:10px 0 2px}
+.b5Row{gap:8px;padding:3px 0;align-items:flex-start}
+.b5Row[hidden]{display:none}
 .bwCheck{padding:8px 0 6px}
 .bwScores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .bwScores label{display:flex;flex-direction:column;font-size:12px;font-family:var(--f-display);letter-spacing:.06em;color:var(--ink2)}
@@ -1873,7 +1877,7 @@ function entryActions(e){
   }
 }
 function entryCard(e){
-  return `<div class="head"><h2>${esc(e.n)}</h2>${srcTag(e)}<span class="spacer"></span>${entryActions(e)}</div>
+  return `<div class="head"><h2>${esc(e.n)}</h2>${srcTag(e)}<span class="spacer"></span>${entryActions(e)}${brewable(e) ? act('brewFrom', e.id, 'Copy to Workshop', 'btn small ghost', 'title="Open it in the Workshop form as a starting point for your own homebrew"') : ''}</div>
     <div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`;
 }
 function showEntry(e){
@@ -2028,10 +2032,13 @@ const BREW = {
     ['n', 'Name', 'text'], ['cat', 'Type', 'select', ['Wondrous Item', 'Armor', 'Weapon', 'Ring', 'Rod', 'Staff', 'Wand', 'Potion', 'Scroll']], ['rar', 'Rarity', 'select', RARITIES.slice(1)],
     ['att', 'Requires attunement', 'check'], ['x', 'Description', 'area']]},
   monsters:{t:'Creature', hint:'Add it to fights from the Encounter page.', f:[
-    ['n', 'Name', 'text'], ['sz', 'Size', 'select', ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']], ['ty', 'Type', 'text', 'monstrosity'], ['al', 'Alignment', 'text', 'unaligned'],
+    ['n', 'Name', 'text'], ['sz', 'Size', 'select', ['Tiny', 'Small', 'Medium', 'Small or Medium', 'Large', 'Huge', 'Gargantuan']], ['ty', 'Type', 'text', 'monstrosity'], ['al', 'Alignment', 'text', 'unaligned'],
     ['ac', 'Armor Class', 'number', '13'], ['hp', 'Hit Points', 'text', '45 (6d10 + 12)'], ['spd', 'Speed', 'text', '30 ft., fly 60 ft.'], ['ab', 'Ability scores', 'scores'],
-    ['cr', 'Challenge rating', 'text', '3'], ['sen', 'Senses', 'text', 'darkvision 60 ft., passive Perception 12'], ['lang', 'Languages', 'text', '—'],
-    ['tr', 'Traits', 'traits', 'Keen Smell: Advantage on Wisdom (Perception) checks that rely on smell.'], ['act', 'Actions', 'traits', 'Bite: Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage.']]},
+    ['cr', 'Challenge rating', 'text', '3'], ['sv', 'Saving throws', 'text', 'Dex +5, Wis +3'], ['sk', 'Skills', 'text', 'Perception +4, Stealth +5'],
+    ['res', 'Resistances', 'text', 'Cold, Fire'], ['imm', 'Immunities', 'text', 'Poison; Poisoned'], ['sen', 'Senses', 'text', 'darkvision 60 ft., passive Perception 12'], ['lang', 'Languages', 'text', '—'],
+    ['tr', 'Traits', 'traits', 'Keen Smell: Advantage on Wisdom (Perception) checks that rely on smell.'], ['act', 'Actions', 'traits', 'Bite: Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage.'],
+    ['bon', 'Bonus actions', 'traits', 'Nimble Escape: The creature takes the Disengage or Hide action.'], ['re', 'Reactions', 'traits', 'Parry: The creature adds 2 to its AC against one melee attack that would hit it.'],
+    ['leg', 'Legendary actions', 'traits', 'Swoop: The creature moves up to half its Speed.']]},
 };
 let BREW_ITEMS = [];
 const brewPack = () => ({id:BREW_ID, name:'Homebrew', kind:'brew', added:Date.now(), count:BREW_ITEMS.length, items:BREW_ITEMS});
@@ -2090,36 +2097,46 @@ function readBrew(cat){
 }
 function workshopHTML(){
   const cat = G.brewCat in BREW ? G.brewCat : 'classes', B = BREW[cat];
-  const editing = G.brewEdit && BREW_ITEMS.find(it => it.id === G.brewEdit), o = editing ? editing.o : {};
+  const editing = G.brewEdit && BREW_ITEMS.find(it => it.id === G.brewEdit), o = editing ? editing.o : G.brewDraft?.cat === cat ? G.brewDraft.o : {};
   const mine = Object.keys(BREW).map(k => [k, BREW_ITEMS.filter(it => it.cat === k)]).filter(([, l]) => l.length);
   const left = plusOK() ? '' : `<p class="muted small">Free plan: ${Math.max(0, FREE_BREW - BREW_ITEMS.length)} of ${FREE_BREW} creations left. ${act('plus', undefined, 'Unlimited with Grimoire+', 'sb')}</p>`;
   return `<div class="libTabs" role="tablist">${Object.entries(BREW).map(([k, b]) => act('brewCat', k, `${esc(b.t)}${BREW_ITEMS.some(it => it.cat === k) ? ` <span class="muted">${BREW_ITEMS.filter(it => it.cat === k).length}</span>` : ''}`, 'sb' + (k === cat ? ' on' : ''), `role="tab" aria-selected="${k === cat}"`)).join('')}</div>
   <div class="grid2" style="margin-top:12px">
     ${card(`${editing ? 'Edit' : 'New'} ${esc(B.t.toLowerCase())}`, `<p class="muted">${esc(B.hint)}</p>
       <div class="bwForm">${B.f.map(f => brewField(f, o)).join('')}</div>
-      <div class="row mt">${act('brewSave', undefined, editing ? 'Save changes' : `＋ Add ${B.t.toLowerCase()}`, 'btn')}${editing ? act('brewNew', undefined, 'Cancel', 'btn ghost') : ''}</div>${left}`)}
+      <div class="row mt">${act('brewSave', undefined, editing ? 'Save changes' : `＋ Add ${B.t.toLowerCase()}`, 'btn')}${editing || G.brewDraft?.cat === cat ? act('brewNew', undefined, editing ? 'Cancel' : 'Clear', 'btn ghost') : ''}</div>${left}`)}
     <div class="stack">
       ${card(`Your creations <span class="muted">${BREW_ITEMS.length}</span>`, mine.length ? mine.map(([k, l]) => `<h4>${esc(BREW[k].t)}</h4>${l.map(it =>
         `<div class="kv"><span><button type="button" class="xref" data-act="detailId" data-arg="brew:${esc(it.id)}">${esc(it.o.n)}</button> <span class="muted">${esc(brewKey(k, it.o) || '')}</span></span><span class="row">${act('brewEdit', it.id, 'Edit')}${act('brewDel', it.id, '✕', 'sb x', `aria-label="Delete ${esc(it.o.n)}"`)}</span></div>`).join('')}`).join('')
         : '<p class="empty">Nothing forged yet. Pick a kind above, fill the form and it joins every menu of the tome.</p>')}
       ${card('Share and back up', `<p class="muted">Your homebrew lives on this device. Export it to move it to another device or give it to your table; import a file to merge it here.</p>
         <div class="row">${act('brewExport', undefined, 'Export homebrew', 'btn small')}<label class="btn small ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr"></div>
-        <p class="muted small">Community 5e JSON files go through Library → Import.</p>`)}
+        <p class="muted small">Takes a Grimoire homebrew export, or a 5etools-style JSON file (<code>{"spell":[…]}</code>, <code>{"monster":[…]}</code>, classes, feats, species, items…): you choose which entries to turn into homebrew you can edit. To only read a big source, use Library → Import instead.</p>`)}
     </div>
   </div>`;
 }
 async function brewImport(file){
   let j; try { j = JSON.parse(await file.text()); } catch (e) { toast('That file is not valid JSON.'); return; }
-  if (!Array.isArray(j?.grimoireHomebrew)){ toast('Not a Grimoire homebrew export. Community 5e JSON goes through Library → Import.'); return; }
+  if (!Array.isArray(j?.grimoireHomebrew)){
+    const r = from5(j);
+    if (r.items.length) return brewPick(r, file.name.replace(/\.json$/i, ''));
+    toast(`Nothing the Workshop can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON such as {"spell":[…]}.`); return;
+  }
   const items = cleanBrew(j.grimoireHomebrew), bad = j.grimoireHomebrew.length - items.length;
   if (!items.length){ toast(`No usable entries in that file${bad ? ` (${bad} skipped: each needs a known kind and a text name)` : ''}.`); return; }
+  const n = await mergeBrew(items);
+  toast(`${items.length} homebrew entries merged (${n} new)${bad ? `, ${bad} skipped (each needs a known kind and a text name)` : ''}.`);
+}
+// same rule for every import: an entry with the same kind and name is replaced, anything else is added
+async function mergeBrew(items){
   let n = 0;
   items.forEach(it => { const had = BREW_ITEMS.find(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n)); if (had) had.o = it.o; else { BREW_ITEMS.push({id:uid(), cat:it.cat, o:it.o}); n++; } });
-  await saveBrew(); reloadBrew(); renderPage(); toast(`${items.length} homebrew entries merged (${n} new)${bad ? `, ${bad} skipped (each needs a known kind and a text name)` : ''}.`);
+  await saveBrew(); reloadBrew(); renderPage();
+  return n;
 }
 const ACT_BREW = {
-  brewCat(k){ G.brewCat = k; G.brewEdit = null; renderPage(); },
-  brewNew(){ G.brewEdit = null; renderPage(); },
+  brewCat(k){ G.brewCat = k; G.brewEdit = null; G.brewDraft = null; renderPage(); },
+  brewNew(){ G.brewEdit = null; G.brewDraft = null; renderPage(); },
   brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; G.brewCat = it.cat; G.brewEdit = id; renderPage(); $('#bw_n')?.focus(); },
   async brewSave(){
     const cat = G.brewCat in BREW ? G.brewCat : 'classes', o = readBrew(cat);
@@ -2128,7 +2145,7 @@ const ACT_BREW = {
     if (!editing && !plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
     if (BREW_ITEMS.some(x => x.cat === cat && norm(x.o.n) === norm(o.n) && x !== editing)){ toast(`You already have a ${BREW[cat].t.toLowerCase()} called ${o.n}.`); return; }
     if (editing) editing.o = o; else BREW_ITEMS.push({id:uid(), cat, o});
-    G.brewEdit = null; await saveBrew(); reloadBrew(); render(); toast(`${o.n} ${editing ? 'updated' : 'joins the tome'}.`);
+    G.brewEdit = null; G.brewDraft = null; await saveBrew(); reloadBrew(); render(); toast(`${o.n} ${editing ? 'updated' : 'joins the tome'}.`);
   },
   brewDel(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return;
     confirmBox(`Delete ${it.o.n}? Heroes that use it keep its name.`, 'Delete', async () => { BREW_ITEMS = BREW_ITEMS.filter(x => x !== it); if (G.brewEdit === id) G.brewEdit = null; await saveBrew(); reloadBrew(); render(); }); },
@@ -2138,6 +2155,266 @@ const ACT_BREW = {
     navigator.clipboard?.writeText(txt).then(() => toast('Downloaded, and copied to the clipboard too.'), () => {});
   },
 };
+
+/* ================================================================== 5etools JSON → Workshop homebrew
+   Turns community 5e JSON (the 5etools format) into the same shapes the Workshop forms write, so an imported
+   spell, creature or class can be edited, exported and shared like anything forged by hand. */
+const SIZE5 = {T:'Tiny', S:'Small', M:'Medium', L:'Large', H:'Huge', G:'Gargantuan'};
+const AB5 = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+const ABN5 = {str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma'};
+const ITEM5 = {W:'Weapon', M:'Weapon', R:'Weapon', A:'Weapon', AF:'Weapon', LA:'Armor', MA:'Armor', HA:'Armor', S:'Armor', RG:'Ring', RD:'Rod', ST:'Staff', WD:'Wand', P:'Potion', SC:'Scroll'};
+const ALIGN5 = {L:'lawful', N:'neutral', NX:'neutral', NY:'neutral', C:'chaotic', G:'good', E:'evil', U:'unaligned', A:'any alignment'};
+const tc5 = s => String(s).replace(/(^|[\s(/-])([a-z])/g, (m, a, b) => a + b.toUpperCase());   // title case that leaves "Calligrapher's" alone
+const FEAT5 = {O:'Origin', G:'General', FS:'Fighting Style', EB:'Epic Boon'};
+const ATK5 = {mw:'Melee Weapon', rw:'Ranged Weapon', ms:'Melee Spell', rs:'Ranged Spell', m:'Melee', r:'Ranged'};
+/** {@tag text|source|display} → the plain text the Workshop stores; dice stay as "2d6 + 3" so the tome still rolls them. */
+function plain5(s){
+  s = typeof s === 'number' ? String(s) : typeof s === 'string' ? s : '';
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/\{@(\w+)\s*([^{}]*?)\}/g, (m, t, body) => {
+      const p = body.split('|'), txt = p[0].trim();
+      switch (t){
+        case 'b': case 'bold': return `**${txt}**`;
+        case 'i': case 'italic': return `*${txt}*`;
+        case 'hit': case 'd20': { const n = parseInt(txt, 10) || 0; return n < 0 ? String(n) : '+' + n; }
+        case 'dc': return 'DC ' + txt;
+        case 'chance': return (p[1] || txt + '%');
+        case 'recharge': return `(Recharge ${txt ? txt + '–6' : '6'})`;
+        case 'atk': return txt.split(',').map(a => ATK5[a.trim()] || a).join(' or ') + ' Attack:';
+        case 'atkr': return txt.split(',').map(a => ATK5[a.trim()] || a).join(' or ') + ' Attack Roll:';
+        case 'h': return 'Hit: ';
+        case 'm': return 'Miss: ';
+        case 'hom': return 'Hit or Miss: ';
+        case 'actSave': return `${ABN5[txt] || tc5(txt)} Saving Throw:`;
+        case 'actSaveFail': return 'Failure:';
+        case 'actSaveSuccess': return 'Success:';
+        case 'actSaveSuccessOrFail': return 'Failure or Success:';
+        case 'actTrigger': return 'Trigger:';
+        case 'actResponse': return 'Response:';
+        case 'dice': case 'damage': case 'autodice': return txt;
+        case 'scaledice': case 'scaledamage': return p[2] || txt;
+        case 'note': case 'filter': case 'link': case '5etools': case 'book': case 'adventure': case 'footnote': case 'area': case 'loader': case 'homebrew': case 'color': case 'highlight': case 'help': case 'style': case 'code': case 'sup': case 'sub': case 'strike': case 'kbd': case 'font': return txt;
+        default: return (p[2] || txt).trim();
+      }
+    });
+  } while (s !== prev);
+  return s.replace(/[ \t]+/g, ' ').trim();
+}
+/** 5etools "entries" → Workshop text: one paragraph per line, "**Name.** text" run-ins, "- " lists and "a | b" tables, as md() reads them. */
+function lines5(e, out = []){
+  if (e == null) return out;
+  if (typeof e === 'string' || typeof e === 'number'){ const t = plain5(e); if (t) out.push(t); return out; }
+  if (Array.isArray(e)){ e.forEach(x => lines5(x, out)); return out; }
+  if (!isObj(e)) return out;
+  const nm = e.name ? `**${plain5(e.name).replace(/[.:]\s*$/, '')}.** ` : '';
+  switch (e.type){
+    case 'list': (e.items || []).forEach(it => { const t = flat5(it); if (t) out.push('- ' + t); }); return out;
+    case 'table': {
+      const cell = c => isObj(c) ? (c.roll ? String(c.roll.exact ?? `${c.roll.min}–${c.roll.max}`) : flat5(c.entry ?? c.entries ?? '')) : plain5(c);
+      const rows = (e.rows || []).map(r => (Array.isArray(r) ? r : r?.row || []).map(cell));
+      if (e.caption) out.push(`**${plain5(e.caption)}**`);
+      if (e.colLabels) rows.unshift(e.colLabels.map(plain5));
+      rows.forEach(r => out.push(r.length > 1 ? r.map(c => c || '—').join(' | ') : '- ' + (r[0] || '')));
+      out.push('');
+      return out;
+    }
+    case 'item': { const t = flat5(e.entry ?? e.entries); if (nm || t) out.push(nm + t); return out; }
+    case 'abilityDc': out.push(`**${plain5(e.name)} save DC** = 8 + your Proficiency Bonus + your ${(e.attributes || []).map(a => ABN5[a] || a).join(' or ')} modifier`); return out;
+    case 'abilityAttackMod': out.push(`**${plain5(e.name)} attack modifier** = your Proficiency Bonus + your ${(e.attributes || []).map(a => ABN5[a] || a).join(' or ')} modifier`); return out;
+    case 'spellcasting': out.push(nm + flat5(spellList5(e))); return out;
+    case 'image': case 'gallery': case 'hr': case 'statblock': case 'refClassFeature': case 'refSubclassFeature': case 'refOptionalfeature': return out;
+  }
+  const sub = lines5(e.entries ?? e.entry ?? [], []);
+  if (nm){ if (sub.length && !/^(- |\*\*)| \| /.test(sub[0])) sub[0] = nm + sub[0]; else sub.unshift(nm.trim()); }
+  out.push(...sub);
+  return out;
+}
+const text5 = e => lines5(e).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+/** The same text on one line, for the one-per-line lists of the forms (features, traits, actions). */
+const flat5 = e => lines5(e).filter(Boolean).map(l => l.replace(/^- /, '• ').split(' | ').join(' – ')).join(' ').slice(0, 4000);
+function spellList5(s){
+  const out = [].concat(s.headerEntries || []);
+  if (s.will) out.push('At will: ' + s.will.join(', '));
+  for (const [k, v] of Object.entries(s.daily || {})) out.push(`${k.replace(/e$/, '')}/day${k.endsWith('e') ? ' each' : ''}: ${[].concat(v).join(', ')}`);
+  for (const [lv, v] of Object.entries(s.spells || {})) out.push(`${lv === '0' ? 'Cantrips' : 'Level ' + lv}${v.slots ? ` (${v.slots} slots)` : ''}: ${(v.spells || []).join(', ')}`);
+  return out.concat(s.footerEntries || []);
+}
+const names5 = (x, key) => [].concat(x ?? []).map(v => typeof v === 'string' ? tc5(plain5(v)) : isObj(v) ? (v.special ? plain5(v.special) : `${v.preNote ? plain5(v.preNote) + ' ' : ''}${names5(v[key], key)}${v.note ? ' ' + plain5(v.note) : ''}`.trim()) : '').filter(Boolean).join(', ');
+const bonus5 = x => isObj(x) ? Object.entries(x).filter(([k]) => typeof x[k] === 'string').map(([k, v]) => `${tc5(k)} ${v}`).join(', ') : '';
+const crNum5 = c => { const v = String(isObj(c) ? c.cr : c ?? ''); if (/^1\/(2|4|8)$/.test(v)) return 1 / +v.slice(2); return v === '' || isNaN(+v) ? v : +v; };
+function time5(t){
+  return [].concat(t || []).map(x => { if (!isObj(x)) return plain5(x);
+    const n = x.number || 1, u = x.unit || '';
+    const base = u === 'action' ? 'Action' : u === 'bonus' ? 'Bonus Action' : u === 'reaction' ? 'Reaction' : `${n} ${u}${n > 1 ? 's' : ''}`;
+    return base + (x.condition ? ', ' + plain5(x.condition) : ''); }).join(' or ');
+}
+function range5(r){
+  if (!isObj(r)) return '';
+  const d = r.distance || {}, amt = d.amount;
+  if (r.type === 'point') return d.type === 'self' ? 'Self' : d.type === 'touch' ? 'Touch' : d.type === 'sight' ? 'Sight' : d.type === 'unlimited' ? 'Unlimited' : `${amt ?? ''} ${d.type === 'feet' ? 'feet' : d.type === 'miles' ? (amt === 1 ? 'mile' : 'miles') : d.type || ''}`.trim();
+  if (r.type === 'special') return 'Special';
+  return `Self (${amt ?? ''}-${d.type === 'miles' ? 'mile' : 'foot'} ${r.type})`;
+}
+function comp5(c){
+  if (!isObj(c)) return '';
+  const m = c.m ? 'M' + (typeof c.m === 'string' ? ` (${plain5(c.m)})` : c.m.text ? ` (${plain5(c.m.text)})` : '') : '';
+  return [c.v && 'V', c.s && 'S', m].filter(Boolean).join(', ');
+}
+function dur5(d){
+  return [].concat(d || []).map(x => { if (!isObj(x)) return '';
+    if (x.type === 'instant') return 'Instantaneous';
+    if (x.type === 'timed'){ const a = x.duration?.amount ?? 1, u = x.duration?.type || ''; return `${x.concentration ? 'up to ' : ''}${a} ${u}${a > 1 ? 's' : ''}`; }
+    if (x.type === 'permanent') return (x.ends || []).includes('dispel') ? 'Until dispelled' : 'Permanent';
+    return tc5(x.type || 'special'); }).filter(Boolean).join(' or ');
+}
+function pre5(list){
+  return [].concat(list || []).filter(isObj).map(p => {
+    const parts = [];
+    if (p.level) parts.push(`Level ${isObj(p.level) ? p.level.level : p.level}+${isObj(p.level) && p.level.class ? ' ' + p.level.class.name : ''}`);
+    if (p.ability) parts.push(p.ability.filter(isObj).map(a => Object.entries(a).map(([k, v]) => `${ABN5[k] || k} ${v}+`).join(' and ')).join(' or '));
+    if (p.race) parts.push(p.race.map(r => tc5(r.name || '')).join(' or '));
+    if (p.feat) parts.push(p.feat.map(f => tc5(String(f).split('|')[0])).join(', '));
+    if (p.spellcasting || p.spellcasting2020 || p.spellcastingFeature) parts.push('Spellcasting or Pact Magic feature');
+    if (p.proficiency) parts.push(p.proficiency.map(x => Object.entries(x).map(([k, v]) => `${tc5(v)} ${k === 'armor' ? 'Armor Training' : k === 'weapon' ? 'weapon proficiency' : k}`).join(', ')).join(' or '));
+    if (p.other) parts.push(plain5(p.other));
+    if (p.otherSummary) parts.push(plain5(p.otherSummary.entry || ''));
+    return parts.filter(Boolean).join(', ');
+  }).filter(Boolean).join('; or ');
+}
+const flags5 = x => [].concat(x || []).flatMap(o => isObj(o) ? Object.keys(o).filter(k => o[k] === true) : []);
+const acts5 = arr => [].concat(arr || []).filter(isObj).map(a => ({n:plain5(a.name || ''), x:flat5(a.entries ?? a.entry ?? '')})).filter(a => a.n || a.x);
+// one converter per 5etools list; each returns the object a Workshop form would save
+const FROM5 = {
+  spell:{cat:'spells', to:o => ({n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
+    conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set((o.classes?.fromClassList || []).map(c => c.name))],
+    x:text5(o.entries), h:flat5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))})},
+  feat:{cat:'feats', to:o => ({n:o.name, ty:FEAT5[String(o.category || 'G').split(':')[0]] || 'General', pre:pre5(o.prerequisite), rep:!!o.repeatable, x:text5(o.entries)})},
+  race:{cat:'species', to:o => {
+    const sz = [].concat(o.size || ['M']).map(s => SIZE5[s] || s), named = [].concat(o.entries || []).filter(e => isObj(e) && e.name);
+    return {n:o.name, ty:tc5([].concat(o.creatureTypes || ['humanoid']).join(' or ')), size:sz.join(' or '), speed:+(isObj(o.speed) ? o.speed.walk : o.speed) || 30,
+      x:text5([].concat(o.entries || []).filter(e => !(isObj(e) && e.name))), tr:named.map(e => ({n:plain5(e.name), x:flat5(e.entries ?? e.entry)}))};
+  }},
+  background:{cat:'backgrounds', to:o => {
+    const a = [].concat(o.ability || [])[0] || {}, from = a.choose?.weighted?.from || a.choose?.from || Object.keys(a).filter(k => ABN5[k]);
+    const hang = [].concat(o.entries || []).find(e => isObj(e) && e.type === 'list' && /hang/.test(e.style || ''));
+    const eq = hang?.items?.find(i => /^equipment/i.test(i.name || ''));
+    const feat = flags5(o.feats)[0] || Object.keys([].concat(o.feats || [])[0] || {})[0] || '';
+    return {n:o.name, asi:from.map(k => k.toUpperCase()), feat:tc5(feat.split('|')[0].replace(/;\s*(.+)$/, ' ($1)')), skills:flags5(o.skillProficiencies).map(tc5),
+      tools:flags5(o.toolProficiencies).map(tc5), eq:eq ? flat5(eq.entry ?? eq.entries) : '', x:text5([].concat(o.entries || []).filter(e => e !== hang))};
+  }},
+  item:{cat:'items', to:o => {
+    o = o.inherits ? {...o.inherits, ...o, name:o.name} : o;
+    const ty = String(o.type || '').split('|')[0], rar = tc5(o.rarity || 'common');
+    return {n:o.name, cat:o.wondrous ? 'Wondrous Item' : ITEM5[ty] || (o.weapon || o.weaponCategory ? 'Weapon' : o.armor ? 'Armor' : 'Wondrous Item'), rar:rar === 'None' ? 'Common' : rar,
+      att:!!o.reqAttune, x:(typeof o.reqAttune === 'string' ? `*Requires attunement ${plain5(o.reqAttune)}.*\n` : '') + text5(o.entries)};
+  }},
+  monster:{cat:'monsters', to:o => {
+    const ty = isObj(o.type) ? `${isObj(o.type.type) ? (o.type.type.choose || []).join(' or ') : o.type.type || ''}${o.type.tags ? ` (${o.type.tags.map(t => isObj(t) ? t.tag : t).join(', ')})` : ''}` : o.type || '';
+    const al = [].concat(o.alignment || []).every(a => typeof a === 'string') ? [].concat(o.alignment || []).map(a => ALIGN5[a] || a).join(' ') : 'any alignment';
+    const ac = [].concat(o.ac || []).map(a => isObj(a) ? (a.special ? plain5(a.special) : `${a.ac}${a.from ? ` (${a.from.map(plain5).join(', ')})` : ''}${a.condition ? ' ' + plain5(a.condition) : ''}`) : a).join(', ');
+    const hp = isObj(o.hp) ? (o.hp.special ? plain5(o.hp.special) : `${o.hp.average ?? ''}${o.hp.formula ? ` (${o.hp.formula})` : ''}`) : String(o.hp ?? '');
+    const sp = isObj(o.speed) ? Object.entries(o.speed).filter(([k, v]) => k !== 'canHover' && k !== 'choose' && k !== 'alternate' && v != null && v !== true).map(([k, v]) => `${k === 'walk' ? '' : k + ' '}${isObj(v) ? `${v.number} ft. ${plain5(v.condition || '')}`.trim() : v + ' ft.'}${k === 'fly' && o.speed.canHover ? ' (hover)' : ''}`).join(', ') : String(o.speed ?? '30') + ' ft.';
+    const casts = [].concat(o.spellcasting || []).filter(isObj).map(s => ({n:plain5(s.name || 'Spellcasting'), x:flat5(spellList5(s)), as:s.displayAs || 'trait'}));
+    return {n:o.name, sz:[].concat(o.size || ['M']).map(s => SIZE5[s] || s).join(' or '), ty, al, ac:ac || '10', hp:hp || '10', spd:sp, ab:AB5.map(a => clamp(+o[a] || 10, 1, 30)), cr:crNum5(o.cr),
+      sv:bonus5(o.save), sk:bonus5(o.skill), vul:names5(o.vulnerable, 'vulnerable'), res:names5(o.resist, 'resist'),
+      imm:[names5(o.immune, 'immune'), names5(o.conditionImmune, 'conditionImmune')].filter(Boolean).join('; '),
+      sen:[...[].concat(o.senses || []).map(plain5), o.passive != null ? `passive Perception ${o.passive}` : ''].filter(Boolean).join(', '), lang:[].concat(o.languages || []).map(plain5).join(', ') || '—',
+      tr:[...acts5(o.trait), ...casts.filter(c => c.as === 'trait')], act:[...acts5(o.action), ...casts.filter(c => c.as === 'action')], bon:[...acts5(o.bonus), ...casts.filter(c => c.as === 'bonus')],
+      re:acts5(o.reaction), leg:acts5(o.legendary)};
+  }},
+  class:{cat:'classes', to:(o, json) => {
+    const sp = o.startingProficiencies || {}, prof = x => [].concat(x || []).map(v => isObj(v) ? plain5(v.full || v.proficiency || '') : plain5(v)).filter(Boolean);
+    const gear = p => [...prof(p.armor).map(a => /armor|shield/i.test(a) ? tc5(a) : tc5(a) + ' armor'), ...prof(p.weapons).map(w => /weapon/i.test(w) ? tc5(w) : tc5(w) + ' weapons'), ...prof(p.tools).map(tc5)];
+    const sk = [].concat(sp.skills || []).map(s => s.choose ? `Choose ${s.choose.count || 1}: ${(s.choose.from || []).map(tc5).join(', ')}` : isObj(s) && s.any ? `Choose any ${s.any}` : '').filter(Boolean);
+    const feats = (json?.classFeature || []).filter(f => isObj(f) && f.className === o.name && (!f.classSource || !o.source || f.classSource === o.source));
+    const mc = o.multiclassing?.proficienciesGained || {};
+    return {n:o.name, hd:[6, 8, 10, 12].includes(+o.hd?.faces) ? +o.hd.faces : 8,
+      prim:[].concat(o.primaryAbility || []).map(p => Object.keys(p).filter(k => p[k]).map(k => ABN5[k] || k).join(' and ')).join(' or '),
+      saves:[].concat(o.proficiency || []).map(a => String(a).toUpperCase()), prof:gear(sp),
+      choice:sk, caster:{full:'full', '1/2':'half', '1/3':'third', pact:'pact', artificer:'half'}[o.casterProgression] || '', spellAb:o.spellcastingAbility || '',
+      mcProf:gear(mc).join(', '), x:'',
+      f:feats.map(f => ({l:clamp(+f.level || 1, 1, 20), n:plain5(f.name), x:flat5(f.entries)})).sort((a, b) => a.l - b.l)};
+  }},
+  subclass:{cat:'subclasses', to:(o, json) => {
+    const short = o.shortName || o.name;
+    const fs = (json?.subclassFeature || []).filter(f => isObj(f) && f.className === o.className && f.subclassShortName === short && (!f.subclassSource || !o.source || f.subclassSource === o.source))
+      .sort((a, b) => (a.level || 0) - (b.level || 0));
+    const intro = fs.find(f => f.name === o.name || f.name === short);
+    return {n:o.name, cls:o.className || '', sum:'', x:intro ? text5(intro.entries) : '', f:fs.filter(f => f !== intro).map(f => ({l:clamp(+f.level || 3, 1, 20), n:plain5(f.name), x:flat5(f.entries)}))};
+  }},
+};
+FROM5.magicvariant = FROM5.item;
+/** Read a whole 5etools file. Returns {items:[{cat, o, src}], skip}: skip counts entries of kinds the Workshop has no form for. */
+function from5(json){
+  const items = []; let skip = 0;
+  if (!isObj(json)) return {items, skip};
+  for (const [k, arr] of Object.entries(json)){
+    if (k.startsWith('_') || !Array.isArray(arr)) continue;
+    const conv = Object.hasOwn(FROM5, k) ? FROM5[k] : null;
+    for (const raw of arr){
+      if (!isObj(raw) || typeof raw.name !== 'string' || k === 'classFeature' || k === 'subclassFeature') continue;   // features travel with their class
+      if (!conv || (k === 'item' && raw.rarity === 'none' && !raw.wondrous)){ skip++; continue; }
+      // a "_copy" entry only lists its changes from another one in the same file
+      const base = raw._copy && arr.find(b => isObj(b) && b !== raw && b.name === raw._copy.name && (!raw._copy.source || b.source === raw._copy.source));
+      const o = base ? {...base, ...raw} : raw;
+      try { const out = conv.to(o, json); if (out?.n?.trim()) items.push({cat:conv.cat, o:out, src:String(raw.source || '')}); else skip++; }
+      catch (e) { skip++; }
+    }
+  }
+  return {items, skip};
+}
+// The 5etools entry an imported Library source holds, or an SRD entry, as a ready-to-edit Workshop draft.
+function brewDraftFrom(e){
+  if (!e || !Object.hasOwn(BREW, e.cat)) return null;
+  let o = null;
+  if (NATIVE(e)) o = structuredClone(e.o);
+  else if (e.o?._kind && Object.hasOwn(FROM5, e.o._kind)){
+    const pack = PACKS.find(p => p.name === e.src)?.data;
+    try { o = FROM5[e.o._kind].to(e.o, pack); } catch (err) { o = null; }
+  }
+  if (!o) return null;
+  for (const [k, , type] of BREW[e.cat].f) if ((type === 'feats' || type === 'traits') && Array.isArray(o[k])) o[k] = o[k].map(t => ({...t, x:String(t.x || '').replace(/\s*\n+\s*/g, ' ')}));
+  return {cat:e.cat, o};
+}
+const brewable = e => !!e && e.src !== 'Homebrew' && Object.hasOwn(BREW, e.cat) && (NATIVE(e) || Object.hasOwn(FROM5, e.o?._kind || ''));
+let BREW5 = null;   // entries waiting in the picker
+function brewPick(r, name){
+  BREW5 = r.items;
+  const many = r.items.length > 60;
+  const groups = Object.keys(BREW).map(k => [k, r.items.map((it, i) => [it, i]).filter(([it]) => it.cat === k)]).filter(([, l]) => l.length);
+  const has = it => BREW_ITEMS.some(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n));
+  modal(`<div class="head"><h2>Bring into the Workshop</h2><span class="spacer"></span>${closeBtn()}</div>
+    <p class="muted">${esc(name)}: ${r.items.length} ${r.items.length === 1 ? 'entry' : 'entries'} the Workshop can edit${r.skip ? `, ${r.skip} of other kinds left out` : ''}. Tick the ones you want: each becomes homebrew you can change, export and share.${many ? ' The file is big, so nothing is ticked yet.' : ''}</p>
+    <div class="row"><label class="sr" for="b5_q">Filter</label><input type="search" id="b5_q" placeholder="Filter by name" style="flex:1" autofocus>
+      <button type="button" class="sb" id="b5_all">Tick shown</button><button type="button" class="sb" id="b5_none">Untick all</button></div>
+    <div class="b5List">${groups.map(([k, l]) => `<h4>${esc(BREW[k].t)} <span class="muted">${l.length}</span></h4>${l.map(([it, i]) =>
+      `<label class="row b5Row" data-n="${esc(norm(it.o.n))}"><input type="checkbox" class="b5" value="${i}" ${many ? '' : 'checked'}> <span>${esc(it.o.n)} <span class="muted">${esc([brewKey(it.cat, it.o), it.src].filter(Boolean).join(' · '))}${has(it) ? ' · replaces yours' : ''}</span></span></label>`).join('')}`).join('')}</div>
+    <div class="row mt">${act('brew5Add', undefined, 'Add ticked', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}<span class="muted" id="b5_n"></span></div>`, {label:'Bring into the Workshop'});
+  const count = () => { $('#b5_n').textContent = `${$$('.b5:checked').length} ticked`; };
+  $('#b5_q').oninput = e => { const q = norm(e.target.value); $$('.b5Row').forEach(r => { r.hidden = !!q && !r.dataset.n.includes(q); }); };
+  $('#b5_all').onclick = () => { $$('.b5Row').forEach(r => { if (!r.hidden) r.querySelector('input').checked = true; }); count(); };
+  $('#b5_none').onclick = () => { $$('.b5').forEach(x => { x.checked = false; }); count(); };
+  $('.b5List').onchange = count; count();
+}
+Object.assign(ACT_BREW, {
+  async brew5Add(){
+    const picked = cleanBrew($$('.b5:checked').map(x => BREW5?.[+x.value]).filter(Boolean).map(({cat, o}) => ({cat, o})));
+    if (!picked.length){ toast('Tick at least one entry.'); return; }
+    closeModal(); BREW5 = null;
+    G.brewCat = picked[0].cat; G.brewEdit = null; G.brewDraft = null;
+    const n = await mergeBrew(picked);
+    toast(`${picked.length} ${picked.length === 1 ? 'entry joins' : 'entries join'} your homebrew (${n} new). Open any of them to edit it.`);
+  },
+  brewFrom(id){
+    const e = byId(id), d = brewDraftFrom(e);
+    if (!d){ toast('The Workshop has no form for this kind of entry.'); return; }
+    G.brewCat = d.cat; G.brewEdit = null; G.brewDraft = d; closeModal();
+    if (G.chapter === 'workshop') renderPage(); else turnTo('workshop');
+    toast(`${d.o.n} is in the ${BREW[d.cat].t.toLowerCase()} form: change what you like, then add it.`);
+  },
+});
 
 /* ================================================================== spell search on the spellbook page */
 function spellSearch(q){

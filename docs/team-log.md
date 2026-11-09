@@ -1,5 +1,15 @@
 # Diario del team
 
+## 2026-11-09 · sviluppo (richiesta di Capo: homebrew da 5etools)
+- **Fatto**: il Workshop ora trasforma file JSON in formato 5etools in homebrew modificabile.
+  - **Workshop → Import file** accetta, oltre all'export Grimoire, un file 5etools (`spell`, `feat`, `race`, `background`, `item`/`magicvariant`, `monster`, `class` con `classFeature`, `subclass` con `subclassFeature`). Si apre una finestra con le voci divise per tipo, filtro per nome, "Tick shown"/"Untick all"; sopra 60 voci non è spuntato nulla. Le voci scelte entrano con la stessa unione dell'import Grimoire (`mergeBrew`: stesso tipo e nome → sostituita) e si modificano con i moduli esistenti.
+  - **Copy to Workshop** su ogni voce SRD o di una fonte importata in Library (dei tipi che hanno un modulo): apre il modulo già compilato come bozza; si salva con "Add", quindi passa dal normale controllo del limite gratuito di `brewSave`.
+  - Modulo Creatura: nuovi campi tiri salvezza, abilità, resistenze, immunità, azioni bonus, reazioni, azioni leggendarie (lo statblock li mostrava già); taglia "Small or Medium".
+  - Conversione testo: tag `{@…}` in testo semplice (i dadi restano "2d6 + 3" e si tirano), sotto-voci come "**Nome.** testo", liste e tabelle nel formato di `md()`; capacità/tratti/azioni su una riga per restare modificabili nei campi "uno per riga".
+- **B-011 non toccato**: l'import da 5etools segue la stessa strada dell'import homebrew esistente (nessun controllo del limite di 3); la decisione di Capo varrà per entrambi.
+- `sw.js`: alzata la versione di `CACHE`.
+- **Test** (Playwright/Chromium, server locale, service worker bloccato, 1440x900 e 390x844) con i file veri di 5etools (spells-xphb 391, bestiary-xmm 503, feats 317, races 177, backgrounds 175, items 1820, class-fighter 2+26): ogni voce convertita passa `cleanBrew` e si apre nella scheda senza `undefined`/`[object`/`{@`. Flusso: file misto → finestra → 8 voci aggiunte → Adult Red Dragon modificato e salvato con le azioni leggendarie intatte; file da 391 incantesimi → 0 spuntati; Copy to Workshop da Acid Arrow (SRD) e da Psi Warrior (fonte importata). Import Grimoire esistente invariato (1 aggiunta, 1 scartata). Console senza errori, scrollWidth uguale alla finestra.
+
 ## 2026-11-08 · sviluppo
 - **Fatto**: i due passi del piano.
   1. **B-004 e B-009 su main** ([8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163)): `writeLocal` imposta `G.saveFailed`; se il salvataggio fallisce compare in basso un avviso `role="alert"` ("Not saved… Try again") separato dal toast, quindi `toast()` non lo copre né lo sostituisce; sparisce appena un salvataggio riesce (anche da sola, alla prossima modifica). Nuovo eroe e Import dicono "is on the page but could not be saved" invece di "joins the tome". `maxlength="80"` su `#w_name` e `#f_name`.
