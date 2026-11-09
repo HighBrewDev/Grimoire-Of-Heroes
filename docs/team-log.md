@@ -1,5 +1,18 @@
 # Diario del team
 
+## 2026-11-09 · design
+- **Nota**: il piano diceva "designer oggi non lavora", ma la routine gira ogni giorno; ho preso la voce 2 del Backlog (telefono, già destinata al designer per martedì), solo CSS e lontano dalle parti toccate oggi dallo sviluppo (fixup, Zaino, export, Homebrew).
+- **Fatto** ([3baa416](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/3baa416), su main):
+  - **Scroll orizzontale sparito**: a 390 px era 400 (768 → 784). Causa: `input#f_img` con classe `.sr`, largo più di 1 px per il padding dei campi; `.sr` ora ha `left:0`, `padding:0`, `border:0`, `clip-path`.
+  - **Tocco ≥44 px** solo su schermi touch (`pointer:coarse`): pulsanti in alto, frecce di pagina, dadi (sotto 560 px i 7 dadi riempiono la prima riga in parti uguali), Damage/Heal/Temp/riposi, + e − delle caratteristiche, slot degli incantesimi (il cerchio resta 26 px, l'area di tocco è 44). Spazio in fondo alla pagina aumentato perché la barra dadi non copra l'ultima riga.
+  - **Campi a 16 px** su touch: niente zoom automatico di iPhone.
+  - **Nomi lunghi senza spazi** (80 caratteri) vanno a capo nel titolo, nella frase iniziale e nel toast: prima allargavano la pagina di 831 px.
+  - `sw.js`: alzata `CACHE`.
+- **File**: index.html (`.sr` e un blocco CSS in fondo allo stile), sw.js, docs/design/ (nuovo: note-design.md e 4 screenshot prima/dopo), docs/team-log.md.
+- **Verifica**: Playwright/Chromium in locale, 390x844, 768x1024, 1440x900, giorno e notte. Sezione `telefono` da 3/11 a **11/11**; robustezza "nome lungo" ora passa. Suite completa **160/165**: restano solo B-005, B-006 (2), B-014, B-015, già noti. Screenshot a 1440 identici al pixel prima e dopo (desktop invariato). Console senza errori. Prima/dopo: [390 giorno](design/2026-11-09-telefono-390-giorno.jpg), [390 notte](design/2026-11-09-telefono-390-notte.jpg), [dettagli](design/2026-11-09-telefono-dettagli.jpg), [768 notte](design/2026-11-09-tablet-768-notte.jpg). Il file `tests/risultati/2026-11-09.json` riscritto dalla mia esecuzione è stato ripristinato (resta quello del tester).
+- **Da sapere**: su telefono le card delle caratteristiche sono più alte e il "Check" è un bottone pieno da 44 px. Il toast di salvataggio fallito (B-004) resta sopra la barra dadi, come scelto dallo sviluppo.
+- **Prossima idea**: proposta per B-014 (filtro e ordine dello scaffale), poi pallini di competenza e "✕" dei chip a 44 px, e un indizio che i segnalibri dei capitoli si scorrono su telefono.
+
 ## 2026-11-09 · sviluppo (richiesta di Capo: import homebrew da Markdown, con controlli seri su tutte le import)
 - **Fatto**: homebrew scritto in **Markdown** (.md) e **controlli delle regole** comuni a ogni ingresso: file Markdown, file 5etools, export Grimoire e editor.
   - **Formato**: una voce per titolo `# Tipo: Nome` (Spell, Feat, Species, Background, Class, Subclass, Item, Creature, anche in italiano), poi `- Campo: valore`, poi il testo; `##` per slot superiori, tratti, privilegi per livello (`### Level 3: Nome`) e sezioni dello statblock. Funzionano anche nomi italiani di campi, scuole, taglie, rarità e caratteristiche.
