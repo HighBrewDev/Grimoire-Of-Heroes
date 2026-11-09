@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-09 · team leader
+- Controllo app live (Playwright 1440x900 e 390x844): copertina, nuovo eroe e level up 1→2 ok; console pulita a parte Supabase; a 390 px ancora 10 px di scroll orizzontale. Il lavoro del weekend (B-002, B-004, B-009) è online.
+- Weekend valutato: prestazioni buone con 33 eroi; nuovi B-012 (`_sig` raddoppia lo spazio), B-013 (oggetti invisibili), B-014, B-015. Stamattina unita anche la PR [#2](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/2) (import 5etools nel Workshop, richiesta di Capo).
+- Obiettivo della settimana (7–13/11), confermato: nessuna perdita di dati; ora il "fatto" è B-012, B-013, B-015 chiusi.
+- Oggi: sviluppo → B-013 su main, poi B-012 come PR (unione automatica dopo i test). Stasera: distruttore sul salvataggio con più schede, memoria piena, import strani e il nuovo import 5etools.
+
 ## 2026-11-09 · sviluppo (richiesta di Capo: homebrew da 5etools)
 - **Fatto**: il Workshop ora trasforma file JSON in formato 5etools in homebrew modificabile.
   - **Workshop → Import file** accetta, oltre all'export Grimoire, un file 5etools (`spell`, `feat`, `race`, `background`, `item`/`magicvariant`, `monster`, `class` con `classFeature`, `subclass` con `subclassFeature`). Si apre una finestra con le voci divise per tipo, filtro per nome, "Tick shown"/"Untick all"; sopra 60 voci non è spuntato nulla. Le voci scelte entrano con la stessa unione dell'import Grimoire (`mergeBrew`: stesso tipo e nome → sostituita) e si modificano con i moduli esistenti.
