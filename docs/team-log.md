@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-09 · test
+- **Fatto**: costruita da zero la suite automatica in `tests/` (Playwright, server locale, niente rete né Supabase, dadi con seme fisso): 154 test in 14 sezioni, con test di regressione per B-001…B-010, B-012, B-013 e per i bug aperti B-005, B-006, B-014, B-015 (B-011 non automatizzabile finché il paywall è spento). Eseguita su main `1028d8d` (con la nuova pagina Homebrew della PR #4). Punteggi in [docs/scoreboard.md](scoreboard.md), comandi in `tests/README.md`.
+- **Risultato**: 140/154 superati, punteggio totale **+107** (primo giorno, nessuna tendenza). **Sezioni rosse: telefono** (−21: 8 test falliti su 11, aree di tocco sotto 44 px in barra in alto, barra dadi, frecce, PF, stepper, slot; carattere 15,5 px nei campi, che su iPhone fa scattare lo zoom; 10 px di scroll orizzontale a 390 px).
+- **Nuovo trovato dai test**: un nome di 80 caratteri senza spazi allarga la pagina desktop di 831 px (lo scaffale non va a capo), test in robustezza. Falliscono come previsto B-005, B-006 (2 test), B-014, B-015.
+- **Prossima volta**: almeno 5 test nuovi nelle sezioni più basse (telefono, combattimento, level up).
+
 ## 2026-11-09 · sviluppo (richiesta di Capo: pagina Homebrew dedicata)
 - **Fatto**: il vecchio "Workshop" (un unico modulo con le schede per tipo) diventa la pagina **Homebrew**, raggiungibile dal pulsante "Homebrew" in alto (evidenziato quando sei nella pagina) e dal capitolo X, ora "Homebrew · create · import · manage".
   - **Pagina principale**: introduzione con "＋ Create new", "Import file", "Export all"; "Create something new" con 8 riquadri (icona, nome, a cosa serve, quanti ne hai fatti); "Your homebrew" con ricerca e filtri per tipo e per ogni voce Edit / Duplicate / Delete; "Import" con area di trascinamento per file Grimoire e 5etools e il rimando a "Copy to Homebrew" nella Library. Stato vuoto con istruzioni.

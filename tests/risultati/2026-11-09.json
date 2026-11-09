@@ -1,0 +1,1086 @@
+{
+ "data": "2026-11-09",
+ "commit": "1028d8d",
+ "totali": 154,
+ "superati": 140,
+ "risultati": [
+  {
+   "sezione": "biblioteca",
+   "test": "la biblioteca mostra gli incantesimi SRD",
+   "esito": "superato",
+   "durata": 1041,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "ricerca \"fireball\" e lettura della voce",
+   "esito": "superato",
+   "durata": 1258,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "filtro per livello e classe",
+   "esito": "superato",
+   "durata": 1058,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "creature: ricerca \"owlbear\"",
+   "esito": "superato",
+   "durata": 1232,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "ricerca senza risultati",
+   "esito": "superato",
+   "durata": 883,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "ricerca globale delle regole: \"Grappled\" e Invio apre la regola",
+   "esito": "superato",
+   "durata": 1015,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "scorciatoia Ctrl+K porta alla ricerca",
+   "esito": "superato",
+   "durata": 872,
+   "errore": null
+  },
+  {
+   "sezione": "biblioteca",
+   "test": "un termine sottolineato apre la regola (Prone)",
+   "esito": "superato",
+   "durata": 816,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "punteggi e modificatori mostrati per tutte e sei le caratteristiche",
+   "esito": "superato",
+   "durata": 866,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "il pulsante + alza il punteggio, salva e ricalcola il modificatore",
+   "esito": "superato",
+   "durata": 1120,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "i punteggi restano fra 1 e 30",
+   "esito": "superato",
+   "durata": 1156,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "tiro salvezza: competenza aggiunge il bonus di competenza",
+   "esito": "superato",
+   "durata": 1033,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "abilità: nessuna → competenza → maestria → nessuna",
+   "esito": "superato",
+   "durata": 1253,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "il bonus di competenza sale con il livello (livello 5 → +3)",
+   "esito": "superato",
+   "durata": 969,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "Percezione passiva = 10 + bonus di Percezione",
+   "esito": "superato",
+   "durata": 711,
+   "errore": null
+  },
+  {
+   "sezione": "caratteristiche",
+   "test": "lo sfinimento toglie 2 per livello alle prove (testo della pagina)",
+   "esito": "superato",
+   "durata": 1201,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "danni: tolgono PF e salvano",
+   "esito": "superato",
+   "durata": 1176,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "i PF temporanei assorbono i danni per primi",
+   "esito": "superato",
+   "durata": 1468,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "i PF non scendono sotto 0 e a 0 i tiri contro la morte ripartono",
+   "esito": "superato",
+   "durata": 1466,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "la cura non supera i PF massimi",
+   "esito": "superato",
+   "durata": 1245,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "CA: armatura a maglia 16 + scudo 2 = 18, regolazione +1 = 19",
+   "esito": "superato",
+   "durata": 1354,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "CA senza armatura: 10 + Des; Barbaro aggiunge Cos",
+   "esito": "superato",
+   "durata": 1475,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "aggiungere un attacco con arma calcola bonus e danni",
+   "esito": "superato",
+   "durata": 1400,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "attacco personalizzato: aggiungi e rimuovi",
+   "esito": "superato",
+   "durata": 1872,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "tiro di attacco scrive tiro e danni nello storico",
+   "esito": "superato",
+   "durata": 2300,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "riposo lungo: PF, Dadi Vita e slot pieni, sfinimento −1",
+   "esito": "superato",
+   "durata": 1280,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "spendere un Dado Vita cura e lo segna come usato",
+   "esito": "superato",
+   "durata": 1278,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "condizioni: attiva e disattiva Prone",
+   "esito": "superato",
+   "durata": 1555,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "tiri contro la morte: segna successi e fallimenti",
+   "esito": "superato",
+   "durata": 1669,
+   "errore": null
+  },
+  {
+   "sezione": "combattimento",
+   "test": "B-006 danni negativi non danno PF temporanei",
+   "esito": "fallito",
+   "durata": 1299,
+   "errore": "PF temporanei 50 dopo danni -50"
+  },
+  {
+   "sezione": "combattimento",
+   "test": "B-006 una cura negativa non porta i PF sotto zero",
+   "esito": "fallito",
+   "durata": 1301,
+   "errore": "PF -68/32 dopo cura -100"
+  },
+  {
+   "sezione": "cronaca",
+   "test": "le note si salvano mentre si scrive",
+   "esito": "superato",
+   "durata": 1365,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "le note restano dopo la ricarica",
+   "esito": "superato",
+   "durata": 2426,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "i pulsanti XP aggiungono esperienza",
+   "esito": "superato",
+   "durata": 1408,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "mostra gli XP del livello successivo",
+   "esito": "superato",
+   "durata": 943,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "al livello 20 non c'è livello successivo",
+   "esito": "superato",
+   "durata": 1361,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "note lunghe (20.000 caratteri) e caratteri speciali si salvano intatte",
+   "esito": "superato",
+   "durata": 3161,
+   "errore": null
+  },
+  {
+   "sezione": "cronaca",
+   "test": "il pulsante Level up si evidenzia quando gli XP bastano",
+   "esito": "superato",
+   "durata": 1059,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "crea un eroe dal wizard con nome, specie, background e classe",
+   "esito": "superato",
+   "durata": 1092,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "il wizard calcola PF e XP al livello 5 (Fighter, array standard)",
+   "esito": "superato",
+   "durata": 1197,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "il wizard dà talento, tiri salvezza e abilità del background",
+   "esito": "superato",
+   "durata": 1233,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "nome vuoto nel wizard diventa \"Nameless\"",
+   "esito": "superato",
+   "durata": 1221,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "cambiare il nome nella pagina Eroe salva e aggiorna il titolo",
+   "esito": "superato",
+   "durata": 1014,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "un nome di soli spazi non cancella il nome",
+   "esito": "superato",
+   "durata": 891,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "cambiare specie salva e mostra i tratti della specie",
+   "esito": "superato",
+   "durata": 873,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "cambiare background salva e mostra il talento di origine",
+   "esito": "superato",
+   "durata": 820,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "cambiare classe azzera la sottoclasse",
+   "esito": "superato",
+   "durata": 834,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "scegliere un eroe sullo scaffale lo rende attivo",
+   "esito": "superato",
+   "durata": 851,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "duplica e cancella un eroe",
+   "esito": "superato",
+   "durata": 1449,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "l'ultimo eroe non si può cancellare",
+   "esito": "superato",
+   "durata": 955,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "B-008 il wizard arrotonda un livello decimale (2.7 → 3)",
+   "esito": "superato",
+   "durata": 1173,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "B-009 il nome ha un limite di 80 caratteri (wizard e scheda)",
+   "esito": "superato",
+   "durata": 1116,
+   "errore": null
+  },
+  {
+   "sezione": "eroe",
+   "test": "B-014 con 33 eroi lo scaffale offre un filtro per nome",
+   "esito": "fallito",
+   "durata": 594,
+   "errore": "nessun campo di ricerca/filtro vicino allo scaffale degli eroi"
+  },
+  {
+   "sezione": "importexport",
+   "test": "le modifiche restano dopo la ricarica della pagina",
+   "esito": "superato",
+   "durata": 1966,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "eroe attivo e capitolo restano dopo la ricarica",
+   "esito": "superato",
+   "durata": 1635,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "export → import: stesso eroe con un nuovo id",
+   "esito": "superato",
+   "durata": 1394,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-012 export senza campi locali (_sig, updatedAt, editedOn…)",
+   "esito": "superato",
+   "durata": 1046,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-012 in localStorage _sig è un'impronta corta, non una copia dell'eroe",
+   "esito": "superato",
+   "durata": 856,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "Download .json scarica un file con il nome dell'eroe",
+   "esito": "superato",
+   "durata": 998,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-010 eroe con nome numerico: diventa testo e il download funziona",
+   "esito": "superato",
+   "durata": 1843,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "testo non valido: messaggio e nessun eroe aggiunto",
+   "esito": "superato",
+   "durata": 1125,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-003 import con campi del tipo sbagliato: tutti i capitoli si aprono, anche dopo ricarica",
+   "esito": "superato",
+   "durata": 6338,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-007 import con valori impossibili riportati in un intervallo valido",
+   "esito": "superato",
+   "durata": 1952,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-002 due schede: gli eroi creati in entrambe restano",
+   "esito": "superato",
+   "durata": 2992,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-004 memoria piena: avviso \"Not saved\" visibile e niente \"joins the tome\"",
+   "esito": "superato",
+   "durata": 4187,
+   "errore": null
+  },
+  {
+   "sezione": "importexport",
+   "test": "B-015 esiste \"Esporta tutti\" gli eroi in un solo file",
+   "esito": "fallito",
+   "durata": 1014,
+   "errore": "nessun pulsante per esportare tutti gli eroi insieme"
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "slot del Mago di livello 4: 4 di 1°, 3 di 2°",
+   "esito": "superato",
+   "durata": 906,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "spendere uno slot e ripristinarli tutti",
+   "esito": "superato",
+   "durata": 1480,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "preparare e togliere un incantesimo",
+   "esito": "superato",
+   "durata": 1117,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "cercare e imparare un incantesimo",
+   "esito": "superato",
+   "durata": 1298,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "lanciare un incantesimo di concentrazione usa uno slot e segna la concentrazione",
+   "esito": "superato",
+   "durata": 1026,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "senza slot rimasti il lancio è rifiutato",
+   "esito": "superato",
+   "durata": 863,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "multiclasse Mago 3 / Chierico 2: slot da incantatore di livello 5 (4/3/2)",
+   "esito": "superato",
+   "durata": 1071,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "multiclasse Paladino 5 / Stregone 3: metà arrotondata per eccesso (livello 6: 4/3/3)",
+   "esito": "superato",
+   "durata": 826,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "Warlock: slot del Patto tornano con un riposo breve",
+   "esito": "superato",
+   "durata": 1315,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "un Guerriero senza sottoclasse arcana non ha slot",
+   "esito": "superato",
+   "durata": 844,
+   "errore": null
+  },
+  {
+   "sezione": "incantesimi",
+   "test": "CD e attacco con incantesimi del Mago (Int 17, livello 4)",
+   "esito": "superato",
+   "durata": 893,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "aggiungere un eroe al combattimento",
+   "esito": "superato",
+   "durata": 1066,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "i combattenti sono ordinati per iniziativa",
+   "esito": "superato",
+   "durata": 1716,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "turno successivo e nuovo round dopo l'ultimo",
+   "esito": "superato",
+   "durata": 1500,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "turno precedente torna al round prima",
+   "esito": "superato",
+   "durata": 1497,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "tira l'iniziativa per tutti e inizia il round 1",
+   "esito": "superato",
+   "durata": 1942,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "creature del libro: 2 Goblin Warrior numerati",
+   "esito": "superato",
+   "durata": 1154,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "danni e cure a un combattente",
+   "esito": "superato",
+   "durata": 1275,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "danni a un eroe nel combattimento cambiano i suoi PF",
+   "esito": "superato",
+   "durata": 1134,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "una condizione di 1 round finisce all'inizio del turno successivo",
+   "esito": "superato",
+   "durata": 1535,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "il combattimento resta dopo la ricarica della pagina",
+   "esito": "superato",
+   "durata": 2344,
+   "errore": null
+  },
+  {
+   "sezione": "incontro",
+   "test": "svuotare il combattimento",
+   "esito": "superato",
+   "durata": 1365,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "livello 3 → 4 con PF medi (d10: 6 + Cos 2 = 8)",
+   "esito": "superato",
+   "durata": 1075,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "aumento dei punteggi +2 (Des 14 → 16)",
+   "esito": "superato",
+   "durata": 1202,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "+1/+1 sulla stessa caratteristica rifiutato",
+   "esito": "superato",
+   "durata": 1297,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "talento al posto dei punteggi",
+   "esito": "superato",
+   "durata": 1303,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "al livello 3 si sceglie la sottoclasse",
+   "esito": "superato",
+   "durata": 1200,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "multiclasse: Valeria prende Rogue 1 (Des 14 ≥ 13)",
+   "esito": "superato",
+   "durata": 1293,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "multiclasse bloccata senza il punteggio minimo (Eldrin For 8 → Barbarian)",
+   "esito": "superato",
+   "durata": 953,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "livello 20: niente level up",
+   "esito": "superato",
+   "durata": 808,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "doppio clic su \"Become level\" applica un solo livello",
+   "esito": "superato",
+   "durata": 1552,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "aggiungi classe dalla pagina Eroe e livello totale massimo 20",
+   "esito": "superato",
+   "durata": 1009,
+   "errore": null
+  },
+  {
+   "sezione": "levelup",
+   "test": "B-005 aumento +2 non abbassa un punteggio sopra 20",
+   "esito": "fallito",
+   "durata": 1141,
+   "errore": "Forza scesa da 24 a 20"
+  },
+  {
+   "sezione": "robustezza",
+   "test": "console senza errori: avvio e tutti i capitoli (desktop)",
+   "esito": "superato",
+   "durata": 4589,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "console senza errori: wizard, level up, export e import",
+   "esito": "superato",
+   "durata": 1642,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "prima apertura senza dati: copertina, eroi di esempio e nessun errore",
+   "esito": "superato",
+   "durata": 893,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "offline: con il service worker il tomo si riapre senza rete",
+   "esito": "superato",
+   "durata": 2478,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "nome con HTML non viene eseguito (niente XSS)",
+   "esito": "superato",
+   "durata": 1244,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "emoji e caratteri composti nel nome restano intatti",
+   "esito": "superato",
+   "durata": 1605,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "livello scritto a mano fuori intervallo viene riportato fra 1 e 20",
+   "esito": "superato",
+   "durata": 955,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "PF massimi 0 o negativi diventano 1",
+   "esito": "superato",
+   "durata": 918,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "localStorage rovinato: l'app parte comunque",
+   "esito": "superato",
+   "durata": 941,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "eroe salvato con campi null non blocca l'avvio",
+   "esito": "superato",
+   "durata": 2447,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "espressione di dadi non valida: messaggio e nessun errore",
+   "esito": "superato",
+   "durata": 1071,
+   "errore": null
+  },
+  {
+   "sezione": "robustezza",
+   "test": "nome lungo senza spazi (80 caratteri) non allarga la pagina",
+   "esito": "fallito",
+   "durata": 1133,
+   "errore": "scroll orizzontale di 831 px a 1440 px"
+  },
+  {
+   "sezione": "telefono",
+   "test": "390 px: nessuno scroll orizzontale in nessun capitolo",
+   "esito": "fallito",
+   "durata": 1490,
+   "errore": "scrollWidth oltre 390: hero 400px"
+  },
+  {
+   "sezione": "telefono",
+   "test": "390 px: la finestra Nuovo eroe sta nello schermo",
+   "esito": "superato",
+   "durata": 871,
+   "errore": null
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: schede dei capitoli",
+   "esito": "superato",
+   "durata": 800,
+   "errore": null
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: pulsanti in alto (nuovo eroe, biblioteca, homebrew, tema)",
+   "esito": "fallito",
+   "durata": 663,
+   "errore": "sotto 44 px: \"Night pages\" 38×36, \"＋ New hero\" 105×36, \"Library\" 73×36, \"Homebrew\" 96×36, \"Page-turn sound\" 38×36"
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: barra dei dadi",
+   "esito": "fallito",
+   "durata": 655,
+   "errore": "sotto 44 px: \"d4\" 39×32, \"d6\" 39×32, \"d8\" 39×32, \"d10\" 45×32, \"d12\" 45×32, \"d20\" 48×32 … (10)"
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: frecce per girare pagina",
+   "esito": "fallito",
+   "durata": 776,
+   "errore": "sotto 44 px: \"Previous page\" 36×29, \"Next page\" 36×29"
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: eroi sullo scaffale",
+   "esito": "superato",
+   "durata": 680,
+   "errore": null
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: danni, cura e riposi",
+   "esito": "fallito",
+   "durata": 788,
+   "errore": "sotto 44 px: \"\" 84×36, \"Damage\" 66×26, \"Heal\" 46×26, \"Temp\" 52×26, \"Short Rest\" 77×26, \"Long Rest\" 75×26"
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: + e − delle caratteristiche",
+   "esito": "fallito",
+   "durata": 861,
+   "errore": "sotto 44 px: \"Lower Strength\" 28×26, \"Raise Strength\" 28×26, \"Lower Dexterity\" 28×26, \"Raise Dexterity\" 28×26, \"Lower Constitution\" 28×26, \"Raise Constitution\" 28×26 … (12)"
+  },
+  {
+   "sezione": "telefono",
+   "test": "tocco ≥44 px: slot degli incantesimi",
+   "esito": "fallito",
+   "durata": 948,
+   "errore": "sotto 44 px: \"Level 1 slot 1\" 26×26, \"Level 1 slot 2\" 26×26, \"Level 1 slot 3\" 26×26, \"Level 1 slot 4\" 26×26, \"Level 2 slot 1\" 26×26, \"Level 2 slot 2\" 26×26 … (7)"
+  },
+  {
+   "sezione": "telefono",
+   "test": "i campi di testo hanno carattere ≥16 px (niente zoom automatico su iPhone)",
+   "esito": "fallito",
+   "durata": 722,
+   "errore": "omni 15.5px, f_name 15.5px, f_player 15.5px, f_portrait 15.5px, f_align 15.5px, f_species 15.5px"
+  },
+  {
+   "sezione": "tratti",
+   "test": "prendere un talento dal libro",
+   "esito": "superato",
+   "durata": 1129,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "lo stesso talento non viene aggiunto due volte",
+   "esito": "superato",
+   "durata": 1140,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "talento personalizzato",
+   "esito": "superato",
+   "durata": 1092,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "rimuovere un talento",
+   "esito": "superato",
+   "durata": 851,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "privilegio personalizzato: aggiungi e rimuovi",
+   "esito": "superato",
+   "durata": 1609,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "le capacità della classe sono elencate (Fighter: Second Wind, Action Surge)",
+   "esito": "superato",
+   "durata": 850,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "competenze: tiri salvezza della classe",
+   "esito": "superato",
+   "durata": 831,
+   "errore": null
+  },
+  {
+   "sezione": "tratti",
+   "test": "il talento Alert aggiunge il bonus di competenza all'iniziativa",
+   "esito": "superato",
+   "durata": 1132,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "creare un incantesimo homebrew",
+   "esito": "superato",
+   "durata": 1699,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "l'homebrew resta dopo la ricarica (IndexedDB)",
+   "esito": "superato",
+   "durata": 3227,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "l'incantesimo homebrew si trova in biblioteca e nel libro degli incantesimi",
+   "esito": "superato",
+   "durata": 2575,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "senza nome non si salva",
+   "esito": "superato",
+   "durata": 1177,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "nome doppio dello stesso tipo rifiutato",
+   "esito": "superato",
+   "durata": 2662,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "specie homebrew compare nel menu della pagina Eroe",
+   "esito": "superato",
+   "durata": 1604,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "cancellare una creazione",
+   "esito": "superato",
+   "durata": 2044,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "import di un export Grimoire: unisce e scarta le voci non valide",
+   "esito": "superato",
+   "durata": 1073,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "B-001 homebrew con nome numerico non blocca la ricarica",
+   "esito": "superato",
+   "durata": 1896,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "import 5etools: finestra di scelta e voci aggiunte",
+   "esito": "superato",
+   "durata": 1301,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "duplicare una creazione crea \"Copy of …\"",
+   "esito": "superato",
+   "durata": 2126,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "ricerca fra le proprie creazioni",
+   "esito": "superato",
+   "durata": 2596,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "modificare una creazione e salvare",
+   "esito": "superato",
+   "durata": 2376,
+   "errore": null
+  },
+  {
+   "sezione": "workshop",
+   "test": "file non JSON rifiutato con un messaggio",
+   "esito": "superato",
+   "durata": 892,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "oggetto personalizzato: aggiunto con categoria, quantità e peso",
+   "esito": "superato",
+   "durata": 1538,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "quantità: + aumenta, − a 1 chiede conferma e toglie",
+   "esito": "superato",
+   "durata": 1625,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "monete: modificare le monete salva mentre si scrive",
+   "esito": "superato",
+   "durata": 2258,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "il totale della borsa in mo è giusto",
+   "esito": "superato",
+   "durata": 1173,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "filtro dello zaino",
+   "esito": "superato",
+   "durata": 1138,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "sintonia: si sintonizza un oggetto e la CA sale (Cloak of Protection)",
+   "esito": "superato",
+   "durata": 1341,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "massimo 3 oggetti in sintonia",
+   "esito": "superato",
+   "durata": 1022,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "aggiungere dall'equipaggiamento del libro",
+   "esito": "superato",
+   "durata": 1223,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "peso trasportato e capacità (15 × For)",
+   "esito": "superato",
+   "durata": 848,
+   "errore": null
+  },
+  {
+   "sezione": "zaino",
+   "test": "B-013 oggetti con categoria sconosciuta restano visibili e si cancellano",
+   "esito": "superato",
+   "durata": 1303,
+   "errore": null
+  }
+ ]
+}
