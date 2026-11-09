@@ -1,5 +1,18 @@
 # Diario del team
 
+## 2026-11-09 · sviluppo sera
+- **Nota**: il piano non aveva un compito "Sviluppo sera" (la mattina ha chiuso B-013 e B-012); ho seguito il "Prossima sessione" del mattino e la voce 1 del Backlog (B-015), più B-005 e B-006 (voce 4), piccoli e con test già pronti. Nessun CSS toccato (il designer oggi ha lavorato sul CSS del telefono).
+- **Fatto** ([4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449), su main):
+  - **B-015** · Sezione import/export. Nella finestra Export c'è "Back up every hero" con **"Export all heroes (N)"**, e lo stesso pulsante compare nell'avviso "Not saved" (B-004). Il file `grimoire-heroes-AAAA-MM-GG.json` è `{grimoire:'heroes', version:1, exported, heroes:[…]}` con `heroData` (niente campi locali); contiene solo gli eroi tuoi (`isMine`), non quelli del party. **Import** (stessa finestra di sempre) riconosce il file o un array di eroi: ogni eroe passa da `fixup`, entra con un **id nuovo**, le copie identiche già nel tomo sono saltate, le voci rotte contate e scartate; se il render fallisce si annulla tutto.
+  - **B-005** · Level up: l'aumento non abbassa mai un punteggio sopra il limite; le note dicono "STR already 24" invece di "STR +2".
+  - **B-006** · Combattimento e Incontro: Damage, Heal, Temp con numero negativo valgono 0 (`hpNum`).
+  - `sw.js`: alzata `CACHE`.
+- **Scelte prudenti**: l'import del backup non sovrascrive mai un eroe e non riusa gli id (niente conflitti con sync/eroi cancellati in Supabase); il prezzo è che un eroe cambiato dopo il backup torna come secondo eroe invece di sostituire quello attuale. Il distruttore può dire se serve una scelta "sostituisci".
+- **Test**: suite completa prima **160/165**, dopo **164/165**: ora passano B-015 (importexport), B-005 (levelup), B-006 ×2 (combattimento); resta solo B-014 (eroe). Nessun test che passava ora fallisce. File dei risultati di oggi ripristinato (resta quello del tester).
+- **Prova a mano** (Playwright, server locale, 1440x900 e 390x844): 12 eroi → Export all (12, senza `_sig`/`updatedAt`) → reimport stesso file "Every hero in that file is already in the tome" → cancellati 5 → reimport "5 heroes back in the tome (7 already here)" → file misto con `null`, numeri, eroe senza caratteristiche e campi rotti "2 heroes back (3 damaged skipped)" → array semplice ok → `{"heroes":[]}` messaggio chiaro; dopo ricarica tutti presenti. Memoria piena: l'avviso mostra "Export all heroes" e il file contiene anche l'eroe non salvato (16). Console senza errori, scrollWidth uguale alla finestra.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md.
+- **Prossima sessione**: B-014 (filtro per nome e ordine dello scaffale, l'ultimo test rosso), ma il piano lo vuole prima proposto dal designer; poi l'avviso "Nuova versione, ricarica" del service worker (Backlog 5).
+
 ## 2026-11-09 · design
 - **Nota**: il piano diceva "designer oggi non lavora", ma la routine gira ogni giorno; ho preso la voce 2 del Backlog (telefono, già destinata al designer per martedì), solo CSS e lontano dalle parti toccate oggi dallo sviluppo (fixup, Zaino, export, Homebrew).
 - **Fatto** ([3baa416](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/3baa416), su main):

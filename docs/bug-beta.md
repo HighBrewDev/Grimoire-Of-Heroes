@@ -13,30 +13,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: scaffale orizzontale con `scrollWidth` 7.410 px su 356 visibili: il 30° eroe è a 6.600 px, solo scorrendo. Gli eroi restano nell'ordine di creazione; non esistono riordino, ordinamento o ricerca (la ricerca Ctrl+K cerca solo le regole).
 - Console: nessun errore.
 
-### B-015 [bassa] [UX] Nessun backup di tutti gli eroi insieme
-- Trovato da: power user · 2026-11-08
-- Dove: I Eroe → Export / Import
-- Passi: 1. Tomo con 33 eroi. 2. Cerca un modo per salvarli tutti prima di liberare spazio (come chiede l'avviso "Not saved… Export your heroes").
-- Atteso: "Esporta tutti" in un file e import dello stesso file.
-- Ottenuto: Export e Download .json lavorano un eroe alla volta: servono 33 export e 33 import. L'homebrew invece ha già "Export homebrew" in blocco. Con l'avviso di memoria piena è la prima cosa che l'utente cerca.
-- Console: nessun errore.
-
-### B-005 [media] Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
-- Trovato da: distruttore · 2026-11-06
-- Dove: Level up (livello 4, Ability Score Improvement), 1440x900
-- Passi: 1. Valeria Thorne (Fighter 3): in II Attributi porta Forza a 24 con il pulsante +. 2. Level up → "+2 to Strength" → Become level 4.
-- Atteso: Forza resta 24 (il limite 20 vale solo per l'aumento) o il level up avvisa che non si può.
-- Ottenuto: Forza scende a 20, mentre il toast dice "STR +2". `up()` fa `Math.min(cap, valore + n)` (index.html:2339).
-- Console: nessun errore.
-
-### B-006 [media] Danni negativi danno PF temporanei, cura negativa porta i PF sotto zero
-- Trovato da: distruttore · 2026-11-06
-- Dove: III Combattimento → Punti ferita, 1440x900
-- Passi: 1. Valeria (32/32 PF). 2. Scrivi `-50` e premi Damage. 3. Scrivi `-100` e premi Heal.
-- Atteso: valori negativi ignorati o trattati come positivi.
-- Ottenuto: dopo il passo 2 ha 50 PF temporanei; dopo il passo 3 ha -68/32 PF, salvati anche dopo ricarica. `applyDamage` (index.html:2181) e `heal` (index.html:2476) non controllano il segno.
-- Console: nessun errore.
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -55,6 +31,33 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-015 [bassa] [UX] Nessun backup di tutti gli eroi insieme
+- **Risolto 2026-11-09** in [4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449): "Export all heroes (N)" nella finestra Export e nell'avviso "Not saved" scarica un file `grimoire-heroes-AAAA-MM-GG.json` con tutti i tuoi eroi (senza campi locali). Import accetta quel file (o un array): ogni eroe entra con un id nuovo, le copie identiche già nel tomo sono saltate, le voci rotte contate e scartate. Verificato: 12 eroi esportati, stesso file reimportato → "già nel tomo"; cancellati 5 → tornano solo i 5; con memoria piena l'export include anche l'eroe non salvato. Test `importexport` B-015 ora passa.
+- Trovato da: power user · 2026-11-08
+- Dove: I Eroe → Export / Import
+- Passi: 1. Tomo con 33 eroi. 2. Cerca un modo per salvarli tutti prima di liberare spazio (come chiede l'avviso "Not saved… Export your heroes").
+- Atteso: "Esporta tutti" in un file e import dello stesso file.
+- Ottenuto: Export e Download .json lavorano un eroe alla volta: servono 33 export e 33 import. L'homebrew invece ha già "Export homebrew" in blocco. Con l'avviso di memoria piena è la prima cosa che l'utente cerca.
+- Console: nessun errore.
+
+### B-005 [media] Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
+- **Risolto 2026-11-09** in [4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449): l'aumento non abbassa mai un punteggio (`max(valore, min(limite, valore + n))`); le note del level up dicono "STR already 24" invece di "STR +2". Test `levelup` B-005 ora passa.
+- Trovato da: distruttore · 2026-11-06
+- Dove: Level up (livello 4, Ability Score Improvement), 1440x900
+- Passi: 1. Valeria Thorne (Fighter 3): in II Attributi porta Forza a 24 con il pulsante +. 2. Level up → "+2 to Strength" → Become level 4.
+- Atteso: Forza resta 24 (il limite 20 vale solo per l'aumento) o il level up avvisa che non si può.
+- Ottenuto: Forza scende a 20, mentre il toast dice "STR +2". `up()` fa `Math.min(cap, valore + n)` (index.html:2339).
+- Console: nessun errore.
+
+### B-006 [media] Danni negativi danno PF temporanei, cura negativa porta i PF sotto zero
+- **Risolto 2026-11-09** in [4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449): Damage, Heal e Temp (scheda e incontro) trattano un numero negativo come 0 (`hpNum`). Entrambi i test `combattimento` B-006 ora passano.
+- Trovato da: distruttore · 2026-11-06
+- Dove: III Combattimento → Punti ferita, 1440x900
+- Passi: 1. Valeria (32/32 PF). 2. Scrivi `-50` e premi Damage. 3. Scrivi `-100` e premi Heal.
+- Atteso: valori negativi ignorati o trattati come positivi.
+- Ottenuto: dopo il passo 2 ha 50 PF temporanei; dopo il passo 3 ha -68/32 PF, salvati anche dopo ricarica. `applyDamage` (index.html:2181) e `heal` (index.html:2476) non controllano il segno.
+- Console: nessun errore.
 
 ### B-012 [media] Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
 - **Risolto 2026-11-09** con la PR [#3](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/3) (commit [7107250](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7107250), unita da sviluppo dopo i test): `_sig` è un'impronta corta (due hash cyrb53); i `_sig` vecchi vengono convertiti senza toccare `updatedAt`/`_dirty`; Export e Download .json senza campi locali. 33 eroi pesanti: da 1.556.502 a 754.604 caratteri.
