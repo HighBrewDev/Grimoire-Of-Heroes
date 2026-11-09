@@ -33,6 +33,7 @@ const BUG_SEZIONE = {
   'B-001':'workshop', 'B-002':'importexport', 'B-003':'importexport', 'B-004':'importexport', 'B-005':'levelup', 'B-006':'combattimento',
   'B-007':'importexport', 'B-008':'eroe', 'B-009':'eroe', 'B-010':'importexport', 'B-011':'workshop', 'B-012':'importexport',
   'B-013':'zaino', 'B-014':'eroe', 'B-015':'importexport',
+  'B-021':'levelup', 'B-022':'levelup', 'B-023':'combattimento', 'B-024':'importexport', 'B-025':'levelup',
 };
 const INDIZI = [
   [/390|telefono|mobile|tocco/i, 'telefono'], [/workshop|homebrew/i, 'workshop'], [/level ?up|multiclass/i, 'levelup'],

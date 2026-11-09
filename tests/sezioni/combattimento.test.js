@@ -115,4 +115,13 @@ module.exports = {sezione:'combattimento', test:[
     const t = await app.text('#page');
     assert.ok(!/e\+\d/.test(t), 'PF in notazione esponenziale: ' + (t.match(/.{0,20}e\+\d+.{0,20}/) || [''])[0]);
   }],
+  ['B-023 riposo breve: Second Wind recupera un uso', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    const pips = await app.page.$$eval('#page [data-act="usePip"]', b => b.map(x => x.dataset.arg));
+    assert.ok(pips.length >= 2, 'mancano i segnalini di Second Wind');
+    for (const a of pips) await app.clickJS('usePip', a);
+    assert.strictEqual((await app.hero()).res.second_wind_uses, 2);
+    await app.click('shortRest');
+    assert.strictEqual((await app.hero()).res.second_wind_uses || 0, 1, 'dopo il riposo breve Second Wind è ancora 0/2');
+  }],
 ]};

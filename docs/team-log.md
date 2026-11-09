@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-09 · power user
+- **Fatto**: sessione serale di circa un'ora su main 8c56f8d (= live). Paladino 1→20, tutte le classi sondate livello per livello, tripla multiclasse Fighter/Wizard/Warlock, sessione di gioco con 4 eroi, homebrew (classe, specie, talento, oggetto) usato sugli eroi, 40 eroi creati/rinominati/duplicati/cancellati da telefono con backup e ripristino. Dettagli e numeri in docs/bug-beta.md, "Diario dei test".
+- **Bug nuovi**: **B-021 [alta]** level up: aumento dei punteggi solo al livello 4 (mancano 8, 12, 16, Guerriero 6/14, Ladro 10) per tutte le classi SRD; B-022 [media] +2 Cos non alza i PF dei livelli precedenti; B-023 [media] riposo breve non restituisce Second Wind, Channel Divinity, Bardic Inspiration; B-024 [media] backup: copie con nome oltre 80 caratteri perse al ripristino come "già qui"; B-025 [bassa] talenti non ripetibili offerti di nuovo.
+- **Test**: 6 test di regressione nuovi che oggi falliscono (levelup ×4, combattimento ×1, importexport ×1); aggiunti B-021…B-025 a `BUG_SEZIONE` in tests/punteggio.js. Nessun codice dell'app toccato. Correzioni di oggi (B-005, B-006, B-012, B-013, B-015) e telefono verificati nell'uso: reggono.
+- **Suggerimento per sviluppo**: B-021 è una riga (`levelPlan`: leggere anche `srd.tbl[N-1].f`) e vale più di tutti gli altri.
+
 ## 2026-11-09 · sviluppo sera
 - **Nota**: il piano non aveva un compito "Sviluppo sera" (la mattina ha chiuso B-013 e B-012); ho seguito il "Prossima sessione" del mattino e la voce 1 del Backlog (B-015), più B-005 e B-006 (voce 4), piccoli e con test già pronti. Nessun CSS toccato (il designer oggi ha lavorato sul CSS del telefono).
 - **Fatto** ([4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449), su main):

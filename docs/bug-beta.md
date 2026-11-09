@@ -5,6 +5,56 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-021 [alta] Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (finestra "reaches level N"), 1440x900 e 390x844, tutte le 12 classi SRD e anche nelle multiclassi (Wizard 7 → 8)
+- Passi: 1. Paladino di livello 7 (o Guerriero 5, Ladro 9, qualsiasi classe 11 o 15). 2. Level up.
+- Atteso: la sezione "Ability Score Improvement or feat" con +2, +1/+1 e talento, come al livello 4 (regole 2024: livelli 4, 8, 12, 16; Guerriero anche 6 e 14; Ladro anche 10; Epic Boon al 19).
+- Ottenuto: la sezione manca: si diventa livello 8 senza poter scegliere nulla. Provato con tutte le 12 classi dal livello 1 al 20: la scelta compare solo al 4 e al 19 (Epic Boon). Un eroe portato al 20 nell'app perde 3 aumenti (5 il Guerriero, 4 il Ladro). Causa probabile: `levelPlan` (index.html ~3420) cerca "Ability Score Improvement" in `clsInfo(v).f`, dove ogni privilegio compare una volta sola (al primo livello, 4); i livelli successivi sono solo nella tabella `srd.tbl[N-1].f`, che ha `"f":["Ability Score Improvement"]` agli 8, 12, 16. Le classi homebrew invece funzionano (usano `ASI_LEVELS`).
+- Console: nessun errore.
+- Test: `levelup` "B-021 …" (2 test).
+
+### B-022 [media] Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (livello 4, Ability Score Improvement), 1440x900
+- Passi: 1. Paladino 3, Cos 14, PF 28/28. 2. Level up → PF medi → "+2 to Constitution" → Become level 4.
+- Atteso: PF massimi 40 (regole 2024: quando il modificatore di Costituzione cambia, i PF massimi cambiano come se lo avessi avuto dal livello 1: 10 + 3 × 6 + 4 × 3).
+- Ottenuto: PF massimi 36 (+8 calcolato con la Cos vecchia, nessun +1 per livello precedente). Il toast dice "+8 HP · CON +2". Stessa cosa con +1/+1 su Costituzione al livello 12 e con il pulsante "Raise Constitution" negli Attributi (Valeria 15 → 16: PF restano 32/32, nessun avviso). `applyLevelUp` (index.html ~3470) calcola `con` prima di applicare l'aumento e non ricalcola i PF.
+- Console: nessun errore.
+- Test: `levelup` "B-022 …".
+
+### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
+- Trovato da: power user · 2026-11-09
+- Sezione: combattimento
+- Dove: III Combattimento → Short Rest, 1440x900
+- Passi: 1. Valeria (Fighter 3): usa i 2 Second Wind (segnalini). 2. Short Rest. 3. Lo stesso con un Chierico 6 (3 Channel Divinity) e un Bardo 5 (4 Bardic Inspiration).
+- Atteso: regole 2024: Second Wind e Channel Divinity recuperano un uso con un riposo breve; Bardic Inspiration dal livello 5 (Font of Inspiration) torna tutta.
+- Ottenuto: tutti i segnalini restano spesi fino al riposo lungo. Il riposo breve rimette solo Focus Points e slot del Patto (`SHORT_REST_RES = ['focus_points']`, index.html ~1214). Simulando una sessione di gioco con tre riposi brevi il giocatore deve ricordarsi a mano quali segnalini liberare.
+- Console: nessun errore.
+- Test: `combattimento` "B-023 …".
+
+### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
+- Trovato da: power user · 2026-11-09
+- Sezione: import/export
+- Dove: I Eroe → Duplicate, poi Export → "Export all heroes" e Import del file, 390x844 e 1440x900
+- Passi: 1. Eroe con nome di 70 caratteri (o un nome normale duplicato più volte partendo dall'ultima copia: ogni copia aggiunge " (copy)"). 2. Duplicate tre volte. 3. Export all heroes. 4. In un altro browser (o dopo aver cancellato gli eroi) Import del file.
+- Atteso: tornano tutti e 4 gli eroi.
+- Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
+- Console: nessun errore.
+- Test: `importexport` "B-024 …".
+
+### B-025 [bassa] Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (livello 4, scelta "Feat"), 1440x900
+- Passi: 1. Valeria (ha già Alert e Savage Attacker). 2. Level up → Feat → Alert → Become level 4.
+- Atteso: Alert e Savage Attacker non compaiono nella lista (solo i talenti ripetibili, come Skilled o Magic Initiate, possono tornare).
+- Ottenuto: compaiono e vengono aggiunti: Valeria ha due volte Alert ("Human (Versatile)" e "Level 4") e il toast dice "+9 HP · Alert". Stesso comportamento con un talento homebrew senza "Repeatable" (preso al 4 e all'8). `featList` (index.html ~3435) non toglie i talenti già presi.
+- Console: nessun errore.
+- Test: `levelup` "B-025 …".
+
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
 - Sezione: import/export (salvataggio con più schede)
@@ -207,4 +257,4 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - 2026-11-06 · distruttore · Prima sessione (Playwright/Chromium, server locale, stesso codice del sito live). Import eroe con 15 JSON malformati (tipi sbagliati, null, valori enormi, multiclasse oltre 20, XSS in nome/classe/specie/note); wizard con nomi vuoti, di soli spazi, da 20.000 caratteri, emoji composte, HTML, livelli -1/0/21/2.7/abc/1e3; PF con danni/cure/temporanei negativi; due schede aperte insieme; level up 1→20 per tutte le 12 classi alternando ASI e talenti; doppio clic su "Become level"; ASI su punteggio sopra 20; import homebrew con nome numerico/oggetto, campi del tipo sbagliato, XSS, 50 voci, categorie `__proto__`/`constructor`; offline con service worker; localStorage pieno; ripristino da eroe rotto. Nessun XSS riuscito (tutto passa da `esc`), offline ok, doppio clic non applica due livelli, level up fino a 20 senza errori. Trovati B-001…B-011.
 - 2026-11-08 · power user · Sito live, Playwright/Chromium, 1440x900 e 390x844, anche CPU 4x. Tomo con 33 eroi: 3 di esempio, 6 dal wizard (livelli 11–20), 24 importati dalla finestra Import (livelli 10–20, 80 oggetti, 45–60 incantesimi, 8 attacchi, note da ~6.500 caratteri). Numeri (desktop / telefono, mediana): apertura del tomo fino allo scaffale completo 0,81 s / 0,79 s, con CPU 4x 2,0 s / 2,0 s; cambio eroe 65–105 ms / 42–61 ms (CPU 4x 210–290 ms, Zaino il più lento fino a 490 ms); cambio capitolo 140–220 ms / 90–120 ms (CPU 4x 410–690 ms); level up apertura 129 ms, conferma 149 ms (CPU 4x 115 / 269 ms); wizard 90 ms; import di un eroe pesante 94 ms; cancellazione 55 ms; filtro dello zaino 37–90 ms a tasto. Memoria JS 4 MB a vuoto → 11,3 MB con 33 eroi, stabile dopo 200 cambi eroe (nessuna perdita). localStorage 1,46 milioni di caratteri (~44 KB per eroe pesante), libero 3,78 milioni: limite ~5,24 milioni, circa 118 eroi così; IndexedDB 72 KB. Verificati sul live: B-004 (avviso "Not saved" resta, Try again lo toglie, eroi presenti dopo ricarica), B-003 (4 JSON rotti, tutti i capitoli aperti, nessun errore), B-001 (voce `n:42` scartata, tomo ok dopo ricarica), B-002 (EroeTabA ed EroeTabB entrambi presenti nella terza scheda). Export → re-import identico; 20 eroi cancellati, ricarica ok. Console pulita. Ancora 10 px di scroll orizzontale a 390 px (già nel backlog). Trovati B-012…B-015.
 - 2026-11-09 · distruttore · Sessione serale sul salvataggio nuovo (Playwright/Chromium, server locale = stesso codice di main a814a69). Suite completa 164/165 (resta solo B-014): B-005, B-006, B-012, B-013, B-015 e i test del telefono reggono. Tecniche nuove: tre schede con 60 operazioni casuali (crea, cancella, danni, cambio capitolo) → nessun eroe perso né resuscitato, 4ª scheda identica; memoria piena in due schede → avviso in entrambe, liberato lo spazio in B "Try again" salva, A unisce e alla modifica successiva salva anche il suo eroe (nessuna perdita); cancellazione in una scheda mentre l'altra sta scrivendo → **B-016**. "Export all"/import di backup con `[]`, `{"heroes":[]}`, `[null,5,"x"]`, doppioni nel file, id già presenti, nome `__proto__`, JSON annidato 3.000 livelli, valori 1e308: nessun errore, doppioni saltati. Import 5etools con 11 file malformati e fino a 20.000 voci (**B-020**). Campi numerici con negativi ed enormi (**B-017**, **B-018**). Telefono 390 px con testi lunghi senza spazi in ogni campo (**B-019**). Tastiera: Esc annulla la conferma di cancellazione, Invio ripetuto non cancella. Console pulita in tutte le prove. Nota: un eroe singolo con un campo `heroes:[]` viene letto come backup vuoto ("no heroes"), caso improbabile e non registrato.
-
+- 2026-11-09 · power user · Sessione serale (Playwright/Chromium, server locale = main 8c56f8d, identico al live). Suite completa 164/172 (falliscono solo i test dei bug aperti B-014, B-016…B-020). Scenari: **Paladino dal livello 1 al 20** con sottoclasse, PF medi, +2 Cos, talenti ed Epic Boon (apertura level up 69–132 ms, conferma 51–252 ms) → **B-021**, **B-022**; sondaggio di tutte le 12 classi per ogni livello 2–20; **tripla multiclasse** Fighter 5 → Wizard 8 / Warlock 7 (livello 20): slot multiclasse, slot del Patto, Dadi Vita per tipo, PF (d6 +6, d8 +7) e competenze tutti corretti; **sessione di gioco** con 4 eroi: 10 danni di fila (64–154 ms), PF temporanei, cure, Dado Vita, 5 condizioni, Second Wind/Channel Divinity/Bardic Inspiration, slot, riposi breve e lungo, 30 tiri di dado (1–6 ms) → **B-023**; **homebrew sugli eroi**: classe mezza incantatrice d10 con aumenti a 4 e 8, specie velocità 40, talento e oggetto, eroe portato dal 2 all'8 (PF, slot e aumenti giusti) → **B-025**; **tutto da telefono 390x844**: 40 eroi dal wizard (tutte le classi, livelli 1–20), 10 rinominati con accenti, 15 duplicati a catena, 15 cancellati, incontro con 20 creature e 25 turni, tutti i capitoli senza scroll orizzontale; "Export all" di 43 eroi (56 KB) e import in un tomo vuoto in 0,37 s → **B-024**. Numeri: apertura del tomo 0,76 s, ricarica con 41 eroi 0,5–0,7 s, localStorage 39.700 caratteri per 43 eroi leggeri (~920 a eroe: B-012 regge), memoria JS 10 MB. Correzioni di oggi verificate nell'uso: B-005, B-006, B-012, B-013, B-015 reggono. Console pulita in tutte le prove.

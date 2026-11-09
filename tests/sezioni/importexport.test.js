@@ -128,4 +128,20 @@ module.exports = {sezione:'importexport', test:[
     const names = (await b.store()).chars.map(c => c.name);
     assert.deepStrictEqual(names, ['Eldrin Moonwhisper', 'Kessa Quickpaw']);
   }],
+  ['B-024 backup di eroi duplicati più volte: il ripristino li riporta tutti', async ({open}) => {
+    const name = 'Cavaliere della Torre Grigia di Valmorta, custode del sigillo antico';   // 70 caratteri
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {name})]});
+    await app.click('duplicate'); await app.click('duplicate'); await app.click('duplicate');
+    const names = (await app.store()).chars.map(c => c.name);
+    assert.strictEqual(new Set(names).size, 4);
+    await app.click('export');
+    const [dl] = await Promise.all([app.page.waitForEvent('download'), app.click('exportAll')]);
+    const txt = require('fs').readFileSync(await dl.path(), 'utf8');
+    const b = await open({heroes:[fx.hero(fx.KESSA)]});
+    await b.click('import');
+    await b.page.evaluate(t => { document.getElementById('impTxt').value = t; }, txt);
+    await b.click('doImport'); await b.page.waitForTimeout(300);
+    const n = (await b.store()).chars.length;
+    assert.strictEqual(n, 5, `dopo il ripristino ${n - 1} eroi su 4 (${await b.toast()})`);
+  }],
 ]};

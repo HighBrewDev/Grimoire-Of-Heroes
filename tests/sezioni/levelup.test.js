@@ -75,4 +75,27 @@ module.exports = {sezione:'levelup', test:[
     const s = (await app.hero()).abilities.str;
     assert.ok(s >= 24, `Forza scesa da 24 a ${s}`);
   }],
+  ['B-021 Paladino 7 → 8: si sceglie aumento dei punteggi o talento', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Paladin', subclass:'Devotion', level:7, abilities:{str:16,dex:10,con:14,int:8,wis:12,cha:14}, hp:{cur:60,max:60,temp:0}})]});
+    await openLU(app);
+    assert.ok(await app.page.locator('input[name="lu_asi"]').count(), 'nessuna scelta di aumento dei punteggi o talento al livello 8');
+  }],
+  ['B-021 Guerriero 5 → 6: si sceglie aumento dei punteggi o talento', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Fighter', subclass:'Champion', level:5, abilities:{str:16,dex:14,con:14,int:10,wis:12,cha:8}, hp:{cur:44,max:44,temp:0}})]});
+    await openLU(app);
+    assert.ok(await app.page.locator('input[name="lu_asi"]').count(), 'nessuna scelta di aumento dei punteggi o talento al livello 6');
+  }],
+  ['B-022 +2 Costituzione al livello 4 alza i PF massimi anche per i livelli precedenti (28 → 40)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Paladin', subclass:'Devotion', level:3, abilities:{str:16,dex:10,con:14,int:8,wis:12,cha:14}, hp:{cur:28,max:28,temp:0}})]});
+    await openLU(app);
+    await app.set('#lu_a1', 'con'); await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.abilities.con, 16);
+    assert.strictEqual(h.hp.max, 40, `PF massimi ${h.hp.max}: 10 + 3 × 6 + 4 × Cos 3 = 40`);
+  }],
+  ['B-025 un talento non ripetibile già preso (Alert) non viene offerto di nuovo', async ({open}) => {
+    const app = await open(); await openLU(app);
+    const opts = await app.page.$$eval('#lu_feat option', o => o.map(x => x.value));
+    assert.ok(!opts.includes('Alert'), 'Alert offerto anche se Valeria lo ha già');
+  }],
 ]};
