@@ -606,6 +606,34 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .bwForm .bwWide{grid-column:1/-1}
 .bwForm .bwWide .row{gap:6px 14px}
 .bwForm textarea{width:100%;min-height:90px}
+/* Homebrew page */
+.topActions .btn[aria-current="page"]{background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,#9a7a15);color:#2a1c08;border-color:#6d5210}
+.hbIntro>p{margin:0 0 10px;max-width:70ch}
+.hbIntro .row{gap:8px;flex-wrap:wrap}
+.hbSec{margin-top:24px}
+.hbSec>h3{margin:0 0 10px;padding-bottom:4px;border-bottom:1px solid var(--gold3);font-family:var(--f-display);font-size:1.1em;letter-spacing:.04em}
+.hbTiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.hbTile{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:12px 14px;min-height:44px;border:1px solid var(--gold3);border-radius:12px;
+  background:var(--surf);color:var(--ink);font:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+.hbTile:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.18);border-color:var(--gold)}
+.hbTile:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hbTile .ico{font-size:1.6em;line-height:1.1}
+.hbTile b{font-family:var(--f-display);font-size:1.05em}
+.hbTile .d{font-size:13.5px;color:var(--ink2);line-height:1.3}
+.hbTile .n{font-size:12.5px;color:var(--ink3);margin-top:4px}
+.hbBar{gap:8px 12px;flex-wrap:wrap;margin-bottom:6px}
+.hbBar input{flex:1 1 220px;min-width:0}
+.hbRow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed var(--gold3)}
+.hbRow .ico{font-size:1.3em;width:1.4em;text-align:center}
+.hbRow .t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.hbRow>.row{gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hbCrumb{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--ink2);flex-wrap:wrap}
+.hbEdit{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;margin-top:12px;align-items:start}
+.hbPrev{position:sticky;top:12px;max-height:calc(100vh - 120px);overflow:auto}
+.hbPrev .head h2{font-size:1.25em;margin:0}
+.hbActs{gap:8px;flex-wrap:wrap}
+@media (max-width:820px){.hbEdit{grid-template-columns:1fr}.hbPrev{position:static;max-height:none}}
+@media (max-width:520px){.hbRow{flex-wrap:wrap}.hbRow>.row{width:100%;justify-content:flex-start;padding-left:2em}.hbTiles{grid-template-columns:1fr 1fr}.hbTile .d{display:none}}
 .b5List{max-height:min(52vh,460px);overflow:auto;margin-top:8px;padding-right:4px}
 .b5List h4{margin:10px 0 2px}
 .b5Row{gap:8px;padding:3px 0;align-items:flex-start}
@@ -643,7 +671,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
       </button>
       <button type="button" class="btn ghost" data-act="wizard">＋ New hero</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="library">Library</button>
-      <button type="button" class="btn ghost" data-act="go" data-arg="workshop" title="Make your own classes, spells, feats…">＋ Homebrew</button>
+      <button type="button" class="btn ghost" data-act="go" data-arg="workshop" title="Create, import and manage your own classes, spells, creatures…">Homebrew</button>
       <button type="button" class="iconBtn" id="soundBtn" data-act="sound" aria-pressed="false" aria-label="Page-turn sound" title="Page-turn sound">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
       </button>
@@ -1245,7 +1273,7 @@ const CHAPTERS = [
   {id:'pack', t:'Pack & Riches', s:'gear · arms · coin', h:'Pack & Riches'},
   {id:'chronicle', t:'Chronicle', s:'story · allies · notes', h:'Chronicle'},
   {id:'library', t:'Library', s:'the rules, offline', h:'Library of the Rules'},
-  {id:'workshop', t:'Workshop', s:'forge your own', h:'Homebrew Workshop'},
+  {id:'workshop', t:'Homebrew', s:'create · import · manage', h:'Homebrew'},
 ];
 const BOOKISH = id => id === 'library' || id === 'workshop';
 const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
@@ -1263,6 +1291,7 @@ function renderShelf(){
   barsFrom($('#shelf'), 'shelf:');
 }
 function renderTabs(){
+  $$('.topActions [data-act="go"]').forEach(b => b.setAttribute('aria-current', G.chapter === b.dataset.arg ? 'page' : 'false'));
   $('#chapTabs').innerHTML = CHAPTERS.map((ch, i) =>
     `<button type="button" class="tab" data-act="go" data-arg="${ch.id}" aria-current="${G.chapter === ch.id ? 'page' : 'false'}"><span class="no">${ROMAN[i]}</span>${ch.t}<small>${ch.s}</small></button>`).join('');
 }
@@ -1275,7 +1304,7 @@ function pageHTML(id){
   const body = (BOOKISH(id) || id === 'encounter' ? '' : roBanner(c)) + PAGES[id](c);
   return `<header class="pageHead">
       <div style="min-width:0"><h2>${BOOKISH(id) ? '' : portrait(c, 'mini')} ${BOOKISH(id) ? ch.h : esc(c.name) + ' · ' + ch.h}</h2>
-      <div class="sub">${id === 'workshop' ? 'Classes, subclasses, spells, feats, species, backgrounds, items and creatures of your own, in every menu' : id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
+      <div class="sub">${id === 'workshop' ? 'Your own classes, subclasses, spells, feats, species, backgrounds, items and creatures' : id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
       <nav class="pageNav" aria-label="Turn page">
         <button type="button" class="btn small" data-act="prev" ${i <= 0 ? 'disabled' : ''} aria-label="Previous page">←</button>
         <button type="button" class="btn small" data-act="next" ${i >= CHAPTERS.length - 1 ? 'disabled' : ''} aria-label="Next page">→</button>
@@ -1441,7 +1470,7 @@ const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String
 const names = cat => [...new Set(ALL.filter(e => e.cat === cat).map(e => e.n))].sort();
 const hpBar = c => `<div class="hpBar ${c.hp.cur <= c.hp.max / 2 ? 'low' : ''}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>`;
 const NATIVE = e => e.src === 'SRD' || e.src === 'Quick' || e.src === 'Homebrew';
-const srcTag = e => e && e.src === 'Homebrew' ? '<span class="src brew" title="Made by you in the Workshop">Homebrew</span>' : e ? `<span class="src ${e.src === 'SRD' ? 'srd' : e.src === 'Quick' ? 'quick' : ''}" title="${e.src === 'Quick' ? 'Short table summary written for this tool' : e.src === 'SRD' ? 'System Reference Document 5.2.1 (CC-BY-4.0)' : 'Imported by you'}">${esc(e.src === 'Quick' ? 'Summary' : e.src)}</span>` : '';
+const srcTag = e => e && e.src === 'Homebrew' ? '<span class="src brew" title="Made by you in Homebrew">Homebrew</span>' : e ? `<span class="src ${e.src === 'SRD' ? 'srd' : e.src === 'Quick' ? 'quick' : ''}" title="${e.src === 'Quick' ? 'Short table summary written for this tool' : e.src === 'SRD' ? 'System Reference Document 5.2.1 (CC-BY-4.0)' : 'Imported by you'}">${esc(e.src === 'Quick' ? 'Summary' : e.src)}</span>` : '';
 
 /* ---- inventory model: an item keeps its own fields; anything missing is read from the library entry ---- */
 const INV_CATS = ['Weapons', 'Armor & Shields', 'Magic Items', 'Potions & Consumables', 'Adventuring Gear', 'Tools & Kits', 'Ammunition', 'Treasure & Valuables', 'Quest & Misc'];
@@ -1826,7 +1855,7 @@ function entryMeta(e){
   const o = e.o;
   if (!NATIVE(e)) return extMeta(e);
   switch (e.cat){
-    case 'spells': return `${o.lv ? `Level ${o.lv} ${esc(o.sc)}` : `${esc(o.sc)} cantrip`}${o.cls ? ' (' + esc(o.cls.join(', ')) + ')' : ''}`;
+    case 'spells': return `${o.lv ? `Level ${o.lv} ${esc(o.sc)}` : `${esc(o.sc)} cantrip`}${o.cls?.length ? ' (' + esc(o.cls.join(', ')) + ')' : ''}`;
     case 'feats': return `${esc(o.ty || '')} feat${o.pre ? ' · Prerequisite: ' + esc(o.pre) : ''}${o.rep ? ' · Repeatable' : ''}`;
     case 'items': return `${esc(o.cat || '')}, ${esc(o.rar || '')}${o.att ? ' (requires attunement)' : ''}`;
     case 'equipment': return `${esc(o.cat || '')} · ${esc(o.cost || '')}${o.wt ? ' · ' + o.wt + ' lb' : ''}`;
@@ -1887,7 +1916,7 @@ function entryActions(e){
   }
 }
 function entryCard(e){
-  return `<div class="head"><h2>${esc(e.n)}</h2>${srcTag(e)}<span class="spacer"></span>${entryActions(e)}${brewable(e) ? act('brewFrom', e.id, 'Copy to Workshop', 'btn small ghost', 'title="Open it in the Workshop form as a starting point for your own homebrew"') : ''}</div>
+  return `<div class="head"><h2>${esc(e.n)}</h2>${srcTag(e)}<span class="spacer"></span>${entryActions(e)}${brewable(e) ? act('brewFrom', e.id, 'Copy to Homebrew', 'btn small ghost', 'title="Open it in the Homebrew editor as a starting point for your own version"') : ''}</div>
     <div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`;
 }
 function showEntry(e){
@@ -2105,32 +2134,71 @@ function readBrew(cat){
   if (cat === 'monsters'){ o.cr = isNaN(+o.cr) ? o.cr : +o.cr; o.ac = o.ac || '10'; o.hp = o.hp || '10'; }
   return o;
 }
-function workshopHTML(){
-  const cat = G.brewCat in BREW ? G.brewCat : 'classes', B = BREW[cat];
-  const editing = G.brewEdit && BREW_ITEMS.find(it => it.id === G.brewEdit), o = editing ? editing.o : G.brewDraft?.cat === cat ? G.brewDraft.o : {};
-  const mine = Object.keys(BREW).map(k => [k, BREW_ITEMS.filter(it => it.cat === k)]).filter(([, l]) => l.length);
-  const left = plusOK() ? '' : `<p class="muted small">Free plan: ${Math.max(0, FREE_BREW - BREW_ITEMS.length)} of ${FREE_BREW} creations left. ${act('plus', undefined, 'Unlimited with Grimoire+', 'sb')}</p>`;
-  return `<div class="libTabs" role="tablist">${Object.entries(BREW).map(([k, b]) => act('brewCat', k, `${esc(b.t)}${BREW_ITEMS.some(it => it.cat === k) ? ` <span class="muted">${BREW_ITEMS.filter(it => it.cat === k).length}</span>` : ''}`, 'sb' + (k === cat ? ' on' : ''), `role="tab" aria-selected="${k === cat}"`)).join('')}</div>
-  <div class="grid2" style="margin-top:12px">
-    ${card(`${editing ? 'Edit' : 'New'} ${esc(B.t.toLowerCase())}`, `<p class="muted">${esc(B.hint)}</p>
-      <div class="bwForm">${B.f.map(f => brewField(f, o)).join('')}</div>
-      <div class="row mt">${act('brewSave', undefined, editing ? 'Save changes' : `＋ Add ${B.t.toLowerCase()}`, 'btn')}${editing || G.brewDraft?.cat === cat ? act('brewNew', undefined, editing ? 'Cancel' : 'Clear', 'btn ghost') : ''}</div>${left}`)}
-    <div class="stack">
-      ${card(`Your creations <span class="muted">${BREW_ITEMS.length}</span>`, mine.length ? mine.map(([k, l]) => `<h4>${esc(BREW[k].t)}</h4>${l.map(it =>
-        `<div class="kv"><span><button type="button" class="xref" data-act="detailId" data-arg="brew:${esc(it.id)}">${esc(it.o.n)}</button> <span class="muted">${esc(brewKey(k, it.o) || '')}</span></span><span class="row">${act('brewEdit', it.id, 'Edit')}${act('brewDel', it.id, '✕', 'sb x', `aria-label="Delete ${esc(it.o.n)}"`)}</span></div>`).join('')}`).join('')
-        : '<p class="empty">Nothing forged yet. Pick a kind above, fill the form and it joins every menu of the tome.</p>')}
-      ${card('Share and back up', `<p class="muted">Your homebrew lives on this device. Export it to move it to another device or give it to your table; import a file to merge it here.</p>
-        <div class="row">${act('brewExport', undefined, 'Export homebrew', 'btn small')}<label class="btn small ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr"></div>
-        <p class="muted small">Takes a Grimoire homebrew export, or a 5etools-style JSON file (<code>{"spell":[…]}</code>, <code>{"monster":[…]}</code>, classes, feats, species, items…): you choose which entries to turn into homebrew you can edit. To only read a big source, use Library → Import instead.</p>`)}
-    </div>
-  </div>`;
+/* ---- the Homebrew page: a home with everything you made (create · find · import), and an editor with a live preview */
+const BREW_ICON = {classes:'🛡️', subclasses:'🔱', spells:'✨', feats:'🏅', species:'🧝', backgrounds:'📜', items:'💍', monsters:'🐉'};
+const BREW_DESC = {classes:'Hit die, proficiencies, spellcasting and features by level', subclasses:'A new path for any class', spells:'Level, school, components and the classes that learn it',
+  feats:'Origin, general, fighting style or epic boon', species:'Size, speed and traits', backgrounds:'Ability scores, origin feat, skills and gear',
+  items:'Rarity, type and attunement', monsters:'A full stat block, ready for the Encounter page'};
+const brewCount = k => BREW_ITEMS.filter(it => it.cat === k).length;
+const brewFreeNote = () => plusOK() ? '' : `<p class="muted small">Free plan: ${Math.max(0, FREE_BREW - BREW_ITEMS.length)} of ${FREE_BREW} creations left. ${act('plus', undefined, 'Unlimited with Grimoire+', 'sb')}</p>`;
+function workshopHTML(){ return G.brewView === 'edit' ? brewEditorHTML() : brewHomeHTML(); }
+const brewRow = it => `<div class="hbRow"><span class="ico" aria-hidden="true">${BREW_ICON[it.cat]}</span>
+  <span class="t"><button type="button" class="xref" data-act="detailId" data-arg="brew:${esc(it.id)}">${esc(it.o.n)}</button><span class="muted small">${esc(BREW[it.cat].t)}${brewKey(it.cat, it.o) ? ' · ' + esc(brewKey(it.cat, it.o)) : ''}</span></span>
+  <span class="row">${act('brewEdit', it.id, 'Edit', 'sb', `aria-label="Edit ${esc(it.o.n)}"`)}${act('brewDup', it.id, 'Duplicate', 'sb', `aria-label="Duplicate ${esc(it.o.n)}"`)}${act('brewDel', it.id, 'Delete', 'sb x', `aria-label="Delete ${esc(it.o.n)}"`)}</span></div>`;
+function brewListHTML(){
+  const f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '', q = norm(G.brewQ || '');
+  const list = BREW_ITEMS.filter(it => (!f || it.cat === f) && (!q || norm(it.o.n).includes(q))).sort((a, b) => a.o.n.localeCompare(b.o.n));
+  return list.length ? list.map(brewRow).join('') : '<p class="empty">Nothing matches. Try another word or kind.</p>';
 }
+function brewHomeHTML(){
+  const n = BREW_ITEMS.length, f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '';
+  return `<div class="hbIntro"><p>Make your own content and it joins every menu of the tome: hero pages, level up, the spellbook, the pack and encounters. It stays on this device; export it to back it up or share it with your table.</p>
+    <div class="row">${act('brewGo', 'create', '＋ Create new', 'btn')}<label class="btn ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr">${n ? act('brewExport', undefined, `Export all (${n})`, 'btn ghost') : ''}</div>${brewFreeNote()}</div>
+  <section class="hbSec" id="hb_create" aria-labelledby="hb_create_h"><h3 id="hb_create_h">Create something new</h3>
+    <div class="hbTiles">${Object.entries(BREW).map(([k, b]) => `<button type="button" class="hbTile" data-act="brewNewKind" data-arg="${k}"><span class="ico" aria-hidden="true">${BREW_ICON[k]}</span><b>${esc(b.t)}</b><span class="d">${esc(BREW_DESC[k])}</span>${brewCount(k) ? `<span class="n">${brewCount(k)} made</span>` : ''}</button>`).join('')}</div></section>
+  <section class="hbSec" aria-labelledby="hb_mine_h"><h3 id="hb_mine_h">Your homebrew <span class="muted">${n}</span></h3>
+    ${n ? `<div class="row hbBar"><label class="sr" for="brew_q">Search your homebrew</label><input type="search" id="brew_q" placeholder="Search your homebrew" value="${esc(G.brewQ || '')}">
+      <div class="libTabs" role="group" aria-label="Show only">${act('brewFilter', '', `All <span class="muted">${n}</span>`, 'sb' + (f ? '' : ' on'), `aria-pressed="${!f}"`)}${Object.keys(BREW).filter(brewCount).map(k => act('brewFilter', k, `${esc(BREW[k].t)} <span class="muted">${brewCount(k)}</span>`, 'sb' + (f === k ? ' on' : ''), `aria-pressed="${f === k}"`)).join('')}</div></div>
+      <div class="hbList" id="hb_list" aria-live="polite">${brewListHTML()}</div>`
+    : '<div class="empty"><p><b>Nothing here yet.</b></p><p>Pick a kind above to create your first piece of homebrew, or import a file below.</p></div>'}</section>
+  <section class="hbSec" aria-labelledby="hb_imp_h"><h3 id="hb_imp_h">Import</h3>
+    <div class="drop" id="brewDrop"><p><b>Drop a .json file here</b></p>
+      <p class="muted small">A Grimoire homebrew export, or a 5etools-style file with spells, creatures, items, feats, species, backgrounds, classes or subclasses. You choose which entries to keep, and each one can be edited afterwards.</p>
+      <label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,application/json" class="sr"></div>
+    <p class="muted small">Want to start from an existing rule? Open any spell, creature, feat… in the ${act('go', 'library', 'Library', 'xref')} and press <b>Copy to Homebrew</b>.</p></section>`;
+}
+function brewEditorHTML(){
+  const editing = G.brewEdit && BREW_ITEMS.find(it => it.id === G.brewEdit);
+  const cat = editing ? editing.cat : Object.hasOwn(BREW, G.brewCat || '') ? G.brewCat : 'classes', B = BREW[cat];
+  const o = editing ? editing.o : G.brewDraft?.cat === cat ? G.brewDraft.o : {};
+  const verb = editing ? 'Edit' : 'New';
+  return `<nav class="hbCrumb" aria-label="Breadcrumb">${act('brewHome', undefined, '← Homebrew', 'sb')}<span aria-hidden="true">›</span><span aria-current="page">${verb} ${esc(B.t.toLowerCase())}${editing ? ': ' + esc(editing.o.n) : ''}</span></nav>
+    ${editing ? '' : `<div class="libTabs" role="group" aria-label="What are you making?">${Object.entries(BREW).map(([k, b]) => act('brewCat', k, `<span aria-hidden="true">${BREW_ICON[k]}</span> ${esc(b.t)}`, 'sb' + (k === cat ? ' on' : ''), `aria-pressed="${k === cat}"`)).join('')}</div>`}
+    <div class="hbEdit">
+      ${card(`<span aria-hidden="true">${BREW_ICON[cat]}</span> ${verb} ${esc(B.t.toLowerCase())}`, `<p class="muted">${esc(B.hint)}</p>
+        <form class="bwForm" id="bwForm" data-cat="${cat}" onsubmit="return false">${B.f.map(f => brewField(f, o)).join('')}</form>
+        <div class="row mt hbActs">${act('brewSave', undefined, editing ? 'Save changes' : `＋ Add ${esc(B.t.toLowerCase())}`, 'btn')}${act('brewHome', undefined, 'Cancel', 'btn ghost')}${editing ? '<span class="spacer"></span>' + act('brewDel', editing.id, 'Delete', 'btn ghost') : ''}</div>${editing ? '' : brewFreeNote()}`)}
+      <aside class="card hbPrev" aria-label="Preview"><h3>Preview</h3><div id="bwPreview">${brewPreview(cat, o)}</div></aside>
+    </div>`;
+}
+function brewPreview(cat, o){
+  if (!o || !String(o.n || '').trim()) return '<p class="muted">Give it a name and the entry appears here as it will in the tome.</p>';
+  try { const e = {cat, n:o.n, o, src:'Homebrew', k:brewKey(cat, o), id:'brew:preview'};
+    return `<div class="head"><h2>${esc(o.n)}</h2>${srcTag(e)}</div><div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`; }
+  catch (err) { return '<p class="muted">The preview appears as you fill in the form.</p>'; }
+}
+let brewPrevQ = 0;
+function brewLivePreview(){
+  cancelAnimationFrame(brewPrevQ);
+  brewPrevQ = requestAnimationFrame(() => { const f = $('#bwForm'), box = $('#bwPreview'); if (!f || !box) return; try { box.innerHTML = brewPreview(f.dataset.cat, readBrew(f.dataset.cat)); } catch (e) {} });
+}
+const brewTop = () => { const p = $('#page'); if (p && p.getBoundingClientRect().top < 0) p.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'}); };
 async function brewImport(file){
   let j; try { j = JSON.parse(await file.text()); } catch (e) { toast('That file is not valid JSON.'); return; }
   if (!Array.isArray(j?.grimoireHomebrew)){
     const r = from5(j);
     if (r.items.length) return brewPick(r, file.name.replace(/\.json$/i, ''));
-    toast(`Nothing the Workshop can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON such as {"spell":[…]}.`); return;
+    toast(`Nothing Homebrew can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON such as {"spell":[…]}.`); return;
   }
   const items = cleanBrew(j.grimoireHomebrew), bad = j.grimoireHomebrew.length - items.length;
   if (!items.length){ toast(`No usable entries in that file${bad ? ` (${bad} skipped: each needs a known kind and a text name)` : ''}.`); return; }
@@ -2145,9 +2213,20 @@ async function mergeBrew(items){
   return n;
 }
 const ACT_BREW = {
-  brewCat(k){ G.brewCat = k; G.brewEdit = null; G.brewDraft = null; renderPage(); },
-  brewNew(){ G.brewEdit = null; G.brewDraft = null; renderPage(); },
-  brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; G.brewCat = it.cat; G.brewEdit = id; renderPage(); $('#bw_n')?.focus(); },
+  brewCat(k){ G.brewCat = k; G.brewEdit = null; G.brewDraft = null; G.brewView = 'edit'; renderPage(); },
+  brewNewKind(k){ if (!Object.hasOwn(BREW, k)) return; G.brewCat = k; G.brewEdit = null; G.brewDraft = null; G.brewView = 'edit'; renderPage(); brewTop(); $('#bw_n')?.focus({preventScroll:true}); },
+  brewHome(){ G.brewView = 'home'; G.brewEdit = null; G.brewDraft = null; renderPage(); brewTop(); },
+  brewGo(){ const t = $('#hb_create'); t?.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'}); t?.querySelector('.hbTile')?.focus({preventScroll:true}); },
+  brewFilter(k){ G.brewFilter = k; renderPage(); },
+  brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; closeModal(); G.brewCat = it.cat; G.brewEdit = id; G.brewDraft = null; G.brewView = 'edit';
+    if (G.chapter !== 'workshop') turnTo('workshop'); else { renderPage(); brewTop(); } $('#bw_n')?.focus({preventScroll:true}); },
+  async brewDup(id){
+    const it = BREW_ITEMS.find(x => x.id === id); if (!it) return;
+    if (!plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
+    let n = 'Copy of ' + it.o.n, i = 2; while (BREW_ITEMS.some(x => x.cat === it.cat && norm(x.o.n) === norm(n))) n = `Copy of ${it.o.n} ${i++}`;
+    const copy = {id:uid(), cat:it.cat, o:{...structuredClone(it.o), n:n.slice(0, 80)}};
+    BREW_ITEMS.push(copy); await saveBrew(); reloadBrew(); renderPage(); toast(`${copy.o.n} added. Edit it to make it your own.`);
+  },
   async brewSave(){
     const cat = G.brewCat in BREW ? G.brewCat : 'classes', o = readBrew(cat);
     if (!o.n){ toast('Give it a name first.'); $('#bw_n')?.focus(); return; }
@@ -2155,10 +2234,10 @@ const ACT_BREW = {
     if (!editing && !plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
     if (BREW_ITEMS.some(x => x.cat === cat && norm(x.o.n) === norm(o.n) && x !== editing)){ toast(`You already have a ${BREW[cat].t.toLowerCase()} called ${o.n}.`); return; }
     if (editing) editing.o = o; else BREW_ITEMS.push({id:uid(), cat, o});
-    G.brewEdit = null; G.brewDraft = null; await saveBrew(); reloadBrew(); render(); toast(`${o.n} ${editing ? 'updated' : 'joins the tome'}.`);
+    G.brewEdit = null; G.brewDraft = null; G.brewView = 'home'; G.brewQ = ''; await saveBrew(); reloadBrew(); render(); brewTop(); toast(`${o.n} ${editing ? 'updated' : 'joins the tome'}.`);
   },
   brewDel(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return;
-    confirmBox(`Delete ${it.o.n}? Heroes that use it keep its name.`, 'Delete', async () => { BREW_ITEMS = BREW_ITEMS.filter(x => x !== it); if (G.brewEdit === id) G.brewEdit = null; await saveBrew(); reloadBrew(); render(); }); },
+    confirmBox(`Delete ${it.o.n}? Heroes that use it keep its name.`, 'Delete', async () => { BREW_ITEMS = BREW_ITEMS.filter(x => x !== it); if (G.brewEdit === id){ G.brewEdit = null; G.brewView = 'home'; } await saveBrew(); reloadBrew(); render(); toast(`${it.o.n} deleted.`); }); },
   brewExport(){
     const txt = JSON.stringify({grimoireHomebrew:BREW_ITEMS.map(({cat, o}) => ({cat, o}))}, null, 1);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type:'application/json'})); a.download = 'grimoire-homebrew.json'; document.body.appendChild(a); a.click(); a.remove();
@@ -2395,13 +2474,13 @@ function brewPick(r, name){
   const many = r.items.length > 60;
   const groups = Object.keys(BREW).map(k => [k, r.items.map((it, i) => [it, i]).filter(([it]) => it.cat === k)]).filter(([, l]) => l.length);
   const has = it => BREW_ITEMS.some(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n));
-  modal(`<div class="head"><h2>Bring into the Workshop</h2><span class="spacer"></span>${closeBtn()}</div>
-    <p class="muted">${esc(name)}: ${r.items.length} ${r.items.length === 1 ? 'entry' : 'entries'} the Workshop can edit${r.skip ? `, ${r.skip} of other kinds left out` : ''}. Tick the ones you want: each becomes homebrew you can change, export and share.${many ? ' The file is big, so nothing is ticked yet.' : ''}</p>
+  modal(`<div class="head"><h2>Import into Homebrew</h2><span class="spacer"></span>${closeBtn()}</div>
+    <p class="muted">${esc(name)}: ${r.items.length} ${r.items.length === 1 ? 'entry' : 'entries'} you can edit${r.skip ? `, ${r.skip} of other kinds left out` : ''}. Tick the ones you want: each becomes homebrew you can change, export and share.${many ? ' The file is big, so nothing is ticked yet.' : ''}</p>
     <div class="row"><label class="sr" for="b5_q">Filter</label><input type="search" id="b5_q" placeholder="Filter by name" style="flex:1" autofocus>
       <button type="button" class="sb" id="b5_all">Tick shown</button><button type="button" class="sb" id="b5_none">Untick all</button></div>
     <div class="b5List">${groups.map(([k, l]) => `<h4>${esc(BREW[k].t)} <span class="muted">${l.length}</span></h4>${l.map(([it, i]) =>
       `<label class="row b5Row" data-n="${esc(norm(it.o.n))}"><input type="checkbox" class="b5" value="${i}" ${many ? '' : 'checked'}> <span>${esc(it.o.n)} <span class="muted">${esc([brewKey(it.cat, it.o), it.src].filter(Boolean).join(' · '))}${has(it) ? ' · replaces yours' : ''}</span></span></label>`).join('')}`).join('')}</div>
-    <div class="row mt">${act('brew5Add', undefined, 'Add ticked', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}<span class="muted" id="b5_n"></span></div>`, {label:'Bring into the Workshop'});
+    <div class="row mt">${act('brew5Add', undefined, 'Add ticked', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}<span class="muted" id="b5_n"></span></div>`, {label:'Import into Homebrew'});
   const count = () => { $('#b5_n').textContent = `${$$('.b5:checked').length} ticked`; };
   $('#b5_q').oninput = e => { const q = norm(e.target.value); $$('.b5Row').forEach(r => { r.hidden = !!q && !r.dataset.n.includes(q); }); };
   $('#b5_all').onclick = () => { $$('.b5Row').forEach(r => { if (!r.hidden) r.querySelector('input').checked = true; }); count(); };
@@ -2413,16 +2492,16 @@ Object.assign(ACT_BREW, {
     const picked = cleanBrew($$('.b5:checked').map(x => BREW5?.[+x.value]).filter(Boolean).map(({cat, o}) => ({cat, o})));
     if (!picked.length){ toast('Tick at least one entry.'); return; }
     closeModal(); BREW5 = null;
-    G.brewCat = picked[0].cat; G.brewEdit = null; G.brewDraft = null;
+    G.brewCat = picked[0].cat; G.brewEdit = null; G.brewDraft = null; G.brewView = 'home'; G.brewFilter = ''; G.brewQ = '';
     const n = await mergeBrew(picked);
     toast(`${picked.length} ${picked.length === 1 ? 'entry joins' : 'entries join'} your homebrew (${n} new). Open any of them to edit it.`);
   },
   brewFrom(id){
     const e = byId(id), d = brewDraftFrom(e);
-    if (!d){ toast('The Workshop has no form for this kind of entry.'); return; }
-    G.brewCat = d.cat; G.brewEdit = null; G.brewDraft = d; closeModal();
-    if (G.chapter === 'workshop') renderPage(); else turnTo('workshop');
-    toast(`${d.o.n} is in the ${BREW[d.cat].t.toLowerCase()} form: change what you like, then add it.`);
+    if (!d){ toast('Homebrew has no form for this kind of entry.'); return; }
+    G.brewCat = d.cat; G.brewEdit = null; G.brewDraft = d; G.brewView = 'edit'; closeModal();
+    if (G.chapter === 'workshop'){ renderPage(); brewTop(); } else turnTo('workshop');
+    toast(`${d.o.n} is in the ${BREW[d.cat].t.toLowerCase()} form: change what you like, then press Add.`);
   },
 });
 
@@ -3255,7 +3334,7 @@ const plusOK = () => !CLOUD || !paywallOn() || !!(me() && S.bill?.plus);
 const PLUS_WHY = {pdf:'The printable sheet and PDF are part of Grimoire+.', themes:'Night pages and the other themes are part of Grimoire+.',
   history:'Grimoire+ keeps a history of every hero, so you can bring back yesterday\'s sheet.', party:'Creating a party is part of Grimoire+. Joining one is free for everybody.',
   sync:'A free account keeps one hero in the cloud. Grimoire+ syncs all of them, on every device.',
-  brew:`The free plan holds ${FREE_BREW} homebrew creations. Grimoire+ makes the Workshop unlimited.`};
+  brew:`The free plan holds ${FREE_BREW} homebrew creations. Grimoire+ makes Homebrew unlimited.`};
 async function billing(body){
   if (S.session.expires_at - 60000 < Date.now()) await refresh();
   const r = await fetch(API('/functions/v1/billing'), {method:'POST', headers:{apikey:CFG.supabaseKey, Authorization:'Bearer ' + S.session.access_token, 'Content-Type':'application/json'},
@@ -3278,7 +3357,7 @@ function exePayModal(){
 }
 function plusModal(why){
   const b = S.bill || {}, left = b.founder_left ?? 0;
-  const perks = ['Every hero synced between PC, tablet and phone', 'History of each hero: restore an earlier sheet', 'Create a party: your companions join free and read each other\'s heroes', 'Printable sheet and PDF', 'Night pages and themes', 'Unlimited homebrew in the Workshop'];
+  const perks = ['Every hero synced between PC, tablet and phone', 'History of each hero: restore an earlier sheet', 'Create a party: your companions join free and read each other\'s heroes', 'Printable sheet and PDF', 'Night pages and themes', 'Unlimited homebrew'];
   const buy = (plan, label, cls) => me() ? act('checkout', plan, label, cls) : '';
   modal(`<div class="head"><h2>Grimoire<span class="plus">+</span></h2><span class="spacer"></span>${closeBtn()}</div>
     ${why && PLUS_WHY[why] ? `<p><b>${esc(PLUS_WHY[why])}</b></p>` : ''}
@@ -3504,7 +3583,7 @@ function wire(){
     if (el.dataset.lib !== undefined){ G.libF[el.dataset.lib] = el.value; renderLibList(); return; }
     if (el.id === 'spell_mine'){ G.spellMine = el.checked; spellSearch($('#spell_q').value); }
     if (el.id === 'imp_file') importFiles([...el.files]);
-    if (el.id === 'brew_file' && el.files[0]) brewImport(el.files[0]);
+    if ((el.id === 'brew_file' || el.id === 'brew_file2') && el.files[0]){ brewImport(el.files[0]); el.value = ''; }
     if (el.id === 'f_img' && el.files[0] && isMine(active())) shrinkImage(el.files[0]).then(d => mut(c => { c.img = d; })).catch(() => toast('That image could not be read.'));
     if (el.id === 'coverStart'){ G.coverOnStart = el.checked; save(); }
     if (el.id === 'gear_cat'){ G.gearCat = el.value; gearSearch(); }
@@ -3518,6 +3597,8 @@ function wire(){
     if (el.id === 'gear_q'){ G.gearQ = el.value; gearSearch(); }
     if (el.id === 'inv_q'){ G.invQ = el.value; const pos = el.selectionStart; renderPage(); const n = $('#inv_q'); n.focus(); n.setSelectionRange(pos, pos); }
     if (el.id === 'lib_q'){ G.libQ = el.value; renderLibList(); }
+    if (el.id === 'brew_q'){ G.brewQ = el.value; const l = $('#hb_list'); if (l) l.innerHTML = brewListHTML(); }
+    if (el.closest?.('#bwForm')) brewLivePreview();
     if (el.id === 'omni'){ omniSel = 0; renderOmni(); }
   });
   const omni = $('#omni');
@@ -3543,9 +3624,10 @@ function wire(){
   book.addEventListener('touchend', e => { if (!st) return; const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
     if (Date.now() - st < 600 && Math.abs(dx) > 70 && Math.abs(dy) < 50) flipStep(dx < 0 ? 1 : -1); st = 0; }, {passive:true});
   // drag & drop import
-  document.addEventListener('dragover', e => { const z = e.target.closest?.('#dropZone'); if (z){ e.preventDefault(); z.classList.add('over'); } });
-  document.addEventListener('dragleave', e => { const z = e.target.closest?.('#dropZone'); if (z) z.classList.remove('over'); });
-  document.addEventListener('drop', e => { const z = e.target.closest?.('#dropZone'); if (z){ e.preventDefault(); z.classList.remove('over'); importFiles([...e.dataTransfer.files].filter(f => /json/i.test(f.type) || /\.json$/i.test(f.name))); } });
+  document.addEventListener('dragover', e => { const z = e.target.closest?.('#dropZone, #brewDrop'); if (z){ e.preventDefault(); z.classList.add('over'); } });
+  document.addEventListener('dragleave', e => { const z = e.target.closest?.('#dropZone, #brewDrop'); if (z) z.classList.remove('over'); });
+  document.addEventListener('drop', e => { const z = e.target.closest?.('#dropZone, #brewDrop'); if (z && z.id === 'brewDrop'){ e.preventDefault(); z.classList.remove('over'); const f = [...e.dataTransfer.files].find(f => /json/i.test(f.type) || /\.json$/i.test(f.name)); f ? brewImport(f) : toast('Drop a .json file.'); return; }
+    if (z){ e.preventDefault(); z.classList.remove('over'); importFiles([...e.dataTransfer.files].filter(f => /json/i.test(f.type) || /\.json$/i.test(f.name))); } });
 }
 
 // The paper textures are SVG noise filters; Chrome re-runs those for every element that paints them,
