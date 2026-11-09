@@ -996,7 +996,7 @@ async function load(){
   if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
-  G.chars.forEach(c => { if (!c._sig) c._sig = sigOf(c); });
+  G.chars.forEach(c => { c._sig = c._sig ? normSig(c._sig) : sigOf(c); });
   markBase(data?.chars ? raw : null);
   try { Object.assign(G, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
@@ -2867,12 +2867,12 @@ const ACT = {
   deleteChar(){ if (G.chars.length <= 1 && !me()){ toast('This is your last hero, so it stays.'); return; }
     confirmBox(`Delete ${active().name}?`, 'Delete hero', () => { const gone = active(); if (me() && gone._rev){ S.tomb.push(gone.id); saveTomb(); }
       G.chars = G.chars.filter(c => c.id !== G.activeId); G.activeId = G.chars[0]?.id || null; save(); render(); toast('Hero deleted.'); }); },
-  export(){ const c = active(), txt = JSON.stringify(c);
+  export(){ const c = active(), txt = JSON.stringify(heroData(c));
     modal(`<div class="head"><h2>Export ${esc(c.name)}</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Copy this text, or download it, then use Import on any device.</p>
       <label class="sr" for="expTxt">Character JSON</label><textarea id="expTxt" style="min-height:180px" readonly>${esc(txt)}</textarea>
       <div class="row mt">${act('copyExport', undefined, 'Copy', 'btn small')}${act('downloadChar', undefined, 'Download .json', 'btn small ghost')}</div>`, {label:'Export'}); },
   async copyExport(){ const t = $('#expTxt'); try { await navigator.clipboard.writeText(t.value); toast('Copied.'); } catch (e) { t.select(); toast('Selected: press Ctrl+C / ⌘C to copy.'); } },
-  downloadChar(){ const c = active(); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(c, null, 2)], {type:'application/json'})); a.download = c.name.replace(/\W+/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove(); },
+  downloadChar(){ const c = active(); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(heroData(c), null, 2)], {type:'application/json'})); a.download = c.name.replace(/\W+/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove(); },
   import(){ modal(`<div class="head"><h2>Import a hero</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Paste exported JSON, or choose a .json file.</p>
       <label class="sr" for="impTxt">Character JSON</label><textarea id="impTxt" style="min-height:160px"></textarea>
       <div class="row mt">${act('doImport', undefined, 'Import', 'btn small')}<label class="btn small ghost" for="impFile">Choose file</label><input type="file" id="impFile" accept=".json" class="sr"></div>`, {label:'Import'});
@@ -2969,7 +2969,19 @@ const deviceName = () => /iPad/.test(navigator.userAgent) || /Macintosh/.test(na
   : /iPhone/.test(navigator.userAgent) ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : /Windows/.test(navigator.userAgent) ? 'Windows PC' : /Mac/.test(navigator.userAgent) ? 'Mac' : 'browser';
 const LOCAL_FIELDS = ['_sig', '_dirty', '_rev', '_blocked', 'ownerName', 'updatedAt', 'editedOn'];
 const heroData = c => { const o = {}; for (const k in c) if (!LOCAL_FIELDS.includes(k)) o[k] = c[k]; return o; };
-const sigOf = c => JSON.stringify(heroData(c));
+/* _sig is a short fingerprint of the hero's data (two 53-bit cyrb53 hashes), not a second copy of the hero:
+   it only answers "did this hero change?". Saves made before kept the whole hero as text (starting with "{"):
+   normSig turns those into the same fingerprint, so an unchanged hero still looks unchanged. */
+function cyrb53(s, seed){
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < s.length; i++){ ch = s.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+const sigHash = s => 's' + cyrb53(s, 0) + '.' + cyrb53(s, 1);
+const normSig = x => typeof x === 'string' && x.startsWith('{') ? sigHash(x) : x;
+const sigOf = c => sigHash(JSON.stringify(heroData(c)));
 // called from save(): own heroes that changed since the last look get a fresh edit stamp and wait to be pushed
 function stampHeroes(){
   for (const c of G.chars){
@@ -3108,13 +3120,13 @@ const isTyping = () => /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagN
 let baseRaw = null, baseSig = new Map();
 function markBase(raw){
   baseRaw = raw; baseSig = new Map();
-  try { (JSON.parse(raw || 'null')?.chars || []).forEach(c => { if (isObj(c) && c.id) baseSig.set(c.id, c._sig || ''); }); } catch (e) {}
+  try { (JSON.parse(raw || 'null')?.chars || []).forEach(c => { if (isObj(c) && c.id) baseSig.set(c.id, normSig(c._sig) || ''); }); } catch (e) {}
 }
 function mergeStored(raw){
   let data = null; try { data = JSON.parse(raw); } catch (e) {}
   if (!isObj(data) || !Array.isArray(data.chars)) return {changed:false, clash:[]};
   const fresh = baseRaw == null && !G.chars.some(c => c.createdAt);   // this tab never saved: only untouched samples to lose
-  const theirs = new Map(data.chars.filter(c => isObj(c) && c.id).map(c => [c.id, c])), clash = [], next = [];
+  const theirs = new Map(data.chars.filter(c => isObj(c) && c.id).map(c => [c.id, {...c, _sig:normSig(c._sig)}])), clash = [], next = [];
   let changed = false;
   for (const c of fresh ? [] : G.chars){
     const t = theirs.get(c.id);
