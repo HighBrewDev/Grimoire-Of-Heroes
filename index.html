@@ -634,9 +634,34 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .hbActs{gap:8px;flex-wrap:wrap}
 @media (max-width:820px){.hbEdit{grid-template-columns:1fr}.hbPrev{position:static;max-height:none}}
 @media (max-width:520px){.hbRow{flex-wrap:wrap}.hbRow>.row{width:100%;justify-content:flex-start;padding-left:2em}.hbTiles{grid-template-columns:1fr 1fr}.hbTile .d{display:none}}
+.b5Bar{flex-wrap:wrap;gap:6px 10px}
+.b5Bar input[type=search]{flex:1 1 220px;min-width:0}
+.hbSum{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hbBadge{display:inline-block;border-radius:999px;padding:0 8px;font-size:12.5px;line-height:1.6;border:1px solid;white-space:nowrap}
+.hbBadge.ok{color:#2f5d34;border-color:#6f9b6f;background:rgba(111,155,111,.14)}
+.hbBadge.w{color:#7a5300;border-color:#c79a2a;background:rgba(201,162,39,.16)}
+.hbBadge.e{color:#8b1d12;border-color:#c0574a;background:rgba(192,87,74,.13)}
+.hbMsgs{list-style:none;margin:4px 0 6px 26px;padding:0;font-size:14px;line-height:1.35}
+.hbMsgs li{margin:2px 0}
+.hbMsgs li.e{color:#8b1d12}
+.hbMsgs li.w{color:#6e4b00}
+.b5Row{padding:3px 0;border-bottom:1px dashed rgba(138,108,31,.35)}
+.b5Row>label{gap:8px;align-items:flex-start}
+.b5Row.bad>label{opacity:.85}
+.hbNotes{margin:6px 0}
+.hbChecks{margin:0 0 10px;padding:8px 10px;border:1px solid var(--gold3);border-radius:10px;background:var(--surf)}
+.hbChecks h4{margin:0 0 4px}
+.hbChecks .hbMsgs{margin-left:0}
+.hbOk{margin:0;color:#2f5d34}
+.hbGuide{margin-top:10px}
+.hbGuide pre{white-space:pre-wrap;font-size:13px;background:var(--surf);border:1px solid var(--gold3);border-radius:8px;padding:8px 10px;overflow:auto}
+.hbGuide li{margin:3px 0}
+[data-book="night"] .hbMsgs li.e,[data-book="night"] .hbBadge.e{color:#f3a397}
+[data-book="night"] .hbMsgs li.w,[data-book="night"] .hbBadge.w{color:#f0d483}
+[data-book="night"] .hbBadge.ok,[data-book="night"] .hbOk{color:#9fd39f}
 .b5List{max-height:min(52vh,460px);overflow:auto;margin-top:8px;padding-right:4px}
 .b5List h4{margin:10px 0 2px}
-.b5Row{gap:8px;padding:3px 0;align-items:flex-start}
+
 .b5Row[hidden]{display:none}
 .bwCheck{padding:8px 0 6px}
 .bwScores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
@@ -2150,6 +2175,16 @@ function brewListHTML(){
   const list = BREW_ITEMS.filter(it => (!f || it.cat === f) && (!q || norm(it.o.n).includes(q))).sort((a, b) => a.o.n.localeCompare(b.o.n));
   return list.length ? list.map(brewRow).join('') : '<p class="empty">Nothing matches. Try another word or kind.</p>';
 }
+const HB_GUIDE = {
+  '# Spell:':'Level (Cantrip or 1–9), School, Casting time, Range, Components, Duration, Concentration, Ritual, Classes; text; “## Using a Higher-Level Spell Slot”.',
+  '# Feat:':'Category (Origin, General, Fighting Style, Epic Boon), Prerequisite, Repeatable; text.',
+  '# Species:':'Creature type, Size, Speed; text; “## Traits” with one “**Name.** text” per trait.',
+  '# Background:':'Ability scores (three), Origin feat, Skills (two), Tools (one), Equipment; text.',
+  '# Class:':'Hit die, Primary ability, Saving throws (two), Proficiencies, Skills (“Choose 2: …”), Spellcasting (none, full, half, third, pact), Spellcasting ability, Multiclassing; “## Features” with “### Level 1: Name”.',
+  '# Subclass:':'Class, Summary; text; “## Features” with “### Level 3: Name”.',
+  '# Item:':'Type, Rarity, Attunement; text.',
+  '# Creature:':'Size, Type, Alignment, Armor class, Hit points, Speed, Ability scores (six numbers), Challenge, Saving throws, Skills, Resistances, Immunities, Senses, Languages; traits as “**Name.** text”; “## Actions”, “## Bonus Actions”, “## Reactions”, “## Legendary Actions”.',
+};
 function brewHomeHTML(){
   const n = BREW_ITEMS.length, f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '';
   return `<div class="hbIntro"><p>Make your own content and it joins every menu of the tome: hero pages, level up, the spellbook, the pack and encounters. It stays on this device; export it to back it up or share it with your table.</p>
@@ -2162,9 +2197,26 @@ function brewHomeHTML(){
       <div class="hbList" id="hb_list" aria-live="polite">${brewListHTML()}</div>`
     : '<div class="empty"><p><b>Nothing here yet.</b></p><p>Pick a kind above to create your first piece of homebrew, or import a file below.</p></div>'}</section>
   <section class="hbSec" aria-labelledby="hb_imp_h"><h3 id="hb_imp_h">Import</h3>
-    <div class="drop" id="brewDrop"><p><b>Drop a .json file here</b></p>
-      <p class="muted small">A Grimoire homebrew export, or a 5etools-style file with spells, creatures, items, feats, species, backgrounds, classes or subclasses. You choose which entries to keep, and each one can be edited afterwards.</p>
-      <label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,application/json" class="sr"></div>
+    <div class="drop" id="brewDrop"><p><b>Drop a .md or .json file here</b></p>
+      <p class="muted small">Homebrew written in Markdown, a Grimoire homebrew export, or a 5etools-style file with spells, creatures, items, feats, species, backgrounds, classes or subclasses. Every entry is checked against the rules (names, levels, schools, skills, feats, proficiencies, ability scores, sizes, challenge, hit points, bonuses…); you see the errors and warnings and choose what to keep.</p>
+      <div class="row" style="justify-content:center;gap:8px"><label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,.md,.markdown,.txt,application/json,text/markdown,text/plain" class="sr">${act('brewMdPaste', undefined, 'Paste Markdown', 'btn small ghost')}${act('brewMdTemplate', undefined, 'Markdown template', 'btn small ghost')}${n ? act('brewExportMd', undefined, 'Export as Markdown', 'btn small ghost') : ''}</div></div>
+    <details class="hbGuide"><summary>How to write homebrew in Markdown</summary>
+      <p>Each entry starts with a heading that says what it is, then one field per line, then the text. Italian names work too.</p>
+      <pre># Spell: Ember Lash
+- Level: 1
+- School: Evocation
+- Casting time: Action
+- Range: 30 feet
+- Components: V, S, M (a pinch of ash)
+- Duration: Instantaneous
+- Classes: Sorcerer, Wizard
+
+A whip of embers… 2d8 Fire damage.
+
+## Using a Higher-Level Spell Slot
+The damage increases by 1d8 for each slot level above 1.</pre>
+      <ul class="small">${Object.entries(HB_GUIDE).map(([k, t]) => `<li><b>${esc(k)}</b>: ${esc(t)}</li>`).join('')}</ul>
+      <p class="muted small">The template has a full example of each kind. “Export as Markdown” writes your homebrew in the same format, so you can edit it in any text editor and import it back.</p></details>
     <p class="muted small">Want to start from an existing rule? Open any spell, creature, feat… in the ${act('go', 'library', 'Library', 'xref')} and press <b>Copy to Homebrew</b>.</p></section>`;
 }
 function brewEditorHTML(){
@@ -2181,9 +2233,16 @@ function brewEditorHTML(){
       <aside class="card hbPrev" aria-label="Preview"><h3>Preview</h3><div id="bwPreview">${brewPreview(cat, o)}</div></aside>
     </div>`;
 }
+function brewChecksHTML(cat, o){
+  const r = checkBrew(cat, o, {});
+  return `<div class="hbChecks" aria-live="polite"><h4>Checks</h4>${r.err.length + r.warn.length ? hbMsgs(r.err, r.warn) : '<p class="hbOk"><span aria-hidden="true">✓</span> No problems found.</p>'}</div>`;
+}
 function brewPreview(cat, o){
-  if (!o || !String(o.n || '').trim()) return '<p class="muted">Give it a name and the entry appears here as it will in the tome.</p>';
-  try { const e = {cat, n:o.n, o, src:'Homebrew', k:brewKey(cat, o), id:'brew:preview'};
+  if (!o || !String(o.n || '').trim()) return '<p class="muted">Give it a name and the entry appears here as it will in the tome, with a check against the rules.</p>';
+  return brewChecksHTML(cat, o) + brewPreviewEntry(cat, o);
+}
+function brewPreviewEntry(cat, o){
+  try { o = checkBrew(cat, o, {}).o; const e = {cat, n:o.n, o, src:'Homebrew', k:brewKey(cat, o), id:'brew:preview'};
     return `<div class="head"><h2>${esc(o.n)}</h2>${srcTag(e)}</div><div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`; }
   catch (err) { return '<p class="muted">The preview appears as you fill in the form.</p>'; }
 }
@@ -2194,16 +2253,17 @@ function brewLivePreview(){
 }
 const brewTop = () => { const p = $('#page'); if (p && p.getBoundingClientRect().top < 0) p.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'}); };
 async function brewImport(file){
-  let j; try { j = JSON.parse(await file.text()); } catch (e) { toast('That file is not valid JSON.'); return; }
+  const text = await file.text(), name = file.name.replace(/\.(json|md|markdown|txt)$/i, '');
+  if (/\.(md|markdown|txt)$/i.test(file.name) || (!/^\s*[{\[]/.test(text) && /^#\s+\S/m.test(text))) return brewMdText(text, name);
+  let j; try { j = JSON.parse(text); } catch (e) { toast('That file is not valid JSON.'); return; }
   if (!Array.isArray(j?.grimoireHomebrew)){
     const r = from5(j);
-    if (r.items.length) return brewPick(r, file.name.replace(/\.json$/i, ''));
+    if (r.items.length) return brewReview(r.items, file.name.replace(/\.json$/i, ''), {skip:r.skip});
     toast(`Nothing Homebrew can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON such as {"spell":[…]}.`); return;
   }
   const items = cleanBrew(j.grimoireHomebrew), bad = j.grimoireHomebrew.length - items.length;
   if (!items.length){ toast(`No usable entries in that file${bad ? ` (${bad} skipped: each needs a known kind and a text name)` : ''}.`); return; }
-  const n = await mergeBrew(items);
-  toast(`${items.length} homebrew entries merged (${n} new)${bad ? `, ${bad} skipped (each needs a known kind and a text name)` : ''}.`);
+  brewReview(items, name, {notes:bad ? [`${bad} ${bad === 1 ? 'entry was' : 'entries were'} left out: each needs a known kind and a text name.`] : []});
 }
 // same rule for every import: an entry with the same kind and name is replaced, anything else is added
 async function mergeBrew(items){
@@ -2230,6 +2290,9 @@ const ACT_BREW = {
   async brewSave(){
     const cat = G.brewCat in BREW ? G.brewCat : 'classes', o = readBrew(cat);
     if (!o.n){ toast('Give it a name first.'); $('#bw_n')?.focus(); return; }
+    const chk = checkBrew(cat, o, {});
+    if (chk.err.length){ brewLivePreview(); toast(`Can’t save yet: ${chk.err[0]}${chk.err.length > 1 ? ` And ${chk.err.length - 1} more problem${chk.err.length > 2 ? 's' : ''}, listed under Checks.` : ''}`); return; }
+    Object.assign(o, chk.o);
     const editing = G.brewEdit && BREW_ITEMS.find(x => x.id === G.brewEdit);
     if (!editing && !plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
     if (BREW_ITEMS.some(x => x.cat === cat && norm(x.o.n) === norm(o.n) && x !== editing)){ toast(`You already have a ${BREW[cat].t.toLowerCase()} called ${o.n}.`); return; }
@@ -2245,10 +2308,644 @@ const ACT_BREW = {
   },
 };
 
+/* ================================================================== homebrew checks
+   One set of rules for everything that becomes homebrew: Markdown files, 5etools files, Grimoire exports and the editor.
+   checkBrew(cat, o) gives errors (the entry can't be used as it is: it is not imported and the editor won't save it)
+   and warnings (it works, but probably isn't what you meant), and tidies what it understands ("d10" → 10, "1/4" → 0.25,
+   "stealth" → "Stealth"…). */
+const HB_SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
+const HB_TYPES = ['aberration', 'beast', 'celestial', 'construct', 'dragon', 'elemental', 'fey', 'fiend', 'giant', 'humanoid', 'monstrosity', 'ooze', 'plant', 'undead'];
+const HB_FEAT_TYPES = ['Origin', 'General', 'Fighting Style', 'Epic Boon'];
+const HB_ITEM_TYPES = ['Wondrous Item', 'Armor', 'Weapon', 'Ring', 'Rod', 'Staff', 'Wand', 'Potion', 'Scroll'];
+const HB_RARITY = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'];
+const HB_DMG = ['acid', 'bludgeoning', 'cold', 'fire', 'force', 'lightning', 'necrotic', 'piercing', 'poison', 'psychic', 'radiant', 'slashing', 'thunder'];
+const HB_CR = [0, 0.125, 0.25, 0.5, ...Array.from({length:30}, (_, i) => i + 1)];
+const HB_DICE = [2, 3, 4, 6, 8, 10, 12, 20, 100];
+// Italian names people write, mapped to the tome's English ones
+const HB_IT = {abiurazione:'Abjuration', invocazione:'Evocation', evocazione:'Conjuration', divinazione:'Divination', ammaliamento:'Enchantment', illusione:'Illusion', necromanzia:'Necromancy', trasmutazione:'Transmutation',
+  origine:'Origin', generale:'General', 'stile di combattimento':'Fighting Style', 'dono epico':'Epic Boon',
+  minuscola:'Tiny', piccola:'Small', media:'Medium', grande:'Large', enorme:'Huge', mastodontica:'Gargantuan', 'piccola o media':'Small or Medium',
+  'oggetto meraviglioso':'Wondrous Item', armatura:'Armor', arma:'Weapon', anello:'Ring', verga:'Rod', bastone:'Staff', bacchetta:'Wand', pozione:'Potion', pergamena:'Scroll',
+  comune:'Common', 'non comune':'Uncommon', raro:'Rare', rara:'Rare', 'molto raro':'Very Rare', 'molto rara':'Very Rare', leggendario:'Legendary', leggendaria:'Legendary', artefatto:'Artifact',
+  forza:'str', destrezza:'dex', costituzione:'con', intelligenza:'int', saggezza:'wis', carisma:'cha', for:'str', des:'dex', cos:'con', sag:'wis', car:'cha'};
+const hbKey = s => String(s ?? '').toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+const hbStr = v => typeof v === 'string' ? v.trim() : typeof v === 'number' && Number.isFinite(v) ? String(v) : '';
+const hbList = v => (Array.isArray(v) ? v.map(hbStr) : hbStr(v).split(/\s*[,;]\s*/)).map(s => s.replace(/^and\s+|^e\s+/i, '').replace(/\.$/, '').trim()).filter(Boolean);
+/** Pick the canonical spelling from a list (case, Italian names); null when it isn't there. */
+const hbPick = (list, v) => { const k = hbKey(v); if (!k) return null; const it = HB_IT[k]; return list.find(x => hbKey(x) === k || (it && x === it)) || null; };
+function hbLev(a, b){
+  a = hbKey(a); b = hbKey(b);
+  const d = Array.from({length:b.length + 1}, (_, i) => i);
+  for (let i = 1; i <= a.length; i++){ let p = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++){ const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] === b[j - 1] ? 0 : 1)); p = t; } }
+  return d[b.length];
+}
+const hbSuggest = (v, list) => { let best = null, bd = 99; for (const x of list){ const d = hbLev(v, x); if (d < bd){ bd = d; best = x; } }
+  return best && bd <= Math.max(2, Math.floor(hbStr(v).length / 3)) ? ` Did you mean “${best}”?` : ''; };
+const hbAbil = s => { const k = hbKey(s).replace(/[^a-z]/g, ''); return ABIL_ID[k] || (HB_IT[k] && ABIL_ID[HB_IT[k]]) || null; };
+const hbAbilName = id => ABIL.find(a => a.id === id)?.n || id;
+const hbMod = v => Math.floor(((+v || 10) - 10) / 2);
+const hbPB = cr => cr < 5 ? 2 : Math.min(9, 2 + Math.ceil((cr - 4) / 4));
+function hbBool(v, W, label){
+  if (typeof v === 'boolean' || typeof v === 'number') return !!v;
+  const k = hbKey(v);
+  if (/^(yes|y|true|x|sì|si|1|✓|✔)\b/.test(k)) return true;
+  if (!k || /^(no|n|false|0|-|—|none|nessuna?)$/.test(k)) return false;
+  W(`${label}: “${v}” is not yes or no, so it was read as no.`); return false;
+}
+function hbLevelNum(v){
+  if (typeof v === 'number') return v;
+  const k = hbKey(v); if (/^(cantrip|trucchetto|0)$/.test(k)) return 0;
+  const m = k.match(/(\d+)/); return m ? +m[1] : NaN;
+}
+const hbSkillNames = () => SKILLS.map(s => s.n);
+const hbSkill = s => hbPick(hbSkillNames(), s) || hbPick(hbSkillNames(), String(s).replace(/\s*\(.*\)$/, '')) || SKILLS.find(k => k.id === hbKey(s))?.n || null;
+const hbClassNames = ctx => [...new Set([...names('classes'), ...(ctx?.classes || [])])];
+const hbFeatNames = ctx => [...new Set([...names('feats'), ...(ctx?.feats || []).map(f => f.n)])];
+const hbFeat = (n, ctx) => { const k = norm(n); return (ctx?.feats || []).find(f => norm(f.n) === k) || ALL.find(e => e.cat === 'feats' && e.lc === k)?.o || null; };
+const hbTools = () => ALL.filter(e => e.cat === 'equipment' && /artisan|instrument|gaming|other tools/i.test(e.o.cat || '')).map(e => e.n);
+const hbWeapons = () => ALL.filter(e => e.cat === 'equipment' && /weapon/i.test(e.o.cat || '')).map(e => e.n);
+// "one kind of Artisan's Tools", "a Musical Instrument of your choice"…
+const HB_ANY_TOOL = /\b(one|any|choose|choice|a|an)\b.*\b(artisan'?s? tools?|musical instruments?|gaming sets?|tools?|instruments?|kits?)\b|\b(artisan'?s? tools?|musical instruments?|gaming sets?)\b.*\b(choice|choose|one|any)\b/i;
+const hbTool = t => hbPick(hbTools(), t) || (HB_ANY_TOOL.test(t) ? hbStr(t) : null);
+function hbProf(t){
+  const s = hbStr(t).replace(/^(tool|tools|strumento|strumenti)\s*:\s*/i, '');
+  if (/^(light|medium|heavy|all)\s+armou?r(\s+training)?$/i.test(s) || /^shields?$/i.test(s) || /^(simple|martial)\s+weapons?$/i.test(s)) return true;
+  if (/^(simple|martial)\s+weapons?\s+(that|with)\b/i.test(s) || /^(armature|armi|scudi?)\b/i.test(s)) return true;
+  const sing = s.replace(/es$|s$/i, '');
+  return !!(hbPick(hbWeapons(), s) || hbPick(hbWeapons(), sing) || hbTool(s));
+}
+function hbTraits(arr, what, E, W){
+  const seen = new Set();
+  return (Array.isArray(arr) ? arr : []).map(t => isObj(t) ? {...t, n:hbStr(t.n), x:hbStr(t.x).replace(/\s*\n+\s*/g, ' ')} : {n:'', x:hbStr(t)}).filter(t => t.n || t.x).map(t => {
+    if (!t.n) W(`A ${what} has no name: write it as “Name: text”.`);
+    else if (!t.x) W(`${what[0].toUpperCase() + what.slice(1)} “${t.n}” has no text.`);
+    if (t.n && seen.has(norm(t.n))) W(`${what[0].toUpperCase() + what.slice(1)} “${t.n}” appears twice.`);
+    seen.add(norm(t.n)); return t;
+  });
+}
+function hbFeatures(arr, E, W){
+  return (Array.isArray(arr) ? arr : []).filter(isObj).map(f => {
+    const l = typeof f.l === 'number' ? f.l : parseInt(f.l, 10), n = hbStr(f.n), x = hbStr(f.x).replace(/\s*\n+\s*/g, ' ');
+    if (!Number.isInteger(l) || l < 1 || l > 20) E(`Feature “${n || '?'}” has level “${f.l ?? ''}”: features go from level 1 to 20.`);
+    if (!n) W(`A level ${f.l} feature has no name.`); else if (!x) W(`Feature “${n}” has no text.`);
+    return {l:Number.isInteger(l) ? clamp(l, 1, 20) : 1, n, x};
+  }).sort((a, b) => a.l - b.l);
+}
+function hbSkillList(v, E, W, label = 'skill'){
+  const out = [];
+  hbList(v).forEach(s => { const k = hbSkill(s); if (!k) E(`“${s}” is not a ${label} of the rules.` + hbSuggest(s, hbSkillNames())); else if (out.includes(k)) W(`${k} is listed twice.`); else out.push(k); });
+  return out;
+}
+function hbAbilList(v, E, W){
+  const out = [];
+  hbList(v).forEach(a => { const id = hbAbil(a); if (!id) E(`“${a}” is not an ability score.` + hbSuggest(a, ABIL.map(x => x.n))); else if (out.includes(id.toUpperCase())) W(`${hbAbilName(id)} is listed twice.`); else out.push(id.toUpperCase()); });
+  return out;
+}
+function hbSize(v){ const k = hbKey(v); if (k === 'small or medium' || HB_IT[k] === 'Small or Medium') return 'Small or Medium';
+  const two = k.split(/\s+(?:or|o)\s+/); if (two.length === 2 && two.every(x => hbPick(HB_SIZES, x))) return two.map(x => hbPick(HB_SIZES, x)).join(' or ');
+  return hbPick(HB_SIZES, v); }
+const hbType = s => HB_TYPES.find(t => hbKey(s).replace(/^(a|an)\s+/, '').startsWith(t)) || null;
+const hbCr = v => { const s = hbKey(isObj(v) ? v.cr : v).replace(/\s*\(.*$/, ''); if (/^1\/(2|4|8)$/.test(s)) return 1 / +s.slice(2); const n = s === '' ? NaN : +s; return HB_CR.includes(n) ? n : null; };
+// "Dex +5, Wis +3" → [{a:'dex', b:5}]
+function hbBonuses(s, kind, E){
+  return hbList(s).map(p => { const m = p.replace(/\s*\([^)]*\)\s*$/, '').match(/^(.+?)\s*([+−-])\s*(\d+)$/);
+    if (!m){ E(`“${p}” should read like “${kind === 'save' ? 'Dex +5' : 'Perception +4'}”.`); return null; }
+    const b = (m[2] === '+' ? 1 : -1) * +m[3];
+    if (kind === 'save'){ const a = hbAbil(m[1]); if (!a){ E(`Saving throw “${m[1]}” is not an ability score.` + hbSuggest(m[1], ABIL.map(x => x.n))); return null; } return {a, b, n:m[1]}; }
+    const k = hbSkill(m[1]); if (!k){ E(`“${m[1]}” is not a skill of the rules.` + hbSuggest(m[1], hbSkillNames())); return null; }
+    return {k, b, a:SKILLS.find(x => x.n === k)?.ab}; }).filter(Boolean);
+}
+const hbDamageList = (s, W, label, conditionsToo) => hbList(s).forEach(p => {
+  const w = hbKey(p).replace(/^(from|to)\s+/, '').split(/[\s(]/)[0];
+  if (!HB_DMG.includes(w) && !(conditionsToo && COND_NAMES.some(c => hbKey(c) === w))) W(`${label}: “${p}” is not a damage type${conditionsToo ? ' or condition' : ''} of the rules.` + hbSuggest(w, conditionsToo ? HB_DMG.concat(COND_NAMES) : HB_DMG));
+});
+const HB_RULES = {
+  spells(o, E, W, ctx){
+    const lv = hbLevelNum(o.lv);
+    if (!Number.isInteger(lv) || lv < 0 || lv > 9) E(`Level “${o.lv ?? ''}” is not 0 (cantrip) to 9.`); else o.lv = lv;
+    const sc = hbPick(SCHOOLS, o.sc);
+    if (!hbStr(o.sc)) E('No school of magic.'); else if (!sc) E(`“${o.sc}” is not a school of magic.` + hbSuggest(o.sc, SCHOOLS)); else o.sc = sc;
+    o.t = hbStr(o.t).replace(/^1 action$/i, 'Action').replace(/^1 bonus action$/i, 'Bonus Action').replace(/^1 reaction/i, 'Reaction');
+    if (!o.t) W('No casting time.');
+    else if (!/^(action|bonus action|reaction|\d+\s+(minutes?|hours?)|1 round)\b/i.test(o.t)) W(`Unusual casting time “${o.t}”: the rules use Action, Bonus Action, Reaction or a number of minutes or hours.`);
+    else if (/^reaction$/i.test(o.t)) W('A Reaction spell should say what triggers it: “Reaction, which you take when …”.');
+    o.r = hbStr(o.r);
+    if (!o.r) W('No range.'); else if (!/^(self|touch|sight|unlimited|special|\d+\s*(feet|foot|ft\.?|miles?)\b)/i.test(o.r)) W(`Unusual range “${o.r}”: write it like “60 feet”, “Self”, “Touch” or “Self (15-foot Cone)”.`);
+    o.c = hbStr(o.c);
+    if (!o.c) W('No components.');
+    else { const parts = o.c.replace(/\([^)]*\)/g, '').split(/\s*,\s*/).map(s => s.trim().toUpperCase()).filter(Boolean), bad = parts.filter(p => !['V', 'S', 'M'].includes(p));
+      if (bad.length) E(`Components can only be V, S and M, not “${bad.join(', ')}”.`);
+      if (new Set(parts).size < parts.length) W('A component is listed twice.');
+      if (parts.includes('M') && !/M\s*\(/i.test(o.c)) W('The M component should name its material in brackets: “M (a pinch of ash)”.'); }
+    o.d = hbStr(o.d);
+    if (/^concentration/i.test(o.d)){ o.conc = true; o.d = o.d.replace(/^concentration,?\s*/i, '').trim(); if (o.d && !/^up to/i.test(o.d)) o.d = 'up to ' + o.d; }
+    if (!o.d) W('No duration.');
+    o.conc = hbBool(o.conc, W, 'Concentration'); o.rit = hbBool(o.rit, W, 'Ritual');
+    if (o.conc && /instantaneous/i.test(o.d)) E('An Instantaneous spell can’t need Concentration.');
+    if (o.conc && o.d && !/^up to/i.test(o.d)) o.d = 'up to ' + o.d;
+    const cl = hbClassNames(ctx);
+    o.cls = hbList(o.cls).map(c => { const k = hbPick(cl, c); if (!k) W(`Class “${c}” is not in the tome, so the spell won’t show on its list.` + hbSuggest(c, cl)); return k || c; });
+    if (!o.cls.length) W('On no class list: heroes will only find it by searching.');
+    o.x = hbStr(o.x); o.h = hbStr(o.h);
+    if (!o.x) W('No effect text.');
+    if (o.lv === 0 && /slot/i.test(o.h)) W('Cantrips don’t use spell slots: say how it grows at levels 5, 11 and 17 instead.');
+    if (o.lv === 0 && o.rit) W('Cantrips are not cast as rituals.');
+  },
+  feats(o, E, W){
+    if (!hbStr(o.ty)){ W('No category, so it is a General feat.'); o.ty = 'General'; }
+    else { const t = hbPick(HB_FEAT_TYPES, o.ty); if (!t) E(`“${o.ty}” is not a feat category: use Origin, General, Fighting Style or Epic Boon.` + hbSuggest(o.ty, HB_FEAT_TYPES)); else o.ty = t; }
+    o.pre = hbStr(o.pre); o.rep = hbBool(o.rep, W, 'Repeatable');
+    const lm = o.pre.match(/level\s*(\d+)|(\d+)(?:st|nd|rd|th)?[- ]level|livello\s*(\d+)/i), lv = lm ? +(lm[1] || lm[2] || lm[3]) : 0;
+    if (lm && (lv < 1 || lv > 20)) E(`Prerequisite level ${lv} is outside 1–20.`);
+    if (o.ty === 'Origin' && lv > 1) W('Origin feats are taken at level 1, so they normally have no level prerequisite.');
+    if (o.ty === 'General' && !lv) W('General feats normally need “Level 4+”.');
+    if (o.ty === 'Epic Boon' && lv !== 19) W('Epic Boons normally need “Level 19+”.');
+    if (o.ty === 'Fighting Style' && !/fighting style/i.test(o.pre)) W('Fighting Style feats normally need “Fighting Style Feature”.');
+    for (const m of o.pre.matchAll(/([A-Za-zÀ-ú]+)\s+(\d{1,2})\+/g)){
+      if (/^(level|livello)$/i.test(m[1])) continue;
+      if (!hbAbil(m[1])) W(`Prerequisite “${m[0]}” doesn’t name an ability score.`); else if (+m[2] < 1 || +m[2] > 30) E(`Prerequisite score ${m[2]} is outside 1–30.`);
+    }
+    o.x = hbStr(o.x); if (!o.x) W('No benefit text.');
+    const asi = o.x.match(/increase .{0,60}?score.{0,40}? by (\d+)/i); if (asi && +asi[1] > 2) W(`An increase of ${asi[1]} to an ability score is more than any feat in the rules gives.`);
+    if (/score/i.test(o.x) && /maximum of (\d+)/i.test(o.x) && +o.x.match(/maximum of (\d+)/i)[1] > 20 && o.ty !== 'Epic Boon') W('Only Epic Boons raise a score above 20.');
+  },
+  species(o, E, W){
+    if (!hbStr(o.size)){ W('No size, so it is Medium.'); o.size = 'Medium'; }
+    else { const s = hbSize(o.size); if (!s) E(`“${o.size}” is not a size: use Small, Medium, “Small or Medium” or Large.` + hbSuggest(o.size, [...HB_SIZES, 'Small or Medium'])); else { o.size = s; if (!['Small', 'Medium', 'Small or Medium', 'Large'].includes(s)) W(`${s} is unusual for a playable species.`); } }
+    if (o.speed === undefined || o.speed === null || hbStr(o.speed) === ''){ W('No speed, so it is 30 feet.'); o.speed = 30; }
+    else { const sp = parseInt(o.speed, 10); if (!Number.isFinite(sp) || sp < 0 || sp > 120) E(`Speed “${o.speed}” must be a number of feet from 0 to 120.`); else { o.speed = sp; if (sp % 5) W(`Speed ${sp} is not a multiple of 5 feet.`); } }
+    o.ty = hbStr(o.ty) || 'Humanoid';
+    if (!hbType(o.ty)) W(`“${o.ty}” is not a creature type of the rules.` + hbSuggest(o.ty, HB_TYPES));
+    o.x = hbStr(o.x); o.tr = hbTraits(o.tr, 'trait', E, W);
+    if (!o.tr.length) W('No traits.');
+  },
+  backgrounds(o, E, W, ctx){
+    const raw = hbList(o.asi); o.asi = hbAbilList(o.asi, E, W);
+    if (!raw.length) W('No ability scores: 2024 backgrounds list three (this looks like an older background).'); else if (o.asi.length && o.asi.length !== 3) W(`${o.asi.length} ability scores; 2024 backgrounds list exactly three.`);
+    o.feat = hbStr(o.feat);
+    if (!o.feat) W('No origin feat.');
+    else { const f = hbFeat(o.feat, ctx); if (!f) W(`Feat “${o.feat}” is not in the tome.` + hbSuggest(o.feat, hbFeatNames(ctx)));
+      else { if (f.ty && f.ty !== 'Origin') W(`${f.n} is a ${f.ty} feat, not an Origin feat.`); if (!/\(/.test(o.feat)) o.feat = f.n; } }
+    o.skills = hbSkillList(o.skills, E, W);
+    if (o.skills.length !== 2) W(`${o.skills.length} skill${o.skills.length === 1 ? '' : 's'}; backgrounds give exactly two.`);
+    o.tools = hbList(o.tools).map(t => { const k = hbTool(t); if (!k) W(`Tool “${t}” is not in the rules’ tool list.` + hbSuggest(t, hbTools())); return k || t; });
+    if (!o.tools.length) W('No tool proficiency.'); else if (o.tools.length > 1) W('Backgrounds give one tool proficiency.');
+    o.eq = hbStr(o.eq); if (!o.eq) W('No starting equipment.');
+    o.x = hbStr(o.x);
+  },
+  classes(o, E, W){
+    const hd = parseInt(String(o.hd ?? '').replace(/^\s*1?d/i, ''), 10);
+    if (![6, 8, 10, 12].includes(hd)) E(`Hit Die “${o.hd ?? ''}” must be d6, d8, d10 or d12.`); else o.hd = hd;
+    o.prim = hbStr(o.prim);
+    if (!o.prim) W('No primary ability.');
+    else o.prim.split(/\s*(?:,|\band\b|\bor\b|\be\b|\bo\b)\s*/i).filter(Boolean).forEach(w => { if (!hbAbil(w)) E(`Primary ability “${w}” is not an ability score.` + hbSuggest(w, ABIL.map(x => x.n))); });
+    const sv = hbList(o.saves); o.saves = hbAbilList(o.saves, E, W);
+    if (!sv.length) E('No saving throw proficiencies: a class has two.'); else if (o.saves.length && o.saves.length !== 2) W(`${o.saves.length} saving throws; classes are proficient in exactly two.`);
+    o.prof = hbList(o.prof); o.prof.forEach(p => { if (!hbProf(p)) W(`Proficiency “${p}” is not armor training, a weapon group, a weapon or a tool of the rules.`); });
+    const ch = (Array.isArray(o.choice) ? o.choice : [o.choice]).map(hbStr).filter(Boolean).join('; ');
+    o.choice = ch ? [ch] : [];
+    if (!ch) W('No skill choices.');
+    else { const m = ch.match(/^(?:choose|pick|scegli)\s+(\w+)\s*(?:skills?|abilità)?\s*(?:from|tra|fra)?\s*:?\s*(.+)$/i);
+      if (!m) W('Skills should read “Choose 2: Arcana, History, Insight”.');
+      else { const words = {one:1, two:2, three:3, four:4, uno:1, una:1, due:2, tre:3, quattro:4}, n = /^\d+$/.test(m[1]) ? +m[1] : words[hbKey(m[1])];
+        const list = m[2].replace(/\.$/, '').split(/\s*,\s*|\s+or\s+|\s+o\s+/).map(s => s.replace(/^(or|o)\s+/i, '').trim()).filter(Boolean);
+        const any = /^any\b|^qualsiasi\b/i.test(m[2]);
+        if (!n || n < 1 || n > 6) E(`“Choose ${m[1]}” should be a number of skills from 1 to 6.`);
+        if (!any){ const ok = list.filter(s => { const k = hbSkill(s); if (!k) E(`“${s}” is not a skill of the rules.` + hbSuggest(s, hbSkillNames())); return k; }); if (n && ok.length && n > ok.length) E(`Choose ${n} from only ${ok.length} skills.`); } } }
+    const cast = {'':'', none:'', no:'', nessuno:'', full:'full', 'full caster':'full', completo:'full', half:'half', 'half caster':'half', mezzo:'half', third:'third', 'third caster':'third', '1/3':'third', '1/2':'half', terzo:'third', pact:'pact', 'pact magic':'pact', patto:'pact'};
+    const ck = hbKey(o.caster); if (!(ck in cast)) E(`Spellcasting “${o.caster}” must be none, full, half, third or pact.`); else o.caster = cast[ck];
+    const sa = hbStr(o.spellAb) ? hbAbil(o.spellAb) : '';
+    if (hbStr(o.spellAb) && !sa) E(`Spellcasting ability “${o.spellAb}” is not an ability score.`);
+    else if (sa && !['int', 'wis', 'cha'].includes(sa)) W(`${hbAbilName(sa)} is an unusual spellcasting ability (the rules use Intelligence, Wisdom or Charisma).`);
+    o.spellAb = sa || '';
+    if (o.caster && !o.spellAb) E('A spellcasting class needs a spellcasting ability.');
+    if (!o.caster && o.spellAb) W('A spellcasting ability is set but the class casts no spells.');
+    o.mcProf = hbStr(o.mcProf); o.x = hbStr(o.x);
+    o.f = hbFeatures(o.f, E, W);
+    if (!o.f.length) W('No features.');
+    else { if (!o.f.some(f => f.l === 1)) W('No feature at level 1.'); if (!o.f.some(f => /subclass|sottoclasse/i.test(f.n + ' ' + f.x))) W('No feature says when the subclass is chosen (2024 classes choose it at level 3).'); }
+  },
+  subclasses(o, E, W, ctx){
+    o.cls = hbStr(o.cls);
+    if (!o.cls) E('No class: say which class this subclass belongs to.');
+    else { const cl = hbClassNames(ctx), k = hbPick(cl, o.cls); if (!k) W(`Class “${o.cls}” is not in the tome: the subclass will show up once that class exists.` + hbSuggest(o.cls, cl)); else o.cls = k; }
+    o.sum = hbStr(o.sum); o.x = hbStr(o.x);
+    o.f = hbFeatures(o.f, E, W);
+    if (!o.f.length) W('No features.'); else if (o.f[0].l < 3) W('2024 subclasses start at level 3, and this one has a feature earlier.');
+  },
+  items(o, E, W){
+    if (!hbStr(o.cat)){ W('No type, so it is a Wondrous Item.'); o.cat = 'Wondrous Item'; }
+    else { const t = hbPick(HB_ITEM_TYPES, o.cat) || hbPick(HB_ITEM_TYPES, String(o.cat).replace(/s$/i, '')); if (!t) E(`“${o.cat}” is not an item type: use ${HB_ITEM_TYPES.join(', ')}.` + hbSuggest(o.cat, HB_ITEM_TYPES)); else o.cat = t; }
+    if (!hbStr(o.rar)){ W('No rarity, so it is Common.'); o.rar = 'Common'; }
+    else { const r = hbPick(HB_RARITY, o.rar);
+      if (r) o.rar = r;
+      else if (/^(unknown|varies|mundane|none|sconosciuta|variabile)\b/i.test(o.rar)) W(`Rarity “${o.rar}” is not one of ${HB_RARITY.join(', ')}; it is kept as written.`);
+      else E(`“${o.rar}” is not a rarity: use ${HB_RARITY.join(', ')}.` + hbSuggest(o.rar, HB_RARITY)); }
+    o.att = hbBool(o.att, W, 'Attunement');
+    o.x = hbStr(o.x); if (!o.x) W('No description.');
+    if (o.cat === 'Potion' && o.att) W('Potions are not normally attuned.');
+  },
+  monsters(o, E, W){
+    if (!hbStr(o.sz)){ W('No size, so it is Medium.'); o.sz = 'Medium'; }
+    else { const s = hbSize(o.sz); if (!s) E(`“${o.sz}” is not a size.` + hbSuggest(o.sz, HB_SIZES)); else o.sz = s; }
+    o.ty = hbStr(o.ty); if (!o.ty) W('No creature type.'); else if (!hbType(o.ty)) W(`“${o.ty}” is not a creature type of the rules.` + hbSuggest(o.ty.split(/[\s(]/)[0], HB_TYPES));
+    o.al = hbStr(o.al); if (!o.al) W('No alignment.'); else if (!/^(unaligned|neutral|any( \w+)* alignment|(lawful|neutral|chaotic) (good|neutral|evil)|typically .+)$/i.test(o.al)) W(`Unusual alignment “${o.al}”.`);
+    if (!Array.isArray(o.ab) || o.ab.length !== 6) E('Ability scores: six numbers, in the order STR DEX CON INT WIS CHA.');
+    else { o.ab = o.ab.map(v => parseInt(v, 10)); if (o.ab.some(v => !Number.isInteger(v) || v < 1 || v > 30)) E('Each ability score must be a whole number from 1 to 30.'); }
+    const ab = Array.isArray(o.ab) && o.ab.length === 6 ? o.ab : [10, 10, 10, 10, 10, 10], mods = Object.fromEntries(AB5.map((a, i) => [a, hbMod(ab[i])]));
+    o.ac = hbStr(o.ac); const acm = o.ac.match(/^(\d+)/);
+    if (!acm) E(`Armor Class “${o.ac}” must start with a number.`); else if (+acm[1] < 1 || +acm[1] > 30) E(`Armor Class ${acm[1]} is outside 1–30.`);
+    o.hp = hbStr(o.hp); const hpm = o.hp.match(/^(\d+)/);
+    if (!hpm || +hpm[1] < 1) E(`Hit Points “${o.hp}” must start with a number of at least 1.`);
+    else { const f = o.hp.match(/\(\s*(\d+)d(\d+)\s*(?:([+−-])\s*(\d+))?\s*\)/);
+      if (f){ const n = +f[1], d = +f[2], z = f[3] ? (f[3] === '+' ? 1 : -1) * +f[4] : 0, avg = Math.floor(n * (d + 1) / 2) + z;
+        if (avg !== +hpm[1]) W(`Hit Points ${hpm[1]} don’t match ${n}d${d}${z ? (z > 0 ? ' + ' : ' − ') + Math.abs(z) : ''}, whose average is ${avg}.`);
+        if (z !== n * mods.con) W(`The Hit Point bonus should be ${n * mods.con} (${n} dice × Constitution modifier ${fmt(mods.con)}).`);
+        if (!HB_DICE.includes(d)) W(`Hit Dice d${d} are unusual.`); } }
+    o.spd = hbStr(o.spd); if (!o.spd) W('No speed.'); else if (!/\d+\s*(ft|feet|m\b)/i.test(o.spd)) W(`Speed “${o.spd}” should read like “30 ft., fly 60 ft.”.`);
+    const cr = hbCr(o.cr);
+    if (cr === null) E(`Challenge “${o.cr ?? ''}” must be 0, 1/8, 1/4, 1/2 or 1 to 30.`); else o.cr = cr;
+    const pb = hbPB(cr ?? 0);
+    o.sv = hbStr(o.sv); hbBonuses(o.sv, 'save', E).forEach(s => { const want = mods[s.a] + pb; if (s.b !== want) W(`${s.n} save ${fmt(s.b)}: with ${hbAbilName(s.a)} ${fmt(mods[s.a])} and Proficiency Bonus +${pb} it is normally ${fmt(want)}.`); });
+    o.sk = hbStr(o.sk); const sk = hbBonuses(o.sk, 'skill', E);
+    sk.forEach(s => { const m = mods[s.a] ?? 0; if (s.b !== m + pb && s.b !== m + 2 * pb) W(`${s.k} ${fmt(s.b)}: with ${hbAbilName(s.a)} ${fmt(m)} and Proficiency Bonus +${pb} it is normally ${fmt(m + pb)} (or ${fmt(m + 2 * pb)} with Expertise).`); });
+    o.sen = hbStr(o.sen);
+    const pp = o.sen.match(/passive perception\s*(\d+)/i), per = sk.find(s => s.k === 'Perception'), wantPP = 10 + (per ? per.b : mods.wis);
+    if (!pp) W(`Senses should end with the passive Perception (${wantPP}).`); else if (+pp[1] !== wantPP) W(`Passive Perception ${pp[1]} should be ${wantPP} (10 + ${per ? 'Perception' : 'Wisdom modifier'}).`);
+    o.lang = hbStr(o.lang) || '—';
+    ['vul', 'res', 'imm'].forEach(k => { o[k] = hbStr(o[k]); });
+    hbDamageList(o.vul, W, 'Vulnerabilities'); hbDamageList(o.res, W, 'Resistances'); hbDamageList(o.imm.replace(/;/g, ','), W, 'Immunities', true);
+    ['tr', 'act', 'bon', 're', 'leg'].forEach(k => { o[k] = hbTraits(o[k], k === 'tr' ? 'trait' : 'action', E, W); });
+    if (!o.act.length) W('No actions.');
+    const best = Math.max(mods.str, mods.dex), cast = Math.max(mods.int, mods.wis, mods.cha);
+    [...o.act, ...o.bon, ...o.re, ...o.leg].forEach(a => {
+      for (const m of a.x.matchAll(/Attack Roll:\s*\+(\d+)/gi)){ const b = +m[1]; if (![mods.str + pb, mods.dex + pb, cast + pb].includes(b)) W(`${a.n}: attack bonus +${b}; with these scores it is normally ${fmt(best + pb)}${cast + pb !== best + pb ? ` (or ${fmt(cast + pb)} for spells)` : ''}.`); }
+      for (const m of a.x.matchAll(/\bDC\s*(\d+)/g)){ const dc = +m[1]; if (!Object.values(mods).some(v => 8 + v + pb === dc)) W(`${a.n}: DC ${dc} doesn’t match 8 + Proficiency Bonus + any ability modifier (from ${8 + pb + Math.min(...Object.values(mods))} to ${8 + pb + Math.max(...Object.values(mods))}).`); }
+    });
+  },
+};
+function hbStrings(x, out = []){ if (typeof x === 'string') out.push(x); else if (Array.isArray(x)) x.forEach(v => hbStrings(v, out)); else if (isObj(x)) Object.values(x).forEach(v => hbStrings(v, out)); return out; }
+/** ctx: {classes, feats} met in the same file, so a subclass can name a class that arrives with it. */
+function checkBrew(cat, src, ctx = {}){
+  const o = structuredClone(isObj(src) ? src : {}), err = [], warn = [];
+  const E = m => { if (!err.includes(m)) err.push(m); }, W = m => { if (!warn.includes(m)) warn.push(m); };
+  o.n = hbStr(o.n);
+  if (!o.n) E('No name.'); else if (o.n.length > 80){ W('Name longer than 80 characters, so it was shortened.'); o.n = o.n.slice(0, 80).trim(); }
+  if (!Object.hasOwn(HB_RULES, cat)){ E('Unknown kind of entry.'); return {o, err, warn}; }
+  try { HB_RULES[cat](o, E, W, ctx); } catch (e) { E('This entry could not be checked: ' + e.message); }
+  const odd = [...new Set(hbStrings([o.x, o.h, o.tr, o.act, o.bon, o.re, o.leg, o.f]).flatMap(s => [...s.matchAll(/\b\d*d(\d+)\b/g)].map(m => +m[1])).filter(d => !HB_DICE.includes(d)))];
+  if (odd.length) W(`Unusual dice in the text: ${odd.map(d => 'd' + d).join(', ')}.`);
+  if (o.n && ALL.some(e => e.cat === cat && e.src === 'SRD' && e.lc === norm(o.n))) W(`The SRD already has a ${BREW[cat].t.toLowerCase()} called ${o.n}: both will show, and the SRD one opens first.`);
+  return {o, err, warn};
+}
+const hbCtx = items => ({classes:items.filter(it => it.cat === 'classes').map(it => hbStr(it.o?.n)).filter(Boolean), feats:items.filter(it => it.cat === 'feats' && isObj(it.o)).map(it => ({n:hbStr(it.o.n), ty:hbPick(HB_FEAT_TYPES, it.o.ty) || it.o.ty}))});
+
+/* ================================================================== Markdown ↔ homebrew
+   One entry per "# Kind: Name" heading, then "- Field: value" lines, then the text. "## Section" headings hold
+   higher-level slots (spells), traits (species), features by level (classes, subclasses) and the stat block sections
+   (creatures). English and Italian names both work; the template from the Homebrew page shows every field. */
+const HB_KIND = {spell:'spells', spells:'spells', cantrip:'spells', incantesimo:'spells', trucchetto:'spells', feat:'feats', talento:'feats',
+  species:'species', race:'species', lineage:'species', specie:'species', razza:'species', background:'backgrounds', class:'classes', classe:'classes',
+  subclass:'subclasses', sottoclasse:'subclasses', archetype:'subclasses', archetipo:'subclasses', item:'items', 'magic item':'items', oggetto:'items', 'oggetto magico':'items',
+  creature:'monsters', monster:'monsters', npc:'monsters', 'stat block':'monsters', creatura:'monsters', mostro:'monsters', png:'monsters'};
+const HB_F_ALL = {name:'n', nome:'n', description:'x', descrizione:'x'};
+const HB_F = {
+  spells:{level:'lv', livello:'lv', school:'sc', scuola:'sc', 'casting time':'t', time:'t', 'tempo di lancio':'t', range:'r', gittata:'r', components:'c', componenti:'c', duration:'d', durata:'d',
+    concentration:'conc', concentrazione:'conc', ritual:'rit', rituale:'rit', classes:'cls', class:'cls', 'spell lists':'cls', 'spell list':'cls', lists:'cls', classi:'cls', liste:'cls', 'liste di incantesimi':'cls',
+    'at higher levels':'h', 'higher levels':'h', 'using a higher-level spell slot':'h', 'livelli superiori':'h', effect:'x', effetto:'x'},
+  feats:{category:'ty', type:'ty', categoria:'ty', tipo:'ty', prerequisite:'pre', prerequisites:'pre', prerequisito:'pre', prerequisiti:'pre', requisiti:'pre', repeatable:'rep', ripetibile:'rep', benefit:'x', beneficio:'x'},
+  species:{'creature type':'ty', type:'ty', tipo:'ty', 'tipo di creatura':'ty', size:'size', taglia:'size', speed:'speed', 'velocità':'speed', velocita:'speed'},
+  backgrounds:{'ability scores':'asi', abilities:'asi', ability:'asi', caratteristiche:'asi', 'punteggi di caratteristica':'asi', feat:'feat', 'origin feat':'feat', talento:'feat', 'talento di origine':'feat',
+    skills:'skills', 'skill proficiencies':'skills', 'abilità':'skills', abilita:'skills', 'competenze nelle abilità':'skills', tools:'tools', tool:'tools', 'tool proficiency':'tools', 'tool proficiencies':'tools',
+    strumenti:'tools', strumento:'tools', 'competenza negli strumenti':'tools', equipment:'eq', 'starting equipment':'eq', equipaggiamento:'eq'},
+  classes:{'hit die':'hd', 'hit dice':'hd', 'dado vita':'hd', 'dadi vita':'hd', 'primary ability':'prim', 'caratteristica primaria':'prim', 'saving throws':'saves', 'saving throw proficiencies':'saves', saves:'saves',
+    'tiri salvezza':'saves', proficiencies:'prof+', competenze:'prof+', armor:'prof+', armour:'prof+', 'armor training':'prof+', weapons:'prof+', tools:'prof+', armature:'prof+', armi:'prof+', strumenti:'prof+',
+    skills:'choice', 'skill proficiencies':'choice', 'abilità':'choice', abilita:'choice', spellcasting:'caster', incantatore:'caster', 'spellcasting ability':'spellAb', 'caratteristica da incantatore':'spellAb',
+    multiclassing:'mcProf', multiclass:'mcProf', 'multiclass proficiencies':'mcProf', multiclasse:'mcProf'},
+  subclasses:{class:'cls', classe:'cls', summary:'sum', tagline:'sum', 'in one line':'sum', sottotitolo:'sum', riassunto:'sum'},
+  items:{type:'cat', tipo:'cat', category:'cat', rarity:'rar', 'rarità':'rar', rarita:'rar', attunement:'att', 'requires attunement':'att', sintonia:'att', 'richiede sintonia':'att'},
+  monsters:{size:'sz', taglia:'sz', type:'ty', tipo:'ty', alignment:'al', allineamento:'al', 'armor class':'ac', ac:'ac', ca:'ac', 'classe armatura':'ac', 'hit points':'hp', hp:'hp', pf:'hp', 'punti ferita':'hp',
+    speed:'spd', 'velocità':'spd', velocita:'spd', 'saving throws':'sv', saves:'sv', 'tiri salvezza':'sv', skills:'sk', 'abilità':'sk', abilita:'sk', resistances:'res', 'damage resistances':'res', resistenze:'res',
+    immunities:'imm+', 'damage immunities':'imm+', 'condition immunities':'imm+', 'immunità':'imm+', immunita:'imm+', vulnerabilities:'vul', 'damage vulnerabilities':'vul', 'vulnerabilità':'vul',
+    senses:'sen', sensi:'sen', languages:'lang', lingue:'lang', linguaggi:'lang', challenge:'cr', cr:'cr', gs:'cr', 'grado di sfida':'cr', 'ability scores':'ab', abilities:'ab', caratteristiche:'ab',
+    str:'ab0', dex:'ab1', con:'ab2', int:'ab3', wis:'ab4', cha:'ab5', for:'ab0', des:'ab1', cos:'ab2', sag:'ab4', car:'ab5', strength:'ab0', dexterity:'ab1', constitution:'ab2', intelligence:'ab3', wisdom:'ab4', charisma:'ab5'},
+};
+const HB_FIELD_RE = /^\s*(?:[-*+]\s+)?(?:\*\*|__)?([^:*_|\n]{1,40}?)(?:\*\*|__)?\s*:\s*(?:\*\*|__)?\s*(.*?)\s*$/;
+const HB_LEVEL_RE = /^(?:level|lv\.?|livello|liv\.?)?\s*(\d{1,2})(?:st|nd|rd|th|°)?(?:[- ]level)?\s*[:.\-–—·)]\s*(.+)$/i;
+function hbKindOf(h){
+  let m = h.match(/^([^:–—|]+?)\s*[:–—|]\s*(.+)$/); if (m && HB_KIND[hbKey(m[1])]) return {cat:HB_KIND[hbKey(m[1])], n:m[2].trim()};
+  m = h.match(/^(.+?)\s*[(\[]([^)\]]+)[)\]]\s*$/); if (m && HB_KIND[hbKey(m[2])]) return {cat:HB_KIND[hbKey(m[2])], n:m[1].trim()};
+  return null;
+}
+const hbUnmark = s => s.replace(/^\*{1,3}(.+?)\*{1,3}$/, '$1').trim();
+/** Markdown lines → the paragraph text md() shows: soft-wrapped lines joined, lists and tables kept, ### headings as run-ins. */
+function hbMdText(lines){
+  const out = []; let para = [], lead = '';
+  const flush = () => { if (para.length){ out.push(lead + para.join(' ')); para = []; lead = ''; } };
+  for (const raw of lines){
+    const l = raw.trim();
+    if (!l){ flush(); continue; }
+    const h = l.match(/^#{3,6}\s+(.+)$/); if (h){ flush(); lead = `**${hbUnmark(h[1]).replace(/[.:]$/, '')}.** `; continue; }
+    if (/^\|?\s*:?-{2,}/.test(l) && /-\s*\|/.test(l + '|')){ continue; }   // table separator row
+    if (/^\|.*\|$/.test(l)){ flush(); out.push(l.replace(/^\||\|$/g, '').split('|').map(c => c.trim()).join(' | ')); continue; }
+    if (/^[-*+•]\s+/.test(l)){ flush(); out.push('- ' + l.replace(/^[-*+•]\s+/, '')); continue; }
+    if (/^>\s?/.test(l)){ para.push(l.replace(/^>\s?/, '')); continue; }
+    if (lead && !para.length){ para.push(l); continue; }
+    para.push(l);
+  }
+  flush();
+  return out.join('\n').trim();
+}
+const hbFlat = lines => hbMdText(lines).split('\n').map(l => l.replace(/^- /, '• ')).join(' ');
+/** "**Name.** text", "***Name.*** text", "- Name: text" or a ### heading start an entry; other lines continue it. */
+function hbEntries(lines){
+  const out = []; let cur = null;
+  for (const raw of lines){
+    const l = raw.trim(); if (!l) continue;
+    let m = l.match(/^#{3,6}\s+(.+)$/);
+    if (m){ cur = {n:hbUnmark(m[1]).replace(/[.:]$/, ''), x:''}; out.push(cur); continue; }
+    m = l.match(/^(?:[-*+]\s+)?(\*{2,3}|__)(.+?)\1\s*(.*)$/) || l.match(/^(?:[-*+]\s+)?(\*)([^*]+?\.)\*\s*(.*)$/);
+    if (m){ cur = {n:m[2].trim().replace(/[.:]$/, ''), x:m[3].replace(/^[.:]\s*/, '').trim()}; out.push(cur); continue; }
+    m = l.match(/^[-*+]\s+([^:]{1,60}):\s*(.*)$/);
+    if (m){ cur = {n:m[1].trim(), x:m[2].trim()}; out.push(cur); continue; }
+    const t = l.replace(/^[-*+]\s+/, '• ');
+    if (cur) cur.x = (cur.x ? cur.x + ' ' : '') + t; else { cur = {n:'', x:t}; out.push(cur); }
+  }
+  return out;
+}
+function hbFeatureEntries(lines, W){
+  const out = []; let cur = null;
+  for (const raw of lines){
+    const l = raw.trim(); if (!l) continue;
+    const h = l.match(/^#{3,6}\s+(.+)$/), item = l.match(/^[-*+]\s+(.+)$/);
+    const head = h ? hbUnmark(h[1]) : item ? hbUnmark(item[1].replace(/^\*\*(.+?)\*\*/, '$1')) : null;
+    const lm = head && head.match(HB_LEVEL_RE);
+    if (lm){ const rest = lm[2].match(/^([^:]{1,60}?)\s*:\s*(.*)$/); cur = {l:+lm[1], n:hbUnmark((rest ? rest[1] : lm[2]).trim()).replace(/[.:]$/, ''), x:h ? '' : (rest ? rest[2] : '')}; out.push(cur); continue; }
+    if (h){ W(`Feature heading “${h[1]}” has no level: write it as “### Level 3: Name”.`); cur = null; continue; }
+    if (cur) cur.x = (cur.x ? cur.x + ' ' : '') + l.replace(/^[-*+]\s+/, '• ');
+    else W(`Text “${l.slice(0, 40)}…” is not under a feature, so it was left out.`);
+  }
+  return out;
+}
+const HB_MON_SEC = {traits:'tr', trait:'tr', tratti:'tr', actions:'act', action:'act', azioni:'act', 'bonus actions':'bon', 'azioni bonus':'bon', reactions:'re', reazioni:'re',
+  'legendary actions':'leg', 'azioni leggendarie':'leg'};
+const HB_HIGHER = /higher|upcast|livell[io] superior|slot di livello superiore/i;
+/** Parse a whole Markdown file. Returns {items:[{cat, o, src, pw}], notes}: pw are the parser's own warnings for that entry, notes those for the file. */
+function parseBrewMd(text){
+  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), items = [], notes = [];
+  let i = 0;
+  if (lines[0]?.trim() === '---'){ const end = lines.indexOf('---', 1); if (end > 0) i = end + 1; }
+  let cur = null;
+  const start = (kind, line) => { cur = {cat:kind.cat, n:kind.n, line, fields:{}, body:[], secs:[], pw:[], head:true}; items.push(cur); };
+  for (; i < lines.length; i++){
+    const l = lines[i], t = l.trim(), h1 = t.match(/^#\s+(.+)$/), h2 = t.match(/^##\s+(.+)$/);
+    if (h1){ const k = hbKindOf(hbUnmark(h1[1])); if (k) start(k, i + 1); else { if (items.length) notes.push(`Line ${i + 1}: “${t}” doesn’t say what it is (write “# Spell: ${hbUnmark(h1[1])}”), so it and its text were skipped.`); cur = null; } continue; }
+    if (!cur) continue;   // a title or notes before the first entry
+    if (/^---+$/.test(t) || /^\*\*\*+$/.test(t)) continue;
+    if (h2){ cur.head = false; cur.secs.push({t:hbUnmark(h2[1]).replace(/[.:]$/, ''), lines:[], line:i + 1}); continue; }
+    if (cur.secs.length){ cur.secs[cur.secs.length - 1].lines.push(l); continue; }
+    const fm = t.match(HB_FIELD_RE), key = fm && hbKey(fm[1].replace(/\s*\(.*\)$/, ''));
+    const fk = key && (HB_F[cur.cat][key] || HB_F_ALL[key]);
+    if (fk && (cur.head || /^\s*([-*+]\s+|\*\*)/.test(l))){ (cur.fields[fk] = cur.fields[fk] || []).push(fm[2]); continue; }
+    // "STR 18 (+4)  DEX 14 (+2) …" on one line, or a | STR | DEX | table
+    if (cur.cat === 'monsters'){
+      const pairs = [...t.matchAll(/\b(STR|DEX|CON|INT|WIS|CHA|FOR|DES|COS|SAG|CAR)\b\s*:?\s*(\d{1,2})/gi)];
+      if (pairs.length >= 3){ pairs.forEach(p => { (cur.fields['ab' + ['str', 'dex', 'con', 'int', 'wis', 'cha'].indexOf(hbAbil(p[1]))] = [p[2]]); }); continue; }
+      const hdr = t.match(/^\|?\s*(STR|FOR)\s*\|/i);
+      if (hdr){ const cols = t.replace(/^\||\|$/g, '').split('|').map(c => hbAbil(c.trim())); let j = i + 1;
+        while (j < lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[j])) j++;
+        if (j < lines.length){ const vals = lines[j].replace(/^\s*\||\|\s*$/g, '').split('|').map(c => parseInt(c, 10)); cols.forEach((a, k) => { if (a) cur.fields['ab' + AB5.indexOf(a)] = [String(vals[k])]; }); i = j; continue; } }
+    }
+    if (cur.head && t && fm && !/^\s*[-*+]?\s*\*{0,3}(hit|miss|failure|success|trigger|response)\b/i.test(t) && /^\s*([-*+]\s+|\*\*)/.test(l))
+      cur.pw.push(`Line ${i + 1}: “${fm[1].trim()}” is not a ${BREW[cur.cat].t.toLowerCase()} field, so it was kept as text.`);
+    if (t) cur.head = false;
+    cur.body.push(l);
+  }
+  return {items:items.map(hbMdBuild), notes};
+}
+function hbMdBuild(e){
+  const f = k => (e.fields[k] || []).join(', ').trim(), o = {n:f('n') || e.n}, pw = e.pw, body = e.body.slice();
+  const secText = s => hbMdText(s.lines);
+  const runIn = s => { const t = secText(s); return t ? `**${s.t}.** ${t.replace(/\n/g, '\n')}` : ''; };
+  const takeFirst = re => { const k = body.findIndex(l => l.trim()); if (k < 0) return null; const m = body[k].trim().match(re); if (m) body.splice(k, 1); return m; };
+  const xs = [];
+  switch (e.cat){
+    case 'spells': {
+      Object.assign(o, {lv:f('lv'), sc:f('sc'), t:f('t'), r:f('r'), c:f('c'), d:f('d'), conc:f('conc'), rit:f('rit'), cls:f('cls'), h:f('h')});
+      if (!o.lv && !o.sc){ const m = takeFirst(/^\*{1,2}_?(?:level\s*(\d)\s+(\w+)|(\d)(?:st|nd|rd|th)-level\s+(\w+)|(\w+)\s+cantrip)(?:\s*\(([^)]*)\))?_?\*{1,2}$/i);
+        if (m){ o.lv = m[1] || m[3] || (m[5] ? '0' : ''); o.sc = m[2] || m[4] || m[5]; if (m[6] && !o.cls) o.cls = m[6]; } }
+      xs.push(hbMdText(body));
+      e.secs.forEach(s => { if (HB_HIGHER.test(s.t)) o.h = [o.h, hbFlat(s.lines)].filter(Boolean).join(' '); else if (/^(effect|description|effetto|descrizione)$/i.test(s.t)) xs.push(secText(s)); else xs.push(runIn(s)); });
+      break;
+    }
+    case 'feats': Object.assign(o, {ty:f('ty'), pre:f('pre'), rep:f('rep')}); xs.push(hbMdText(body)); e.secs.forEach(s => xs.push(/^(benefits?|description|benefici|descrizione)$/i.test(s.t) ? secText(s) : runIn(s))); break;
+    case 'species':
+      Object.assign(o, {ty:f('ty'), size:f('size'), speed:f('speed'), tr:[]}); xs.push(hbMdText(body));
+      e.secs.forEach(s => { if (/^(traits?|tratti|tratti della specie|species traits)$/i.test(s.t)) o.tr.push(...hbEntries(s.lines)); else if (/^(description|descrizione)$/i.test(s.t)) xs.push(secText(s)); else o.tr.push({n:s.t, x:hbFlat(s.lines)}); });
+      break;
+    case 'backgrounds': Object.assign(o, {asi:f('asi'), feat:f('feat'), skills:f('skills'), tools:f('tools'), eq:f('eq')}); xs.push(hbMdText(body)); e.secs.forEach(s => xs.push(/^(description|descrizione)$/i.test(s.t) ? secText(s) : runIn(s))); break;
+    case 'classes': case 'subclasses': {
+      if (e.cat === 'classes') Object.assign(o, {hd:f('hd'), prim:f('prim'), saves:f('saves'), prof:f('prof+'), choice:f('choice'), caster:f('caster'), spellAb:f('spellAb'), mcProf:f('mcProf')});
+      else Object.assign(o, {cls:f('cls'), sum:f('sum')});
+      o.f = []; xs.push(hbMdText(body));
+      e.secs.forEach(s => { const lm = s.t.match(HB_LEVEL_RE);
+        if (lm) o.f.push({l:+lm[1], n:lm[2].trim(), x:hbFlat(s.lines)});
+        else if (/^(features|class features|subclass features|privilegi|privilegi di classe|privilegi della sottoclasse|capacità)$/i.test(s.t)) o.f.push(...hbFeatureEntries(s.lines, m => pw.push(m)));
+        else if (/^(description|descrizione)$/i.test(s.t)) xs.push(secText(s));
+        else { pw.push(`Section “${s.t}” is not a feature (write “## Level 3: ${s.t}”), so it was added to the description.`); xs.push(runIn(s)); } });
+      break;
+    }
+    case 'items': {
+      Object.assign(o, {cat:f('cat'), rar:f('rar'), att:f('att')});
+      if (!o.cat && !o.rar){ const m = takeFirst(/^[*_]{1,2}([^,*_]+),\s*([^(*_]+?)\s*(\(requires attunement([^)]*)\))?[*_]{1,2}$/i); if (m){ o.cat = m[1].trim(); o.rar = m[2].trim(); if (m[3]){ o.att = 'yes'; if (m[4]?.trim()) body.unshift(`*Requires attunement ${m[4].trim()}.*`); } } }
+      const at = hbKey(o.att); if (/^(yes|sì|si)\b.+|^\(?(by|da|requires)\b/.test(at)){ const by = o.att.replace(/^(yes|sì|si)[,\s]*/i, '').replace(/^\(|\)$/g, '').trim(); o.att = 'yes'; if (by) body.unshift(`*Requires attunement ${by.replace(/^requires attunement\s*/i, '')}.*`); }
+      xs.push(hbMdText(body)); e.secs.forEach(s => xs.push(/^(description|descrizione)$/i.test(s.t) ? secText(s) : runIn(s)));
+      break;
+    }
+    case 'monsters': {
+      Object.assign(o, {sz:f('sz'), ty:f('ty'), al:f('al'), ac:f('ac'), hp:f('hp'), spd:f('spd'), cr:f('cr'), sv:f('sv'), sk:f('sk'), res:f('res'), imm:(e.fields['imm+'] || []).join('; '), vul:f('vul'), sen:f('sen'), lang:f('lang')});
+      if (!o.sz && !o.ty){ const m = takeFirst(/^[*_]{1,2}(Tiny|Small|Medium|Large|Huge|Gargantuan)(?: or (?:Tiny|Small|Medium|Large|Huge|Gargantuan))?\s+([^,*_]+),\s*([^*_]+)[*_]{1,2}$/i); if (m){ o.sz = m[0].replace(/^[*_]+/, '').match(/^(\w+(?: or \w+)?)/)[1]; o.ty = m[2].trim(); o.al = m[3].trim(); } }
+      const abv = f('ab'); o.ab = !abv ? null : /\(/.test(abv) ? [...abv.matchAll(/(\d+)\s*\(/g)].map(m => +m[1]) : (abv.match(/\d+/g) || []).map(Number);
+      if (!o.ab && AB5.some((a, k) => e.fields['ab' + k])) o.ab = AB5.map((a, k) => parseInt(f('ab' + k), 10));
+      if (!o.ab) o.ab = [];
+      o.tr = []; o.act = []; o.bon = []; o.re = []; o.leg = [];
+      const pre = hbEntries(body); if (pre.length) o.tr.push(...pre);
+      e.secs.forEach(s => { const k = HB_MON_SEC[hbKey(s.t)]; if (k) o[k].push(...hbEntries(s.lines).filter(a => !(k === 'leg' && !a.n && /legendary action|azioni leggendarie/i.test(a.x)))); else { pw.push(`Section “${s.t}” is not Traits, Actions, Bonus Actions, Reactions or Legendary Actions, so it was read as traits.`); o.tr.push(...hbEntries(s.lines)); } });
+      break;
+    }
+  }
+  if (e.cat !== 'monsters') o.x = [f('x'), ...xs].filter(Boolean).join('\n').trim();
+  return {cat:e.cat, o, src:'line ' + e.line, pw};
+}
+/** Homebrew → Markdown in the same format, so an export can be edited in any text editor and imported back. */
+function brewToMd(list){
+  const L = [], yes = v => v ? 'yes' : 'no', fl = s => hbStr(s).replace(/\s*\n+\s*/g, ' ');
+  const field = (k, v) => { v = Array.isArray(v) ? v.filter(Boolean).join(', ') : hbStr(v); if (v) L.push(`- ${k}: ${v}`); };
+  const text = x => { if (hbStr(x)){ L.push(''); L.push(hbStr(x).replace(/\n/g, '\n\n')); } };
+  const ents = arr => (arr || []).forEach(t => L.push(t.n ? `**${fl(t.n).replace(/[.:]$/, '')}.** ${fl(t.x)}` : fl(t.x)));
+  for (const {cat, o} of list){
+    if (L.length) L.push('', '---', '');
+    L.push(`# ${BREW[cat].t === 'Magic item' ? 'Item' : BREW[cat].t}: ${o.n}`, '');
+    switch (cat){
+      case 'spells': field('Level', +o.lv ? o.lv : 'Cantrip'); field('School', o.sc); field('Casting time', o.t); field('Range', o.r); field('Components', o.c); field('Duration', o.d);
+        field('Concentration', yes(o.conc)); field('Ritual', yes(o.rit)); field('Classes', o.cls); text(o.x); if (hbStr(o.h)) L.push('', '## Using a Higher-Level Spell Slot', '', fl(o.h)); break;
+      case 'feats': field('Category', o.ty); field('Prerequisite', o.pre); if (o.rep) field('Repeatable', 'yes'); text(o.x); break;
+      case 'species': field('Creature type', o.ty); field('Size', o.size); field('Speed', o.speed); text(o.x); if ((o.tr || []).length){ L.push('', '## Traits', ''); ents(o.tr); } break;
+      case 'backgrounds': field('Ability scores', (o.asi || []).map(a => hbAbilName(hbAbil(a)))); field('Origin feat', o.feat); field('Skills', o.skills); field('Tools', o.tools); field('Equipment', o.eq); text(o.x); break;
+      case 'classes': field('Hit die', o.hd ? 'd' + o.hd : ''); field('Primary ability', o.prim); field('Saving throws', (o.saves || []).map(a => hbAbilName(hbAbil(a)))); field('Proficiencies', o.prof);
+        field('Skills', (o.choice || []).join('; ')); field('Spellcasting', o.caster || 'none'); if (o.spellAb) field('Spellcasting ability', hbAbilName(o.spellAb)); field('Multiclassing', o.mcProf); text(o.x);
+        if ((o.f || []).length){ L.push('', '## Features'); o.f.forEach(x => L.push('', `### Level ${x.l}: ${fl(x.n)}`, '', fl(x.x))); } break;
+      case 'subclasses': field('Class', o.cls); field('Summary', o.sum); text(o.x);
+        if ((o.f || []).length){ L.push('', '## Features'); o.f.forEach(x => L.push('', `### Level ${x.l}: ${fl(x.n)}`, '', fl(x.x))); } break;
+      case 'items': field('Type', o.cat); field('Rarity', o.rar); field('Attunement', yes(o.att)); text(o.x); break;
+      case 'monsters': field('Size', o.sz); field('Type', o.ty); field('Alignment', o.al); field('Armor class', o.ac); field('Hit points', o.hp); field('Speed', o.spd);
+        field('Ability scores', (o.ab || []).join(' ')); field('Challenge', crStr(o.cr)); field('Saving throws', o.sv); field('Skills', o.sk); field('Vulnerabilities', o.vul); field('Resistances', o.res);
+        field('Immunities', o.imm); field('Senses', o.sen); field('Languages', o.lang);
+        [['Traits', o.tr], ['Actions', o.act], ['Bonus Actions', o.bon], ['Reactions', o.re], ['Legendary Actions', o.leg]].forEach(([h, a]) => { if ((a || []).length){ L.push('', '## ' + h, ''); ents(a); } }); break;
+    }
+  }
+  return L.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+}
+const HB_MD_TEMPLATE = `# Grimoire homebrew template
+Each entry starts with "# Kind: Name". Kinds: Spell, Feat, Species, Background, Class, Subclass, Item, Creature
+(Italian works too: Incantesimo, Talento, Specie, Background, Classe, Sottoclasse, Oggetto, Creatura).
+Then one "- Field: value" per line, then the text. Delete the examples you don't need.
+
+# Spell: Ember Lash
+
+- Level: 1
+- School: Evocation
+- Casting time: Action
+- Range: 30 feet
+- Components: V, S, M (a pinch of ash)
+- Duration: Instantaneous
+- Concentration: no
+- Ritual: no
+- Classes: Sorcerer, Wizard
+
+A whip of embers lashes one creature you can see within range. Make a ranged spell attack against it. On a hit, the target takes 2d8 Fire damage.
+
+## Using a Higher-Level Spell Slot
+
+The damage increases by 1d8 for each spell slot level above 1.
+
+# Feat: Ashen Resolve
+
+- Category: General
+- Prerequisite: Level 4+, Constitution 13+
+- Repeatable: no
+
+You gain the following benefits.
+
+**Ability Score Increase.** Increase your Constitution score by 1, to a maximum of 20.
+
+**Smoulder.** When you take Fire damage, you can take a Reaction to reduce it by 1d10 + your Constitution modifier.
+
+# Species: Emberkin
+
+- Creature type: Humanoid
+- Size: Small or Medium
+- Speed: 30
+
+Folk touched by an elemental hearth, with warm skin and eyes like coals.
+
+## Traits
+
+**Darkvision.** You have Darkvision with a range of 60 feet.
+**Hearthblood.** You have Resistance to Fire damage.
+
+# Background: Lamplighter
+
+- Ability scores: Dexterity, Intelligence, Wisdom
+- Origin feat: Alert
+- Skills: Perception, Stealth
+- Tools: Tinker's Tools
+- Equipment: Choose A or B: (A) Tinker's Tools, Lamp, 2 Flasks of Oil, 10 GP; or (B) 50 GP
+
+You kept the city's lamps burning through the long nights.
+
+# Class: Ember Knight
+
+- Hit die: d10
+- Primary ability: Strength and Charisma
+- Saving throws: Strength, Charisma
+- Proficiencies: Light armor, Medium armor, Shields, Simple weapons, Martial weapons
+- Skills: Choose 2: Athletics, Insight, Intimidation, Persuasion
+- Spellcasting: half
+- Spellcasting ability: Charisma
+- Multiclassing: Light armor, Shields
+
+Warriors who carry a living flame in their oath.
+
+## Features
+
+### Level 1: Burning Oath
+
+Your weapon attacks deal an extra 1d4 Fire damage.
+
+### Level 2: Spellcasting
+
+You learn to cast spells from the Paladin spell list.
+
+### Level 3: Ember Knight Subclass
+
+You choose an Ember Knight subclass.
+
+### Level 4: Ability Score Improvement
+
+You gain the Ability Score Improvement feat or another feat for which you qualify.
+
+# Subclass: Order of the Last Coal
+
+- Class: Ember Knight
+- Summary: Keepers of the final flame
+
+Knights sworn to carry the last ember of a dying world.
+
+## Features
+
+### Level 3: Coal Ward
+
+When an ally within 10 feet takes damage, you can take a Reaction to grant them 1d8 Temporary Hit Points.
+
+### Level 7: Fire That Stays
+
+Your Burning Oath damage increases to 1d6.
+
+# Item: Lantern of the Long Night
+
+- Type: Wondrous Item
+- Rarity: Uncommon
+- Attunement: no
+
+While lit, this lantern sheds Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Invisible creatures in the bright light are outlined in a soft glow.
+
+# Creature: Cinder Hound
+
+- Size: Medium
+- Type: Elemental
+- Alignment: Unaligned
+- Armor class: 13
+- Hit points: 22 (4d8 + 4)
+- Speed: 40 ft.
+- Ability scores: 14 16 12 4 12 6
+- Challenge: 1
+- Skills: Perception +3
+- Immunities: Fire
+- Senses: Darkvision 60 ft., passive Perception 13
+- Languages: —
+
+**Pack Tactics.** The hound has Advantage on an attack roll against a creature if at least one of the hound's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.
+
+## Actions
+
+**Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 3 (1d6) Fire damage.
+`;
+
 /* ================================================================== 5etools JSON → Workshop homebrew
    Turns community 5e JSON (the 5etools format) into the same shapes the Workshop forms write, so an imported
    spell, creature or class can be edited, exported and shared like anything forged by hand. */
-const SIZE5 = {T:'Tiny', S:'Small', M:'Medium', L:'Large', H:'Huge', G:'Gargantuan'};
+const SIZE5 = {T:'Tiny', S:'Small', M:'Medium', L:'Large', H:'Huge', G:'Gargantuan', V:'Small or Medium'};
 const AB5 = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const ABN5 = {str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma'};
 const ITEM5 = {W:'Weapon', M:'Weapon', R:'Weapon', A:'Weapon', AF:'Weapon', LA:'Armor', MA:'Armor', HA:'Armor', S:'Armor', RG:'Ring', RD:'Rod', ST:'Staff', WD:'Wand', P:'Potion', SC:'Scroll'};
@@ -2468,34 +3165,62 @@ function brewDraftFrom(e){
   return {cat:e.cat, o};
 }
 const brewable = e => !!e && e.src !== 'Homebrew' && Object.hasOwn(BREW, e.cat) && (NATIVE(e) || Object.hasOwn(FROM5, e.o?._kind || ''));
-let BREW5 = null;   // entries waiting in the picker
-function brewPick(r, name){
-  BREW5 = r.items;
-  const many = r.items.length > 60;
-  const groups = Object.keys(BREW).map(k => [k, r.items.map((it, i) => [it, i]).filter(([it]) => it.cat === k)]).filter(([, l]) => l.length);
+let BREW5 = null;   // checked entries waiting in the review window
+const hbMsgs = (err, warn) => err.length + warn.length ? `<ul class="hbMsgs">${err.map(m => `<li class="e"><span aria-hidden="true">✕</span> ${esc(m)}</li>`).join('')}${warn.map(m => `<li class="w"><span aria-hidden="true">⚠</span> ${esc(m)}</li>`).join('')}</ul>` : '';
+const hbBadge = it => it.err.length ? `<span class="hbBadge e">${it.err.length} error${it.err.length > 1 ? 's' : ''}</span>` : it.warn.length ? `<span class="hbBadge w">${it.warn.length} warning${it.warn.length > 1 ? 's' : ''}</span>` : '<span class="hbBadge ok">ready</span>';
+/** Every import ends here: each entry is checked, errors keep it out, warnings are shown, and you tick what to bring in. */
+function brewReview(list, name, {skip = 0, notes = []} = {}){
+  const ctx = hbCtx(list), seen = new Map();
+  BREW5 = list.map(it => { const r = checkBrew(it.cat, it.o, ctx); r.warn.unshift(...(it.pw || [])); return {cat:it.cat, src:it.src || '', ...r}; });
+  BREW5.forEach(it => { const k = it.cat + '|' + norm(it.o.n); if (it.o.n && seen.has(k)) it.warn.push(`Another ${BREW[it.cat].t.toLowerCase()} in this file has the same name; the one further down wins.`); seen.set(k, it); });
   const has = it => BREW_ITEMS.some(x => x.cat === it.cat && norm(x.o.n) === norm(it.o.n));
+  const nE = BREW5.filter(it => it.err.length).length, nW = BREW5.filter(it => !it.err.length && it.warn.length).length, nOk = BREW5.length - nE - nW;
+  const many = BREW5.length > 60;
+  const groups = Object.keys(BREW).map(k => [k, BREW5.map((it, i) => [it, i]).filter(([it]) => it.cat === k)]).filter(([, l]) => l.length);
   modal(`<div class="head"><h2>Import into Homebrew</h2><span class="spacer"></span>${closeBtn()}</div>
-    <p class="muted">${esc(name)}: ${r.items.length} ${r.items.length === 1 ? 'entry' : 'entries'} you can edit${r.skip ? `, ${r.skip} of other kinds left out` : ''}. Tick the ones you want: each becomes homebrew you can change, export and share.${many ? ' The file is big, so nothing is ticked yet.' : ''}</p>
-    <div class="row"><label class="sr" for="b5_q">Filter</label><input type="search" id="b5_q" placeholder="Filter by name" style="flex:1" autofocus>
+    <p class="muted">${esc(name)}: ${BREW5.length} ${BREW5.length === 1 ? 'entry' : 'entries'} checked${skip ? `, ${skip} of kinds Homebrew has no form for left out` : ''}. Tick the ones you want; each one can be edited afterwards.${many ? ' The file is big, so nothing is ticked yet.' : ''}</p>
+    <p class="hbSum" role="status"><span class="hbBadge ok">${nOk} ready</span> <span class="hbBadge w">${nW} with warnings</span> <span class="hbBadge e">${nE} with errors</span>${nE ? ' <span class="muted small">Entries with errors can’t be imported: fix them in the file and import it again.</span>' : ''}</p>
+    ${notes.length ? `<details class="hbNotes"${notes.length < 4 ? ' open' : ''}><summary>${notes.length} note${notes.length > 1 ? 's' : ''} about the file</summary><ul class="hbMsgs">${notes.map(m => `<li class="w"><span aria-hidden="true">⚠</span> ${esc(m)}</li>`).join('')}</ul></details>` : ''}
+    <div class="row b5Bar"><label class="sr" for="b5_q">Filter</label><input type="search" id="b5_q" placeholder="Filter by name" autofocus>
+      <label class="row small"><input type="checkbox" id="b5_prob"> Only problems</label>
       <button type="button" class="sb" id="b5_all">Tick shown</button><button type="button" class="sb" id="b5_none">Untick all</button></div>
     <div class="b5List">${groups.map(([k, l]) => `<h4>${esc(BREW[k].t)} <span class="muted">${l.length}</span></h4>${l.map(([it, i]) =>
-      `<label class="row b5Row" data-n="${esc(norm(it.o.n))}"><input type="checkbox" class="b5" value="${i}" ${many ? '' : 'checked'}> <span>${esc(it.o.n)} <span class="muted">${esc([brewKey(it.cat, it.o), it.src].filter(Boolean).join(' · '))}${has(it) ? ' · replaces yours' : ''}</span></span></label>`).join('')}`).join('')}</div>
+      `<div class="b5Row${it.err.length ? ' bad' : ''}" data-n="${esc(norm(it.o.n))}" data-p="${it.err.length + it.warn.length ? 1 : 0}"><label class="row"><input type="checkbox" class="b5" value="${i}" ${it.err.length ? 'disabled' : many ? '' : 'checked'}>
+        <span>${esc(it.o.n || '(no name)')} <span class="muted">${esc([brewKey(it.cat, it.o), it.src].filter(Boolean).join(' · '))}${has(it) ? ' · replaces yours' : ''}</span> ${hbBadge(it)}</span></label>${hbMsgs(it.err, it.warn)}</div>`).join('')}`).join('')}</div>
     <div class="row mt">${act('brew5Add', undefined, 'Add ticked', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}<span class="muted" id="b5_n"></span></div>`, {label:'Import into Homebrew'});
   const count = () => { $('#b5_n').textContent = `${$$('.b5:checked').length} ticked`; };
-  $('#b5_q').oninput = e => { const q = norm(e.target.value); $$('.b5Row').forEach(r => { r.hidden = !!q && !r.dataset.n.includes(q); }); };
-  $('#b5_all').onclick = () => { $$('.b5Row').forEach(r => { if (!r.hidden) r.querySelector('input').checked = true; }); count(); };
+  const filt = () => { const q = norm($('#b5_q').value), p = $('#b5_prob').checked; $$('.b5Row').forEach(r => { r.hidden = (!!q && !r.dataset.n.includes(q)) || (p && r.dataset.p !== '1'); }); };
+  $('#b5_q').oninput = filt; $('#b5_prob').onchange = filt;
+  $('#b5_all').onclick = () => { $$('.b5Row').forEach(r => { const c = r.querySelector('input'); if (!r.hidden && !c.disabled) c.checked = true; }); count(); };
   $('#b5_none').onclick = () => { $$('.b5').forEach(x => { x.checked = false; }); count(); };
   $('.b5List').onchange = count; count();
 }
+function brewMdText(text, name){
+  const r = parseBrewMd(text);
+  if (!r.items.length){ toast(`No entries in ${name}: each one starts with a heading like “# Spell: Ember Lash”. Download the Markdown template from Homebrew to see the format.`); return; }
+  brewReview(r.items, name, {notes:r.notes});
+}
+function brewDownload(txt, fname, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type})); a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+}
 Object.assign(ACT_BREW, {
   async brew5Add(){
-    const picked = cleanBrew($$('.b5:checked').map(x => BREW5?.[+x.value]).filter(Boolean).map(({cat, o}) => ({cat, o})));
+    const picked = cleanBrew($$('.b5:checked').map(x => BREW5?.[+x.value]).filter(it => it && !it.err.length).map(({cat, o}) => ({cat, o})));
     if (!picked.length){ toast('Tick at least one entry.'); return; }
     closeModal(); BREW5 = null;
     G.brewCat = picked[0].cat; G.brewEdit = null; G.brewDraft = null; G.brewView = 'home'; G.brewFilter = ''; G.brewQ = '';
     const n = await mergeBrew(picked);
     toast(`${picked.length} ${picked.length === 1 ? 'entry joins' : 'entries join'} your homebrew (${n} new). Open any of them to edit it.`);
   },
+  brewMdTemplate(){ brewDownload(HB_MD_TEMPLATE, 'grimoire-homebrew-template.md', 'text/markdown'); toast('Template downloaded: open it in any text editor, change it, then import it here.'); },
+  brewExportMd(){ brewDownload(brewToMd(BREW_ITEMS), 'grimoire-homebrew.md', 'text/markdown'); toast(`${BREW_ITEMS.length} entries written as Markdown.`); },
+  brewMdPaste(){
+    modal(`<div class="head"><h2>Paste Markdown</h2><span class="spacer"></span>${closeBtn()}</div>
+      <p class="muted">Paste one or more entries, each starting with a heading like “# Spell: Ember Lash”. Nothing is added until you check it and tick what to keep.</p>
+      <label class="sr" for="hb_md">Markdown</label><textarea id="hb_md" style="width:100%;min-height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px" placeholder="# Feat: Ashen Resolve&#10;- Category: General&#10;- Prerequisite: Level 4+&#10;&#10;You gain the following benefits…" autofocus></textarea>
+      <div class="row mt">${act('brewMdCheck', undefined, 'Check', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}</div>`, {label:'Paste Markdown'});
+  },
+  brewMdCheck(){ const t = $('#hb_md')?.value || ''; if (!t.trim()){ toast('Paste some Markdown first.'); return; } brewMdText(t, 'Pasted text'); },
   brewFrom(id){
     const e = byId(id), d = brewDraftFrom(e);
     if (!d){ toast('Homebrew has no form for this kind of entry.'); return; }
