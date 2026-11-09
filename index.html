@@ -55,7 +55,7 @@ h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sr{position:absolute;left:0;width:1px;height:1px;padding:0;border:0;margin:-1px;overflow:hidden;white-space:nowrap;clip:rect(0 0 0 0);clip-path:inset(50%)}
 .num{font-variant-numeric:tabular-nums lining-nums}
 
 /* ---------- frame ---------- */
@@ -667,6 +667,34 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .bwScores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .bwScores label{display:flex;flex-direction:column;font-size:12px;font-family:var(--f-display);letter-spacing:.06em;color:var(--ink2)}
 .bwScores input{width:100%}
+
+
+/* very long names without spaces (80 chars) wrap instead of widening the page */
+.pageBody p,.pageHead h2,.toast{overflow-wrap:break-word}
+
+/* ---------- touch screens (design 2026-11-09): tap targets >= 44 px, fields at 16 px (no iPhone zoom).
+   Desktop with a mouse is untouched. Slot pips keep their 26 px look: the ring is drawn by ::before. */
+@media (pointer:coarse){
+  input[type=text],input[type=email],input[type=password],input[type=number],input[type=search],select,textarea,.omni input{font-size:16px}
+  .btn,.btn.small{min-height:44px;min-width:44px}
+  .iconBtn{width:44px;height:44px}
+  .sb{min-height:44px}
+  #hpAmt,.tray input{min-height:44px}
+  .ability .stepper{gap:8px}
+  .ability .stepper button{width:44px;height:44px;font-size:18px}
+  .dbtn{min-height:44px;min-width:44px}
+  .pips{gap:0}
+  .pip,.pip.used{position:relative;width:44px;height:44px;border:0;background:transparent;box-shadow:none}
+  .pip::before{content:"";position:absolute;inset:9px;border-radius:50%;border:2px solid #6d5210;background:var(--paper)}
+  .pip.used::before{background:#3a2417;box-shadow:inset 0 0 0 4px var(--paper)}
+  #app{padding-bottom:calc(150px + env(safe-area-inset-bottom, 0px))}
+}
+@media (pointer:coarse) and (max-width:560px){
+  .tray{padding-left:max(12px, env(safe-area-inset-left, 0px));padding-right:max(12px, env(safe-area-inset-right, 0px))}
+  .trayIn{gap:6px}
+  .tray .dbtn[data-act="die"]{flex:1 1 0;padding-inline:2px}
+  #app{padding-bottom:calc(175px + env(safe-area-inset-bottom, 0px))}
+}
 
 </style>
 <script src="config.js"></script>
