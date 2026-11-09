@@ -1,5 +1,17 @@
 # Diario del team
 
+## 2026-11-09 · sviluppo
+- **Fatto**: i due passi del piano, nessun CSS toccato.
+  1. **B-013 su main** ([9c791c1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/9c791c1)): nuova `invCat` porta ogni categoria sconosciuta al gruppo più vicino ("Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", "Instrument" → "Tools & Kits"…) o a "Quest & Misc"; la usano `fixup` (import, avvio, unione schede) e `itemInfo` (render), quindi nessun oggetto resta senza riga. Categoria `null`/vuota viene tolta (vale la categoria del libro).
+  2. **B-012 come PR** [#3](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/3), **unita da sviluppo** dopo i test (non tocca Supabase/pagamenti): `_sig` = due hash cyrb53 dei dati dell'eroe; `normSig` converte i `_sig` vecchi (iniziano con `{`) all'avvio, in `markBase` e nella lista di un'altra scheda; Export e Download .json usano `heroData(c)`. `CACHE` di sw.js alzata (porta online anche B-013). Funzioni push/pull Supabase non toccate.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md.
+- **Test** (Playwright/Chromium, server locale, service worker bloccato, 1440x900 e 390x844, main e branch affiancati su due porte):
+  - B-013 riprodotto prima (83 oggetti, 56 righe, "trophy" → "Nothing matches this filter."); dopo: 83 righe, 25 trovati, modifica (categoria "Treasure & Valuables") e cancellazione ok, anche con l'eroe già salvato in localStorage.
+  - B-012: 33 eroi pesanti salvati da main = 1.556.502 caratteri (753.436 di `_sig`); stesso salvataggio aperto col branch e risalvato = 754.604 (48%). 0 `updatedAt` cambiati, 0 `_dirty`; una modifica dopo timbra solo quell'eroe. Export senza campi locali, re-import identico.
+  - B-002 ripetuto (schede A, B, C) con risultato identico a main; corsa con un salvataggio non ancora visto di un'altra scheda, sia con `_sig` vecchio sia nuovo: vince l'ultima modifica con avviso, eroe nuovo dell'altra scheda tenuto. Console senza errori.
+- **Nota prudenza**: se un'app con la cache vecchia e la nuova sono aperte insieme, la vecchia vede una volta tutti gli eroi come "cambiati" e risolve per ultima modifica; la `CACHE` alzata accorcia questa finestra. Il distruttore può provarlo stasera.
+- **Prossima sessione**: B-015 "Esporta tutti gli eroi" (ora l'export è pulito e si può riusare `heroData`).
+
 ## 2026-11-09 · team leader
 - Controllo app live (Playwright 1440x900 e 390x844): copertina, nuovo eroe e level up 1→2 ok; console pulita a parte Supabase; a 390 px ancora 10 px di scroll orizzontale. Il lavoro del weekend (B-002, B-004, B-009) è online.
 - Weekend valutato: prestazioni buone con 33 eroi; nuovi B-012 (`_sig` raddoppia lo spazio), B-013 (oggetti invisibili), B-014, B-015. Stamattina unita anche la PR [#2](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/2) (import 5etools nel Workshop, richiesta di Capo).
@@ -53,5 +65,5 @@
 - Oggi: sviluppo → scroll orizzontale a 390 px; designer → barra dadi e toast su telefono + note-design.md; distruttore → wizard e import/export.
 
 ## In attesa di Capo
-- Nessuna PR aperta: la PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (B-002) è stata unita il 2026-11-08.
+- Nessuna PR aperta: la PR [#3](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/3) (B-012) è stata unita da sviluppo il 2026-11-09 dopo i test, come da regola del team.
 - Bozze promo: nessuna.

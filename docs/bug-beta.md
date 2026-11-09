@@ -5,22 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-012 [media] Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
-- Trovato da: power user · 2026-11-08
-- Dove: salvataggio automatico ed Export, 1440x900 e 390x844 (sito live)
-- Passi: 1. Importa 24 eroi di livello 10–20 con 80 oggetti, ~50 incantesimi e note lunghe (33 eroi in tutto). 2. Leggi `grimoire-heroes-v1` in localStorage. 3. Su un eroe: Export → guarda il testo.
-- Atteso: ogni eroe salvato una volta; l'export contiene solo i dati dell'eroe.
-- Ottenuto: 1.460.000 caratteri in localStorage, di cui 749.600 (51%) sono il campo `_sig` (l'eroe intero ri-serializzato come stringa). `writeLocal` (index.html ~2866) salva `G.chars` così com'è, senza togliere i `LOCAL_FIELDS`. Con il limite misurato di ~5,24 milioni di caratteri ci stanno circa 118 eroi così invece di ~230: l'avviso "Not saved" (B-004) arriva al doppio della velocità. Anche l'Export (`export`/`downloadChar`, ~2581) include `_sig`, `updatedAt`, `editedOn` (nome del dispositivo) e `createdAt`: file da 60.789 caratteri, 29.555 sono `_sig`. Il re-import funziona (dati identici).
-- Console: nessun errore.
-
-### B-013 [media] Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
-- Trovato da: power user · 2026-11-08
-- Dove: VII Pack & Riches, 1440x900 e 390x844
-- Passi: 1. Importa un eroe con oggetti personalizzati che hanno `"cat":"Treasure"` (es. `{"n":"Trophy 1","q":1,"custom":true,"cat":"Treasure","d":"…"}`; succede con file scritti a mano, da altri strumenti o da versioni con nomi di categoria diversi). 2. Apri Pack & Riches. 3. Scrivi "trophy" nel filtro.
-- Atteso: gli oggetti compaiono (in "Quest & Misc" o con la categoria normalizzata da `fixup`).
-- Ottenuto: l'intestazione dice "Inventory 80 entries · 482.5 / 165 lb" ma le righe sono 55: i 25 oggetti "Treasure" non compaiono in nessun gruppo, il filtro dice "Nothing matches this filter.", il loro peso conta per il sovraccarico e non c'è modo di modificarli o cancellarli dall'app. Il render raggruppa solo per `INV_CATS` (index.html ~1714) e `fixup` non controlla `it.cat` (il nome giusto sarebbe "Treasure & Valuables").
-- Console: nessun errore.
-
 ### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
 - Trovato da: power user · 2026-11-08
 - Dove: scaffale degli eroi, 390x844 (anche 1440x900)
@@ -71,6 +55,26 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-012 [media] Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
+- **Risolto 2026-11-09** con la PR [#3](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/3) (commit [7107250](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7107250), unita da sviluppo dopo i test): `_sig` è un'impronta corta (due hash cyrb53); i `_sig` vecchi vengono convertiti senza toccare `updatedAt`/`_dirty`; Export e Download .json senza campi locali. 33 eroi pesanti: da 1.556.502 a 754.604 caratteri.
+- Trovato da: power user · 2026-11-08
+- Dove: salvataggio automatico ed Export, 1440x900 e 390x844 (sito live)
+- Passi: 1. Importa 24 eroi di livello 10–20 con 80 oggetti, ~50 incantesimi e note lunghe (33 eroi in tutto). 2. Leggi `grimoire-heroes-v1` in localStorage. 3. Su un eroe: Export → guarda il testo.
+- Atteso: ogni eroe salvato una volta; l'export contiene solo i dati dell'eroe.
+- Ottenuto: 1.460.000 caratteri in localStorage, di cui 749.600 (51%) sono il campo `_sig` (l'eroe intero ri-serializzato come stringa). `writeLocal` (index.html ~2866) salva `G.chars` così com'è, senza togliere i `LOCAL_FIELDS`. Con il limite misurato di ~5,24 milioni di caratteri ci stanno circa 118 eroi così invece di ~230: l'avviso "Not saved" (B-004) arriva al doppio della velocità. Anche l'Export (`export`/`downloadChar`, ~2581) include `_sig`, `updatedAt`, `editedOn` (nome del dispositivo) e `createdAt`: file da 60.789 caratteri, 29.555 sono `_sig`. Il re-import funziona (dati identici).
+- Console: nessun errore.
+
+
+### B-013 [media] Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
+- **Risolto 2026-11-09** in [9c791c1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/9c791c1): `fixup` porta ogni categoria sconosciuta al gruppo più vicino ("Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", ecc.) o a "Quest & Misc"; anche `itemInfo` lo fa al render, quindi nessun oggetto resta senza riga. Verificato: eroe dei passi importato → 83 righe su 83, filtro "trophy" trova 25 oggetti, modifica e cancellazione ok, anche con il salvataggio già in localStorage.
+- Trovato da: power user · 2026-11-08
+- Dove: VII Pack & Riches, 1440x900 e 390x844
+- Passi: 1. Importa un eroe con oggetti personalizzati che hanno `"cat":"Treasure"` (es. `{"n":"Trophy 1","q":1,"custom":true,"cat":"Treasure","d":"…"}`; succede con file scritti a mano, da altri strumenti o da versioni con nomi di categoria diversi). 2. Apri Pack & Riches. 3. Scrivi "trophy" nel filtro.
+- Atteso: gli oggetti compaiono (in "Quest & Misc" o con la categoria normalizzata da `fixup`).
+- Ottenuto: l'intestazione dice "Inventory 80 entries · 482.5 / 165 lb" ma le righe sono 55: i 25 oggetti "Treasure" non compaiono in nessun gruppo, il filtro dice "Nothing matches this filter.", il loro peso conta per il sovraccarico e non c'è modo di modificarli o cancellarli dall'app. Il render raggruppa solo per `INV_CATS` (index.html ~1714) e `fixup` non controlla `it.cat` (il nome giusto sarebbe "Treasure & Valuables").
+- Console: nessun errore.
+
 
 ### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
 - **Risolto 2026-11-08** con la PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (commit [55d1dda](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/55d1dda), unita da Capo): le schede uniscono le liste per `id` tramite l'evento `storage` e prima di ogni salvataggio.
