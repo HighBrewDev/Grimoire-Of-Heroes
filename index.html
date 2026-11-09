@@ -972,6 +972,7 @@ function fixup(c){
   c.hitDice = objOr(c.hitDice, {used:0}); c.death = objOr(c.death, {s:0,f:0});
   c.spells = objOr(c.spells, {}); c.spells.known = txtList(c.spells.known); c.spells.prep = txtList(c.spells.prep); c.spells.slots = objOr(c.spells.slots, {});
   ['attacks','feats','inventory'].forEach(k => c[k] = objList(c[k]));
+  c.inventory.forEach(it => { if (it.cat == null || it.cat === '') delete it.cat; else it.cat = invCat(it.cat); });
   ['conditions','classFeats'].forEach(k => c[k] = txtList(c[k]));
   ['saves','skills','res','notes'].forEach(k => c[k] = objOr(c[k], {}));
   c.currency = objOr(c.currency, {cp:0,sp:0,ep:0,gp:0,pp:0});
@@ -1444,6 +1445,15 @@ const srcTag = e => e && e.src === 'Homebrew' ? '<span class="src brew" title="M
 
 /* ---- inventory model: an item keeps its own fields; anything missing is read from the library entry ---- */
 const INV_CATS = ['Weapons', 'Armor & Shields', 'Magic Items', 'Potions & Consumables', 'Adventuring Gear', 'Tools & Kits', 'Ammunition', 'Treasure & Valuables', 'Quest & Misc'];
+/* any category the pack does not know (hand-written files, other tools, old names) lands in a real group, never nowhere */
+const INV_CAT_HINTS = [[/weapon/, 'Weapons'], [/armou?r|shield/, 'Armor & Shields'], [/ammo|ammunition|arrow|bolt|bullet/, 'Ammunition'],
+  [/potion|consumable|scroll|poison|elixir/, 'Potions & Consumables'], [/magic|wondrous|\bring|\bwand|\bstaff|\brods?\b/, 'Magic Items'],
+  [/tool|\bkits?\b|instrument/, 'Tools & Kits'], [/treasure|valuable|\bgems?\b|jewel|\bcoins?\b|\bart\b|trinket/, 'Treasure & Valuables'], [/gear|adventur|equipment/, 'Adventuring Gear']];
+function invCat(x){
+  if (INV_CATS.includes(x)) return x;
+  const t = norm(toTxt(x, 80));
+  return INV_CATS.find(k => norm(k) === t) || INV_CAT_HINTS.find(([re]) => re.test(t))?.[1] || 'Quest & Misc';
+}
 const RARITIES = ['', 'Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'];
 function libCat(e){
   if (!e) return '';
@@ -1467,7 +1477,7 @@ const libAtt = e => !!(e && (e.o.att || e.o.reqAttune));
 function itemInfo(it){
   const e = it.custom ? null : findGear(it.n), o = e?.o || {}, a = armorOf(it);
   return {e,
-    cat: it.cat || (a && !e?.cat?.startsWith('item') && e?.cat !== 'items' ? 'Armor & Shields' : libCat(e)) || 'Adventuring Gear',
+    cat: invCat(it.cat || (a && !e?.cat?.startsWith('item') && e?.cat !== 'items' ? 'Armor & Shields' : libCat(e)) || 'Adventuring Gear'),
     type: it.type || (e ? String(o.cat || title(String(o.type || '').split('|')[0] || '')).replace(/ies$/, 'y').replace(/([^s])s$/, '$1') : ''),
     rar: it.rar ?? libRar(e), att: it.att ?? libAtt(e), wt: it.wt ?? o.wt ?? o.weight ?? 0,
     val: it.val || o.cost || '', armor: !!a};
