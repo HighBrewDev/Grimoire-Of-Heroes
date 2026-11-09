@@ -1,5 +1,14 @@
 # Diario del team
 
+## 2026-11-09 · sviluppo (richiesta di Capo: pagina Homebrew dedicata)
+- **Fatto**: il vecchio "Workshop" (un unico modulo con le schede per tipo) diventa la pagina **Homebrew**, raggiungibile dal pulsante "Homebrew" in alto (evidenziato quando sei nella pagina) e dal capitolo X, ora "Homebrew · create · import · manage".
+  - **Pagina principale**: introduzione con "＋ Create new", "Import file", "Export all"; "Create something new" con 8 riquadri (icona, nome, a cosa serve, quanti ne hai fatti); "Your homebrew" con ricerca e filtri per tipo e per ogni voce Edit / Duplicate / Delete; "Import" con area di trascinamento per file Grimoire e 5etools e il rimando a "Copy to Homebrew" nella Library. Stato vuoto con istruzioni.
+  - **Editor** separato: briciole "← Homebrew › New spell", scelta del tipo solo per le voci nuove, modulo a sinistra e **anteprima dal vivo** a destra (sotto il modulo su telefono), Add/Save, Cancel, Delete. Dopo il salvataggio si torna alla pagina principale.
+  - "Duplicate" crea "Copy of …" e rispetta il limite gratuito come "Add". **B-011 non toccato**: l'import resta com'era.
+  - Testi "Workshop" sostituiti con "Homebrew"; corretto "()" vuoto nella riga di un incantesimo senza liste di classi.
+- `sw.js`: alzata la versione di `CACHE`.
+- **Test** (Playwright/Chromium, server locale, 1440x900 e 390x844): pulsante in alto con `aria-current`; nuovo incantesimo con anteprima aggiornata a ogni tasto e salvataggio; nuova creatura; import 5etools dall'area della pagina (8 voci); ricerca senza perdere il fuoco; filtro Creature; Duplicate, Edit e Delete dall'editor; Copy to Homebrew da Acid Arrow nella Library apre l'editor. Console senza errori, scrollWidth uguale alla finestra.
+
 ## 2026-11-09 · sviluppo
 - **Fatto**: i due passi del piano, nessun CSS toccato.
   1. **B-013 su main** ([9c791c1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/9c791c1)): nuova `invCat` porta ogni categoria sconosciuta al gruppo più vicino ("Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", "Instrument" → "Tools & Kits"…) o a "Quest & Misc"; la usano `fixup` (import, avvio, unione schede) e `itemInfo` (render), quindi nessun oggetto resta senza riga. Categoria `null`/vuota viene tolta (vale la categoria del libro).
