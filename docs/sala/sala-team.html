@@ -426,48 +426,150 @@ const win=(c,a,b,f=.3)=>ease((c-a)/f)*ease((b-c)/f);
 const mix=(x,y,k)=>x+(y-x)*k;
 function noteTexture(){const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");g.fillStyle="#2E6DA4";g.font="700 50px 'Alegreya Sans', 'Segoe UI Symbol', sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("♪",32,34);return new T.CanvasTexture(c);}
 
+/* materiali "toon" e contorno per i pupini */
+let _grad,_olm={};
+function TM(c,o){if(!_grad){_grad=new T.DataTexture(new Uint8Array([150,150,150,255,212,212,212,255,255,255,255,255]),3,1,T.RGBAFormat);_grad.minFilter=_grad.magFilter=T.NearestFilter;_grad.needsUpdate=true;}
+  return new T.MeshToonMaterial(Object.assign({color:c,gradientMap:_grad},o||{}));}
+function shade(hex,k){const c=new T.Color(hex);c.multiplyScalar(k);return "#"+c.getHexString();}
+function ol(m,k=1.05,c="#3A2A22"){const mat=_olm[c]||(_olm[c]=new T.MeshBasicMaterial({color:c,side:T.BackSide}));const o=new T.Mesh(m.geometry,mat);o.scale.setScalar(k);m.add(o);return m;}
+function tsph(r,m){return mesh(new T.SphereGeometry(r,28,20),m);}
+function lump(m,x,y,z,sx,sy,sz,rz=0,rx=0){const s=mesh(new T.SphereGeometry(.1,16,12),m);s.scale.set(sx,sy,sz);s.position.set(x,y,z);s.rotation.set(rx,0,rz);return s;}
+function spike(m,x,y,z,r,h,rz=0,rx=0){const s=mesh(new T.ConeGeometry(r,h,10),m);s.position.set(x,y,z);s.rotation.set(rx,0,rz);return s;}
+const SKINS=["#F6CFA8","#EDB98A","#F9DCC0","#D9A074","#F2C59C","#C98F62","#F7D3B0","#EEC39A"];
+const HAIR_BY_ID={lead:"neat",test:"bob",devm:"messy",deve:"swept",design:"long",destr:"mohawk",power:"fluffy",report:"bun"};
+const HAIR_BY_ACC={tie:"neat",clip:"bob",hood:"messy",beret:"long",hammer:"mohawk",phones:"fluffy",glasses:"bun"};
+const HR=.42; // raggio della testa
+
+function buildHair(headG,style,hm){
+  const cap=mesh(new T.SphereGeometry(HR+.025,28,20,0,Math.PI*2,0,Math.PI*(style==="bob"||style==="long"?.6:.5)),hm);
+  cap.scale.set(1.05,.98,1.04);cap.rotation.x=style==="mohawk"?-.2:-.42;ol(cap,1.035);headG.add(cap);
+  const add=o=>{headG.add(o);return o;};
+  if(style==="neat"){ // riga di lato
+    add(lump(hm,-.12,.3,.3,2.6,.9,1.3,.28));add(lump(hm,.2,.3,.27,1.5,.8,1.2,-.5));add(lump(hm,-.33,.16,.24,.9,1.3,1,.2));
+  }else if(style==="bob"){ // caschetto con frangia
+    [-.24,-.12,0,.12,.24].forEach((x,i)=>add(lump(hm,x,.25-Math.abs(x)*.12,.36-Math.abs(x)*.3,.75,1.25,.6,x*-.6)));
+    [-1,1].forEach(s=>add(lump(hm,s*.4,-.12,.08,.7,2.3,1.5,s*.08)));
+  }else if(style==="messy"){ // ciuffi spettinati
+    [[-.2,.4,.1,-.5],[0,.47,.05,0],[.2,.4,.1,.5],[-.1,.42,-.15,-.3],[.14,.43,-.12,.4],[.32,.28,0,1.0],[-.32,.28,0,-1.0]].forEach(([x,y,z,rz])=>add(spike(hm,x,y,z,.11,.24,-rz)));
+    [-.16,0,.16].forEach(x=>add(spike(hm,x,.24,.36,.08,.2,x*1.2,Math.PI*.8)));
+  }else if(style==="swept"){ // ciuffo all'indietro e codino
+    add(lump(hm,.05,.36,.24,2.8,1.1,1.6,-.15,-.3));add(lump(hm,.3,.22,.24,1,1.4,1,-.3));
+    add(lump(hm,0,.1,-.48,1,1,1));add(lump(hm,0,-.08,-.56,.8,1.7,.8,0,.5));
+  }else if(style==="long"){ // capelli lunghi
+    add(lump(hm,0,-.2,-.25,3.6,3.2,2,0,.15));add(lump(hm,-.18,.26,.31,1.9,.9,1.2,.35));add(lump(hm,.2,.27,.3,1.6,.85,1.2,-.4));
+    [-1,1].forEach(s=>add(lump(hm,s*.41,-.2,.06,.6,2.8,1.2,s*.06)));
+  }else if(style==="mohawk"){ // cresta
+    [.34,.2,.05,-.1,-.25].forEach((z,i)=>add(spike(hm,0,.4+.1*Math.cos(z*2.4)+(i===1?.03:0),z,.1,.34-.03*Math.abs(i-1),0,z*1.1)));
+  }else if(style==="fluffy"){ // ricci morbidi
+    [[-.25,.33,.15],[0,.42,.18],[.25,.33,.15],[-.34,.2,-.05],[.34,.2,-.05],[-.14,.42,-.1],[.14,.42,-.1],[0,.3,.34],[-.2,.25,.31],[.2,.25,.31]].forEach(([x,y,z])=>add(lump(hm,x,y,z,1.5,1.35,1.5)));
+  }else{ // chignon
+    ol(add(lump(hm,0,.5,-.1,1.6,1.4,1.6)),1.06);add(lump(hm,-.14,.28,.31,2,.8,1.1,.3));add(lump(hm,.18,.28,.3,1.7,.8,1.1,-.35));
+  }
+}
+
 function buildAgent(mb){
   const g=new T.Group();g.userData.who=mb.id;
-  const skin=M("#F2C9A0",{roughness:.7}), shirt=M(mb.shirt), hairM=M(mb.hair), dark=M("#2a1d14",{roughness:.4}), pants=M("#3B4648"), shoe=M("#2E3638");
+  const idx=DATA.team.indexOf(mb);
+  const skin=TM(mb.skin||SKINS[idx%SKINS.length]), shirt=TM(mb.shirt), shirtD=TM(shade(mb.shirt,.72)), hairM=TM(mb.hair), dark=new T.MeshBasicMaterial({color:"#2B1A14"}),
+    white=new T.MeshBasicMaterial({color:"#FFFFFF"}), cream=TM("#F6F1E4"), pants=TM("#3B4648"), shoe=TM("#2A3032");
   const upper=new T.Group();g.add(upper);
-  const body=sph(.34,shirt);body.scale.set(1,1.12,.88);body.position.y=.38;upper.add(body);
+  // corpo a campana, piccolo rispetto alla testa
+  const prof=[[0,.03],[.17,.04],[.25,.1],[.275,.2],[.265,.34],[.22,.5],[.15,.62],[0,.66]].map(([r,y])=>new T.Vector2(r,y));
+  const body=mesh(new T.LatheGeometry(prof,28),shirt);body.scale.z=.86;upper.add(body);
+  const bodyO=new T.Mesh(body.geometry,_olm["#3A2A22"]||(ol(new T.Mesh(body.geometry)),_olm["#3A2A22"]));bodyO.scale.set(1.07,1.03,1.07*.86);bodyO.position.y=-.01;upper.add(bodyO);
+  const hip=lump(pants,0,.09,0,2.6,1.1,2.2);upper.add(hip);
+  const front=(o,y,x=0,dz=.012)=>{const r=y<.2?.275:y<.34?.27:y<.5?.265-(y-.34)*.28:.22-(y-.5)*.58;o.position.set(x,y,Math.sqrt(Math.max(0,r*r-x*x))*.86+dz);upper.add(o);return o;};
+  if(mb.acc==="tie"){ // colletto e cravatta
+    [-1,1].forEach(s=>{const c=front(box(.1,.05,.02,cream),.57,s*.06);c.rotation.z=s*.5;});
+    front(box(.07,.06,.03,"#C0392B"),.52);const t=front(mesh(new T.ConeGeometry(.06,.26,4),TM("#C0392B")),.37,0,.02);t.rotation.set(Math.PI-.12,Math.PI/4,0);t.scale.z=.4;
+  }else if(mb.acc==="hood"){ // felpa: cappuccio, lacci, tasca
+    const h=mesh(new T.TorusGeometry(.2,.085,10,24),shirtD);h.rotation.x=Math.PI/2+.25;h.position.set(0,.62,-.1);upper.add(h);
+    [-1,1].forEach(s=>{const l=front(cyl(.012,.012,.14,cream,6),.47,s*.06);l.rotation.x=-.25;front(tsph(.02,cream),.4,s*.06,.02);});
+    const pk=front(box(.26,.1,.02,shirtD),.2);pk.rotation.x=.05;
+  }else if(mb.acc==="clip"){ // camicia con bottoni e penna nel taschino
+    [.5,.38,.26].forEach(y=>front(tsph(.02,cream),y));
+    front(box(.1,.08,.015,shirtD),.4,.14);const pen=front(cyl(.012,.012,.1,"#E8C24A",6),.45,.15,.02);
+    [-1,1].forEach(s=>{const c=front(box(.1,.05,.02,cream),.58,s*.06);c.rotation.z=s*.5;});
+  }else if(mb.acc==="beret"){ // grembiule e foulard
+    const ap=front(box(.3,.3,.02,cream),.27,0,-.005);ap.rotation.x=.08;front(box(.14,.08,.02,TM("#E7DCC3")),.24,0,.012);
+    const sc=mesh(new T.TorusGeometry(.17,.055,10,24),TM("#B23A32"));sc.rotation.x=Math.PI/2;sc.position.y=.61;upper.add(sc);front(lump(TM("#B23A32"),0,0,0,.6,1.1,.4,.5),.52,.1,.03);
+  }else if(mb.acc==="hammer"){ // cintura degli attrezzi e toppa
+    const bl=mesh(new T.TorusGeometry(.262,.035,8,28),TM("#7A5236"));bl.rotation.x=Math.PI/2;bl.scale.y=.86;bl.position.y=.17;upper.add(bl);
+    front(box(.07,.07,.03,TM("#E8C24A")),.17,0,.03);front(box(.09,.1,.04,TM("#7A5236")),.15,.17,.03);
+    const st=front(box(.06,.36,.015,TM("#2A2A2A")),.42,0,.004);st.rotation.set(.3,0,.75);
+  }else if(mb.acc==="phones"){ // zip e stemmino
+    front(box(.02,.5,.012,cream),.36,0,.0).rotation.x=.22;front(tsph(.022,TM("#C9CED0")),.56,0,.02);
+    const lg=front(mesh(new T.CircleGeometry(.04,16),white,false),.42,-.12,.012);lg.rotation.y=-.45;
+  }else if(mb.acc==="glasses"){ // cardigan e papillon
+    [-1,1].forEach(s=>{const v=front(box(.04,.32,.015,shirtD),.42,s*.07,.006);v.rotation.set(.2,0,s*-.22);const bw=front(mesh(new T.ConeGeometry(.045,.09,4),TM("#B23A32")),.575,s*.045,.03);bw.rotation.z=s*Math.PI/2;bw.scale.z=.5;});
+    front(tsph(.022,TM("#B23A32")),.575,0,.035);[.3,.2].forEach(y=>front(tsph(.018,cream),y));
+  }else{[.5,.38,.26].forEach(y=>front(tsph(.02,cream),y));}
+  // testa grande
   const headG=new T.Group();headG.position.y=.98;upper.add(headG);
-  headG.add(sph(.33,skin));
-  const hair=mesh(new T.SphereGeometry(.345,28,20,0,Math.PI*2,0,Math.PI*.52),hairM);hair.rotation.x=-.35;headG.add(hair);
-  const eyesO=new T.Group();[-.11,.11].forEach(x=>{const e=sph(.045,dark);e.position.set(x,-.02,.3);e.castShadow=false;eyesO.add(e);});headG.add(eyesO);
-  const eyesC=new T.Group();[-.11,.11].forEach(x=>{const e=box(.1,.018,.02,dark);e.position.set(x,-.03,.315);e.castShadow=false;eyesC.add(e);});eyesC.visible=false;headG.add(eyesC);
-  [-.19,.19].forEach(x=>{const c=mesh(new T.CircleGeometry(.055,16),M("#E89A8A",{transparent:true,opacity:.7}),false);c.position.set(x,-.1,.3);c.rotation.y=x>0?.45:-.45;headG.add(c);});
-  const mouth=box(.07,.02,.02,"#7a3b2e");mouth.position.set(0,-.13,.32);mouth.castShadow=false;headG.add(mouth);
-  if(mb.acc==="beret"){const b=cyl(.3,.32,.08,"#B23A32");b.position.set(.05,.3,0);b.rotation.z=-.25;headG.add(b);headG.add(at(sph(.04,"#B23A32"),.1,.36,0));}
-  if(mb.acc==="phones"){headG.add(mesh(new T.TorusGeometry(.36,.035,8,24,Math.PI),M("#222")));[-.36,.36].forEach(x=>{const cup=cyl(.1,.1,.08,"#2E6DA4");cup.rotation.z=Math.PI/2;cup.position.set(x,0,0);headG.add(cup);});}
-  if(mb.acc==="glasses"){[-.11,.11].forEach(x=>{const r=mesh(new T.TorusGeometry(.075,.015,8,20),M("#222"));r.position.set(x,-.02,.31);headG.add(r);});headG.add(at(box(.08,.015,.015,"#222"),0,-.02,.33));}
-  if(mb.acc==="tie"){const t=box(.08,.26,.02,"#C0392B");t.position.set(0,.4,.3);upper.add(t);}
-  if(mb.acc==="hood"){const h=mesh(new T.TorusGeometry(.26,.07,10,24),shirt);h.rotation.x=Math.PI/2;h.position.y=.7;upper.add(h);}
-  const hL=sph(.085,skin),hR=sph(.085,skin);upper.add(hL);upper.add(hR);
-  hL.position.set(-.27,.25,.22);hR.position.set(.27,.25,.22);
-  // gambe con anca, per camminare
-  const legs=new T.Group();const legArr=[-.13,.13].map(x=>{const lg=new T.Group();lg.position.x=x;const l=cyl(.09,.09,.42,pants,12);l.position.y=-.21;lg.add(l);const f=sph(.1,shoe);f.scale.set(1,.6,1.4);f.position.set(0,-.42,.04);lg.add(f);legs.add(lg);return lg;});
+  const head=tsph(HR,skin);head.scale.set(1.04,.94,1);head.receiveShadow=false;ol(head,1.04);headG.add(head);
+  [-1,1].forEach(s=>{const e=tsph(.075,skin);e.scale.set(.6,1,.8);e.position.set(s*.43,-.04,0);headG.add(e);});
+  const style=mb.hairStyle||HAIR_BY_ID[mb.id]||HAIR_BY_ACC[mb.acc]||"neat";
+  buildHair(headG,style,hairM);
+  // occhi grandi con riflessi
+  const eyesO=new T.Group(),eyesC=new T.Group();
+  [-1,1].forEach(s=>{
+    const e=new T.Group();e.position.set(s*.155,-.045,.385);e.rotation.y=s*.36;
+    const b=new T.Mesh(new T.SphereGeometry(.075,20,16),dark);b.scale.set(.92,1.3,.3);e.add(b);
+    const ir=new T.Mesh(new T.SphereGeometry(.05,16,12),new T.MeshBasicMaterial({color:shade(mb.shirt,.9)}));ir.scale.set(.9,1,.3);ir.position.set(0,-.035,.012);e.add(ir);
+    const h1=new T.Mesh(new T.SphereGeometry(.026,12,10),white);h1.position.set(.022,.042,.024);h1.scale.z=.4;e.add(h1);
+    const h2=new T.Mesh(new T.SphereGeometry(.012,10,8),white);h2.position.set(-.025,-.045,.026);h2.scale.z=.4;e.add(h2);
+    eyesO.add(e);
+    const c=new T.Mesh(new T.TorusGeometry(.06,.013,8,16,Math.PI),dark);c.position.set(s*.155,-.07,.395);c.rotation.y=s*.36;eyesC.add(c);
+    const br=new T.Mesh(new T.BoxGeometry(.1,.022,.02),TM(shade(mb.hair,.75)));br.position.set(s*.155,.085,.4);br.rotation.set(0,s*.36,mb.acc==="hammer"?s*-.35:s*.12);headG.add(br);
+    const bl=mesh(new T.CircleGeometry(.062,18),new T.MeshBasicMaterial({color:"#F08C82",transparent:true,opacity:.55}),false);bl.scale.y=.7;bl.position.set(s*.27,-.15,.31);bl.rotation.y=s*.72;headG.add(bl);
+  });
+  eyesC.visible=false;headG.add(eyesO);headG.add(eyesC);
+  const mouth=new T.Mesh(new T.SphereGeometry(.035,14,10),new T.MeshBasicMaterial({color:"#8A3B2E"}));mouth.geometry.scale(1,.45,.4);mouth.position.set(0,-.185,.378);headG.add(mouth);
+  if(mb.acc==="hammer"){const p=box(.09,.035,.01,TM("#F3E3C8"));p.position.set(.27,-.05,.33);p.rotation.set(0,.7,.5);headG.add(p);}
+  if(mb.acc==="beret"){const bm=TM("#B23A32");const b=mesh(new T.SphereGeometry(.4,24,14),bm);b.scale.set(1,.3,1);b.position.set(.07,.38,0);b.rotation.z=-.28;ol(b,1.04);headG.add(b);headG.add(at(cyl(.015,.015,.07,bm,6),.1,.5,0));}
+  if(mb.acc==="phones"){const band=mesh(new T.TorusGeometry(HR+.07,.035,8,28,Math.PI),TM("#2A2A2A"));headG.add(band);
+    [-1,1].forEach(s=>{const cup=cyl(.12,.12,.09,TM("#2E6DA4"));cup.rotation.z=Math.PI/2;cup.position.set(s*(HR+.06),-.02,0);ol(cup,1.06);headG.add(cup);const pad=cyl(.09,.09,.1,TM("#1F2A30"));pad.rotation.z=Math.PI/2;pad.position.set(s*(HR+.03),-.02,0);headG.add(pad);});}
+  if(mb.acc==="glasses"){const gm=TM("#2A2A2A");[-1,1].forEach(s=>{const r=mesh(new T.TorusGeometry(.105,.014,8,24),gm,false);r.position.set(s*.155,-.045,.41);r.rotation.y=s*.36;headG.add(r);
+      const l=mesh(new T.CircleGeometry(.1,20),new T.MeshBasicMaterial({color:"#DDF1FF",transparent:true,opacity:.22}),false);l.position.copy(r.position);l.rotation.y=s*.36;headG.add(l);});
+    headG.add(at(box(.09,.014,.014,gm),0,-.03,.435));}
+  // mani e braccia
+  const hL=tsph(.08,skin),hR=tsph(.08,skin);upper.add(hL);upper.add(hR);
+  hL.position.set(-.3,.25,.2);hR.position.set(.3,.25,.2);
+  const armG=new T.CylinderGeometry(.062,.07,1,12);armG.translate(0,.5,0);
+  const arms=[-1,1].map(s=>{const a=mesh(armG,shirt);a.userData.sh=new T.Vector3(s*.2,.53,0);upper.add(a);return a;});
+  // gambe corte con anca, per camminare
+  const legs=new T.Group();const legArr=[-.125,.125].map(x=>{const lg=new T.Group();lg.position.x=x;
+    const l=cyl(.105,.09,.36,pants,14);l.position.y=-.18;lg.add(l);
+    lg.add(at(cyl(.094,.094,.05,cream,14),0,-.33,0));
+    const f=tsph(.12,shoe);f.scale.set(1,.62,1.45);f.position.set(0,-.4,.05);ol(f,1.07);lg.add(f);
+    const so=cyl(.1,.1,.03,TM("#E9E4D6"),14);so.scale.z=1.5;so.position.set(0,-.455,.05);lg.add(so);
+    legs.add(lg);return lg;});
   g.add(legs);
   // oggetti in mano
   const props={};
   const ges=loungeSpot[mb.id].ges;
-  props.mug=new T.Group();props.mug.add(at(cyl(.07,.06,.14,"#F4F1E8"),0,0,0));props.mug.add(at(mesh(new T.TorusGeometry(.045,.012,6,12),M("#F4F1E8")),.08,0,0));props.mug.position.set(.02,.06,.06);hR.add(props.mug);
-  if(mb.acc==="hammer"){props.hammer=new T.Group();const hh=new T.Group();hh.add(at(cyl(.025,.025,.46,"#8A6246",8),0,.1,0));hh.add(at(box(.22,.1,.1,"#5A6466",{metalness:.5,roughness:.35}),0,.32,0));props.hammer.add(hh);props.hammerInner=hh;hR.add(props.hammer);}
-  if(mb.acc==="clip"||ges==="clip"){props.clip=new T.Group();props.clip.add(at(box(.26,.34,.02,"#F4F1E8"),0,0,0));props.clip.add(at(box(.1,.04,.03,"#8A6246"),0,.16,.01));[0,1,2].forEach(i=>props.clip.add(at(box(.16,.012,.005,"#2C7369"),0,.06-i*.06,.012)));props.clip.position.set(.06,.12,.04);hL.add(props.clip);}
-  if(ges==="sketch"){props.book=new T.Group();props.book.add(at(box(.3,.22,.03,"#2C3E50"),0,0,0));props.book.add(at(box(.27,.19,.005,"#F8F4E8"),0,0,.018));props.book.position.set(.08,.08,.06);hL.add(props.book);}
-  if(ges==="sketch"||ges==="clip"){props.pencil=at(cyl(.012,.012,.2,"#E8C24A",6),0,.08,.03);props.pencil.rotation.x=.4;hR.add(props.pencil);}
+  props.mug=new T.Group();props.mug.add(at(cyl(.07,.06,.14,cream),0,0,0));props.mug.add(at(cyl(.058,.058,.01,TM("#6B4226")),0,.068,0));props.mug.add(at(mesh(new T.TorusGeometry(.045,.012,6,12),cream),.08,0,0));props.mug.position.set(.02,.06,.06);hR.add(props.mug);
+  if(mb.acc==="hammer"){props.hammer=new T.Group();const hh=new T.Group();hh.add(at(cyl(.025,.025,.46,TM("#8A6246"),8),0,.1,0));hh.add(ol(at(box(.22,.1,.1,M("#6A7476",{metalness:.5,roughness:.35})),0,.32,0),1.08));props.hammer.add(hh);props.hammerInner=hh;hR.add(props.hammer);}
+  if(mb.acc==="clip"||ges==="clip"){props.clip=new T.Group();props.clip.add(at(box(.28,.36,.02,TM("#8A6246")),0,0,-.012));props.clip.add(at(box(.24,.32,.01,cream),0,-.01,0));props.clip.add(at(box(.1,.04,.03,TM("#9AA7A3")),0,.16,.01));[0,1,2].forEach(i=>props.clip.add(at(box(.16,.012,.005,TM("#2C7369")),0,.06-i*.06,.008)));props.clip.position.set(.06,.12,.04);hL.add(props.clip);}
+  if(ges==="sketch"){props.book=new T.Group();props.book.add(at(box(.3,.22,.03,TM("#2C3E50")),0,0,0));props.book.add(at(box(.27,.19,.005,cream),0,0,.018));props.book.position.set(.08,.08,.06);hL.add(props.book);}
+  if(ges==="sketch"||ges==="clip"){props.pencil=at(cyl(.012,.012,.2,TM("#E8C24A"),6),0,.08,.03);props.pencil.rotation.x=.4;hR.add(props.pencil);}
   if(ges==="read"){props.paper=new T.Mesh(new T.PlaneGeometry(.3,.38),M("#FBFBF6",{side:T.DoubleSide,roughness:1}));props.paper.position.set(.1,.1,.06);hL.add(props.paper);}
   // zz e note
   const zt=zTexture();const zz=[0,1].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:zt,transparent:true}));s.scale.set(.32,.32,1);s.visible=false;g.add(s);return s;});
   const nt=noteTexture();const notes=[0,1,2].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:nt,transparent:true}));s.scale.set(.3,.3,1);s.visible=false;g.add(s);return s;});
   const tag=sprite(labelTexture(mb.short,"#9AA7A3"),1.25);g.add(tag);
   scene.add(g);clickables.push(g);
-  return {mb,g,upper,headG,eyesO,eyesC,mouth,hL,hR,legs,legArr,props,zz,notes,tag,ges,
+  const a={mb,g,upper,headG,eyesO,eyesC,mouth,hL,hR,arms,legs,legArr,props,zz,notes,tag,ges,
     place:null,seated:false,walk:null,phase:Math.random()*20,tL:new T.Vector3(),tR:new T.Vector3()};
+  updArms(a);return a;
 }
+const _up=new T.Vector3(0,1,0),_d=new T.Vector3(),_hc=new T.Vector3(0,.98,0);
+function updArms(a){[a.hL,a.hR].forEach((h,i)=>{const arm=a.arms[i],sh=arm.userData.sh;_d.copy(h.position).sub(sh);const len=Math.max(.05,_d.length()-.03);
+  arm.position.copy(sh);arm.quaternion.setFromUnitVectors(_up,_d.normalize());arm.scale.set(1,len,1);});}
+function clearHead(v){_d.copy(v).sub(_hc);const d=_d.length();if(d<HR+.06&&d>1e-4)v.copy(_hc).addScaledVector(_d,(HR+.06)/d);}
 
 function setTag(a,st,seated){
-  a.tag.position.set(0,seated?1.58:2.0,0);
+  a.tag.position.set(0,seated?1.78:2.2,0);
   a.tag.material.map.dispose();
   a.tag.material.map=labelTexture(a.mb.short,st.work?"#2E7D4F":"#9AA7A3",st.work?`al lavoro dalle ${st.since}`:`torna ${st.next}`);
   a.tag.material.needsUpdate=true;const im=a.tag.material.map.image;a.tag.scale.set(1.5,1.5*im.height/im.width,1);
@@ -662,7 +764,7 @@ function animAgent(a,t,dt){
   }
   // applica con morbidezza
   const kH=1-Math.exp(-dt*16),kB=1-Math.exp(-dt*8);
-  a.hL.position.lerp(tL,kH);a.hR.position.lerp(tR,kH);
+  clearHead(tL);clearHead(tR);a.hL.position.lerp(tL,kH);a.hR.position.lerp(tR,kH);updArms(a);
   a.headG.rotation.x=mix(a.headG.rotation.x,hx,kB);a.headG.rotation.y=mix(a.headG.rotation.y,hy,kB);a.headG.rotation.z=mix(a.headG.rotation.z,hz,kB);
   a.upper.rotation.x=mix(a.upper.rotation.x,ux,kB);a.upper.rotation.z=mix(a.upper.rotation.z,uz,kB);
   a.upper.position.y=(a.seated?0:.42)+Math.sin(t*2+a.phase)*.012;
