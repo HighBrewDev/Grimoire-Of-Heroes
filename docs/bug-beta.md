@@ -5,26 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-021 [alta] Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
-- Trovato da: power user · 2026-11-09
-- Sezione: level up/multiclasse
-- Dove: Level up (finestra "reaches level N"), 1440x900 e 390x844, tutte le 12 classi SRD e anche nelle multiclassi (Wizard 7 → 8)
-- Passi: 1. Paladino di livello 7 (o Guerriero 5, Ladro 9, qualsiasi classe 11 o 15). 2. Level up.
-- Atteso: la sezione "Ability Score Improvement or feat" con +2, +1/+1 e talento, come al livello 4 (regole 2024: livelli 4, 8, 12, 16; Guerriero anche 6 e 14; Ladro anche 10; Epic Boon al 19).
-- Ottenuto: la sezione manca: si diventa livello 8 senza poter scegliere nulla. Provato con tutte le 12 classi dal livello 1 al 20: la scelta compare solo al 4 e al 19 (Epic Boon). Un eroe portato al 20 nell'app perde 3 aumenti (5 il Guerriero, 4 il Ladro). Causa probabile: `levelPlan` (index.html ~3420) cerca "Ability Score Improvement" in `clsInfo(v).f`, dove ogni privilegio compare una volta sola (al primo livello, 4); i livelli successivi sono solo nella tabella `srd.tbl[N-1].f`, che ha `"f":["Ability Score Improvement"]` agli 8, 12, 16. Le classi homebrew invece funzionano (usano `ASI_LEVELS`).
-- Console: nessun errore.
-- Test: `levelup` "B-021 …" (2 test).
-
-### B-022 [media] Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
-- Trovato da: power user · 2026-11-09
-- Sezione: level up/multiclasse
-- Dove: Level up (livello 4, Ability Score Improvement), 1440x900
-- Passi: 1. Paladino 3, Cos 14, PF 28/28. 2. Level up → PF medi → "+2 to Constitution" → Become level 4.
-- Atteso: PF massimi 40 (regole 2024: quando il modificatore di Costituzione cambia, i PF massimi cambiano come se lo avessi avuto dal livello 1: 10 + 3 × 6 + 4 × 3).
-- Ottenuto: PF massimi 36 (+8 calcolato con la Cos vecchia, nessun +1 per livello precedente). Il toast dice "+8 HP · CON +2". Stessa cosa con +1/+1 su Costituzione al livello 12 e con il pulsante "Raise Constitution" negli Attributi (Valeria 15 → 16: PF restano 32/32, nessun avviso). `applyLevelUp` (index.html ~3470) calcola `con` prima di applicare l'aumento e non ricalcola i PF.
-- Console: nessun errore.
-- Test: `levelup` "B-022 …".
-
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09
 - Sezione: combattimento
@@ -44,16 +24,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
 - Console: nessun errore.
 - Test: `importexport` "B-024 …".
-
-### B-025 [bassa] Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
-- Trovato da: power user · 2026-11-09
-- Sezione: level up/multiclasse
-- Dove: Level up (livello 4, scelta "Feat"), 1440x900
-- Passi: 1. Valeria (ha già Alert e Savage Attacker). 2. Level up → Feat → Alert → Become level 4.
-- Atteso: Alert e Savage Attacker non compaiono nella lista (solo i talenti ripetibili, come Skilled o Magic Initiate, possono tornare).
-- Ottenuto: compaiono e vengono aggiunti: Valeria ha due volte Alert ("Human (Versatile)" e "Level 4") e il toast dice "+9 HP · Alert". Stesso comportamento con un talento homebrew senza "Repeatable" (preso al 4 e all'8). `featList` (index.html ~3435) non toglie i talenti già presi.
-- Console: nessun errore.
-- Test: `levelup` "B-025 …".
 
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
@@ -132,6 +102,38 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+### B-021 [alta] Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
+- **Risolto 2026-11-10** in [b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49): `levelPlan` legge anche la tabella della classe SRD (`srd.tbl[N-1].f`), quindi "Ability Score Improvement or feat" compare a 4, 8, 12, 16, Guerriero anche 6 e 14, Ladro anche 10, pure nella classe aggiunta in multiclasse. Verificato portando 1→20 Guerriero (6 aumenti + Epic Boon), Ladro a 390 px (5 + Epic Boon) e Mago (4 + Epic Boon). Test `levelup` B-021 (4) ora passano.
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (finestra "reaches level N"), 1440x900 e 390x844, tutte le 12 classi SRD e anche nelle multiclassi (Wizard 7 → 8)
+- Passi: 1. Paladino di livello 7 (o Guerriero 5, Ladro 9, qualsiasi classe 11 o 15). 2. Level up.
+- Atteso: la sezione "Ability Score Improvement or feat" con +2, +1/+1 e talento, come al livello 4 (regole 2024: livelli 4, 8, 12, 16; Guerriero anche 6 e 14; Ladro anche 10; Epic Boon al 19).
+- Ottenuto: la sezione manca: si diventa livello 8 senza poter scegliere nulla. Provato con tutte le 12 classi dal livello 1 al 20: la scelta compare solo al 4 e al 19 (Epic Boon). Un eroe portato al 20 nell'app perde 3 aumenti (5 il Guerriero, 4 il Ladro). Causa probabile: `levelPlan` (index.html ~3420) cerca "Ability Score Improvement" in `clsInfo(v).f`, dove ogni privilegio compare una volta sola (al primo livello, 4); i livelli successivi sono solo nella tabella `srd.tbl[N-1].f`, che ha `"f":["Ability Score Improvement"]` agli 8, 12, 16. Le classi homebrew invece funzionano (usano `ASI_LEVELS`).
+- Console: nessun errore.
+- Test: `levelup` "B-021 …" (2 test).
+
+### B-022 [media] Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
+- **Risolto 2026-11-10** in [b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49): quando il modificatore di Costituzione cambia (aumento o Epic Boon nel level up, pulsanti + e − negli Attributi) i PF massimi e attuali cambiano di (differenza del modificatore × livello totale), come dalle regole 2024. Paladino 3 Cos 14 → 16 al livello 4: 28 → 40. Il toast lo dice ("+12 HP (+4 from Constitution, all levels)", "Max HP +5…"). Test `levelup` B-022 ora passa.
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (livello 4, Ability Score Improvement), 1440x900
+- Passi: 1. Paladino 3, Cos 14, PF 28/28. 2. Level up → PF medi → "+2 to Constitution" → Become level 4.
+- Atteso: PF massimi 40 (regole 2024: quando il modificatore di Costituzione cambia, i PF massimi cambiano come se lo avessi avuto dal livello 1: 10 + 3 × 6 + 4 × 3).
+- Ottenuto: PF massimi 36 (+8 calcolato con la Cos vecchia, nessun +1 per livello precedente). Il toast dice "+8 HP · CON +2". Stessa cosa con +1/+1 su Costituzione al livello 12 e con il pulsante "Raise Constitution" negli Attributi (Valeria 15 → 16: PF restano 32/32, nessun avviso). `applyLevelUp` (index.html ~3470) calcola `con` prima di applicare l'aumento e non ricalcola i PF.
+- Console: nessun errore.
+- Test: `levelup` "B-022 …".
+
+### B-025 [bassa] Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
+- **Risolto 2026-11-10** in [b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49): la lista dei talenti del level up toglie quelli che l'eroe ha già, salvo quelli ripetibili (`rep`, SRD e homebrew con "Repeatable"). Vale anche per gli Epic Boon. Test `levelup` B-025 ora passa.
+- Trovato da: power user · 2026-11-09
+- Sezione: level up/multiclasse
+- Dove: Level up (livello 4, scelta "Feat"), 1440x900
+- Passi: 1. Valeria (ha già Alert e Savage Attacker). 2. Level up → Feat → Alert → Become level 4.
+- Atteso: Alert e Savage Attacker non compaiono nella lista (solo i talenti ripetibili, come Skilled o Magic Initiate, possono tornare).
+- Ottenuto: compaiono e vengono aggiunti: Valeria ha due volte Alert ("Human (Versatile)" e "Level 4") e il toast dice "+9 HP · Alert". Stesso comportamento con un talento homebrew senza "Repeatable" (preso al 4 e all'8). `featList` (index.html ~3435) non toglie i talenti già presi.
+- Console: nessun errore.
+- Test: `levelup` "B-025 …".
 ### B-015 [bassa] [UX] Nessun backup di tutti gli eroi insieme
 - **Risolto 2026-11-09** in [4c4d449](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/4c4d449): "Export all heroes (N)" nella finestra Export e nell'avviso "Not saved" scarica un file `grimoire-heroes-AAAA-MM-GG.json` con tutti i tuoi eroi (senza campi locali). Import accetta quel file (o un array): ogni eroe entra con un id nuovo, le copie identiche già nel tomo sono saltate, le voci rotte contate e scartate. Verificato: 12 eroi esportati, stesso file reimportato → "già nel tomo"; cancellati 5 → tornano solo i 5; con memoria piena l'export include anche l'eroe non salvato. Test `importexport` B-015 ora passa.
 - Trovato da: power user · 2026-11-08

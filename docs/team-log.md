@@ -1,5 +1,18 @@
 # Diario del team
 
+## 2026-11-10 · sviluppo mattina
+- **Fatto** ([b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49), su main) · sezione **Level up e multiclasse**:
+  - **B-021** · `levelPlan` per le classi SRD legge anche la tabella della classe (`srd.tbl[N-1].f`): "Ability Score Improvement or feat" a 4, 8, 12, 16, Guerriero anche 6 e 14, Ladro anche 10, anche nella classe aggiunta in multiclasse. Le classi homebrew restano su `ASI_LEVELS`.
+  - **B-022** · Nuova `conHp`: se cambia il modificatore di Costituzione, PF massimi e attuali cambiano di (differenza × livello totale). Vale per aumento/Epic Boon nel level up e per i pulsanti + e − degli Attributi (toast "Max HP +5: the Constitution modifier counts at every level."). Abbassando la Cos i PF scendono allo stesso modo (minimo 1 per il massimo, 0 per gli attuali).
+  - **B-025** · La lista dei talenti del level up esclude quelli già presi se non sono ripetibili (`rep`, SRD e homebrew; anche gli Epic Boon). Se non resta nessun talento, "Feat" avvisa invece di aggiungere un talento vuoto.
+  - `sw.js`: alzata `CACHE`. Niente CSS.
+- **Test**: `levelup` da **14/20** a **20/20**. Suite completa prima **169/186**, dopo **175/186**: passano B-021 ×4, B-022, B-025; restano solo B-014, B-016 ×2, B-017, B-018, B-019 ×2, tocco Level up (telefono), B-020, B-023, B-024. Nessun test che passava ora fallisce. File `tests/risultati/2026-11-10.json` ripristinato (resta quello del tester).
+- **Prova a mano** (Playwright, server locale): Guerriero 1→20 a 1440x900 → aumenti a 4, 6, 8, 12, 14, 16 + Epic Boon al 19; Ladro 1→20 a 390x844 → 4, 8, 10, 12, 16 + Epic Boon, PF controllati livello per livello (es. livello 10 con Cos 17→19: +18 = 5 + 3 + 10); Mago 1→20 → 4, 8, 12, 16 + Epic Boon. scrollWidth uguale alla finestra, console senza errori. Pulsante + Cos su Paladino 5 (15→16): PF 30/44 → 35/49, − li riporta a 30/44, + Forza non li tocca.
+- **Scelta prudente**: anche i pulsanti + e − degli Attributi ricalcolano i PF (come chiede il piano). Chi corregge a mano un punteggio di creazione vede i PF muoversi, ma il toast lo spiega e il − annulla esattamente. Gli eroi già salvati non vengono toccati finché non si cambia la Cos.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md.
+- **Per Test e punteggio**: B-021, B-022, B-025 in "Risolti" con test verde (+3 ciascuno). Utile un test per il pulsante + Cos negli Attributi e per l'ASI nella seconda classe in multiclasse (già nel piano).
+- **Prossima sessione** (sera): Import/export come da piano, B-016 come PR e B-024 su main.
+
 ## 2026-11-10 · team leader
 - **Stato**: live = main, controllo a 1440x900 e 390x844 senza problemi. Punteggio +105 (↓ da +107 per i 10 bug nuovi), 169/186, nessuna regressione. Rossa solo Level up (giorno 1).
 - **Piano**: sviluppo mattina su Level up (B-021, B-022, B-025: obiettivo 20/20); sviluppo sera su Import/export (B-016 come PR, B-024 su main); designer su Telefono solo CSS (B-019, tocco nella finestra Level up); distruttore e power user concentrati su Level up e salvataggio. Le 7 sezioni tutte verdi passano a carico BASSO.
