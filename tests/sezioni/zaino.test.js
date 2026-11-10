@@ -90,4 +90,21 @@ module.exports = {sezione:'zaino', test:[
     const c = (await app.hero()).currency;
     assert.ok(c.gp >= 0 && c.pp >= 0, `monete salvate: ${c.gp} gp, ${c.pp} pp`);
   }],
+  ['B-017 esperienza: un valore negativo non viene salvato', async ({open}) => {
+    const app = await open(); await app.go('hero');
+    await app.set('#f_xp', '-5000');
+    const xp = (await app.hero()).xp;
+    assert.ok(xp >= 0, `XP salvata: ${xp}`);
+    assert.strictEqual(await app.page.locator('#f_xp').inputValue(), String(xp), 'il campo mostra un valore diverso da quello salvato');
+  }],
+  ['B-017 import: monete negative o enormi vengono riportate in un intervallo sensato', async ({open}) => {
+    const app = await open();
+    await app.click('import'); await app.page.fill('#impTxt', JSON.stringify({name:'Tesoriere', abilities:{str:10}, class:'Fighter', level:1, currency:{sp:-5, gp:1e308, pp:'tanti'}})); await app.click('doImport');
+    const s = await app.store(), h = s.chars.find(c => c.name === 'Tesoriere');
+    assert.ok(h, 'eroe non importato');
+    const c = h.currency;
+    assert.ok(['cp','sp','ep','gp','pp'].every(k => c[k] == null || (Number.isSafeInteger(c[k]) && c[k] >= 0)), 'monete importate: ' + JSON.stringify(c));
+    await app.go('pack');
+    assert.ok(!/e\+\d/.test(await app.text('#page')), 'monete in notazione esponenziale');
+  }],
 ]};

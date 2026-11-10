@@ -124,4 +124,21 @@ module.exports = {sezione:'combattimento', test:[
     await app.click('shortRest');
     assert.strictEqual((await app.hero()).res.second_wind_uses || 0, 1, 'dopo il riposo breve Second Wind è ancora 0/2');
   }],
+  ['B-018 PF massimi enormi scritti nel campo restano in un intervallo sensato', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.set('#f_hpmax', '999999999999');
+    const hp = (await app.hero()).hp;
+    assert.ok(hp.max <= 9999 && hp.max >= 1, `PF massimi salvati ${hp.max}`);
+    assert.strictEqual(await app.page.locator('#f_hpmax').inputValue(), String(hp.max), 'il campo mostra un valore diverso da quello salvato');
+  }],
+  ['B-018 import con PF 1e308: PF salvati entro 9999 e Combattimento senza notazione esponenziale', async ({open}) => {
+    const app = await open();
+    await app.click('import'); await app.page.fill('#impTxt', JSON.stringify({name:'Enorme', abilities:{str:10}, class:'Fighter', level:20, hp:{cur:1e308, max:1e308, temp:1e308}})); await app.click('doImport');
+    const h = (await app.store()).chars.find(c => c.name === 'Enorme');
+    assert.ok(h, 'eroe non importato');
+    assert.ok([h.hp.cur, h.hp.max, h.hp.temp].every(v => Number.isSafeInteger(v) && v >= 0 && v <= 9999), 'PF importati: ' + JSON.stringify(h.hp));
+    await app.go('combat');
+    const t = await app.text('#page');
+    assert.ok(!/e\+\d/.test(t), 'PF in notazione esponenziale: ' + (t.match(/.{0,20}e\+\d+.{0,20}/) || [''])[0]);
+  }],
 ]};

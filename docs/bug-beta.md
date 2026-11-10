@@ -75,26 +75,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `importexport` "B-016 …" (2 test).
 
-### B-017 [bassa] Monete negative accettate nello Zaino
-- Trovato da: distruttore · 2026-11-09
-- Sezione: zaino
-- Dove: VII Pack & Riches → monete, 1440x900
-- Passi: 1. Scrivi `-100` in GP e `-3` in PP.
-- Atteso: valore portato a 0 (o rifiutato).
-- Ottenuto: salvati `gp:-100, pp:-3`. Anche l'import accetta `"currency":{"sp":-5}` e `"gp":1e308` (mostrato "≈ 1e+308 gp"). `bindValue` con `data-type="int"` non ha minimo; stessa cosa per XP (`-5000` salvato).
-- Console: nessun errore.
-- Test: `zaino` "B-017 …".
-
-### B-018 [bassa] CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
-- Trovato da: distruttore · 2026-11-09
-- Sezione: combattimento
-- Dove: III Combattimento, 1440x900
-- Passi: 1. AC adjustment `-999`. 2. Oppure Import `{"name":"Enorme","abilities":{"str":10},"class":"Fighter","level":20,"hp":{"cur":1e308,"max":1e308,"temp":1e308}}`. 3. Oppure PF massimi `999999999999` nel campo.
-- Atteso: CA mai sotto 0 e PF entro un massimo ragionevole (B-007 ha messo solo i minimi).
-- Ottenuto: CA mostrata -981; PF "1e+308 / 1e+308 · 1e+308 temp" (i danni non li scalfiscono); 999999999999 accettato dal campo.
-- Console: nessun errore.
-- Test: `combattimento` "B-018 …".
-
 ### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 - Trovato da: distruttore · 2026-11-09
 - Sezione: workshop
@@ -131,6 +111,28 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-017 [bassa] Monete negative accettate nello Zaino
+- Trovato da: distruttore · 2026-11-09
+- Sezione: zaino
+- Dove: VII Pack & Riches → monete, 1440x900
+- Passi: 1. Scrivi `-100` in GP e `-3` in PP.
+- Atteso: valore portato a 0 (o rifiutato).
+- Ottenuto: salvati `gp:-100, pp:-3`. Anche l'import accetta `"currency":{"sp":-5}` e `"gp":1e308` (mostrato "≈ 1e+308 gp"). `bindValue` con `data-type="int"` non ha minimo; stessa cosa per XP (`-5000` salvato).
+- Console: nessun errore.
+- Test: `zaino` "B-017 …".
+- Risolto: backend · 2026-11-10. Monete 0…999.999.999 e XP 0…9.999.999 nei campi (min/max rispettati da `bindValue`, il campo mostra il valore tenuto), in `addXP` e in `fixup` (import, sync, caricamento). Test: `zaino` "B-017 …" ×3.
+
+### B-018 [bassa] CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
+- Trovato da: distruttore · 2026-11-09
+- Sezione: combattimento
+- Dove: III Combattimento, 1440x900
+- Passi: 1. AC adjustment `-999`. 2. Oppure Import `{"name":"Enorme","abilities":{"str":10},"class":"Fighter","level":20,"hp":{"cur":1e308,"max":1e308,"temp":1e308}}`. 3. Oppure PF massimi `999999999999` nel campo.
+- Atteso: CA mai sotto 0 e PF entro un massimo ragionevole (B-007 ha messo solo i minimi).
+- Ottenuto: CA mostrata -981; PF "1e+308 / 1e+308 · 1e+308 temp" (i danni non li scalfiscono); 999999999999 accettato dal campo.
+- Console: nessun errore.
+- Test: `combattimento` "B-018 …".
+- Risolto: backend · 2026-11-10. PF massimi/attuali/temporanei 0…9999 (campo, Damage/Heal/Temp, `fixup` per import e sync), regolazione CA −20…+20, CA mostrata mai sotto 0. Test: `combattimento` "B-018 …" (i due nuovi passano; quello vecchio clicca Import dal capitolo Combattimento, dove il pulsante non c'è: va corretto dal tester).
 
 ### B-019 [media] Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
 - **Risolto 2026-11-10** in [7cb1ec7](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7cb1ec7) (designer, solo CSS): `overflow-wrap:anywhere` su nomi e note degli attacchi, nomi e descrizioni degli oggetti, slot di sintonia, titoli delle card, titolo e sottotitolo della pagina e card dello scaffale (`.hero` resta 210 px, nome e riga sotto al massimo 2 righe). A 390 px con specie, sottoclasse, attacco, nota, oggetto e link lunghissimi: scrollWidth 390 in tutti i 10 capitoli (prima 780–1.291). Test `telefono` B-019 ×2 ora passano.

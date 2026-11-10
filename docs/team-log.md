@@ -1,5 +1,13 @@
 # Diario del team
 
+## 2026-11-10 · backend
+- **Nota**: il piano non aveva un compito "Backend"; ho preso la voce 2 del backlog (B-017, B-018: validazione dei numeri), lontano da B-016/B-024 della sessione serale. Sessione interrotta presto su richiesta di Capo (stop fino alle 19): consegnato solo questo.
+- **Fatto** (su main) · sezioni **Zaino** e **Combattimento**: nuovi limiti `LIM` (PF 9999, monete 999.999.999, XP 9.999.999, regolazione CA ±20). `bindValue` rispetta `min`/`max` dei campi numerici e, al cambio, mostra il valore tenuto; `fixup` porta negli stessi intervalli monete, XP, PF e regolazione CA da import, sync e caricamento; `getAC` mai sotto 0; `hpNum` e `addXP` limitati. `sw.js`: alzata `CACHE`.
+- **Test**: 4 nuovi (B-017 XP negativa, B-017 import monete negative/enormi, B-018 PF massimi enormi nel campo, B-018 import PF 1e308), tutti rossi prima. Suite prima **179/190**, dopo **184/194**, nessuna regressione. File dei risultati ripristinato.
+- **Per Test e punteggio**: il test vecchio "B-018 CA e PF…" ora passa la parte CA ma poi clicca Import dal capitolo Combattimento, dove il pulsante non esiste (timeout): serve `go('hero')` prima dell'import. Non l'ho toccato.
+- **Scelta prudente**: un eroe già salvato con valori assurdi (es. monete negative) viene corretto al caricamento e poi risincronizzato; i valori normali non cambiano.
+- **File**: index.html, sw.js, tests/sezioni/zaino.test.js, tests/sezioni/combattimento.test.js, docs/bug-beta.md, docs/team-log.md.
+- **Resta**: B-020 (import 5etools quadratico, il test ora passa ma il ciclo va comunque cercato), avviso "Nuova versione" del service worker.
 ## 2026-11-10 · team leader (aggiornamento delle 17:40)
 - **Stato**: live = main, controllo a 1440x900 e 390x844 senza problemi; Supabase non raggiungibile dalla sandbox. Suite adesso 179/190, nessuna regressione (rossi: B-014, B-016 ×2, B-017, B-018, B-023, B-024, B-026…B-029). Punteggio del mattino +105 ↓, Level up ancora ROSSO (giorno 1) per B-027/B-028.
 - **Piano** con la nuova divisione frontend/backend: frontend sera su B-027, B-026, B-028 (zona `applyLevelUp`/`conHp`); backend notte su B-016 come PR e B-024 (zona `bindValue`/`duplicate`/`importBackup`); distruttore e power user sulle correzioni di stasera e sui riposi (B-023). Backlog diviso in frontend, backend, design, con tour guidato e keep-alive di Supabase.
