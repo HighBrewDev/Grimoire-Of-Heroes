@@ -15,16 +15,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `robustezza` "B-029 …".
 
-### B-028 [bassa] Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
-- Trovato da: distruttore · 2026-11-10
-- Sezione: level up/multiclasse
-- Dove: I Eroe → righe della multiclasse, 1440x900; anche Import
-- Passi: 1. Fighter 3 / Rogue 4 / Wizard 4 (preso dal Level up). 2. Nella pagina Eroe cambia la riga "Rogue" in "Wizard" (o in "Fighter"). 3. Apri Level up. Oppure importa `{"name":"Neg","class":"Fighter","level":3,"abilities":{"str":10},"multi":[{"class":"Fighter","level":2}]}`.
-- Atteso: il menu della riga offre solo classi che l'eroe non ha (o unisce i livelli), l'import unisce i doppioni.
-- Ottenuto: l'eroe diventa "Fighter 3 / Wizard 4 / Wizard 4"; Level up offre due volte "Wizard 4 → 5", quindi due volte l'aumento del livello 4, privilegi e incantesimi contati da due classi separate. Import: "Fighter 1 / … / Fighter 2" accettato. Il menu `data-mc="i:class"` (index.html ~1645) elenca tutte le classi, anche quella principale.
-- Console: nessun errore.
-- Test: `levelup` "B-028 …".
-
 ### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
 - Trovato da: distruttore · 2026-11-10
 - Sezione: level up/multiclasse
@@ -34,16 +24,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
 - Console: nessun errore.
 - Test: `levelup` "B-027 …".
-
-### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
-- Trovato da: distruttore · 2026-11-10
-- Sezione: caratteristiche
-- Dove: II Caratteristiche → pulsanti − / + della Costituzione, 1440x900 (correzione B-022 di stamattina)
-- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1). 3. Premi + 9 volte (Cos 10).
-- Atteso: a Cos 1 PF massimi 20 (almeno 1 per livello); tornati a Cos 10, di nuovo 82/82.
-- Ottenuto: a Cos 1 PF **0/1** (l'eroe è a terra per un clic di troppo); tornati a Cos 10 PF **100/101** (+19 dal nulla). Con Cos 30 e ritorno a 10 resta 100/101. Anche un clic sbagliato su un eroe ferito lo cura: PF attuali portati a 0 dal −, poi il + li alza di livello × 1. `conHp` (index.html ~3416) taglia i massimi a 1 con `Math.max(1, …)` e i PF attuali a 0, poi il ritorno aggiunge l'intera differenza.
-- Console: nessun errore.
-- Test: `caratteristiche` "B-026 …".
+- **Correzione in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14)** (2026-11-10, frontend sera), in attesa di Capo perché cambia anche il test vecchio "livello 18 → 19 … può superare 20".
 
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09
@@ -111,6 +92,30 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+- **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): `conHp` tiene i PF massimi ad almeno 1 per livello e lascia uguale il danno subito; quello che una Costituzione bassa non ha potuto togliere (massimo fermo al minimo, danno oltre 0 PF) resta in `hp.conAdj`, così − e poi + ridanno gli stessi PF. Un eroe a 0 PF non viene curato alzando la Cos. La memoria si azzera appena i PF cambiano per altro. Mago 20: 82/82 → Cos 1 20/20 → Cos 10 82/82; ferito 30/82 → 0/20 → 30/82; morente 0/82 resta a 0. Test `caratteristiche` B-026 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: caratteristiche
+- Dove: II Caratteristiche → pulsanti − / + della Costituzione, 1440x900 (correzione B-022 di stamattina)
+- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1). 3. Premi + 9 volte (Cos 10).
+- Atteso: a Cos 1 PF massimi 20 (almeno 1 per livello); tornati a Cos 10, di nuovo 82/82.
+- Ottenuto: a Cos 1 PF **0/1** (l'eroe è a terra per un clic di troppo); tornati a Cos 10 PF **100/101** (+19 dal nulla). Con Cos 30 e ritorno a 10 resta 100/101. Anche un clic sbagliato su un eroe ferito lo cura: PF attuali portati a 0 dal −, poi il + li alza di livello × 1. `conHp` (index.html ~3416) taglia i massimi a 1 con `Math.max(1, …)` e i PF attuali a 0, poi il ritorno aggiunge l'intera differenza.
+- Console: nessun errore.
+- Test: `caratteristiche` "B-026 …".
+
+
+### B-028 [bassa] Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
+- **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): il menu della riga di multiclasse (`data-mc`) offre solo la classe della riga e quelle che l'eroe non ha; `fixup` (import, sync) unisce le righe ripetute e restituisce alla prima classe i livelli di una riga uguale a lei (Fighter 3 con riga Fighter 2 → Fighter 3; Rogue 2 + rogue 1 → Rogue 3). Test `levelup` B-028 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: I Eroe → righe della multiclasse, 1440x900; anche Import
+- Passi: 1. Fighter 3 / Rogue 4 / Wizard 4 (preso dal Level up). 2. Nella pagina Eroe cambia la riga "Rogue" in "Wizard" (o in "Fighter"). 3. Apri Level up. Oppure importa `{"name":"Neg","class":"Fighter","level":3,"abilities":{"str":10},"multi":[{"class":"Fighter","level":2}]}`.
+- Atteso: il menu della riga offre solo classi che l'eroe non ha (o unisce i livelli), l'import unisce i doppioni.
+- Ottenuto: l'eroe diventa "Fighter 3 / Wizard 4 / Wizard 4"; Level up offre due volte "Wizard 4 → 5", quindi due volte l'aumento del livello 4, privilegi e incantesimi contati da due classi separate. Import: "Fighter 1 / … / Fighter 2" accettato. Il menu `data-mc="i:class"` (index.html ~1645) elenca tutte le classi, anche quella principale.
+- Console: nessun errore.
+- Test: `levelup` "B-028 …".
+
 
 ### B-017 [bassa] Monete negative accettate nello Zaino
 - Trovato da: distruttore · 2026-11-09

@@ -68,6 +68,7 @@ Zone di index.html: **Frontend** possiede `levelPlan`/`applyLevelUp`/`conHp` (~3
 - Ogni rilascio alza `CACHE` in sw.js. Rispettare le zone di index.html scritte sopra. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
+- **[PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14)** (frontend sera): B-027, limite 20 per "+2"/"+1/+1" e +1 dell'Epic Boon fino a 30. Contiene anche la correzione del test vecchio "livello 18 → 19" che codificava il bug: per questo aspetta il tuo ok. Suite 187/194, nessuna regressione.
 - **[PR #6](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/6)** (tester extra): solo bug B-030, B-031 e 4 test nuovi, nessun codice dell'app. Consiglio di unirla: senza, B-030 e B-031 non entrano nel punteggio.
 - **Keep-alive di Supabase**: serve il tuo ok per assegnarlo al backend (il progetto gratuito va in pausa dopo 7 giorni senza attività).
 - **Decisione (facoltativa)**: permettere l'host `obahrlbwbplqqgokjqhf.supabase.co` nella rete dell'ambiente cloud, per testare login e sync.

@@ -1,5 +1,17 @@
 # Diario del team
 
+## 2026-11-10 · frontend sera
+- **Fatto** ([0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426), su main) · sezioni **Caratteristiche** e **Level up e multiclasse**, nella zona del piano (`conHp`, menu `data-mc`) più la riga della multiclasse in `fixup`:
+  - **B-026** · `conHp`: PF massimi mai sotto 1 per livello, danno subito invariato; quello che una Cos bassa non ha potuto togliere resta in `hp.conAdj` (si azzera se i PF cambiano per altro), quindi − e poi + ridanno gli stessi PF. Eroe a 0 PF non curato alzando la Cos.
+  - **B-028** · il menu della riga di multiclasse offre solo classi che l'eroe non ha; `fixup` unisce righe doppie e una riga uguale alla prima classe.
+  - `sw.js`: `CACHE` → `grimoire-fs1110a`.
+- **B-027 in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14)** (in attesa di Capo): "+2" e "+1/+1" fermi a 20 anche al 19; scegliendo un Epic Boon si sceglie la caratteristica che prende +1 fino a 30. **Scelta prudente**: il piano chiedeva di correggere anche il test vecchio "livello 18 → 19 … può superare 20" (si aspettava 22 da "+2", cioè il bug), ma la routine dice di non toccare i test; con la sola correzione quel test diventa rosso su main. Per questo codice e test corretto (ora Boon of Combat Prowess +1 Forza → 21) sono in PR, non su main. Nella PR suite 187/194, nessuna regressione.
+- **Test**: suite completa prima **184/194** (main 86a67ec), dopo **186/194** su main: passano B-026 e B-028. Nessun test che passava ora fallisce. `levelup` + `caratteristiche` 30/31 su main (resta B-027, chiuso dalla PR). File `tests/risultati/2026-11-10.json` ripristinato.
+- **Prova a mano** (Playwright, 1440x900 e 390x844): Mago 20 ferito 30/82 → Cos 1 0/20 → Cos 10 30/82 → Cos 30 230/282 → Cos 10 30/82; morente 0/82 → Cos 14 0/122 → Cos 10 0/82. Import "Fighter 3 + riga Fighter 2" → Fighter 3; "Rogue 2, rogue 1 (Thief), Wizard 2" → Rogue 3 (Thief) / Wizard 2. Console pulita, scrollWidth uguale alla finestra.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md, docs/team-plan.md (PR #14 in "In attesa di Capo"); nella PR anche tests/sezioni/levelup.test.js.
+- **Per Test e punteggio**: B-026 e B-028 in "Risolti" con test verde. Il test B-018 vecchio cerca Import nel capitolo Combattimento (timeout), già segnalato dal backend.
+- **Resta**: B-029 (`modal()` trattiene il focus), B-031 dopo PR #6, B-023 riposo breve. I Boon offrono tutte le caratteristiche (alcuni nell'SRD ne limitano la scelta).
+
 ## 2026-11-10 · backend
 - **Nota**: il piano non aveva un compito "Backend"; ho preso la voce 2 del backlog (B-017, B-018: validazione dei numeri), lontano da B-016/B-024 della sessione serale. Sessione interrotta presto su richiesta di Capo (stop fino alle 19): consegnato solo questo.
 - **Fatto** (su main) · sezioni **Zaino** e **Combattimento**: nuovi limiti `LIM` (PF 9999, monete 999.999.999, XP 9.999.999, regolazione CA ±20). `bindValue` rispetta `min`/`max` dei campi numerici e, al cambio, mostra il valore tenuto; `fixup` porta negli stessi intervalli monete, XP, PF e regolazione CA da import, sync e caricamento; `getAC` mai sotto 0; `hpNum` e `addXP` limitati. `sw.js`: alzata `CACHE`.
