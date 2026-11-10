@@ -668,7 +668,7 @@ function buildAgent(mb){
   // zz e note
   const zt=zTexture();const zz=[0,1].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:zt,transparent:true}));s.scale.set(.32,.32,1);s.visible=false;g.add(s);return s;});
   const nt=noteTexture();const notes=[0,1,2].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:nt,transparent:true}));s.scale.set(.3,.3,1);s.visible=false;g.add(s);return s;});
-  const tag=new T.Object3D();g.add(tag);tag.userData.label=htmlLabel(tag,mb.short,"#9AA7A3");
+  const tag=new T.Object3D();g.add(tag);
   scene.add(g);clickables.push(g);
   const a={mb,g,upper,headG,eyesO,eyesC,mouth,hL,hR,arms,legs,legArr,props,zz,notes,tag,ges,base:ges,slot:null,wanderT:20,over:false,
     place:null,seated:false,walk:null,phase:Math.random()*20,tL:new T.Vector3(),tR:new T.Vector3()};
@@ -680,7 +680,6 @@ function updArms(a){[a.hL,a.hR].forEach((h,i)=>{const arm=a.arms[i],sh=arm.userD
 function clearHead(v){_d.copy(v).sub(_hc);const d=_d.length();if(d<HR+.06&&d>1e-4)v.copy(_hc).addScaledVector(_d,(HR+.06)/d);}
 
 function setTag(a,st,seated){
-  a.tag.userData.label.set(a.mb.short,st.work?"#2E7D4F":"#9AA7A3",st.work?`al lavoro dalle ${st.since}`:`torna ${st.next}`);
 }
 function placePose(a,place){
   a.place=place;a.seated=place.seated;
