@@ -39,6 +39,7 @@
 7. **design** · Accessibilità: contrasto, focus visibile, `aria-label`; pallini di competenza e "✕" dei chip a 44 px.
 8. **funzione** · Stampa/PDF della scheda su A4.
 9. **marketing** · Bozza di post in docs/promo/ quando non ci sono più bug alti (solo bozza).
+10. **design · richiesta di Capo, priorità bassa** · Animazioni di idle personalizzate per i pupini della Sala del Team (docs/sala/sala-team.html, istruzioni in docs/sala/README.md). Solo designer, nei giorni senza un compito UI/telefono per l'app; non toccare l'oggetto `DATA`. Tenere in backlog finché non è fatta.
 
 ## Regole per tutti
 - Solo contenuti SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo l'attribuzione CC-BY).
