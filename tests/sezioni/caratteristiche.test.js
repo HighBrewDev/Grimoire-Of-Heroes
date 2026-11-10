@@ -57,4 +57,13 @@ module.exports = {sezione:'caratteristiche', test:[
     await app.go('abilities');
     assert.ok(/Exhaustion 2: every D20 Test takes −4/.test(await app.text('#page')));
   }],
+  ['B-026 Costituzione abbassata e rialzata col − / +: i PF tornano quelli di prima (Mago 20, PF 82)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Wizard', subclass:'Evoker', level:20, xp:355000, hp:{cur:82,max:82,temp:0}})]}); await app.go('abilities');
+    for (let i = 0; i < 9; i++) await app.click('stepAb', 'con:-1');
+    let h = await app.hero();
+    assert.ok(h.hp.max >= 20, `Cos 1 al livello 20: PF massimi ${h.hp.max} (almeno 1 per livello = 20)`);
+    for (let i = 0; i < 9; i++) await app.click('stepAb', 'con:1');
+    h = await app.hero();
+    assert.deepStrictEqual([h.abilities.con, h.hp.max, h.hp.cur], [10, 82, 82], `dopo Cos 10 → 1 → 10 PF ${h.hp.cur}/${h.hp.max} invece di 82/82`);
+  }],
 ]};

@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-10 · distruttore
+- **Fatto** · sessione serale sul Level up di stamattina (server locale = main 4452eb8). Suite 179/186, nessuna regressione; le correzioni B-021, B-022, B-025 reggono su tutte le 12 classi 1 → 20 e su una multiclasse a tre. La PR di B-016 non è ancora arrivata: niente da verificare sulle tre schede.
+- **Bug nuovi** (4, ognuno con un test che oggi fallisce): B-026 [media] caratteristiche (Cos giù e su gonfia i PF, PF attuali a 0); B-027 [media] level up (+2 al 19 oltre 20); B-028 [bassa] level up (stessa classe due volte in multiclasse); B-029 [media] robustezza (Tab esce dalla finestra Level up e il livello va a un altro eroe).
+- **Per Test e punteggio**: il test esistente "livello 18 → 19 … può superare 20" si aspetta Forza 22 con "+2", in contrasto con B-027: va rivisto con la correzione. `tests/risultati/2026-11-10.json` ripristinato dopo la suite.
+- **File**: docs/bug-beta.md, docs/team-log.md, tests/sezioni/caratteristiche, levelup, robustezza.
+
 ## 2026-11-10 · design
 - **Fatto** ([7cb1ec7](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7cb1ec7), su main) · sezione **Telefono**, solo CSS, come da piano:
   - **B-019** · parole e link lunghi vanno a capo invece di allargare la pagina: `overflow-wrap:anywhere` su nomi e note degli attacchi, nomi e descrizioni degli oggetti, slot di sintonia, titoli delle card (es. "SSS… traits"), titolo e sottotitolo della pagina (specie/sottoclasse homebrew), card dello scaffale (`.hero` resta 210 px, nome e riga sotto tagliati a 2 righe). A 390 px con tutti i campi lunghi insieme: scrollWidth 390 in tutti i 10 capitoli (prima 780–1.291 px); anche 768 e 1440 restano alla larghezza della finestra.

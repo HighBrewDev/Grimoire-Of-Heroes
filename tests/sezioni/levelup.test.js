@@ -135,4 +135,18 @@ module.exports = {sezione:'levelup', test:[
     assert.ok(/Roll first/.test(await app.toast()), 'nessun avviso');
     assert.strictEqual((await app.hero()).level, 3);
   }],
+  ['B-027 livello 18 → 19: +2 ai punteggi (aumento, non Epic Boon) non porta Intelligenza oltre 20', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Wizard', subclass:'Evoker', level:18, xp:265000, abilities:{str:10,dex:14,con:14,int:20,wis:12,cha:10}, hp:{cur:110,max:110,temp:0}})]});
+    await openLU(app);
+    await app.set('#lu_a1', 'int'); await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.level, 19);
+    assert.ok(h.abilities.int <= 20, `Intelligenza ${h.abilities.int}: l'aumento dei punteggi arriva al massimo a 20`);
+  }],
+  ['B-028 multiclasse nella pagina Eroe: una riga non può diventare una classe che l\'eroe ha già', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
+    const opts = await app.page.$$eval('select[data-mc="0:class"] option', o => o.map(x => x.value));
+    assert.ok(opts.includes('Rogue'), 'manca la classe attuale della riga');
+    assert.ok(!opts.includes('Fighter'), 'la riga Rogue offre Fighter, che è già la classe principale (Fighter 3 / Fighter 1)');
+  }],
 ]};

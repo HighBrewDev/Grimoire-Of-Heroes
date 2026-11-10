@@ -80,4 +80,19 @@ module.exports = {sezione:'robustezza', test:[
     const sw = await app.page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     assert.ok(sw <= 0, `scroll orizzontale di ${sw} px a 1440 px`);
   }],
+  ['B-029 solo tastiera: Tab nella finestra Level up non esce sugli eroi coperti e il livello va all\'eroe del titolo', async ({open}) => {
+    const app = await open({activeId:'teldrin'});
+    await app.click('levelUp'); await app.page.waitForSelector('#modalBk [data-act="luApply"]');
+    const fuori = [];
+    for (let i = 0; i < 25; i++){
+      await app.page.keyboard.press('Tab');
+      const f = await app.page.evaluate(() => { const a = document.activeElement; return a.closest('#modalBk') ? '' : (a.dataset.act || a.id || a.tagName) + (a.dataset.arg ? ':' + a.dataset.arg : ''); });
+      if (f && f !== 'BODY') fuori.push(f);
+      if (f === 'pick:tkessa'){ await app.page.keyboard.press('Enter'); break; }
+    }
+    if (await app.modalOpen()) await app.page.locator('#modalBk [data-act="luApply"]').click().catch(() => {});
+    const s = await app.store(), lv = id => s.chars.find(c => c.id === id).level;
+    assert.strictEqual(lv('tkessa'), 2, `Kessa è passata al livello ${lv('tkessa')} dalla finestra "Eldrin reaches level 5" (focus uscito su: ${fuori.slice(0, 6).join(', ')})`);
+    assert.deepStrictEqual(fuori, [], `il focus esce dalla finestra: ${fuori.slice(0, 6).join(', ')}`);
+  }],
 ]};
