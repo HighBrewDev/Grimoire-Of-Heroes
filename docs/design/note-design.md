@@ -37,12 +37,27 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 - Ogni controllo toccabile almeno **44×44 px**: `.btn`, `.iconBtn`, `.sb`, `.dbtn`, campi della barra dadi, + e − delle caratteristiche, slot degli incantesimi.
 - Gli slot (`.pip`) restano cerchi da 26 px: l'area di tocco è il bottone da 44 px, il cerchio è disegnato da `::before`.
 - Sotto 560 px i 7 dadi si dividono la prima riga della barra in parti uguali; `#app` ha spazio in fondo (175 px) per non finire sotto la barra.
+- `.sb` è largo e alto almeno 44 px (2026-11-10).
 - Il desktop con il mouse non cambia (screenshot a 1440 identici al pixel).
+
+### Testo dell'utente lungo (B-019)
+- Gli elementi che mostrano testo libero (nomi e note di attacchi, oggetti, slot di sintonia, titoli delle card, titolo/sottotitolo della pagina, card dello scaffale) hanno `overflow-wrap:anywhere`: a differenza di `break-word` abbassa anche la larghezza minima, quindi celle di griglia e flex si stringono invece di allargare la pagina.
+- **Non** metterlo su contenitori grandi (`.pageBody`, `.modal`): spezza parole corte in righe strette ("SR D", "Train ing"). Aggiungere il selettore preciso quando nasce un nuovo campo libero.
+- Card dello scaffale: nome e riga sotto al massimo 2 righe (`-webkit-line-clamp`), con 3 px di margine interno per non tagliare le grazie del Cinzel.
+
+### Movimento
+- Con `prefers-reduced-motion` le finestre si aprono senza la piega 3D (`.modal{animation:none}`).
 
 ### Controlli prima di pubblicare
 `node tests/run.js telefono` (11 test: scroll orizzontale, aree di tocco, 16 px) e screenshot a 390x844, 768x1024, 1440x900 in giorno e notte. Le esecuzioni complete riscrivono `tests/risultati/AAAA-MM-GG.json`: se non sei il tester, ripristinalo con `git checkout` prima del commit.
 
 ## Diario
+
+### 2026-11-10
+- **Fatto**: B-019 e tocco nella finestra Level up (compito del piano, solo CSS). Testi e link lunghi vanno a capo in Combattimento, Zaino, titoli e scaffale; `.sb` a 44 px di larghezza su touch; finestre senza piega 3D con "riduci animazioni". Telefono 15/15, suite 179/186 senza regressioni.
+- **Prima/dopo**: [testi lunghi 390](2026-11-10-b019-testi-lunghi-390.jpg), [Level up 390](2026-11-10-levelup-tocco-390.jpg).
+- **Imparato**: gli screenshot a pagina intera con emulazione telefono variano un po' fra due esecuzioni dello stesso codice; per confrontare conviene misurare le posizioni degli elementi (`getBoundingClientRect`) oltre al confronto dei pixel.
+- **Prossime idee**: proposta per B-014 (filtro e ordine dello scaffale); `.dot` e "✕" dei chip a 44 px; indizio di scorrimento sui segnalibri dei capitoli.
 
 ### 2026-11-09
 - **Fatto**: telefono e tablet comodi al tocco (voce 2 del Backlog, anticipata da martedì). Tolti i 10 px di scroll orizzontale a 390 px (16 a 768): la causa era `input#f_img.sr`, che con il padding dei campi era largo più di 1 px. Aree di tocco 44 px e campi a 16 px solo su schermi touch. Nomi lunghi senza spazi vanno a capo (titolo, frase iniziale, toast) invece di allargare la pagina di 831 px.

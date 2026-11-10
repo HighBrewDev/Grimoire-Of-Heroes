@@ -55,16 +55,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `combattimento` "B-018 …".
 
-### B-019 [media] Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
-- Trovato da: distruttore · 2026-11-09
-- Sezione: telefono
-- Dove: VII Pack & Riches e III Combattimento, 390x844
-- Passi: 1. Pack & Riches → Custom → nome "Mappa", descrizione `Vedi https://example.com/mappe/abcdefghij…` (un link di ~180 caratteri) → Add. 2. Guarda la larghezza della pagina.
-- Atteso: il testo va a capo (`overflow-wrap:anywhere`), nessuno scroll orizzontale.
-- Ottenuto: `scrollWidth` 1.054 px dall'interfaccia (1.400 px con un link di 200 caratteri). Stessa cosa con un nome di attacco di 80 caratteri senza spazi (Combattimento 1.291 px), un nome di oggetto (Zaino 1.325 px), una nota di attacco con link (1.365 px), e con specie o sottoclasse homebrew di 80 caratteri (tutti i capitoli ~1.190–1.290 px; lo scaffale `.hero` è largo 1.225 px). Note e talenti invece vanno a capo bene.
-- Console: nessun errore.
-- Test: `telefono` "B-019 …" (2 test).
-
 ### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 - Trovato da: distruttore · 2026-11-09
 - Sezione: workshop
@@ -101,6 +91,17 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-019 [media] Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
+- **Risolto 2026-11-10** in [7cb1ec7](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7cb1ec7) (designer, solo CSS): `overflow-wrap:anywhere` su nomi e note degli attacchi, nomi e descrizioni degli oggetti, slot di sintonia, titoli delle card, titolo e sottotitolo della pagina e card dello scaffale (`.hero` resta 210 px, nome e riga sotto al massimo 2 righe). A 390 px con specie, sottoclasse, attacco, nota, oggetto e link lunghissimi: scrollWidth 390 in tutti i 10 capitoli (prima 780–1.291). Test `telefono` B-019 ×2 ora passano.
+- Trovato da: distruttore · 2026-11-09
+- Sezione: telefono
+- Dove: VII Pack & Riches e III Combattimento, 390x844
+- Passi: 1. Pack & Riches → Custom → nome "Mappa", descrizione `Vedi https://example.com/mappe/abcdefghij…` (un link di ~180 caratteri) → Add. 2. Guarda la larghezza della pagina.
+- Atteso: il testo va a capo (`overflow-wrap:anywhere`), nessuno scroll orizzontale.
+- Ottenuto: `scrollWidth` 1.054 px dall'interfaccia (1.400 px con un link di 200 caratteri). Stessa cosa con un nome di attacco di 80 caratteri senza spazi (Combattimento 1.291 px), un nome di oggetto (Zaino 1.325 px), una nota di attacco con link (1.365 px), e con specie o sottoclasse homebrew di 80 caratteri (tutti i capitoli ~1.190–1.290 px; lo scaffale `.hero` è largo 1.225 px). Note e talenti invece vanno a capo bene.
+- Console: nessun errore.
+- Test: `telefono` "B-019 …" (2 test).
 
 ### B-021 [alta] Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
 - **Risolto 2026-11-10** in [b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49): `levelPlan` legge anche la tabella della classe SRD (`srd.tbl[N-1].f`), quindi "Ability Score Improvement or feat" compare a 4, 8, 12, 16, Guerriero anche 6 e 14, Ladro anche 10, pure nella classe aggiunta in multiclasse. Verificato portando 1→20 Guerriero (6 aumenti + Epic Boon), Ladro a 390 px (5 + Epic Boon) e Mago (4 + Epic Boon). Test `levelup` B-021 (4) ora passano.

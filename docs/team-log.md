@@ -1,5 +1,16 @@
 # Diario del team
 
+## 2026-11-10 · design
+- **Fatto** ([7cb1ec7](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7cb1ec7), su main) · sezione **Telefono**, solo CSS, come da piano:
+  - **B-019** · parole e link lunghi vanno a capo invece di allargare la pagina: `overflow-wrap:anywhere` su nomi e note degli attacchi, nomi e descrizioni degli oggetti, slot di sintonia, titoli delle card (es. "SSS… traits"), titolo e sottotitolo della pagina (specie/sottoclasse homebrew), card dello scaffale (`.hero` resta 210 px, nome e riga sotto tagliati a 2 righe). A 390 px con tutti i campi lunghi insieme: scrollWidth 390 in tutti i 10 capitoli (prima 780–1.291 px); anche 768 e 1440 restano alla larghezza della finestra.
+  - **Tocco nella finestra Level up**: `.sb` anche largo 44 px su touch ("Roll" era 42 px; in Zaino −, +, ✕ erano 27 px). Con "riduci animazioni" le finestre si aprono senza la piega 3D: il primo fotogramma rimpiccioliva i pulsanti ("Become level 4" misurato 100×30, poi 119×44).
+  - `sw.js`: alzata `CACHE`.
+- **Scelta prudente**: niente `anywhere` su tutta la pagina. La prima prova lo metteva su `.pageBody` e spezzava parole corte in righe strette ("SR D", "Train ing", "Too ls"); ora vale solo sugli elementi che contengono testo libero dell'utente, e le altre parti non cambiano.
+- **Verifica**: `node tests/run.js telefono` da 12/15 a **15/15**. Suite completa **179/186** (prima 175/186): restano solo B-014, B-016 ×2, B-017, B-018, B-023, B-024, nessuna regressione. Screenshot di tutti i capitoli a 390, 768 e 1440 in giorno e notte prima/dopo: a 1440 identici a parte il rumore che c'è già fra due esecuzioni dello stesso codice; a 768 e 390 cambiano solo i pulsanti `.sb` più larghi su touch. Console senza errori. File `tests/risultati/2026-11-10.json` ripristinato. Prima/dopo: [testi lunghi 390](design/2026-11-10-b019-testi-lunghi-390.jpg), [Level up 390](design/2026-11-10-levelup-tocco-390.jpg).
+- **File**: index.html (blocco CSS B-019 vicino a "very long names", `.sb` nel blocco `pointer:coarse`), sw.js, docs/design/, docs/bug-beta.md, docs/team-log.md.
+- **Per Test e punteggio**: B-019 in "Risolti" con 2 test verdi; il test di tocco nella finestra Level up ora passa. Utile il test già previsto per lo scaffale con specie homebrew lunga.
+- **Prossima idea**: proposta per B-014 (filtro per nome e ordine dello scaffale), poi pallini di competenza `.dot` e "✕" dei chip a 44 px (Backlog 7).
+
 ## 2026-11-10 · sviluppo mattina
 - **Fatto** ([b5f0d49](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b5f0d49), su main) · sezione **Level up e multiclasse**:
   - **B-021** · `levelPlan` per le classi SRD legge anche la tabella della classe (`srd.tbl[N-1].f`): "Ability Score Improvement or feat" a 4, 8, 12, 16, Guerriero anche 6 e 14, Ladro anche 10, anche nella classe aggiunta in multiclasse. Le classi homebrew restano su `ASI_LEVELS`.
