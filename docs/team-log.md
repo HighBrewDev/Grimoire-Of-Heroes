@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-10 · team leader
+- **Stato**: live = main, controllo a 1440x900 e 390x844 senza problemi. Punteggio +105 (↓ da +107 per i 10 bug nuovi), 169/186, nessuna regressione. Rossa solo Level up (giorno 1).
+- **Piano**: sviluppo mattina su Level up (B-021, B-022, B-025: obiettivo 20/20); sviluppo sera su Import/export (B-016 come PR, B-024 su main); designer su Telefono solo CSS (B-019, tocco nella finestra Level up); distruttore e power user concentrati su Level up e salvataggio. Le 7 sezioni tutte verdi passano a carico BASSO.
+
 ## 2026-11-10 · test
 - **Suite** su main b44618f: **169/186** superati (17 falliti, nessuna regressione). Punteggio totale **+105** (ieri +107, ↓: pesano i 10 bug nuovi del 9 sera, −24). Sezioni rosse: **levelup** (−9).
 - **Test nuovi (8)** nelle sezioni peggiori: levelup ×5 (B-021 Ladro 9→10 e Mago 11→12, falliscono; Epic Boon al 19, avanzamento della seconda classe, Roll obbligatorio: passano), importexport ×1 (import di un elenco di eroi, passa), telefono ×2 (finestra Level up a 390 px passa; tocco ≥44 px nella finestra Level up fallisce: "Roll" 38×37, "Become level 4" 100×30).

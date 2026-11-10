@@ -1,44 +1,53 @@
-# Piano del team · lunedì 9 novembre 2026
+# Piano del team · martedì 10 novembre 2026
 
 ## Stato dell'app
-- Sito live online (200, ~1,6 MB) con tutto il lavoro di sabato e domenica: B-004/B-009 ([8e79163](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/8e79163)) e B-002 (PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1), unita). Il power user li ha verificati sul live. Stamattina Capo ha unito la PR [#2](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/2): il Workshop importa file JSON in formato 5etools come homebrew modificabile (e `CACHE` di sw.js è stato alzato).
-- Controllo di stamattina (Playwright, 1440x900 e 390x844): copertina → "Start writing" → nuovo eroe → level up 1→2 ok, console pulita a parte Supabase bloccato dalla sandbox. A 390 px ancora 10 px di scroll orizzontale (scrollWidth 400).
-- Weekend del power user: prestazioni buone (tomo con 33 eroi aperto in 0,8 s, 2 s con CPU 4x; nessuna perdita di memoria). Trovati **B-012** (ogni eroe salvato due volte: il campo `_sig` occupa metà di localStorage e finisce negli export) e **B-013** (oggetti con categoria sconosciuta invisibili e non cancellabili).
-- Rischio: con B-012 l'avviso "Not saved" arriva a ~118 eroi pesanti invece di ~230, e non esiste un backup di tutti gli eroi (B-015).
+- Live = main (stesso index.html e `CACHE` di sw.js, `4fd899d`). Controllo di stamattina con Playwright a 1440x900 e 390x844: copertina "Open the Grimoire" ok, scrollWidth uguale alla finestra (1440 / 390), console pulita a parte Supabase bloccato dalla sandbox. Niente di rotto da ieri.
+- Ieri chiusi B-005, B-006, B-015 (backup di tutti gli eroi) e il telefono è passato da 3/11 a 12/15. Il distruttore e il power user hanno aperto 10 bug nuovi (B-016…B-025), che oggi pesano −24.
+- **Punteggio totale +105, tendenza ↓** (ieri +107). Test 169/186, nessuna regressione. **Unica sezione rossa: Level up (−9, 14/20), giorno 1 su 3.**
+- Nessuna PR aperta.
 
-## Obiettivo della settimana (7–13 novembre)
-**Nessuna perdita di dati**: salvataggio, import/export a prova di bomba. B-001…B-004 chiusi. *Fatto* entro venerdì = B-012, B-013 e B-015 in "Risolti" e il distruttore di stasera e di venerdì non trova nuove perdite di dati.
+## Allocazione per sezione
+| Sezione | Punti | Stato | Carico | Perché |
+|---|---:|---|---|---|
+| Level up e multiclasse | −9 | 🔴 ROSSO | **ALTO** | B-021 [alta] = 4 test rossi, più B-022, B-025 |
+| Import/export e salvataggio | +1 | 🟡 GIALLO | MEDIO | B-016 [alta] (2 test), B-024 |
+| Telefono (390x844) | +1 | 🟡 GIALLO | MEDIO | B-019 (2 test), tocco nella finestra Level up |
+| Zaino e monete | +6 | 🟡 GIALLO | MEDIO | B-017 |
+| Combattimento | +9 | 🟡 GIALLO | MEDIO | B-023, B-018 |
+| Eroe | +11 | 🟡 GIALLO | MEDIO | B-014 (UX) |
+| Workshop homebrew | +21 | 🟡 GIALLO | MEDIO | B-020 |
+| Cronaca, Caratteristiche, Tratti, Biblioteca, Incontro, Incantesimi, Robustezza | +7…+12 | 🟡 GIALLO | BASSO | tutto verde, giorno 2 su 3: domani possono diventare VERDI; solo controlli leggeri |
 
-## Oggi (lunedì)
-- **Sviluppo (10:23)**: due passi, in quest'ordine. Niente CSS.
-  1. **B-013 su main** (validazione locale): in `fixup` (index.html ~963) ogni oggetto con `cat` non presente in `INV_CATS` (~1442) diventa "Quest & Misc" (mappa i nomi ovvi: "Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", ecc.). In più, il render dello Zaino non deve mai saltare un oggetto: categoria sconosciuta → gruppo "Quest & Misc".
-     *Fatto* = importato l'eroe dei passi di B-013, i 25 "Treasure" compaiono, il filtro "trophy" li trova, si possono modificare e cancellare; numero righe = numero oggetti nell'intestazione; B-013 in "Risolti".
-  2. **B-012 come PR** (cambia il formato di salvataggio dei dati utenti): `_sig` diventa un'impronta corta (hash della stringa di `sigOf`, es. cyrb53) invece dell'eroe intero; all'avvio i `_sig` vecchi (che iniziano con `{`) vanno convertiti con lo stesso hash, così nessun eroe risulta "cambiato" e `updatedAt`/`_dirty` non scattano. Export e Download .json (~2583–2588) usano `heroData(c)` (niente `_sig`, `_dirty`, `_rev`, `editedOn`, `updatedAt`). Non toccare le funzioni di push/pull Supabase.
-     *Fatto* = PR aperta con test: localStorage con 33 eroi pesanti scende di circa metà; l'unione fra due schede di B-002 funziona ancora (passi di B-002 + stesso eroe cambiato in due schede); un salvataggio vecchio si apre senza nuovi `updatedAt`; export senza campi locali e re-import identico. Si può unire da sola dopo i test (non tocca Supabase/pagamenti), con link e test nel log.
-- **Distruttore (21:07)**: attacca il salvataggio nuovo. Due e tre schede insieme con creazione/modifica/cancellazione rapide dello stesso eroe; memoria piena con due schede aperte (avviso "Not saved" in entrambe? eroi persi?); import di eroi con oggetti di categorie strane, `null`, migliaia di oggetti; export → re-import di tutti gli eroi di esempio; **nuovo import 5etools** (Workshop → Import file, PR #2) con file malformati, enormi, tag `{@…}` strani, nomi non testo, voci duplicate e categorie inesistenti: l'app non deve bloccarsi né salvare voci che rompono l'avvio (come B-001). Se B-012 è già su main, ripeti tutto sul live. *Fatto* = voce nel diario dei test e bug nuovi in docs/bug-beta.md con passi riproducibili.
-- **Designer e power user**: oggi non lavorano.
+## Oggi
+- **Sviluppo mattina (10:23) · Level up** (su main, non tocca dati salvati). `levelPlan` (~3420) deve offrire "Ability Score Improvement or feat" a 4, 8, 12, 16 per tutti, 6 e 14 Guerriero, 10 Ladro, anche nella classe aggiunta in multiclasse (B-021). Poi B-022: dopo un aumento di Costituzione (level up e "Raise Constitution") i PF massimi si ricalcolano per tutti i livelli. Poi B-025: `featList` esclude i talenti già presi se non sono ripetibili (anche homebrew).
+  *Fatto* = `node tests/run.js levelup` 20/20, nessun altro test regredisce, B-021/B-022/B-025 in "Risolti". Niente CSS.
+- **Sviluppo sera (18:23) · Import/export.** 1) **B-016 come PR** (tocca il salvataggio con più schede): se l'eroe in modifica è stato cancellato in un'altra scheda, il testo non va mai su un altro eroe (avviso e niente salvataggio, o l'eroe resta). Unione automatica dopo i test (non tocca Supabase). 2) **B-024 su main**: `duplicate` (~3700) passa da `fixup`/limite 80 e dà nomi distinti ("(copy 2)"); l'import del backup non scarta eroi diversi con lo stesso nome.
+  *Fatto* = `node tests/run.js importexport` 17/17, test di B-002 ancora verdi, suite completa senza regressioni, link alla PR nel log.
+- **Designer (14:13) · Telefono, solo CSS.** B-019: `overflow-wrap:anywhere` su descrizioni e nomi di oggetti, attacchi, note, specie/sottoclasse homebrew e scaffale `.hero`. Poi tocco ≥44 px nella finestra Level up ("Roll", "Become level N") solo con `pointer:coarse`. Non toccare JS di `levelPlan`/`applyLevelUp` né `duplicate` (sviluppo).
+  *Fatto* = `node tests/run.js telefono` 15/15, desktop identico a 1440, screenshot prima/dopo in docs/design/.
+- **Distruttore (21:07) · Level up e salvataggio.** Attacca la correzione del mattino: aumenti a ogni livello per tutte le 12 classi, multiclassi a tre, eroi importati già al 20, Costituzione portata a 30 e poi abbassata, talenti homebrew ripetibili e no, annulla/chiudi a metà finestra. Poi B-016 dopo la PR: tre schede, cancellazione e rinomina durante la scrittura. Controllo leggero sulle sezioni tutte verdi. *Fatto* = voce nel diario e bug nuovi con passi e test.
+- **Power user (21:37) · Verifica in gioco.** Porta 1→20 un Guerriero, un Ladro e un Mago/Chierico multiclasse: conta aumenti e PF (attesi: 7 per il Guerriero, 6 il Ladro, 5 gli altri + Epic Boon). Verifica B-024 (backup con copie) e B-019 su telefono vero (390x844). *Fatto* = diario con numeri, bug nuovi solo se riproducibili.
+- **Test e punteggio (domani 8:47)**: aggiungi test di level up per multiclasse (ASI nella seconda classe) e per i talenti homebrew ripetibili; un test B-019 per lo scaffale con specie homebrew lunga.
 
 ## Backlog (ordinato)
-1. **funzione** · B-015 "Esporta tutti gli eroi" e import dello stesso file (per sviluppo, martedì): è la prima cosa che serve quando compare "Not saved".
-2. **UX/design** · Telefono 390x844: 10 px di scroll orizzontale (`.hero` / `input#f_img`), barra dadi e toast che coprono il fondo. Per il designer martedì.
-3. **UX** · B-014 scaffale con 30+ eroi: filtro per nome e ordine (ultimi usati prima). Designer propone, sviluppo realizza.
-4. **bug** · B-005 ASI che abbassa punteggi sopra 20; B-006 danni/cure negativi.
-5. **bug** · Aggiornamenti: `CACHE` in sw.js va alzato a ogni rilascio (oggi fatto a mano nella PR #2); aggiungere un avviso "Nuova versione, ricarica" quando il service worker trova un index.html nuovo.
-6. **performance** · Zaino il più lento con CPU 4x (fino a 490 ms al cambio eroe): render a pezzi o memo.
-7. **design** · Accessibilità: contrasto, focus visibile, `aria-label` sulle icone senza testo.
-8. **funzione** · Stampa/PDF della scheda leggibile su A4.
-9. **marketing** · Prima bozza di post di presentazione in docs/promo/ (solo bozza, pubblica Capo) quando l'obiettivo della settimana è chiuso.
-10. **decisione** · B-011 import homebrew oltre il limite gratuito: serve Capo quando si riaccende il paywall.
+1. **bug** · B-023 riposo breve: Second Wind, Channel Divinity, Bardic Inspiration (Font of Inspiration) recuperano. Prossima sessione libera di sviluppo.
+2. **bug** · B-017 monete e XP negative; B-018 CA mai sotto 0 e PF con massimo ragionevole (`bindValue` int con min/max).
+3. **UX** · B-014 filtro per nome e ordine dello scaffale: il designer propone, lo sviluppo realizza (ultimo test rosso di Eroe).
+4. **performance** · B-020 import 5etools quadratico (cercare il confronto dentro il ciclo).
+5. **funzione** · Avviso "Nuova versione, ricarica" quando il service worker trova un index.html nuovo.
+6. **performance** · Zaino lento con CPU 4x al cambio eroe.
+7. **design** · Accessibilità: contrasto, focus visibile, `aria-label`; pallini di competenza e "✕" dei chip a 44 px.
+8. **funzione** · Stampa/PDF della scheda su A4.
+9. **marketing** · Bozza di post in docs/promo/ quando non ci sono più bug alti (solo bozza).
 
 ## Regole per tutti
-- Solo contenuti SRD 5.2.1 pubblici; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo l'attribuzione CC-BY).
-- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**, mai su main. Avvisi e validazione locali (come B-013) vanno su main.
-- **Unione automatica delle PR** (confermata da Capo il 2026-11-08): chi apre una PR la unisce da solo quando i test passano (bug riprodotto prima, assente dopo, desktop e telefono, console pulita) e annota nel log il link e i test. Eccezione: le PR che toccano **pagamenti/Stripe, Supabase, `schema.sql` o le funzioni edge** aspettano l'ok di Capo in "In attesa di Capo".
-- Nessuna pubblicazione su Reddit/Discord: lo fa Capo.
-- Sviluppo e designer non modificano la stessa parte di index.html nello stesso giorno.
-- Ogni agente lascia almeno una voce in docs/team-log.md, anche se non ha concluso nulla.
+- Solo contenuti SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo l'attribuzione CC-BY).
+- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**. Unione automatica dopo i test, tranne pagamenti/Stripe, Supabase, `schema.sql`, funzioni edge: quelle aspettano Capo.
+- Mai cambiare un test per farlo passare se l'app è sbagliata. Ogni correzione: test della sezione + suite completa, nessuna regressione.
+- Ogni rilascio alza `CACHE` in sw.js. Sviluppo e designer non toccano la stessa parte di index.html nello stesso giorno.
+- Nessuna pubblicazione su Reddit/Discord. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- Nessuna PR aperta e nessuna bozza in docs/promo/. La PR di B-012 di oggi non tocca Supabase: lo sviluppo la unisce da sé dopo i test.
-- **Decisione (facoltativa)**: permettere l'host `obahrlbwbplqqgokjqhf.supabase.co` nella rete dell'ambiente cloud, così gli agenti possono testare login e sync.
+- Nessuna PR aperta. La PR di B-016 di stasera si unisce da sola dopo i test (non tocca Supabase).
+- **Decisione (facoltativa)**: permettere l'host `obahrlbwbplqqgokjqhf.supabase.co` nella rete dell'ambiente cloud, per testare login e sync.
 - **Decisione (facoltativa)**: B-011, l'import homebrew deve rispettare il limite di 3 elementi gratuiti?
