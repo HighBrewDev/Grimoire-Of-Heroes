@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-10 · team leader (aggiornamento delle 17:40)
+- **Stato**: live = main, controllo a 1440x900 e 390x844 senza problemi; Supabase non raggiungibile dalla sandbox. Suite adesso 179/190, nessuna regressione (rossi: B-014, B-016 ×2, B-017, B-018, B-023, B-024, B-026…B-029). Punteggio del mattino +105 ↓, Level up ancora ROSSO (giorno 1) per B-027/B-028.
+- **Piano** con la nuova divisione frontend/backend: frontend sera su B-027, B-026, B-028 (zona `applyLevelUp`/`conHp`); backend notte su B-016 come PR e B-024 (zona `bindValue`/`duplicate`/`importBackup`); distruttore e power user sulle correzioni di stasera e sui riposi (B-023). Backlog diviso in frontend, backend, design, con tour guidato e keep-alive di Supabase.
+- **Per Capo**: PR #6 del tester extra (solo bug e test) da unire; ok per il keep-alive di Supabase.
+
 ## 2026-11-10 · distruttore
 - **Fatto** · sessione serale sul Level up di stamattina (server locale = main 4452eb8). Suite 179/186, nessuna regressione; le correzioni B-021, B-022, B-025 reggono su tutte le 12 classi 1 → 20 e su una multiclasse a tre. La PR di B-016 non è ancora arrivata: niente da verificare sulle tre schede.
 - **Bug nuovi** (4, ognuno con un test che oggi fallisce): B-026 [media] caratteristiche (Cos giù e su gonfia i PF, PF attuali a 0); B-027 [media] level up (+2 al 19 oltre 20); B-028 [bassa] level up (stessa classe due volte in multiclasse); B-029 [media] robustezza (Tab esce dalla finestra Level up e il livello va a un altro eroe).
