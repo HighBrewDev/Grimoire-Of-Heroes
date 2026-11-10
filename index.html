@@ -3738,8 +3738,8 @@ const ACT = {
   wizard(){ openWizard(); },
   doWizard(){ doWizard(); },
   duplicate(){ const src = active(), c = JSON.parse(JSON.stringify(src)); LOCAL_FIELDS.concat(['createdAt']).forEach(k => delete c[k]); c.id = uid(); c.owner = me() || undefined;
-    c.name += isMine(src) ? ' (copy)' : ` (copy of ${src.ownerName || 'party'}'s)`; if (!isMine(src)) c.player = S.profile?.display_name || '';
-    G.chars.push(c); G.activeId = c.id; save(); render(); toast(`${c.name} is yours to change.`); },
+    c.name = copyName(src); if (!isMine(src)) c.player = S.profile?.display_name || '';
+    fixup(c); G.chars.push(c); G.activeId = c.id; save(); render(); toast(`${c.name} is yours to change.`); },
   deleteChar(){ if (G.chars.length <= 1 && !me()){ toast('This is your last hero, so it stays.'); return; }
     confirmBox(`Delete ${active().name}?`, 'Delete hero', () => { const gone = active(); if (me() && gone._rev){ S.tomb.push(gone.id); saveTomb(); }
       G.chars = G.chars.filter(c => c.id !== G.activeId); G.activeId = G.chars[0]?.id || null; save(); render(); toast('Hero deleted.'); }); },
@@ -3854,16 +3854,30 @@ const deviceName = () => /iPad/.test(navigator.userAgent) || /Macintosh/.test(na
 const LOCAL_FIELDS = ['_sig', '_dirty', '_rev', '_blocked', 'ownerName', 'updatedAt', 'editedOn'];
 /* Backups (B-015): every hero of yours in one file; importing it adds them as new heroes, skipping exact copies already in the tome. */
 const backupHeroes = () => G.chars.filter(c => isMine(c));
+/* B-024: a copy gets a name no other hero has, within the 80-character limit fixup keeps: "X (copy)", "X (copy 2)"…
+   Copying a copy numbers it again instead of piling up "(copy) (copy)". */
+function copyName(src){
+  const mine = isMine(src), who = String(src.ownerName || 'party').slice(0, 30);
+  const base = String(src.name || 'Nameless').replace(/ \(copy(?: \d+)?(?: of .*'s)?\)$/, '') || 'Nameless';
+  const taken = new Set(G.chars.map(c => c.name));
+  for (let i = 1; ; i++){
+    const n = i === 1 ? '' : ' ' + i, tag = mine ? ` (copy${n})` : ` (copy${n} of ${who}'s)`;
+    const name = (base.slice(0, 80 - tag.length).trimEnd() || 'Nameless') + tag;
+    if (!taken.has(name)) return name;
+  }
+}
 const sameHeroKey = c => { const o = heroData(c); ['id', 'owner', 'createdAt'].forEach(k => delete o[k]); return sigHash(JSON.stringify(o)); };
 function importBackup(list){
-  const have = new Set(G.chars.map(sameHeroKey)), prev = G.activeId, added = [];
+  // B-024: count copies, so two identical heroes in the file both come back; only as many as the tome already holds are skipped.
+  const have = new Map(), prev = G.activeId, added = [];
+  for (const c of G.chars){ const k = sameHeroKey(c); have.set(k, (have.get(k) || 0) + 1); }
   let bad = 0, same = 0;
   for (const raw of list){
     if (!isObj(raw) || raw.name == null || raw.name === '' || !isObj(raw.abilities)){ bad++; continue; }
     let h; try { h = JSON.parse(JSON.stringify(raw)); LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete h[k]); h.id = uid(); fixup(h); }
     catch (e) { console.warn('Backup hero rejected', e); bad++; continue; }
-    const k = sameHeroKey(h); if (have.has(k)){ same++; continue; }
-    have.add(k); added.push(h);
+    const k = sameHeroKey(h), n = have.get(k) || 0; if (n > 0){ have.set(k, n - 1); same++; continue; }
+    added.push(h);
   }
   if (!added.length){ toast(same ? `Every hero in that file is already in the tome${bad ? `; ${bad} damaged entr${bad === 1 ? 'y' : 'ies'} skipped` : ''}.` : 'That file has no heroes this tome can read.', same ? '' : 'fumble'); if (same) closeModal(); return; }
   try { G.chars.push(...added); G.activeId = added[0].id; render(); }
