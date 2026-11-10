@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-10 · distruttore (sera, dopo il frontend)
+- **Fatto** · verifica di B-026/B-028 su main b8462eb: suite 186/194, nessuna regressione, B-026 e B-028 verdi. B-027 aspetta PR #14, B-016/B-024 la sessione backend.
+- **Bug nuovi** (4, tutti [bassa], ognuno con un test che oggi fallisce): B-032 caratteristiche (Cos al minimo + danno o Level up + Cos rialzata: PF massimi gonfiati, resto di B-026); B-033 level up (il menu della classe principale offre una classe già in multiclasse, resto di B-028); B-034 eroe (classe/specie/background fuori dai menu mostrati come Barbarian/Dragonborn/Acolyte); B-035 combattimento (`1e3` nel Max HP salva 1 e porta i PF attuali a 1).
+
 ## 2026-11-10 · frontend sera
 - **Fatto** ([0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426), su main) · sezioni **Caratteristiche** e **Level up e multiclasse**, nella zona del piano (`conHp`, menu `data-mc`) più la riga della multiclasse in `fixup`:
   - **B-026** · `conHp`: PF massimi mai sotto 1 per livello, danno subito invariato; quello che una Cos bassa non ha potuto togliere resta in `hp.conAdj` (si azzera se i PF cambiano per altro), quindi − e poi + ridanno gli stessi PF. Eroe a 0 PF non curato alzando la Cos.

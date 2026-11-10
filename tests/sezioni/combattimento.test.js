@@ -141,4 +141,11 @@ module.exports = {sezione:'combattimento', test:[
     const t = await app.text('#page');
     assert.ok(!/e\+\d/.test(t), 'PF in notazione esponenziale: ' + (t.match(/.{0,20}e\+\d+.{0,20}/) || [''])[0]);
   }],
+  ['B-035 PF massimi scritti come 1e3: il campo non mostra un valore diverso da quello salvato e i PF attuali non crollano a 1', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.set('#f_hpmax', '1e3');
+    const h = await app.hero(), shown = await app.page.inputValue('#f_hpmax');
+    assert.strictEqual(shown, String(h.hp.max), `il campo mostra "${shown}" ma i PF massimi salvati sono ${h.hp.max}`);
+    assert.strictEqual(h.hp.cur, 32, `PF attuali di Valeria da 32 a ${h.hp.cur} (${h.hp.cur}/${h.hp.max})`);
+  }],
 ]};
