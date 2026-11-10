@@ -148,4 +148,13 @@ module.exports = {sezione:'combattimento', test:[
     assert.strictEqual(shown, String(h.hp.max), `il campo mostra "${shown}" ma i PF massimi salvati sono ${h.hp.max}`);
     assert.strictEqual(h.hp.cur, 32, `PF attuali di Valeria da 32 a ${h.hp.cur} (${h.hp.cur}/${h.hp.max})`);
   }],
+  ['B-036 danno a 0 PF: un fallimento in più ai tiri contro la morte, non tutti azzerati', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.page.fill('#hpAmt', '32'); await app.click('damage');
+    await app.clickJS('setDeath', 'f:2');
+    assert.strictEqual((await app.hero()).death.f, 2);
+    await app.page.fill('#hpAmt', '3'); await app.click('damage');
+    const d = (await app.hero()).death;
+    assert.strictEqual(d.f, 3, `dopo 3 danni a 0 PF i fallimenti sono ${d.f} (prima 2)`);
+  }],
 ]};

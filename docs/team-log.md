@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-10 · power user (sera)
+- **Fatto** · sessione di gioco con riposi e backup, come da piano, su main e9629ca: suite 186/198, nessuna regressione. Dettagli nel diario di docs/bug-beta.md.
+- **Bug nuovi** (2, ognuno con un test che oggi fallisce): **B-036 [media] combattimento** (un danno a 0 PF azzera i fallimenti dei tiri contro la morte: un eroe morente non muore mai per i colpi; danno massiccio non segnalato); **B-037 [bassa] incontro** (Heal dal tracciatore lascia i tiri contro la morte accesi). `tests/punteggio.js`: B-036 e B-037 in `BUG_SEZIONE`.
+- **Verifiche**: B-023 ancora aperto, allargato a Rage, Wild Shape, Channel Divinity del Paladino. B-024 ancora aperto, con un caso nuovo senza nomi lunghi (due copie identiche dello stesso originale → 38/39 al ripristino): la correzione del backend deve coprirlo.
+
 ## 2026-11-10 · distruttore (sera, dopo il frontend)
 - **Fatto** · verifica di B-026/B-028 su main b8462eb: suite 186/194, nessuna regressione, B-026 e B-028 verdi. B-027 aspetta PR #14, B-016/B-024 la sessione backend.
 - **Bug nuovi** (4, tutti [bassa], ognuno con un test che oggi fallisce): B-032 caratteristiche (Cos al minimo + danno o Level up + Cos rialzata: PF massimi gonfiati, resto di B-026); B-033 level up (il menu della classe principale offre una classe già in multiclasse, resto di B-028); B-034 eroe (classe/specie/background fuori dai menu mostrati come Barbarian/Dragonborn/Acolyte); B-035 combattimento (`1e3` nel Max HP salva 1 e porta i PF attuali a 1).

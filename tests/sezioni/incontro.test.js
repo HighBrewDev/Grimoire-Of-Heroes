@@ -88,4 +88,14 @@ module.exports = {sezione:'incontro', test:[
     await custom(app, 'X', 1); await app.click('encClear'); await app.confirm();
     const e = await enc(app); assert.deepStrictEqual([e.list.length, e.round], [0, 1]);
   }],
+  ['B-037 cura dal tracciatore a un eroe a 0 PF: i tiri contro la morte si azzerano come con Heal', async ({open}) => {
+    const h = fx.hero(fx.VALERIA, {hp:{cur:0, max:32, temp:0}, death:{s:1, f:2}});
+    const app = await open({heroes:[h, fx.hero(fx.ELDRIN)], activeId:h.id}); await app.go('encounter');
+    await app.clickJS('encAddHero', h.id);
+    const rid = (await enc(app)).list.find(r => r.hero === h.id).id;
+    await app.page.fill('#amt_' + rid, '5'); await app.clickJS('encHeal', rid);
+    const c = await app.heroById(h.id);
+    assert.strictEqual(c.hp.cur, 5);
+    assert.deepStrictEqual([c.death.s || 0, c.death.f || 0], [0, 0], `a 5 PF i tiri contro la morte restano ${JSON.stringify(c.death)}`);
+  }],
 ]};
