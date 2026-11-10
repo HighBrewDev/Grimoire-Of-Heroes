@@ -1076,7 +1076,12 @@ function fixup(c){
   ['class','subclass','species','background','alignment'].forEach(k => { if (typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
   ['player','portrait'].forEach(k => { if (c[k] != null && typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
   let room = 19; const multi = [];
-  (Array.isArray(c.multi) ? c.multi : []).forEach(m => { if (!isObj(m) || !toTxt(m.class) || room < 1) return; const level = clamp(Math.round(toNum(m.level, 1)) || 1, 1, room); room -= level; multi.push({class:toTxt(m.class, 80), subclass:toTxt(m.subclass, 80), level}); });
+  /* a class appears once: a row repeating the first class gives its levels back to it, repeated rows are merged (B-028) */
+  const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  (Array.isArray(c.multi) ? c.multi : []).forEach(m => { if (!isObj(m) || !toTxt(m.class) || room < 1) return; const level = clamp(Math.round(toNum(m.level, 1)) || 1, 1, room); room -= level;
+    const cls = toTxt(m.class, 80), twin = multi.find(x => same(x.class, cls)); if (same(cls, c.class)) return;
+    if (twin){ twin.level += level; if (!twin.subclass) twin.subclass = toTxt(m.subclass, 80); return; }
+    multi.push({class:cls, subclass:toTxt(m.subclass, 80), level}); });
   c.multi = multi;
   c.level = clamp(Math.round(toNum(c.level, 1)) || 1, 1 + c.multi.reduce((t, m) => t + m.level, 0), 20); c.exhaustion = clamp(Math.round(toNum(c.exhaustion, 0)), 0, 6);
   return c;
@@ -1648,7 +1653,7 @@ hero(c){
         <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" max="${LIM.xp}" value="${c.xp || 0}"></div>
       </div>
       <div class="mcBox">${multi(c).length ? `<h4>Multiclass <span class="muted">${esc(c.class)} ${classList(c)[0].level} is the first class</span></h4>
-        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
+        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').filter(s => s === m.class || !classList(c).some(e => e.class === s)).map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
         ${c.level < 20 ? `<div class="row">${act('mcAdd', undefined, '＋ Add a class (multiclass)', 'sb')}<span class="muted small">or take one from Level up, which checks the rules</span></div>` : ''}</div>
       <label class="row mt"><input type="checkbox" id="f_insp" data-bind="inspiration" ${c.inspiration ? 'checked' : ''}> <b>Heroic Inspiration</b> <span class="muted">reroll one D20; Humans regain it each Long Rest</span></label>
       <div class="rule"></div>
@@ -3419,9 +3424,18 @@ PAGES.encounter = function(c){
 /* ================================================================== guided level up */
 const ASI_LEVELS = {Fighter:[4,6,8,12,14,16,19], Rogue:[4,8,10,12,16,19]};
 /* 2024: when the Constitution modifier changes, max HP changes as if it had been that from level 1 (B-022) */
+/* Max HP never drops below 1 per level and damage taken stays the same; what a low Constitution could not take away
+   (max kept at the floor, damage beyond 0 HP) is remembered in hp.conAdj, so − then + gives back the same HP (B-026).
+   The memory is dropped as soon as the HP change for any other reason. */
 function conHp(c, oldCon){
-  const n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * (c.level || 1); if (!n) return 0;
-  c.hp.max = Math.max(1, (+c.hp.max || 0) + n); c.hp.cur = clamp((+c.hp.cur || 0) + n, 0, c.hp.max); return n;
+  const lv = c.level || 1, n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * lv; if (!n) return 0;
+  const hp = c.hp, max0 = +hp.max || 0, cur0 = +hp.cur || 0, a = hp.conAdj, fresh = !!a && a.m === max0 && a.c === cur0;
+  const raw = max0 - (fresh ? +a.max || 0 : 0) + n, max = clamp(raw, lv, LIM.hp);
+  const dmg = max0 - cur0 + (fresh ? +a.cur || 0 : 0), dying = cur0 === 0 && !(fresh && a.cur);
+  const want = dying ? 0 : max - dmg, cur = clamp(want, 0, max);
+  hp.max = max; hp.cur = cur;
+  if (max !== raw || cur !== want) hp.conAdj = {max:max - raw, cur:cur - want, m:max, c:cur}; else delete hp.conAdj;
+  return max - max0;
 }
 /* feats already taken are not offered again unless repeatable (B-025) */
 const featOffered = (c, e) => !!(e.o?.rep) || !hasFeat(c, e.n);
