@@ -144,4 +144,12 @@ module.exports = {sezione:'importexport', test:[
     const n = (await b.store()).chars.length;
     assert.strictEqual(n, 5, `dopo il ripristino ${n - 1} eroi su 4 (${await b.toast()})`);
   }],
+  ['import di un elenco di due eroi: entrano entrambi e restano dopo la ricarica', async ({open}) => {
+    const app = await open();
+    await importText(app, [fx.blank({id:'x1', name:'Primo Importato'}), fx.blank({id:'x2', name:'Secondo Importato'})]);
+    await app.reload();
+    const nomi = (await app.store()).chars.map(c => c.name);
+    assert.ok(nomi.includes('Primo Importato') && nomi.includes('Secondo Importato'), 'eroi presenti: ' + nomi.join(', '));
+    assert.strictEqual(nomi.length, 5);
+  }],
 ]};

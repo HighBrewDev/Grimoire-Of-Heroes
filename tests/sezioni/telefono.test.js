@@ -53,4 +53,13 @@ module.exports = {sezione:'telefono', test:[
     const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(w <= 390, `scrollWidth ${w}px`);
   }],
+  ['390 px: la finestra Level up sta nello schermo e non allarga la pagina', async ({open}) => {
+    const app = await open(PHONE);
+    await app.click('levelUp'); await app.page.waitForSelector('#modalBk [data-act="luApply"]');
+    const r = await app.page.locator('#modalBk .modal').boundingBox();
+    assert.ok(r.x >= 0 && r.x + r.width <= 390, `finestra da ${Math.round(r.x)} a ${Math.round(r.x + r.width)} px`);
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
+  tapTest('tocco ≥44 px: pulsanti della finestra Level up', app => app.click('levelUp').then(() => app.page.waitForSelector('#modalBk [data-act="luApply"]')), '#modalBk [data-act="luApply"], #modalBk [data-act="luRoll"]'),
 ]};

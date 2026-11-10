@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-09** sul commit `1028d8d` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-10** sul commit `b44618f` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,86 +14,94 @@ Aggiornato il **2026-11-09** sul commit `1028d8d` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **140 / 154**
-- Punteggio totale: **+107**, tendenza — (primo giorno)
-- Sezioni rosse: telefono
+- Test superati: **169 / 186**
+- Punteggio totale: **+105**, tendenza ↓ (ieri 107)
+- Sezioni rosse: levelup
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +13 | 13 | — | 14/15 | B-014 (UX) | 🟡 GIALLO |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +8 | 8 | — | 8/8 | — | 🟡 GIALLO |
-| Combattimento (PF, CA, attacchi, riposi) | +7 | 7 | — | 13/15 | B-006 (media) | 🟡 GIALLO |
-| Incontro (iniziativa, round) | +11 | 11 | — | 11/11 | — | 🟡 GIALLO |
-| Tratti e talenti | +8 | 8 | — | 8/8 | — | 🟡 GIALLO |
-| Incantesimi (slot, preparati, multiclasse) | +11 | 11 | — | 11/11 | — | 🟡 GIALLO |
-| Zaino e monete | +11 | 11 | — | 10/10 | — | 🟡 GIALLO |
-| Cronaca | +7 | 7 | — | 7/7 | — | 🟡 GIALLO |
-| Biblioteca (ricerca regole) | +8 | 8 | — | 8/8 | — | 🟡 GIALLO |
-| Workshop homebrew | +14 | 14 | — | 14/14 | B-011 (bassa) | 🟡 GIALLO |
-| Level up e multiclasse | +7 | 7 | — | 10/11 | B-005 (media) | 🟡 GIALLO |
-| Import/export e salvataggio | +15 | 15 | — | 12/13 | B-015 (UX) | 🟡 GIALLO |
-| Telefono (390x844) | -21 | -21 | — | 3/11 | — | 🔴 ROSSO |
-| Robustezza (console, offline, input strani) | +8 | 8 | — | 11/12 | — | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +11 | 12 | ↓ | 14/15 | B-014 (UX) | 🟡 GIALLO |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
+| Combattimento (PF, CA, attacchi, riposi) | +9 | 8 | ↑ | 15/17 | B-023 (media), B-018 (bassa) | 🟡 GIALLO |
+| Incontro (iniziativa, round) | +11 | 11 | = | 11/11 | — | 🟡 GIALLO |
+| Tratti e talenti | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
+| Incantesimi (slot, preparati, multiclasse) | +11 | 11 | = | 11/11 | — | 🟡 GIALLO |
+| Zaino e monete | +6 | 8,5 | ↓ | 10/11 | B-017 (bassa) | 🟡 GIALLO |
+| Cronaca | +7 | 7 | = | 7/7 | — | 🟡 GIALLO |
+| Biblioteca (ricerca regole) | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
+| Workshop homebrew | +21 | 17,5 | ↑ | 25/26 | B-020 (bassa), B-011 (bassa) | 🟡 GIALLO |
+| Level up e multiclasse | -9 | -1 | ↓ | 14/20 | B-021 (alta), B-022 (media), B-025 (bassa) | 🔴 ROSSO |
+| Import/export e salvataggio | +1 | 8 | ↓ | 14/17 | B-024 (media), B-016 (alta) | 🟡 GIALLO |
+| Telefono (390x844) | +1 | -10 | ↑ | 12/15 | B-019 (media) | 🟡 GIALLO |
+| Robustezza (console, offline, input strani) | +12 | 10 | ↑ | 12/12 | — | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
-- **telefono** -21 (3 × +1, 8 × −3)
-  - ✗ 390 px: nessuno scroll orizzontale in nessun capitolo: scrollWidth oltre 390: hero 400px
-  - ✗ tocco ≥44 px: pulsanti in alto (nuovo eroe, biblioteca, homebrew, tema): sotto 44 px: "Night pages" 38×36, "＋ New hero" 105×36, "Library" 73×36, "Homebrew" 96×36, "Page-turn sound" 38×36
-  - ✗ tocco ≥44 px: barra dei dadi: sotto 44 px: "d4" 39×32, "d6" 39×32, "d8" 39×32, "d10" 45×32, "d12" 45×32, "d20" 48×32 … (10)
-  - ✗ tocco ≥44 px: frecce per girare pagina: sotto 44 px: "Previous page" 36×29, "Next page" 36×29
-  - ✗ tocco ≥44 px: danni, cura e riposi: sotto 44 px: "" 84×36, "Damage" 66×26, "Heal" 46×26, "Temp" 52×26, "Short Rest" 77×26, "Long Rest" 75×26
-  - ✗ tocco ≥44 px: + e − delle caratteristiche: sotto 44 px: "Lower Strength" 28×26, "Raise Strength" 28×26, "Lower Dexterity" 28×26, "Raise Dexterity" 28×26, "Lower Constitution" 28×26, "Raise Constitution" 28×26 … (12)
-  - ✗ tocco ≥44 px: slot degli incantesimi: sotto 44 px: "Level 1 slot 1" 26×26, "Level 1 slot 2" 26×26, "Level 1 slot 3" 26×26, "Level 1 slot 4" 26×26, "Level 2 slot 1" 26×26, "Level 2 slot 2" 26×26 … (7)
-  - ✗ i campi di testo hanno carattere ≥16 px (niente zoom automatico su iPhone): omni 15.5px, f_name 15.5px, f_player 15.5px, f_portrait 15.5px, f_align 15.5px, f_species 15.5px
-- **combattimento** +7 (13 × +1, 2 × −3)
-  - ✗ B-006 danni negativi non danno PF temporanei: PF temporanei 50 dopo danni -50
-  - ✗ B-006 una cura negativa non porta i PF sotto zero: PF -68/32 dopo cura -100
-- **levelup** +7 (10 × +1, 1 × −3)
-  - ✗ B-005 aumento +2 non abbassa un punteggio sopra 20: Forza scesa da 24 a 20
+- **levelup** -9 (14 × +1, 6 × −3, bug nuovi -8, bug chiusi +3)
+  - ✗ B-021 Paladino 7 → 8: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 8
+  - ✗ B-021 Guerriero 5 → 6: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 6
+  - ✗ B-022 +2 Costituzione al livello 4 alza i PF massimi anche per i livelli precedenti (28 → 40): PF massimi 36: 10 + 3 × 6 + 4 × Cos 3 = 40
+  - ✗ B-025 un talento non ripetibile già preso (Alert) non viene offerto di nuovo: Alert offerto anche se Valeria lo ha già
+  - ✗ B-021 Ladro 9 → 10: si sceglie aumento dei punteggi o talento (livello extra del Ladro): nessuna scelta di aumento dei punteggi o talento al livello 10
+  - ✗ B-021 Mago 11 → 12: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 12
+  - Bug nuovo B-021 [alta] -5: Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
+  - Bug nuovo B-022 [media] -2: Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
+  - Bug nuovo B-025 [bassa] -1: Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
+  - Bug chiuso B-005 con test che passa +3: Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
+- **telefono** +1 (12 × +1, 3 × −3, bug nuovi -2)
+  - ✗ B-019 390 px: un link lungo nella descrizione di un oggetto non allarga la pagina: scrollWidth 1054px
+  - ✗ B-019 390 px: nome lungo senza spazi di un attacco non allarga Combattimento: scrollWidth 1291px
+  - ✗ tocco ≥44 px: pulsanti della finestra Level up: sotto 44 px: "Roll" 38×37, "Become level 4" 100×30
+  - Bug nuovo B-019 [media] -2: Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
+- **importexport** +1 (14 × +1, 3 × −3, bug nuovi -7, bug chiusi +3)
+  - ✗ B-016 due schede: se A cancella l'eroe che B sta scrivendo, le note di un altro eroe non cambiano: storia di Eldrin sovrascritta: "A city guardsman who took up the adventuring road. e poi ancora"
+  - ✗ B-016 due schede: se A cancella l'eroe che B sta rinominando, nessun altro eroe prende quel nome: Expected values to be strictly deep-equal:
+  - ✗ B-024 backup di eroi duplicati più volte: il ripristino li riporta tutti: dopo il ripristino 3 eroi su 4 (3 heroes back in the tome (1 already here).)
+  - Bug nuovo B-024 [media] -2: Backup: eroi duplicati più volte persi al ripristino ("già qui")
+  - Bug nuovo B-016 [alta] -5: Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
+  - Bug chiuso B-015 con test che passa +3: Nessun backup di tutti gli eroi insieme
+- **zaino** +6 (10 × +1, 1 × −3, bug nuovi -1)
+  - ✗ B-017 monete: un valore negativo non viene salvato: monete salvate: -100 gp, -3 pp
+  - Bug nuovo B-017 [bassa] -1: Monete negative accettate nello Zaino
 - **cronaca** +7 (7 × +1, 0 × −3): tutto verde oggi.
-- **robustezza** +8 (11 × +1, 1 × −3)
-  - ✗ nome lungo senza spazi (80 caratteri) non allarga la pagina: scroll orizzontale di 831 px a 1440 px
 - **caratteristiche** +8 (8 × +1, 0 × −3): tutto verde oggi.
 - **tratti** +8 (8 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +8 (8 × +1, 0 × −3): tutto verde oggi.
+- **combattimento** +9 (15 × +1, 2 × −3, bug nuovi -3, bug chiusi +3)
+  - ✗ B-018 CA e PF restano in un intervallo sensato (regolazione -999, PF 1e308 da import): CA mostrata -981
+  - ✗ B-023 riposo breve: Second Wind recupera un uso: dopo il riposo breve Second Wind è ancora 0/2
+  - Bug nuovo B-023 [media] -2: Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
+  - Bug nuovo B-018 [bassa] -1: CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
+  - Bug chiuso B-006 con test che passa +3: Danni negativi danno PF temporanei, cura negativa porta i PF sotto zero
+- **eroe** +11 (14 × +1, 1 × −3)
+  - ✗ B-014 con 33 eroi lo scaffale offre un filtro per nome: nessun campo di ricerca/filtro vicino allo scaffale degli eroi
 - **incontro** +11 (11 × +1, 0 × −3): tutto verde oggi.
 - **incantesimi** +11 (11 × +1, 0 × −3): tutto verde oggi.
-- **zaino** +11 (10 × +1, 0 × −3, bug nuovi -2, bug chiusi +3)
-  - Bug nuovo B-013 [media] -2: Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
-  - Bug chiuso B-013 con test che passa +3: Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
-- **eroe** +13 (14 × +1, 1 × −3, bug nuovi -1, bug chiusi +3)
-  - ✗ B-014 con 33 eroi lo scaffale offre un filtro per nome: nessun campo di ricerca/filtro vicino allo scaffale degli eroi
-  - Bug nuovo B-014 [bassa, UX] -1: Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
-  - Bug chiuso B-009 con test che passa +3: Nome eroe senza limite di lunghezza: pagina larga 358.000 px
-- **workshop** +14 (14 × +1, 0 × −3): tutto verde oggi.
-- **importexport** +15 (12 × +1, 1 × −3, bug nuovi -3, bug chiusi +9)
-  - ✗ B-015 esiste "Esporta tutti" gli eroi in un solo file: nessun pulsante per esportare tutti gli eroi insieme
-  - Bug nuovo B-015 [bassa, UX] -1: Nessun backup di tutti gli eroi insieme
-  - Bug nuovo B-012 [media] -2: Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
-  - Bug chiuso B-012 con test che passa +3: Ogni eroe è salvato due volte: la copia `_sig` raddoppia localStorage e i file di export
-  - Bug chiuso B-002 con test che passa +3: Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
-  - Bug chiuso B-004 con test che passa +3: Memoria piena: il nuovo eroe sembra salvato ma sparisce alla ricarica
+- **robustezza** +12 (12 × +1, 0 × −3): tutto verde oggi.
+- **workshop** +21 (25 × +1, 1 × −3, bug nuovi -1)
+  - ✗ B-020 import 5etools con 10.000 incantesimi: la finestra di scelta arriva in meno di 8 s: finestra dopo 8588 ms
+  - Bug nuovo B-020 [bassa] -1: Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. telefono -21 · 3/11 · ROSSO
-2. combattimento +7 · 13/15 · GIALLO
-3. levelup +7 · 10/11 · GIALLO
-4. cronaca +7 · 7/7 · GIALLO
-5. robustezza +8 · 11/12 · GIALLO
+1. levelup -9 · 14/20 · ROSSO
+2. telefono +1 · 12/15 · GIALLO
+3. importexport +1 · 14/17 · GIALLO
+4. zaino +6 · 10/11 · GIALLO
+5. cronaca +7 · 7/7 · GIALLO
 6. caratteristiche +8 · 8/8 · GIALLO
 7. tratti +8 · 8/8 · GIALLO
 8. biblioteca +8 · 8/8 · GIALLO
-9. incontro +11 · 11/11 · GIALLO
-10. incantesimi +11 · 11/11 · GIALLO
-11. zaino +11 · 10/10 · GIALLO
-12. eroe +13 · 14/15 · GIALLO
-13. workshop +14 · 14/14 · GIALLO
-14. importexport +15 · 12/13 · GIALLO
+9. combattimento +9 · 15/17 · GIALLO
+10. eroe +11 · 14/15 · GIALLO
+11. incontro +11 · 11/11 · GIALLO
+12. incantesimi +11 · 11/11 · GIALLO
+13. robustezza +12 · 12/12 · GIALLO
+14. workshop +21 · 25/26 · GIALLO
 
 ## Storico
 
 ```
 2026-11-09  totale  +107  test 140/154  1028d8d
+2026-11-10  totale  +105  test 169/186  b44618f
 ```

@@ -98,4 +98,41 @@ module.exports = {sezione:'levelup', test:[
     const opts = await app.page.$$eval('#lu_feat option', o => o.map(x => x.value));
     assert.ok(!opts.includes('Alert'), 'Alert offerto anche se Valeria lo ha già');
   }],
+  ['B-021 Ladro 9 → 10: si sceglie aumento dei punteggi o talento (livello extra del Ladro)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Rogue', subclass:'Thief', level:9, abilities:{str:10,dex:18,con:14,int:12,wis:12,cha:10}, hp:{cur:65,max:65,temp:0}})]});
+    await openLU(app);
+    assert.ok(await app.page.locator('input[name="lu_asi"]').count(), 'nessuna scelta di aumento dei punteggi o talento al livello 10');
+  }],
+  ['B-021 Mago 11 → 12: si sceglie aumento dei punteggi o talento', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Wizard', subclass:'Evoker', level:11, abilities:{str:8,dex:14,con:14,int:20,wis:12,cha:10}, hp:{cur:68,max:68,temp:0}})]});
+    await openLU(app);
+    assert.ok(await app.page.locator('input[name="lu_asi"]').count(), 'nessuna scelta di aumento dei punteggi o talento al livello 12');
+  }],
+  ['livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Fighter', subclass:'Champion', level:18, xp:265000, abilities:{str:20,dex:14,con:16,int:10,wis:12,cha:8}, hp:{cur:180,max:180,temp:0}})]});
+    await openLU(app);
+    assert.ok(/Epic Boon/.test(await app.text('#modalBk .modal')), 'manca la sezione Epic Boon al livello 19');
+    await app.set('#lu_a1', 'str'); await app.click('luApply');
+    const h = await app.hero();
+    assert.deepStrictEqual([h.level, h.abilities.str], [19, 22]);
+  }],
+  ['multiclasse: avanzare la seconda classe (Fighter 3 / Rogue 1 → Rogue 2, PF d8 medi 5 + Cos 2)', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
+    await app.click('levelUp'); await app.page.waitForSelector('#lu_cls');
+    await app.set('#lu_cls', '1');
+    await app.page.waitForSelector('#modalBk [data-act="luApply"]');
+    await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.level, 5);
+    assert.deepStrictEqual(h.multi.map(m => [m.class, m.level]), [['Rogue', 2]]);
+    assert.strictEqual(h.hp.max, 46);
+  }],
+  ['PF tirati: senza premere Roll il livello non viene applicato', async ({open}) => {
+    const app = await open(); await openLU(app);
+    await app.page.locator('input[name="lu_hp"][value="roll"]').check();
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.click('luApply');
+    assert.ok(/Roll first/.test(await app.toast()), 'nessun avviso');
+    assert.strictEqual((await app.hero()).level, 3);
+  }],
 ]};

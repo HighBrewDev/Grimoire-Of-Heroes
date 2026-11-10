@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-10 · test
+- **Suite** su main b44618f: **169/186** superati (17 falliti, nessuna regressione). Punteggio totale **+105** (ieri +107, ↓: pesano i 10 bug nuovi del 9 sera, −24). Sezioni rosse: **levelup** (−9).
+- **Test nuovi (8)** nelle sezioni peggiori: levelup ×5 (B-021 Ladro 9→10 e Mago 11→12, falliscono; Epic Boon al 19, avanzamento della seconda classe, Roll obbligatorio: passano), importexport ×1 (import di un elenco di eroi, passa), telefono ×2 (finestra Level up a 390 px passa; tocco ≥44 px nella finestra Level up fallisce: "Roll" 38×37, "Become level 4" 100×30).
+- **Punteggio**: aggiunti B-016…B-020 a `BUG_SEZIONE` in tests/punteggio.js. Premiati +3 i bug chiusi ieri con test verde: B-005, B-006, B-015.
+- **Per sviluppo**: B-021 [alta] vale da solo 4 test rossi in levelup; poi B-016 [alta] (importexport) e B-019 (telefono).
+
 ## 2026-11-09 · power user
 - **Fatto**: sessione serale di circa un'ora su main 8c56f8d (= live). Paladino 1→20, tutte le classi sondate livello per livello, tripla multiclasse Fighter/Wizard/Warlock, sessione di gioco con 4 eroi, homebrew (classe, specie, talento, oggetto) usato sugli eroi, 40 eroi creati/rinominati/duplicati/cancellati da telefono con backup e ripristino. Dettagli e numeri in docs/bug-beta.md, "Diario dei test".
 - **Bug nuovi**: **B-021 [alta]** level up: aumento dei punteggi solo al livello 4 (mancano 8, 12, 16, Guerriero 6/14, Ladro 10) per tutte le classi SRD; B-022 [media] +2 Cos non alza i PF dei livelli precedenti; B-023 [media] riposo breve non restituisce Second Wind, Channel Divinity, Bardic Inspiration; B-024 [media] backup: copie con nome oltre 80 caratteri perse al ripristino come "già qui"; B-025 [bassa] talenti non ripetibili offerti di nuovo.
