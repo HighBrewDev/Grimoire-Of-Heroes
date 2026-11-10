@@ -671,6 +671,15 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 
 /* very long names without spaces (80 chars) wrap instead of widening the page */
 .pageBody p,.pageHead h2,.toast{overflow-wrap:break-word}
+/* B-019 (design 2026-11-10): long links and words in items, attacks, notes, homebrew species/subclass
+   wrap anywhere. "anywhere" (unlike break-word) also lowers the min-content width, so grid and flex
+   cells shrink instead of pushing the page wider. Shelf cards stay 210 px. */
+.pageHead h2,.pageHead .sub,.card h3,.entry > .row > b,.entry > .meta,.invN,.aslotBody,.await .kv > span:first-child,.hero{overflow-wrap:anywhere}
+.invN,.aslotBody{min-width:0}
+.hero{min-width:0}
+.hero .n,.hero .s{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;padding-inline:3px;margin-inline:-3px}
+/* reduced motion: dialogs appear without the 3D unfold (its first frame shrank buttons under 44 px) */
+@media (prefers-reduced-motion:reduce){ .modal,.modalBk,.modalBk.closing .modal{animation:none} }
 
 /* ---------- touch screens (design 2026-11-09): tap targets >= 44 px, fields at 16 px (no iPhone zoom).
    Desktop with a mouse is untouched. Slot pips keep their 26 px look: the ring is drawn by ::before. */
@@ -678,7 +687,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
   input[type=text],input[type=email],input[type=password],input[type=number],input[type=search],select,textarea,.omni input{font-size:16px}
   .btn,.btn.small{min-height:44px;min-width:44px}
   .iconBtn{width:44px;height:44px}
-  .sb{min-height:44px}
+  .sb{min-height:44px;min-width:44px}
   #hpAmt,.tray input{min-height:44px}
   .ability .stepper{gap:8px}
   .ability .stepper button{width:44px;height:44px;font-size:18px}
