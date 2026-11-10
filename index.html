@@ -1396,6 +1396,7 @@ function barsFrom(root, prefix){
 function renderPage(){
   const page = $('#page');
   page.innerHTML = pageHTML(G.chapter);
+  G.pageHero = active()?.id ?? null;   // B-016: the hero these fields were drawn for
   lockReadOnly();
   barsFrom(page, G.chapter + ':' + G.activeId + ':');
   afterRender();
@@ -4384,8 +4385,15 @@ async function cloudBoot(){
 
 /* ================================================================== wiring */
 function setPath(obj, path, v){ const ks = path.split('.'); let o = obj; ks.slice(0, -1).forEach(k => o = o[k] = o[k] || {}); o[ks[ks.length - 1]] = v; }
+/* B-016: a field writes only to the hero it was drawn for. If another tab deleted that hero meanwhile,
+   what is typed is not saved anywhere (never onto whichever hero became active) and the page says so. */
+function heroGone(){
+  if (G.goneWarned !== G.pageHero){ G.goneWarned = G.pageHero; toast('This hero was deleted in another tab: what you typed here is not saved.', 'fumble'); }
+  G.needRender = true;
+}
 function bindValue(el, done){
-  const c = active(), path = el.dataset.bind;
+  const id = G.pageHero === undefined ? active()?.id : G.pageHero, c = G.chars.find(h => h.id === id), path = el.dataset.bind;
+  if (!c){ heroGone(); return; }
   let v = el.type === 'checkbox' ? el.checked : el.value;
   if (el.dataset.type === 'int'){   // B-017, B-018: the field's own min/max hold, typed or pasted
     // B-035: read the number the field shows ("1e3" is 1000, "2.9" keeps 2), not just its leading digits
@@ -4399,6 +4407,7 @@ function bindValue(el, done){
   if (path === 'class' && v !== c.class) c.subclass = '';
   setPath(c, path, v);
   save();
+  if (!G.chars.includes(c)) heroGone();   // this save found it deleted in the other tab
 }
 function mcValue(el){
   const [i, k] = el.dataset.mc.split(':');
