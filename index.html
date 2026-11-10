@@ -4388,9 +4388,10 @@ function bindValue(el, done){
   const c = active(), path = el.dataset.bind;
   let v = el.type === 'checkbox' ? el.checked : el.value;
   if (el.dataset.type === 'int'){   // B-017, B-018: the field's own min/max hold, typed or pasted
-    const n = parseInt(v, 10) || 0, lo = el.min === '' ? -LIM.coin : +el.min, hi = el.max === '' ? LIM.coin : +el.max;
+    // B-035: read the number the field shows ("1e3" is 1000, "2.9" keeps 2), not just its leading digits
+    const f = Number(String(v).trim()), n = Number.isFinite(f) ? Math.trunc(f) : (parseInt(v, 10) || 0), lo = el.min === '' ? -LIM.coin : +el.min, hi = el.max === '' ? LIM.coin : +el.max;
     v = clamp(n, lo, hi);
-    if (done && el.value !== '' && v !== n) el.value = v;   // on change (not mid-typing) show what was kept
+    if (done && el.value !== '' && el.value !== String(v)) el.value = v;   // on change (not mid-typing) show what was kept
   }
   if (path === 'level') v = clamp(v, 1 + multi(c).reduce((t, m) => t + m.level, 0), 20);
   if (path === 'hp.max'){ v = Math.max(1, v); c.hp.cur = Math.min(c.hp.cur, v); }
