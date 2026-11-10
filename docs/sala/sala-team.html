@@ -361,7 +361,7 @@ function buildRoom(){
   sofa.add(at(box(3.6,.45,1.1,"#3F7F74"),0,.23,0));sofa.add(at(box(3.6,.9,.3,"#33695F"),0,.7,-.45));
   sofa.add(at(box(.35,.75,1.1,"#33695F"),-1.9,.38,0));sofa.add(at(box(.35,.75,1.1,"#33695F"),1.9,.38,0));
   at(sofa,6.4,0,-4.7);scene.add(sofa);
-  const table=new T.Group();table.add(at(cyl(.6,.6,.08,"#8A6246"),0,.45,0));table.add(at(cyl(.08,.12,.45,"#6F4C36"),0,.22,0));at(table,6.4,0,-3.1);scene.add(table);
+  const table=new T.Group();table.add(at(cyl(.6,.6,.08,"#8A6246"),0,.45,0));table.add(at(cyl(.08,.12,.45,"#6F4C36"),0,.22,0));at(table,6.4,0,-2.85);scene.add(table);
   scene.add(at(box(1.2,.9,.7,"#8A6246"),9.7,.45,-6.6));
   const cm=new T.Group();cm.add(at(box(.6,.85,.5,"#2E3638",{metalness:.4,roughness:.4}),0,.42,0));cm.add(at(box(.36,.18,.06,"#62B7AA",{emissive:"#62B7AA",emissiveIntensity:.5}),0,.62,.26));cm.add(at(cyl(.08,.07,.14,"#F4F1E8"),0,.1,.12));
   at(cm,9.7,.9,-6.6);scene.add(cm);
@@ -405,9 +405,9 @@ const GESTURE_BY_ACC={tie:"watch",clip:"clip",hammer:"hammer",phones:"music",gla
 const SPOT_BY_GESTURE={
   watch:{p:[8.3,0,-6.3],ry:-0.5,pose:"stand"}, read:{p:[10.0,0,-4.6],ry:-1.6,pose:"stand"},
   clip:{p:[5.3,.46,-4.55],ry:0,pose:"sit"}, nap:{p:[6.4,.46,-4.55],ry:0,pose:"sit"}, stretch:{p:[7.5,.46,-4.55],ry:0,pose:"sit"},
-  sketch:{p:[8.3,.32,-1.2],ry:-0.5,pose:"sit"}, hammer:{p:[4.6,0,-1.6],ry:0.6,pose:"stand"}, music:{p:[5.9,0,-0.4],ry:-0.3,pose:"stand"}
+  sketch:{p:[8.3,.32,-1.2],ry:-0.5,pose:"sit"}, hammer:{p:[5.0,0,-1.75],ry:0.6,pose:"stand"}, music:{p:[5.9,0,-0.4],ry:-0.3,pose:"stand"}
 };
-const EXTRA_SPOTS=[[4.2,-3.4,0.9],[10.3,-2.8,-1.2],[9.4,0.6,-0.6],[3.6,0.2,0.4],[7.2,0.9,0],[10.2,-0.6,-1.0],[3.4,-5.6,0.8]].map(([x,z,ry])=>({p:[x,0,z],ry,pose:"stand"}));
+const EXTRA_SPOTS=[[3.2,-6.4,0.9],[10.3,-2.8,-1.2],[9.4,0.6,-0.6],[3.6,0.2,0.4],[7.2,0.9,0],[10.2,-0.6,-1.0],[3.4,-5.6,0.8]].map(([x,z,ry])=>({p:[x,0,z],ry,pose:"stand"}));
 const SIT_ONLY={nap:1};
 const loungeSpot={};
 (function assignSpots(){
@@ -482,23 +482,26 @@ function placePose(a,place){
 function deskPlace(id){return {kind:"desk",pos:deskSeats[id].clone(),ry:0,seated:true};}
 function loungePlace(id){const s=loungeSpot[id];return {kind:"lounge",pos:new T.Vector3(...s.p),ry:s.ry,seated:s.pose==="sit"};}
 function ground(v){return new T.Vector3(v.x,0,v.z);}
-function routeOut(place){ // dal posto al corridoio davanti
-  if(place.kind==="desk"){const ax=place.pos.x+1.1;return [ground(place.pos),new T.Vector3(ax,0,place.pos.z),new T.Vector3(ax,0,CORR)];}
+function routeOut(place,lane){ // dal posto al corridoio: corsia diversa per chi va e chi torna
+  const cz=CORR+lane;
+  if(place.kind==="desk"){const ax=place.pos.x+1.1;return [ground(place.pos),new T.Vector3(ax,0,place.pos.z),new T.Vector3(ax,0,cz)];}
   const p=[ground(place.pos)];
-  if(place.pos.z<-5.2)p.push(new T.Vector3(9.4,0,-3.6));
-  else if(place.seated&&place.pos.z<-4)p.push(new T.Vector3(place.pos.x,0,-3.95),new T.Vector3(3.9,0,-3.95));p.push(new T.Vector3(Math.max(3.2,Math.min(place.pos.x,9.5)),0,CORR));return p;
+  if(place.pos.z<-5.2){p.push(new T.Vector3(9.6+lane*.4,0,-3.6),new T.Vector3(9.6+lane*.4,0,cz));return p;}
+  else if(place.seated&&place.pos.z<-4){p.push(new T.Vector3(place.pos.x,0,-3.85+lane*.3),new T.Vector3(3.6+lane,0,-3.85+lane*.3),new T.Vector3(3.6+lane,0,cz));return p;}
+  p.push(new T.Vector3(Math.max(3.2,Math.min(place.pos.x,9.5))+lane,0,cz));return p;
 }
 function startWalk(a,to){
-  const from=a.place;const pts=routeOut(from).concat(routeOut(to).reverse());
+  const from=a.place;const lane=to.kind==="lounge"?.35:-.35;const pts=routeOut(from,lane).concat(routeOut(to,lane).reverse());
   const clean=[pts[0]];pts.slice(1).forEach(p=>{if(p.distanceTo(clean[clean.length-1])>.05)clean.push(p);});
-  a.walk={pts:clean,i:0,to};
+  a.walk={pts:clean,i:0,to,pos:clean[0].clone(),off:new T.Vector3(),offS:0,dir:new T.Vector3(0,0,1),wait:(walkOrder++)*.6,moving:false,ghost:0,blockT:0};
   a.seated=false;a.upper.position.y=.42;a.legs.position.set(0,.44,0);a.legs.rotation.x=0;
   a.g.position.copy(clean[0]);
 }
 
 const deskSeats={},deskGroups={};
+let walkOrder=0;
 function updateWorld(first){
-  const now=romeNow();
+  const now=romeNow();walkOrder=0;
   DATA.team.forEach(mb=>{const st=status(mb,now),a=agents[mb.id];
     screens[mb.id].on=st.work;
     const to=st.work?deskPlace(mb.id):loungePlace(mb.id);
@@ -541,7 +544,7 @@ function init3D(){
   Object.assign(sun.shadow.camera,{left:-15,right:15,top:12,bottom:-12,near:1,far:50});sun.shadow.bias=-.0005;sun.shadow.radius=4;scene.add(sun);
   scene.add(new T.AmbientLight("#ffffff",.15));
   buildRoom();
-  DATA.team.forEach((mb,i)=>{const d=buildDesk(mb,i);deskSeats[mb.id]=d.seat;deskGroups[mb.id]=d.group;agents[mb.id]=buildAgent(mb);});
+  DATA.team.forEach((mb,i)=>{const d=buildDesk(mb,i);deskSeats[mb.id]=d.seat;deskGroups[mb.id]=d.group;const a=buildAgent(mb);a.idx=i;a.lane=((i%5)-2)*.2;agents[mb.id]=a;});
   const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";camera.aspect=w/h;camera.updateProjectionMatrix();placeCamera();};
   new ResizeObserver(resize).observe(stage);resize();
   // trascina per ruotare, tocca per aprire
@@ -577,13 +580,32 @@ function animAgent(a,t,dt){
   if(P.paper)P.paper.visible=lounge;
 
   if(a.walk){
-    const w=a.walk;let step=WALK_SPEED*dt;
-    while(step>0&&w.i<w.pts.length-1){const to=w.pts[w.i+1],d=a.g.position.distanceTo(to);
-      if(d<=step){a.g.position.copy(to);step-=d;w.i++;}else{const dir=to.clone().sub(a.g.position).normalize();a.g.position.addScaledVector(dir,step);step=0;}}
-    const nxt=w.pts[Math.min(w.i+1,w.pts.length-1)],dx=nxt.x-a.g.position.x,dz=nxt.z-a.g.position.z;
+    const w=a.walk;
+    // direzione del tratto attuale
+    const nxt=w.pts[Math.min(w.i+1,w.pts.length-1)];w.dir.set(nxt.x-w.pos.x,0,nxt.z-w.pos.z);if(w.dir.lengthSq()>1e-6)w.dir.normalize();
+    const dx=w.dir.x,dz=w.dir.z,ax=w.pos.x+w.off.x,az=w.pos.z+w.off.z;
+    // precedenza: chi ha davanti un collega che cammina con precedenza, o che è fermo, aspetta
+    let blocked=w.wait>0;if(w.wait>0)w.wait-=dt;
+    if(!blocked&&!(w.ghost>0))for(const k in agents){const b=agents[k];if(b===a||!b.walk)continue;
+      const vx=b.g.position.x-ax,vz=b.g.position.z-az,d=Math.hypot(vx,vz);if(d>1.0||d<1e-4)continue;
+      const aheadA=(dx*vx+dz*vz)/d,aheadB=-(b.walk.dir.x*vx+b.walk.dir.z*vz)/d,bMov=b.walk.moving&&b.walk.wait<=0;
+      if((aheadA>.35&&!bMov&&d<.85)||(bMov&&b.idx<a.idx&&(aheadA>.35||aheadB>.35))){blocked=true;break;}}
+    if(w.ghost>0)w.ghost-=dt;
+    if(blocked&&w.wait<=0){w.blockT=(w.blockT||0)+dt;if(w.blockT>1.4){w.ghost=.9;w.blockT=0;}}else w.blockT=0;
+    let step=blocked?0:WALK_SPEED*dt;w.moving=step>0;
+    while(step>0&&w.i<w.pts.length-1){const to=w.pts[w.i+1],d=Math.hypot(to.x-w.pos.x,to.z-w.pos.z);
+      if(d<=step){w.pos.copy(to);step-=d;w.i++;}else{w.pos.addScaledVector(w.dir,step);step=0;}}
+    // separazione: nessuno passa attraverso un altro
+    w.off.multiplyScalar(Math.exp(-dt*1.5));
+    const px=w.pos.x+w.off.x,pz=w.pos.z+w.off.z;
+    for(const k in agents){const b=agents[k];if(b===a)continue;if(!b.walk&&b.place&&b.place.kind==="desk")continue;
+      const ox=px-b.g.position.x,oz=pz-b.g.position.z,d=Math.hypot(ox,oz);
+      if(d<.62&&d>1e-4&&(!b.walk||b.idx<a.idx||b.walk.wait>0)){const k2=(.62-d)/d;w.off.x+=ox*k2;w.off.z+=oz*k2;}}
+    const ol=Math.hypot(w.off.x,w.off.z);if(ol>.7)w.off.multiplyScalar(.7/ol);
+    if(w.i>=w.pts.length-2){const left=Math.hypot(w.pts[w.pts.length-1].x-w.pos.x,w.pts[w.pts.length-1].z-w.pos.z);if(left<.8)w.off.multiplyScalar(left/.8);}
     if(Math.abs(dx)+Math.abs(dz)>.01){const want=Math.atan2(dx,dz);let d=want-a.g.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));a.g.rotation.y+=d*Math.min(1,dt*10);}
-    const s=Math.sin(t*9.5);a.legArr[0].rotation.x=s*.55;a.legArr[1].rotation.x=-s*.55;
-    a.g.position.y=Math.abs(Math.cos(t*9.5))*.05;
+    const s=w.moving?Math.sin(t*9.5):0;a.legArr[0].rotation.x=s*.55;a.legArr[1].rotation.x=-s*.55;
+    a.g.position.set(w.pos.x+w.off.x,w.moving?Math.abs(Math.cos(t*9.5))*.05:0,w.pos.z+w.off.z);
     tL.set(-.3,.28,.15+s*.14);tR.set(.3,.28,.15-s*.14);uz=s*.05;
     if(w.i>=w.pts.length-1){placePose(a,w.to);a.walk=null;}
   } else if(working){
