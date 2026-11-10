@@ -62,4 +62,19 @@ module.exports = {sezione:'telefono', test:[
     assert.ok(w <= 390, `scrollWidth ${w}px`);
   }],
   tapTest('tocco ≥44 px: pulsanti della finestra Level up', app => app.click('levelUp').then(() => app.page.waitForSelector('#modalBk [data-act="luApply"]')), '#modalBk [data-act="luApply"], #modalBk [data-act="luRoll"]'),
+  ['B-030 390 px: un link nel danno di un attacco non allarga Combattimento', async ({open}) => {
+    const app = await open(PHONE); await app.go('combat');
+    await app.page.fill('#atk_n', 'Spada'); await app.page.fill('#atk_b', '5');
+    await app.page.fill('#atk_d', '1d8+3 https://example.com/regole/' + 'abcdefghij'.repeat(6));
+    await app.click('addAttack');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
+  ['B-030 390 px: un link in un privilegio di classe non allarga Tratti', async ({open}) => {
+    const app = await open(PHONE); await app.go('traits');
+    await app.page.fill('#cf_n', 'Vedi https://example.com/privilegi/' + 'abcdefghij'.repeat(6));
+    await app.click('addClassFeat');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
 ]};

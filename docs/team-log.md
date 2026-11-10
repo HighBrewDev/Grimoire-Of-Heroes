@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-10 · tester extra
+- **Fatto**: sessione di beta test di circa un'ora, chiesta da Capo, sulle correzioni di oggi (Level up b5f0d49, Telefono 7cb1ec7). Live = main 4452eb8. Nessun codice dell'app toccato. Dettagli in docs/bug-beta.md, "Diario dei test".
+- **Reggono**: B-021 (Guerriero 1→20 da telefono, multiclasse anche sulla seconda classe), B-022 (Cos al massimo, +1/+1, PF tirati, multiclasse), B-025, B-019 nei casi del bug, pulsanti Level up 44 px.
+- **Bug**: nuovi **B-030 [media]** telefono: danno degli attacchi, privilegi/talenti, incantesimi homebrew e nome in Incontro allargano ancora la pagina (689–850 px); **B-031 [bassa]** Grappler non dà il +1. Confermati con casi in più B-026 (− e + della Cos curano anche un eroe a 0 PF) e B-027 (Epic Boon senza +1) del distruttore, trovati in parallelo.
+- **Test**: suite completa 179/186 su 4452eb8, nessuna regressione; 4 test nuovi che falliscono (telefono B-030 ×2, caratteristiche B-026 con eroe ferito, levelup B-031); B-026…B-031 in `BUG_SEZIONE`. File `tests/risultati/2026-11-10.json` non toccato.
+- **Per sviluppo**: B-026 e B-027/B-031 nascono da `conHp` e dal ramo `feat` di `applyLevelUp`; B-030 è lo stesso blocco CSS di B-019 esteso a `.chip`, `th` di Tratti, nomi degli incantesimi e righe dell'Incontro.
+
 ## 2026-11-10 · distruttore
 - **Fatto** · sessione serale sul Level up di stamattina (server locale = main 4452eb8). Suite 179/186, nessuna regressione; le correzioni B-021, B-022, B-025 reggono su tutte le 12 classi 1 → 20 e su una multiclasse a tre. La PR di B-016 non è ancora arrivata: niente da verificare sulle tre schede.
 - **Bug nuovi** (4, ognuno con un test che oggi fallisce): B-026 [media] caratteristiche (Cos giù e su gonfia i PF, PF attuali a 0); B-027 [media] level up (+2 al 19 oltre 20); B-028 [bassa] level up (stessa classe due volte in multiclasse); B-029 [media] robustezza (Tab esce dalla finestra Level up e il livello va a un altro eroe).

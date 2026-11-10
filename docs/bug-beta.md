@@ -5,6 +5,28 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-030 [media] Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
+- Trovato da: tester extra · 2026-11-10
+- Sezione: telefono (seguito di B-019)
+- Dove: III Combattimento, V Tratti, VI Incantesimi, IV Incontro, 390x844
+- Passi: 1. Combattimento → attacco personalizzato "Spada", +5, danno `1d8+3 https://example.com/regole/abcdefghij…` (60 caratteri senza spazi) → Add custom. 2. Tratti → "Add a feature" con un link lungo → Add.
+- Atteso: il testo va a capo, nessuno scroll orizzontale (come per nome e note degli attacchi dopo 7cb1ec7).
+- Ottenuto: `scrollWidth` 743 px in Combattimento (il `chip light` del danno non va a capo), 689 px in Tratti (`th` della tabella privilegi). Stesso problema con dati da import o homebrew: talento o fonte del talento di 80 caratteri (Tratti 772–850 px), incantesimo homebrew di 80 caratteri (Incantesimi 819 px), nome eroe di 80 caratteri senza spazi, permesso dal `maxlength` (Incontro 806 px; con 43 caratteri già 405 px). Eroe, Zaino, Cronaca, Biblioteca, Workshop restano a 390.
+- Console: nessun errore.
+- Test: `telefono` "B-030 …" (2 test).
+
+
+### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
+- Trovato da: tester extra · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: Level up, livello 4 (o 8, 12, 16), scelta "Feat", 1440x900
+- Passi: 1. Valeria (Guerriero 3, For 16, Des 14). 2. Level up → Feat → Grappler → Become level 4.
+- Atteso: regole 2024: Grappler dà +1 a Forza o Destrezza (massimo 20), come dice il suo testo nell'app ("Ability Score Increase").
+- Ottenuto: il talento viene aggiunto ma For e Des restano 16 e 14. Stessa causa dell'Epic Boon in B-027: il ramo `feat` di `applyLevelUp` fa solo `c.feats.push`. Serve anche una scelta della caratteristica nella finestra.
+- Console: nessun errore.
+- Test: `levelup` "B-031 …".
+
+
 ### B-029 [media] Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-10
 - Sezione: robustezza
@@ -33,6 +55,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: regole 2024: l'aumento dei punteggi (talento Ability Score Improvement) arriva al massimo a 20; solo il talento Epic Boon dà +1 a un punteggio fino a 30.
 - Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
 - Console: nessun errore.
+- Conferma (tester extra, 2026-11-10): Guerriero 18, For 20 → Feat "Boon of Fate" → punteggi invariati (toast "+9 HP · Boon of Fate"); quindi un Boon su Costituzione non alza nemmeno i PF (B-022). Lo stesso succede con Grappler ai livelli normali (B-031).
 - Test: `levelup` "B-027 …".
 
 ### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
@@ -43,7 +66,8 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: a Cos 1 PF massimi 20 (almeno 1 per livello); tornati a Cos 10, di nuovo 82/82.
 - Ottenuto: a Cos 1 PF **0/1** (l'eroe è a terra per un clic di troppo); tornati a Cos 10 PF **100/101** (+19 dal nulla). Con Cos 30 e ritorno a 10 resta 100/101. Anche un clic sbagliato su un eroe ferito lo cura: PF attuali portati a 0 dal −, poi il + li alza di livello × 1. `conHp` (index.html ~3416) taglia i massimi a 1 con `Math.max(1, …)` e i PF attuali a 0, poi il ritorno aggiunge l'intera differenza.
 - Console: nessun errore.
-- Test: `caratteristiche` "B-026 …".
+- Conferma (tester extra, 2026-11-10): Paladino 5, Cos 14, PF 3/44 → un − e un + → **5/44**; Paladino 20 a 0 PF con 2 tiri contro la morte falliti, Cos 3 → tre − e tre + → **40/50**, tiri ancora segnati: un eroe morente torna in piedi correggendo un clic.
+- Test: `caratteristiche` "B-026 …" (2 test).
 
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09
@@ -302,3 +326,4 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - 2026-11-09 · distruttore · Sessione serale sul salvataggio nuovo (Playwright/Chromium, server locale = stesso codice di main a814a69). Suite completa 164/165 (resta solo B-014): B-005, B-006, B-012, B-013, B-015 e i test del telefono reggono. Tecniche nuove: tre schede con 60 operazioni casuali (crea, cancella, danni, cambio capitolo) → nessun eroe perso né resuscitato, 4ª scheda identica; memoria piena in due schede → avviso in entrambe, liberato lo spazio in B "Try again" salva, A unisce e alla modifica successiva salva anche il suo eroe (nessuna perdita); cancellazione in una scheda mentre l'altra sta scrivendo → **B-016**. "Export all"/import di backup con `[]`, `{"heroes":[]}`, `[null,5,"x"]`, doppioni nel file, id già presenti, nome `__proto__`, JSON annidato 3.000 livelli, valori 1e308: nessun errore, doppioni saltati. Import 5etools con 11 file malformati e fino a 20.000 voci (**B-020**). Campi numerici con negativi ed enormi (**B-017**, **B-018**). Telefono 390 px con testi lunghi senza spazi in ogni campo (**B-019**). Tastiera: Esc annulla la conferma di cancellazione, Invio ripetuto non cancella. Console pulita in tutte le prove. Nota: un eroe singolo con un campo `heroes:[]` viene letto come backup vuoto ("no heroes"), caso improbabile e non registrato.
 - 2026-11-09 · power user · Sessione serale (Playwright/Chromium, server locale = main 8c56f8d, identico al live). Suite completa 164/172 (falliscono solo i test dei bug aperti B-014, B-016…B-020). Scenari: **Paladino dal livello 1 al 20** con sottoclasse, PF medi, +2 Cos, talenti ed Epic Boon (apertura level up 69–132 ms, conferma 51–252 ms) → **B-021**, **B-022**; sondaggio di tutte le 12 classi per ogni livello 2–20; **tripla multiclasse** Fighter 5 → Wizard 8 / Warlock 7 (livello 20): slot multiclasse, slot del Patto, Dadi Vita per tipo, PF (d6 +6, d8 +7) e competenze tutti corretti; **sessione di gioco** con 4 eroi: 10 danni di fila (64–154 ms), PF temporanei, cure, Dado Vita, 5 condizioni, Second Wind/Channel Divinity/Bardic Inspiration, slot, riposi breve e lungo, 30 tiri di dado (1–6 ms) → **B-023**; **homebrew sugli eroi**: classe mezza incantatrice d10 con aumenti a 4 e 8, specie velocità 40, talento e oggetto, eroe portato dal 2 all'8 (PF, slot e aumenti giusti) → **B-025**; **tutto da telefono 390x844**: 40 eroi dal wizard (tutte le classi, livelli 1–20), 10 rinominati con accenti, 15 duplicati a catena, 15 cancellati, incontro con 20 creature e 25 turni, tutti i capitoli senza scroll orizzontale; "Export all" di 43 eroi (56 KB) e import in un tomo vuoto in 0,37 s → **B-024**. Numeri: apertura del tomo 0,76 s, ricarica con 41 eroi 0,5–0,7 s, localStorage 39.700 caratteri per 43 eroi leggeri (~920 a eroe: B-012 regge), memoria JS 10 MB. Correzioni di oggi verificate nell'uso: B-005, B-006, B-012, B-013, B-015 reggono. Console pulita in tutte le prove.
 - 2026-11-10 · distruttore · Sessione serale sulla correzione del Level up (Playwright/Chromium, server locale = main 4452eb8, identico al live). Suite completa 179/186: falliscono solo i test dei bug aperti B-014, B-016 (×2), B-017, B-018, B-023, B-024; B-020 oggi passa (3,9 s, nessun commit lo tocca: probabile macchina più veloce, resta aperto). La PR di B-016 di stasera non c'è ancora, quindi niente da verificare sulle tre schede. **Correzioni di stamattina reggono**: tutte le 12 classi portate 1 → 20 dal Level up con +1/+1 a ogni scelta: aumenti a 4, 8, 12, 16 (Guerriero anche 6 e 14, Ladro 10) ed Epic Boon a 19, PF finali esatti (Barbaro 183, Mago 126 da 12 PF iniziali); multiclasse a tre Fighter 3 → Rogue 4 / Wizard 4 con aumenti al 4° livello di ciascuna classe e +2 Cos che alza i PF di 11 (91 esatti); Alert già preso non offerto; Magic Initiate e Skilled (ripetibili) offerti. Import di eroi già al 20 con multiclasse oltre 20 o negativa: livelli riportati a 20, nessun pulsante Level up, nessun errore. Tecniche nuove: Costituzione 10 → 1 → 30 → 10 coi pulsanti (**B-026**); scelta "+2" al 19 (**B-027**); righe della multiclasse cambiate in una classe già presente (**B-028**); solo tastiera dentro la finestra Level up (**B-029**); 320x640 e 720x450 (zoom 200%) su tutti i capitoli e nella finestra: nessuno scroll orizzontale; Esc chiude. Controllo leggero sulle sezioni verdi: suite verde. Console pulita in tutte le prove.
+- 2026-11-10 · tester extra · Sessione pomeridiana sulle correzioni di oggi (Playwright/Chromium, server locale = main 4452eb8, identico al live: stesso `index.html` e `CACHE` di sw.js). **Level up**: B-021 regge in tutti i casi provati: Guerriero 1→20 a 390x844 (aumenti a 4, 6, 8, 12, 14, 16 + Epic Boon al 19, nessun talento ripetuto), multiclasse Mago 7 / Guerriero 5 (8 e 6 entrambi con la scelta), Guerriero 3 / Ladro 9 (Ladro 10 e Guerriero 4 ok). B-022 regge: Cos 15 → 17, 19 → 20 (solo +1 di modificatore), 20 → "already 20" (nessun cambio), +1/+1 su For e Cos, PF tirati con eroe ferito e PF temporanei (temporanei intatti), multiclasse livello 13 (+13). B-025 regge: talenti già presi tolti anche scritti in minuscolo o con uno spazio finale; Skilled e Magic Initiate restano. Confermati B-026 e B-027 del distruttore con casi in più; nuovo **B-031** (Grappler senza +1). **Telefono**: i casi di B-019 reggono (Zaino, nome e note degli attacchi, scaffale) e "Roll"/"Become level" sono 44 px; ma testo lungo senza spazi allarga ancora Combattimento, Tratti, Incantesimi e Incontro (**B-030**). Nella finestra Level up a 390 px i `select` sono alti 33 px e le righe dei radio 23–33 px, come i `select` delle pagine: non registrato come bug. Suite completa 179/186 come dopo il commit del designer (nessuna regressione), più 4 test nuovi che oggi falliscono (B-026 eroe ferito, B-030 ×2, B-031). Console pulita in tutte le prove.
