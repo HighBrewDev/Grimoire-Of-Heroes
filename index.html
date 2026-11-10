@@ -3403,6 +3403,13 @@ PAGES.encounter = function(c){
 
 /* ================================================================== guided level up */
 const ASI_LEVELS = {Fighter:[4,6,8,12,14,16,19], Rogue:[4,8,10,12,16,19]};
+/* 2024: when the Constitution modifier changes, max HP changes as if it had been that from level 1 (B-022) */
+function conHp(c, oldCon){
+  const n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * (c.level || 1); if (!n) return 0;
+  c.hp.max = Math.max(1, (+c.hp.max || 0) + n); c.hp.cur = clamp((+c.hp.cur || 0) + n, 0, c.hp.max); return n;
+}
+/* feats already taken are not offered again unless repeatable (B-025) */
+const featOffered = (c, e) => !!(e.o?.rep) || !hasFeat(c, e.n);
 function luTarget(c){
   const list = classList(c), pick = String(G.lu?.cls ?? '0');
   if (pick.startsWith('new:')) return {class:pick.slice(4), subclass:'', level:0, isNew:true};
@@ -3417,7 +3424,8 @@ function levelPlan(c){
   const T = luTarget(c), v = asClass(c, T), N = T.level + 1, cl = clsInfo(v), srd = srdClass(v), sub = subclassOf(v);
   const feats = (cl.f || []).filter(f => f.l === N);
   const subFeats = (sub?.f || []).filter(f => f.l === N);
-  const asi = feats.some(f => /ability score improvement/i.test(f.n)) || (!srd && (ASI_LEVELS[T.class] || [4,8,12,16,19]).includes(N));
+  /* SRD classes list each feature once in .f (first level); later ASI levels are only in the class table (B-021) */
+  const asi = feats.some(f => /ability score improvement/i.test(f.n)) || (srd ? (srd.tbl?.[N - 1]?.f || []).some(f => /ability score improvement/i.test(f)) : (ASI_LEVELS[T.class] || [4,8,12,16,19]).includes(N));
   const boon = feats.some(f => /epic boon/i.test(f.n)) || (!srd && N === 19);
   const needSub = !T.subclass && (feats.some(f => /subclass/i.test(f.n)) || (!srd && N === 3));
   const old = slotsFor(c), nx = slotsFor(afterLevel(c, T));
@@ -3432,7 +3440,7 @@ function openLevelUp(keep){
   const extra = (c.species === 'Dwarf' ? 1 : 0) + (hasFeat(c, 'Tough') ? 2 : 0);
   const slotRows = P.nx.slots.map((n, i) => n !== P.old.slots[i] ? `<tr><td>Level ${i + 1}</td><td>${P.old.slots[i] || 0}</td><td><b>${n}</b></td></tr>` : '').join('');
   const abSel = id => `<select id="${id}">${ABIL.map(a => `<option value="${a.id}">${a.n} (${c.abilities[a.id]})</option>`).join('')}</select>`;
-  const featList = ALL.filter(e => { if (e.cat !== 'feats') return false; const k = e.k || e.o.ty || ''; return !/fighting style/i.test(k) && !/^ability score improvement$/i.test(e.n) && (P.boon || !/epic boon/i.test(k)); });
+  const featList = ALL.filter(e => { if (e.cat !== 'feats') return false; const k = e.k || e.o.ty || ''; return !/fighting style/i.test(k) && !/^ability score improvement$/i.test(e.n) && (P.boon || !/epic boon/i.test(k)) && featOffered(c, e); });
   const list = classList(c), blockers = list.filter(e => !mcMeets(c, e.class)).map(e => e.class);
   const others = names('classes').filter(n => !list.some(e => e.class === n));
   const clsSel = `<label class="sr" for="lu_cls">Class to advance</label><select id="lu_cls">${list.map((e, i) => `<option value="${i}" ${String(G.lu.cls) === String(i) ? 'selected' : ''}>${esc(e.class)} ${e.level} → ${e.level + 1}</option>`).join('')}
@@ -3472,7 +3480,7 @@ function applyLevelUp(){
   const mode = $('input[name="lu_hp"]:checked')?.value;
   if (mode === 'roll' && G.lu.roll == null){ toast('Press Roll first, or take the average.'); return; }
   const gain = Math.max(1, (mode === 'roll' ? G.lu.roll : Math.floor(hd / 2) + 1) + con) + extra;
-  const notes = [`+${gain} HP`];
+  const notes = [`+${gain} HP`], con0 = c.abilities.con;
   if (P.needSub){ const s = $('#lu_sub').value.trim(); if (s){ const sc = s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '');
     if (T.isNew) T.subclass = sc; else if (T.main) c.subclass = sc; else c.multi[T.i].subclass = sc; notes.push(sc); } }
   if (P.asi || P.boon){
@@ -3482,11 +3490,12 @@ function applyLevelUp(){
     const gained = (ab, g) => g ? `${ab.toUpperCase()} +${g}` : `${ab.toUpperCase()} already ${c.abilities[ab]}`;
     if (m === 'two'){ const a = $('#lu_a1').value; notes.push(gained(a, up(a, 2))); }
     else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } notes.push(gained(a, up(a, 1)) + ', ' + gained(b, up(b, 1))); }
-    else if (m === 'feat'){ const f = $('#lu_feat').value; c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
+    else if (m === 'feat'){ const f = $('#lu_feat')?.value; if (!f){ toast('No feat left to pick: choose an ability increase.'); return; } c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
   }
   if (T.isNew){ c.multi = multi(c); c.multi.push({class:T.class, subclass:T.subclass || '', level:1}); notes.unshift(`${T.class} 1`); }
   else if (!T.main) c.multi[T.i].level++;
   c.level = P.N; c.hp.max += gain; c.hp.cur += gain;
+  const conGain = conHp(c, con0); if (conGain) notes[0] = `+${gain + conGain} HP (${fmt(conGain)} from Constitution, all levels)`;
   if ((c.xp || 0) < XP_TABLE[c.level - 1]) c.xp = XP_TABLE[c.level - 1];
   save(); closeModal(); render();
   toast(`${c.name} is now level ${c.level}: ${notes.join(' · ')}.`);
@@ -3607,7 +3616,9 @@ const ACT = {
   adv(v){ G.adv = G.adv === +v ? 0 : +v; save(); syncTray(); },
   log(){ modal(`<div class="head"><h2>Roll history</h2><span class="spacer"></span>${closeBtn()}</div><ul class="logList">${G.log.map(l => `<li>${esc(l.line)}</li>`).join('') || '<li class="muted">No rolls yet.</li>'}</ul>`, {label:'Roll history'}); },
   sound(){ G.sound = !G.sound; save(); syncTray(); if (G.sound) rustle(); },
-  stepAb(arg){ const [ab, d] = arg.split(':'); mut(c => c.abilities[ab] = clamp((c.abilities[ab] || 10) + +d, 1, 30), false); },
+  stepAb(arg){ const [ab, d] = arg.split(':'); let hpN = 0;
+    mut(c => { const v = c.abilities[ab] || 10; c.abilities[ab] = clamp(v + +d, 1, 30); if (ab === 'con') hpN = conHp(c, v); }, false);
+    if (hpN){ render(); toast(`Max HP ${fmt(hpN)}: the Constitution modifier counts at every level.`); } },
   rollAb(ab){ const c = active(); testRoll(ab.toUpperCase() + ' check', mod(c.abilities[ab])); },
   rollSave(ab){ testRoll(ab.toUpperCase() + ' save', saveBonus(active(), ab)); },
   rollSkill(id){ const s = SKILLS.find(x => x.id === id); testRoll(s.n, skillBonus(active(), s)); },
