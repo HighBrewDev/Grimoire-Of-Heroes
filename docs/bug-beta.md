@@ -25,16 +25,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `incontro` "B-037 …".
 
-### B-035 [bassa] PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
-- Trovato da: distruttore · 2026-11-10
-- Sezione: combattimento
-- Dove: III Combattimento → campo Max HP (vale per tutti i campi numerici con `data-type="int"`: monete, XP, livello, regolazione CA), 1440x900
-- Passi: 1. Valeria 32/32. 2. Nel campo Max HP scrivi `1e3` (il campo numerico del browser lo accetta: vuol dire 1000) ed esci dal campo. 3. Nello Zaino scrivi `1e3` o `2.9` nelle monete d'oro.
-- Atteso: 1000 PF massimi (32/1000), oppure il valore rifiutato senza toccare i PF attuali; il campo mostra ciò che è stato salvato.
-- Ottenuto: PF **1/1**: i 32 PF attuali sono persi (si rimette solo a mano). Nello Zaino il campo resta "1e3" / "2.9" ma vengono salvati **1** e **2** gp, senza segnale. `bindValue` (index.html ~4373) usa `parseInt` (1e3 → 1) e corregge il campo solo se il limite min/max ha cambiato il numero; per `hp.max` poi taglia `hp.cur` al nuovo massimo.
-- Console: nessun errore.
-- Test: `combattimento` "B-035 …".
-
 ### B-034 [bassa] Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
 - Trovato da: distruttore · 2026-11-10
 - Sezione: eroe
@@ -97,17 +87,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Test: `combattimento` "B-023 …".
 - Aggiornamento power user 2026-11-10 sera (sessione con 3 incontri e 2 riposi brevi): ancora così su main e9629ca. Stessa causa, anche **Rage** (Barbaro 5), **Wild Shape** (Druido 5) e **Channel Divinity del Paladino** (5) restano spesi dopo il riposo breve (regole 2024: recuperano un uso). Tornano solo Focus Points e slot del Patto (corretto). Sorcery Points restano spesi: giusto, salvo Sorcerous Restoration del 5° livello che l'app non ha.
 
-### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
-- Trovato da: power user · 2026-11-09
-- Sezione: import/export
-- Dove: I Eroe → Duplicate, poi Export → "Export all heroes" e Import del file, 390x844 e 1440x900
-- Passi: 1. Eroe con nome di 70 caratteri (o un nome normale duplicato più volte partendo dall'ultima copia: ogni copia aggiunge " (copy)"). 2. Duplicate tre volte. 3. Export all heroes. 4. In un altro browser (o dopo aver cancellato gli eroi) Import del file.
-- Atteso: tornano tutti e 4 gli eroi.
-- Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
-- Console: nessun errore.
-- Test: `importexport` "B-024 …".
-- Aggiornamento power user 2026-11-10 sera (preparazione della verifica): ancora così su main e9629ca. Si perde un eroe anche **senza nomi lunghi**: due Duplicate dello stesso originale (non a catena) danno due "Eroe 11 Warlock (copy)" identici; backup di 39 eroi → "38 heroes back in the tome (1 already here)". `sameHeroKey` confronta tutto tranne l'id, quindi due copie mai modificate sono "lo stesso eroe". Le copie a catena con nomi corti (fino a 37 caratteri) tornano tutte. Ripristinare due volte lo stesso file: "Every hero in that file is already in the tome", nessun doppione (corretto).
-
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
 - Sezione: import/export (salvataggio con più schede)
@@ -155,6 +134,29 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
+- **Risolto 2026-11-10** in [f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab): Duplicate dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…, una copia di una copia viene numerata invece di accumulare "(copy)") e passa da `fixup`; `importBackup` conta gli eroi identici, quindi due copie mai modificate tornano entrambe, e ripristinare due volte lo stesso file non crea doppioni. Test `importexport` B-024 (3) verdi.
+- Trovato da: power user · 2026-11-09
+- Sezione: import/export
+- Dove: I Eroe → Duplicate, poi Export → "Export all heroes" e Import del file, 390x844 e 1440x900
+- Passi: 1. Eroe con nome di 70 caratteri (o un nome normale duplicato più volte partendo dall'ultima copia: ogni copia aggiunge " (copy)"). 2. Duplicate tre volte. 3. Export all heroes. 4. In un altro browser (o dopo aver cancellato gli eroi) Import del file.
+- Atteso: tornano tutti e 4 gli eroi.
+- Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
+- Console: nessun errore.
+- Test: `importexport` "B-024 …".
+- Aggiornamento power user 2026-11-10 sera (preparazione della verifica): ancora così su main e9629ca. Si perde un eroe anche **senza nomi lunghi**: due Duplicate dello stesso originale (non a catena) danno due "Eroe 11 Warlock (copy)" identici; backup di 39 eroi → "38 heroes back in the tome (1 already here)". `sameHeroKey` confronta tutto tranne l'id, quindi due copie mai modificate sono "lo stesso eroe". Le copie a catena con nomi corti (fino a 37 caratteri) tornano tutte. Ripristinare due volte lo stesso file: "Every hero in that file is already in the tome", nessun doppione (corretto).
+
+### B-035 [bassa] PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
+- **Risolto 2026-11-10** in [ca54499](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/ca54499): `bindValue` legge i campi numerici con `Number` (troncato): `1e3` → 1000, `2.9` → 2; uscendo dal campo mostra sempre il valore salvato. Test `combattimento` B-035 verde.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: combattimento
+- Dove: III Combattimento → campo Max HP (vale per tutti i campi numerici con `data-type="int"`: monete, XP, livello, regolazione CA), 1440x900
+- Passi: 1. Valeria 32/32. 2. Nel campo Max HP scrivi `1e3` (il campo numerico del browser lo accetta: vuol dire 1000) ed esci dal campo. 3. Nello Zaino scrivi `1e3` o `2.9` nelle monete d'oro.
+- Atteso: 1000 PF massimi (32/1000), oppure il valore rifiutato senza toccare i PF attuali; il campo mostra ciò che è stato salvato.
+- Ottenuto: PF **1/1**: i 32 PF attuali sono persi (si rimette solo a mano). Nello Zaino il campo resta "1e3" / "2.9" ma vengono salvati **1** e **2** gp, senza segnale. `bindValue` (index.html ~4373) usa `parseInt` (1e3 → 1) e corregge il campo solo se il limite min/max ha cambiato il numero; per `hp.max` poi taglia `hp.cur` al nuovo massimo.
+- Console: nessun errore.
+- Test: `combattimento` "B-035 …".
+
 ### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
 - **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): `conHp` tiene i PF massimi ad almeno 1 per livello e lascia uguale il danno subito; quello che una Costituzione bassa non ha potuto togliere (massimo fermo al minimo, danno oltre 0 PF) resta in `hp.conAdj`, così − e poi + ridanno gli stessi PF. Un eroe a 0 PF non viene curato alzando la Cos. La memoria si azzera appena i PF cambiano per altro. Mago 20: 82/82 → Cos 1 20/20 → Cos 10 82/82; ferito 30/82 → 0/20 → 30/82; morente 0/82 resta a 0. Test `caratteristiche` B-026 ora passa.
 - Trovato da: distruttore · 2026-11-10
@@ -166,7 +168,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `caratteristiche` "B-026 …".
 
-
 ### B-028 [bassa] Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
 - **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): il menu della riga di multiclasse (`data-mc`) offre solo la classe della riga e quelle che l'eroe non ha; `fixup` (import, sync) unisce le righe ripetute e restituisce alla prima classe i livelli di una riga uguale a lei (Fighter 3 con riga Fighter 2 → Fighter 3; Rogue 2 + rogue 1 → Rogue 3). Test `levelup` B-028 ora passa.
 - Trovato da: distruttore · 2026-11-10
@@ -177,7 +178,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: l'eroe diventa "Fighter 3 / Wizard 4 / Wizard 4"; Level up offre due volte "Wizard 4 → 5", quindi due volte l'aumento del livello 4, privilegi e incantesimi contati da due classi separate. Import: "Fighter 1 / … / Fighter 2" accettato. Il menu `data-mc="i:class"` (index.html ~1645) elenca tutte le classi, anche quella principale.
 - Console: nessun errore.
 - Test: `levelup` "B-028 …".
-
 
 ### B-017 [bassa] Monete negative accettate nello Zaino
 - Trovato da: distruttore · 2026-11-09
@@ -280,7 +280,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: 1.460.000 caratteri in localStorage, di cui 749.600 (51%) sono il campo `_sig` (l'eroe intero ri-serializzato come stringa). `writeLocal` (index.html ~2866) salva `G.chars` così com'è, senza togliere i `LOCAL_FIELDS`. Con il limite misurato di ~5,24 milioni di caratteri ci stanno circa 118 eroi così invece di ~230: l'avviso "Not saved" (B-004) arriva al doppio della velocità. Anche l'Export (`export`/`downloadChar`, ~2581) include `_sig`, `updatedAt`, `editedOn` (nome del dispositivo) e `createdAt`: file da 60.789 caratteri, 29.555 sono `_sig`. Il re-import funziona (dati identici).
 - Console: nessun errore.
 
-
 ### B-013 [media] Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
 - **Risolto 2026-11-09** in [9c791c1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/9c791c1): `fixup` porta ogni categoria sconosciuta al gruppo più vicino ("Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", ecc.) o a "Quest & Misc"; anche `itemInfo` lo fa al render, quindi nessun oggetto resta senza riga. Verificato: eroe dei passi importato → 83 righe su 83, filtro "trophy" trova 25 oggetti, modifica e cancellazione ok, anche con il salvataggio già in localStorage.
 - Trovato da: power user · 2026-11-08
@@ -289,7 +288,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: gli oggetti compaiono (in "Quest & Misc" o con la categoria normalizzata da `fixup`).
 - Ottenuto: l'intestazione dice "Inventory 80 entries · 482.5 / 165 lb" ma le righe sono 55: i 25 oggetti "Treasure" non compaiono in nessun gruppo, il filtro dice "Nothing matches this filter.", il loro peso conta per il sovraccarico e non c'è modo di modificarli o cancellarli dall'app. Il render raggruppa solo per `INV_CATS` (index.html ~1714) e `fixup` non controlla `it.cat` (il nome giusto sarebbe "Treasure & Valuables").
 - Console: nessun errore.
-
 
 ### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
 - **Risolto 2026-11-08** con la PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (commit [55d1dda](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/55d1dda), unita da Capo): le schede uniscono le liste per `id` tramite l'evento `storage` e prima di ogni salvataggio.
