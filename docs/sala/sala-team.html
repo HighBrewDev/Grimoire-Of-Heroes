@@ -273,14 +273,11 @@ function status(mb,now){
 const T=window.THREE;
 let renderer,scene,camera,hemi,sun,windowMat,clockCanvas,clockTex,posterTex;
 const agents={}; const clickables=[]; const screens={};
-const DESKS=[[-8.2,-4.6],[-5.3,-4.6],[-2.4,-4.6],[0.5,-4.6],[-8.2,-0.9],[-5.3,-0.9],[-2.4,-0.9],[0.5,-0.9]];
-const LOUNGE=[
-  {p:[5.3,0.46,-4.55],ry:0,pose:"sit"},{p:[6.4,0.46,-4.55],ry:0,pose:"sit"},{p:[7.5,0.46,-4.55],ry:0,pose:"sit"},
-  {p:[8.3,0,-6.3],ry:-0.5,pose:"stand",mug:true},{p:[10.0,0,-4.6],ry:-1.6,pose:"stand",mug:true},
-  {p:[8.3,0.32,-1.2],ry:-0.5,pose:"sit"},{p:[4.6,0,-1.6],ry:0.6,pose:"stand",mug:true},{p:[5.8,0,-0.6],ry:-0.4,pose:"stand"}
-];
-const target=new (T?T.Vector3:Object)(0.5,0.9,-3.9);
-let az=0.1, pol=0.9, rad=19.5;
+const NCOL=4, ROWS=Math.max(2,Math.ceil(DATA.team.length/NCOL));
+const DESKS=DATA.team.map((_,i)=>[-8.2+(i%NCOL)*2.9,-4.6+Math.floor(i/NCOL)*3.7]);
+const CORR=-4.6+(ROWS-1)*3.7+1.55, FLOOR_D=13+(ROWS-2)*3.7, FLOOR_Z=-10+FLOOR_D/2;
+const target=new (T?T.Vector3:Object)(0.5,0.9,-3.9+(ROWS-2)*1.6);
+let az=0.1, pol=0.9, rad=19.5+(ROWS-2)*2;
 
 function M(c,o){return new T.MeshStandardMaterial(Object.assign({color:c,roughness:.85,metalness:0},o||{}));}
 function mesh(g,m,sh=true){const x=new T.Mesh(g,m);x.castShadow=sh;x.receiveShadow=true;return x;}
@@ -320,13 +317,13 @@ function buildRoom(){
   const fc=document.createElement("canvas");fc.width=512;fc.height=512;const fg=fc.getContext("2d");fg.fillStyle="#C9A77E";fg.fillRect(0,0,512,512);
   for(let r=0;r<8;r++){for(let k=-1;k<3;k++){const sh=158+((r*7+k*13+13)%5)*8;fg.fillStyle=`rgb(${sh+8},${sh-28},${sh-70})`;fg.fillRect(k*171+(r%2)*85,r*64,171,64);fg.fillStyle="rgba(90,60,35,.35)";fg.fillRect(k*171+(r%2)*85,r*64,3,64);}}
   fg.strokeStyle="rgba(90,60,35,.35)";fg.lineWidth=3;for(let r=0;r<=8;r++){fg.beginPath();fg.moveTo(0,r*64);fg.lineTo(512,r*64);fg.stroke();}
-  const ft=new T.CanvasTexture(fc);ft.wrapS=ft.wrapT=T.RepeatWrapping;ft.repeat.set(4,3);
-  const floor=mesh(new T.PlaneGeometry(23.4,13),new T.MeshStandardMaterial({map:ft,roughness:.9}),false);floor.rotation.x=-Math.PI/2;at(floor,0.5,0,-3.5);scene.add(floor);
+  const ft=new T.CanvasTexture(fc);ft.wrapS=ft.wrapT=T.RepeatWrapping;ft.repeat.set(4,3*FLOOR_D/13);
+  const floor=mesh(new T.PlaneGeometry(23.4,FLOOR_D),new T.MeshStandardMaterial({map:ft,roughness:.9}),false);floor.rotation.x=-Math.PI/2;at(floor,0.5,0,FLOOR_Z);scene.add(floor);
   // muri
   scene.add(at(box(24,4.4,.3,"#D7E3DC"),0.5,2.2,-10));
-  scene.add(at(box(.3,4.4,13,"#CCDBD3"),-11.5,2.2,-3.5));
+  scene.add(at(box(.3,4.4,FLOOR_D,"#CCDBD3"),-11.5,2.2,FLOOR_Z));
   scene.add(at(box(24,.35,.36,"#6F4C36"),0.5,.17,-9.85));
-  scene.add(at(box(.36,.35,13,"#6F4C36"),-11.35,.17,-3.5));
+  scene.add(at(box(.36,.35,FLOOR_D,"#6F4C36"),-11.35,.17,FLOOR_Z));
   // finestra
   scene.add(at(box(4.2,2.4,.2,"#6F4C36"),7,2.5,-9.82));
   windowMat=new T.MeshBasicMaterial({color:"#8EC5E8"});
@@ -402,9 +399,36 @@ function buildDesk(mb,i){
   return {group:g,seat:new T.Vector3(x+.35,.46,z-.85)};
 }
 
+/* ---------- pupini: costruzione, pose, gesti, camminata ---------- */
+const GESTURE_BY_ID={lead:"watch",test:"clip",devm:"nap",deve:"stretch",design:"sketch",destr:"hammer",power:"music",report:"read"};
+const GESTURE_BY_ACC={tie:"watch",clip:"clip",hammer:"hammer",phones:"music",glasses:"read",beret:"sketch",hood:"stretch"};
+const SPOT_BY_GESTURE={
+  watch:{p:[8.3,0,-6.3],ry:-0.5,pose:"stand"}, read:{p:[10.0,0,-4.6],ry:-1.6,pose:"stand"},
+  clip:{p:[5.3,.46,-4.55],ry:0,pose:"sit"}, nap:{p:[6.4,.46,-4.55],ry:0,pose:"sit"}, stretch:{p:[7.5,.46,-4.55],ry:0,pose:"sit"},
+  sketch:{p:[8.3,.32,-1.2],ry:-0.5,pose:"sit"}, hammer:{p:[4.6,0,-1.6],ry:0.6,pose:"stand"}, music:{p:[5.9,0,-0.4],ry:-0.3,pose:"stand"}
+};
+const EXTRA_SPOTS=[[4.2,-3.4,0.9],[10.3,-2.8,-1.2],[9.4,0.6,-0.6],[3.6,0.2,0.4],[7.2,0.9,0],[10.2,-0.6,-1.0],[3.4,-5.6,0.8]].map(([x,z,ry])=>({p:[x,0,z],ry,pose:"stand"}));
+const SIT_ONLY={nap:1};
+const loungeSpot={};
+(function assignSpots(){
+  const used=new Set();let e=0;
+  DATA.team.forEach(mb=>{
+    let ges=mb.idle||GESTURE_BY_ID[mb.id]||GESTURE_BY_ACC[mb.acc]||"sip";
+    if(ges==="hammer"&&mb.acc!=="hammer")ges="sip";
+    let sp=SPOT_BY_GESTURE[ges];
+    if(!sp||used.has(ges)){sp=EXTRA_SPOTS[e++%EXTRA_SPOTS.length];}else used.add(ges);
+    loungeSpot[mb.id]={...sp,ges:(sp.pose==="stand"&&SIT_ONLY[ges])?"sip":ges};
+  });
+})();
+
+const ease=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+const win=(c,a,b,f=.3)=>ease((c-a)/f)*ease((b-c)/f);
+const mix=(x,y,k)=>x+(y-x)*k;
+function noteTexture(){const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");g.fillStyle="#2E6DA4";g.font="700 50px 'Alegreya Sans', 'Segoe UI Symbol', sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("♪",32,34);return new T.CanvasTexture(c);}
+
 function buildAgent(mb){
   const g=new T.Group();g.userData.who=mb.id;
-  const skin=M("#F2C9A0",{roughness:.7}), shirt=M(mb.shirt), hairM=M(mb.hair), dark=M("#2a1d14",{roughness:.4}), pants=M("#3B4648");
+  const skin=M("#F2C9A0",{roughness:.7}), shirt=M(mb.shirt), hairM=M(mb.hair), dark=M("#2a1d14",{roughness:.4}), pants=M("#3B4648"), shoe=M("#2E3638");
   const upper=new T.Group();g.add(upper);
   const body=sph(.34,shirt);body.scale.set(1,1.12,.88);body.position.y=.38;upper.add(body);
   const headG=new T.Group();headG.position.y=.98;upper.add(headG);
@@ -414,62 +438,79 @@ function buildAgent(mb){
   const eyesC=new T.Group();[-.11,.11].forEach(x=>{const e=box(.1,.018,.02,dark);e.position.set(x,-.03,.315);e.castShadow=false;eyesC.add(e);});eyesC.visible=false;headG.add(eyesC);
   [-.19,.19].forEach(x=>{const c=mesh(new T.CircleGeometry(.055,16),M("#E89A8A",{transparent:true,opacity:.7}),false);c.position.set(x,-.1,.3);c.rotation.y=x>0?.45:-.45;headG.add(c);});
   const mouth=box(.07,.02,.02,"#7a3b2e");mouth.position.set(0,-.13,.32);mouth.castShadow=false;headG.add(mouth);
-  // accessori
   if(mb.acc==="beret"){const b=cyl(.3,.32,.08,"#B23A32");b.position.set(.05,.3,0);b.rotation.z=-.25;headG.add(b);headG.add(at(sph(.04,"#B23A32"),.1,.36,0));}
-  if(mb.acc==="phones"){const t=mesh(new T.TorusGeometry(.36,.035,8,24,Math.PI),M("#222"));headG.add(t);[-.36,.36].forEach(x=>headG.add(at(cyl(.1,.1,.08,"#2E6DA4"),x,0,0)).children);headG.children.slice(-2).forEach(c=>c.rotation.z=Math.PI/2);}
+  if(mb.acc==="phones"){headG.add(mesh(new T.TorusGeometry(.36,.035,8,24,Math.PI),M("#222")));[-.36,.36].forEach(x=>{const cup=cyl(.1,.1,.08,"#2E6DA4");cup.rotation.z=Math.PI/2;cup.position.set(x,0,0);headG.add(cup);});}
   if(mb.acc==="glasses"){[-.11,.11].forEach(x=>{const r=mesh(new T.TorusGeometry(.075,.015,8,20),M("#222"));r.position.set(x,-.02,.31);headG.add(r);});headG.add(at(box(.08,.015,.015,"#222"),0,-.02,.33));}
   if(mb.acc==="tie"){const t=box(.08,.26,.02,"#C0392B");t.position.set(0,.4,.3);upper.add(t);}
   if(mb.acc==="hood"){const h=mesh(new T.TorusGeometry(.26,.07,10,24),shirt);h.rotation.x=Math.PI/2;h.position.y=.7;upper.add(h);}
-  // tester: martello o cartellina
-  const tool=new T.Group();
-  if(mb.acc==="hammer"){tool.add(at(cyl(.025,.025,.42,"#8A6246",8),0,0,0));tool.add(at(box(.2,.09,.09,"#5A6466",{metalness:.5,roughness:.4}),0,.2,0));}
-  if(mb.acc==="clip"){tool.add(at(box(.24,.32,.02,"#F4F1E8"),0,0,0));tool.add(at(box(.1,.04,.03,"#8A6246"),0,.15,0));}
-  upper.add(tool);
-  // mani e gambe
   const hL=sph(.085,skin),hR=sph(.085,skin);upper.add(hL);upper.add(hR);
-  const legs=new T.Group();[-.13,.13].forEach(x=>{const l=cyl(.09,.09,.42,pants,12);l.position.set(x,-.21,0);legs.add(l);const f=sph(.1,M("#2E3638"));f.scale.set(1,.6,1.4);f.position.set(x,-.42,.04);legs.add(f);});
+  hL.position.set(-.27,.25,.22);hR.position.set(.27,.25,.22);
+  // gambe con anca, per camminare
+  const legs=new T.Group();const legArr=[-.13,.13].map(x=>{const lg=new T.Group();lg.position.x=x;const l=cyl(.09,.09,.42,pants,12);l.position.y=-.21;lg.add(l);const f=sph(.1,shoe);f.scale.set(1,.6,1.4);f.position.set(0,-.42,.04);lg.add(f);legs.add(lg);return lg;});
   g.add(legs);
-  // tazza
-  const mug=new T.Group();mug.add(at(cyl(.07,.06,.14,"#F4F1E8"),0,0,0));mug.add(at(mesh(new T.TorusGeometry(.045,.012,6,12),M("#F4F1E8")),.08,0,0));upper.add(mug);
-  // zz
-  const zt=zTexture();const zz=[0,1].map(i=>{const s=new T.Sprite(new T.SpriteMaterial({map:zt,transparent:true}));s.scale.set(.32,.32,1);g.add(s);return s;});
-  // etichetta
+  // oggetti in mano
+  const props={};
+  const ges=loungeSpot[mb.id].ges;
+  props.mug=new T.Group();props.mug.add(at(cyl(.07,.06,.14,"#F4F1E8"),0,0,0));props.mug.add(at(mesh(new T.TorusGeometry(.045,.012,6,12),M("#F4F1E8")),.08,0,0));props.mug.position.set(.02,.06,.06);hR.add(props.mug);
+  if(mb.acc==="hammer"){props.hammer=new T.Group();const hh=new T.Group();hh.add(at(cyl(.025,.025,.46,"#8A6246",8),0,.1,0));hh.add(at(box(.22,.1,.1,"#5A6466",{metalness:.5,roughness:.35}),0,.32,0));props.hammer.add(hh);props.hammerInner=hh;hR.add(props.hammer);}
+  if(mb.acc==="clip"||ges==="clip"){props.clip=new T.Group();props.clip.add(at(box(.26,.34,.02,"#F4F1E8"),0,0,0));props.clip.add(at(box(.1,.04,.03,"#8A6246"),0,.16,.01));[0,1,2].forEach(i=>props.clip.add(at(box(.16,.012,.005,"#2C7369"),0,.06-i*.06,.012)));props.clip.position.set(.06,.12,.04);hL.add(props.clip);}
+  if(ges==="sketch"){props.book=new T.Group();props.book.add(at(box(.3,.22,.03,"#2C3E50"),0,0,0));props.book.add(at(box(.27,.19,.005,"#F8F4E8"),0,0,.018));props.book.position.set(.08,.08,.06);hL.add(props.book);}
+  if(ges==="sketch"||ges==="clip"){props.pencil=at(cyl(.012,.012,.2,"#E8C24A",6),0,.08,.03);props.pencil.rotation.x=.4;hR.add(props.pencil);}
+  if(ges==="read"){props.paper=new T.Mesh(new T.PlaneGeometry(.3,.38),M("#FBFBF6",{side:T.DoubleSide,roughness:1}));props.paper.position.set(.1,.1,.06);hL.add(props.paper);}
+  // zz e note
+  const zt=zTexture();const zz=[0,1].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:zt,transparent:true}));s.scale.set(.32,.32,1);s.visible=false;g.add(s);return s;});
+  const nt=noteTexture();const notes=[0,1,2].map(()=>{const s=new T.Sprite(new T.SpriteMaterial({map:nt,transparent:true}));s.scale.set(.3,.3,1);s.visible=false;g.add(s);return s;});
   const tag=sprite(labelTexture(mb.short,"#9AA7A3"),1.25);g.add(tag);
   scene.add(g);clickables.push(g);
-  return {g,upper,headG,eyesO,eyesC,hL,hR,legs,mug,tool,zz,tag,mode:null,phase:Math.random()*6};
+  return {mb,g,upper,headG,eyesO,eyesC,mouth,hL,hR,legs,legArr,props,zz,notes,tag,ges,
+    place:null,seated:false,walk:null,phase:Math.random()*20,tL:new T.Vector3(),tR:new T.Vector3()};
 }
 
-function setPose(a,mode,where,mb,st){
-  a.mode=mode;a.g.position.copy(where.pos);a.g.rotation.y=where.ry||0;
-  const seated=mode!=="stand";
-  a.upper.position.y=seated?0:.42;
-  a.legs.position.y=seated?.02:.44;
-  a.legs.rotation.x=seated?-Math.PI/2:0;a.legs.position.z=seated?.15:0;
-  a.eyesO.visible=mode!=="sleep";a.eyesC.visible=mode==="sleep";
-  a.headG.rotation.set(0,0,mode==="sleep"?.22:0);
-  a.mug.visible=!!where.mug;a.mug.position.set(.28,.5,.25);
-  a.tool.visible=mode==="desk"&&(mb.acc==="hammer"||mb.acc==="clip");a.tool.position.set(-.42,.55,.15);a.tool.rotation.z=.5;
-  a.zz.forEach(z=>z.visible=mode==="sleep"&&!REDUCED);
-  if(mode==="desk"){a.hL.position.set(-.2,.55,.45);a.hR.position.set(.2,.55,.45);}
-  else if(where.mug){a.hL.position.set(-.3,.32,.18);a.hR.position.set(.26,.45,.25);}
-  else{a.hL.position.set(-.26,.2,.25);a.hR.position.set(.26,.2,.25);}
-  a.tag.position.set(0,(seated?1.58:2.0),0);
-  a.tag.material.map.dispose();a.tag.material.map=labelTexture(mb.short,st.work?"#2E7D4F":"#9AA7A3",st.work?`al lavoro dalle ${st.since}`:`torna ${st.next}`);a.tag.material.needsUpdate=true;
-  const im=a.tag.material.map.image;a.tag.scale.set(1.5,1.5*im.height/im.width,1);
+function setTag(a,st,seated){
+  a.tag.position.set(0,seated?1.58:2.0,0);
+  a.tag.material.map.dispose();
+  a.tag.material.map=labelTexture(a.mb.short,st.work?"#2E7D4F":"#9AA7A3",st.work?`al lavoro dalle ${st.since}`:`torna ${st.next}`);
+  a.tag.material.needsUpdate=true;const im=a.tag.material.map.image;a.tag.scale.set(1.5,1.5*im.height/im.width,1);
+}
+function placePose(a,place){
+  a.place=place;a.seated=place.seated;
+  a.g.position.copy(place.pos);a.g.rotation.set(0,place.ry,0);
+  a.upper.position.y=a.seated?0:.42;
+  a.legs.position.set(0,a.seated?.02:.44,a.seated?.15:0);a.legs.rotation.x=a.seated?-Math.PI/2:0;
+  a.legArr.forEach(l=>l.rotation.set(0,0,0));
+}
+function deskPlace(id){return {kind:"desk",pos:deskSeats[id].clone(),ry:0,seated:true};}
+function loungePlace(id){const s=loungeSpot[id];return {kind:"lounge",pos:new T.Vector3(...s.p),ry:s.ry,seated:s.pose==="sit"};}
+function ground(v){return new T.Vector3(v.x,0,v.z);}
+function routeOut(place){ // dal posto al corridoio davanti
+  if(place.kind==="desk"){const ax=place.pos.x+1.1;return [ground(place.pos),new T.Vector3(ax,0,place.pos.z),new T.Vector3(ax,0,CORR)];}
+  const p=[ground(place.pos)];
+  if(place.pos.z<-5.2)p.push(new T.Vector3(9.4,0,-3.6));
+  else if(place.seated&&place.pos.z<-4)p.push(new T.Vector3(place.pos.x,0,-3.95),new T.Vector3(3.9,0,-3.95));p.push(new T.Vector3(Math.max(3.2,Math.min(place.pos.x,9.5)),0,CORR));return p;
+}
+function startWalk(a,to){
+  const from=a.place;const pts=routeOut(from).concat(routeOut(to).reverse());
+  const clean=[pts[0]];pts.slice(1).forEach(p=>{if(p.distanceTo(clean[clean.length-1])>.05)clean.push(p);});
+  a.walk={pts:clean,i:0,to};
+  a.seated=false;a.upper.position.y=.42;a.legs.position.set(0,.44,0);a.legs.rotation.x=0;
+  a.g.position.copy(clean[0]);
 }
 
-const deskSeats={};
-function updateWorld(){
-  const now=romeNow();let li=0;
-  DATA.team.forEach((mb,i)=>{const st=status(mb,now),a=agents[mb.id];
+const deskSeats={},deskGroups={};
+function updateWorld(first){
+  const now=romeNow();
+  DATA.team.forEach(mb=>{const st=status(mb,now),a=agents[mb.id];
     screens[mb.id].on=st.work;
-    if(st.work){setPose(a,"desk",{pos:deskSeats[mb.id],ry:0},mb,st);}
-    else{const sp=LOUNGE[li++%LOUNGE.length];setPose(a,sp.pose==="sit"?"sleep":"stand",{pos:new T.Vector3(...sp.p),ry:sp.ry,mug:sp.mug},mb,st);}
+    const to=st.work?deskPlace(mb.id):loungePlace(mb.id);
+    const target=a.walk?a.walk.to:a.place;
+    if(!target||first||REDUCED){a.walk=null;placePose(a,to);}
+    else if(target.kind!==to.kind){if(a.walk){placePose(a,a.walk.to);}startWalk(a,to);}
+    setTag(a,st,to.seated);
   });
   // cielo e luce
   const h=now.h, night=h<7||h>=17, dusk=(h>=16&&h<17)||(h>=7&&h<8);
   windowMat.color.set(night?"#1A2550":dusk?"#B9A6D9":"#9CCBEA");
-  hemi.intensity=night?.55:.85;sun.intensity=night?.25:dusk?.6:.8;sun.color.set(dusk?"#FFD2A0":night?"#AFC3FF":"#FFFFFF");
+  hemi.intensity=night?.55:.68;sun.intensity=night?.25:dusk?.55:.62;sun.color.set(dusk?"#FFD2A0":night?"#AFC3FF":"#FFFFFF");
   drawClock(now);
 }
 function drawClock(now){
@@ -500,7 +541,7 @@ function init3D(){
   Object.assign(sun.shadow.camera,{left:-15,right:15,top:12,bottom:-12,near:1,far:50});sun.shadow.bias=-.0005;sun.shadow.radius=4;scene.add(sun);
   scene.add(new T.AmbientLight("#ffffff",.15));
   buildRoom();
-  DATA.team.forEach((mb,i)=>{const d=buildDesk(mb,i);deskSeats[mb.id]=d.seat;agents[mb.id]=buildAgent(mb);});
+  DATA.team.forEach((mb,i)=>{const d=buildDesk(mb,i);deskSeats[mb.id]=d.seat;deskGroups[mb.id]=d.group;agents[mb.id]=buildAgent(mb);});
   const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";camera.aspect=w/h;camera.updateProjectionMatrix();placeCamera();};
   new ResizeObserver(resize).observe(stage);resize();
   // trascina per ruotare, tocca per aprire
@@ -519,17 +560,100 @@ function init3D(){
   return true;
 }
 
-let lastT=0;
-function loop(ms){
-  const t=ms/1000;
-  for(const id in agents){const a=agents[id];
-    if(!REDUCED){
-      if(a.mode==="desk"){a.hL.position.y=.55+Math.max(0,Math.sin(t*18+a.phase))*.05;a.hR.position.y=.55+Math.max(0,Math.sin(t*18+a.phase+Math.PI))*.05;a.headG.rotation.x=Math.sin(t*1.3+a.phase)*.05;}
-      a.upper.position.y=(a.mode==="stand"?.42:0)+Math.sin(t*2+a.phase)*.012;
-      a.eyesO.scale.y=(Math.sin(t*1.7+a.phase*3)>.985)?.15:1;
-      if(a.mode==="sleep")a.zz.forEach((z,i)=>{const p=((t*.45+i*.5+a.phase)%1);z.position.set(.3+p*.35,1.45+p*.8,0);z.material.opacity=Math.sin(p*Math.PI);});
+let lastT=0,prevMs=0;
+const WALK_SPEED=2.3;
+function animAgent(a,t,dt){
+  const P=a.props, c=t+a.phase, sit=a.seated;
+  let hx=0,hy=0,hz=0,ux=0,uz=0,closed=false,yawn=0,zzOn=false,notesOn=false,blinkOK=true;
+  const tL=a.tL,tR=a.tR;
+  tL.set(-.27,sit?.22:.25,.22);tR.set(.27,sit?.22:.25,.22);
+  // visibilità oggetti
+  const working=a.place&&a.place.kind==="desk"&&!a.walk, lounge=!working&&!a.walk;
+  P.mug.visible=lounge&&(a.ges==="watch"||a.ges==="sip");
+  if(P.hammer){P.hammer.visible=true;P.hammer.position.set(0,0,0);P.hammer.rotation.set(0,0,0);P.hammerInner.rotation.set(0,0,0);}
+  if(P.clip)P.clip.visible=!a.walk&&(lounge||a.ges==="clip");
+  if(P.book)P.book.visible=lounge;
+  if(P.pencil)P.pencil.visible=lounge;
+  if(P.paper)P.paper.visible=lounge;
+
+  if(a.walk){
+    const w=a.walk;let step=WALK_SPEED*dt;
+    while(step>0&&w.i<w.pts.length-1){const to=w.pts[w.i+1],d=a.g.position.distanceTo(to);
+      if(d<=step){a.g.position.copy(to);step-=d;w.i++;}else{const dir=to.clone().sub(a.g.position).normalize();a.g.position.addScaledVector(dir,step);step=0;}}
+    const nxt=w.pts[Math.min(w.i+1,w.pts.length-1)],dx=nxt.x-a.g.position.x,dz=nxt.z-a.g.position.z;
+    if(Math.abs(dx)+Math.abs(dz)>.01){const want=Math.atan2(dx,dz);let d=want-a.g.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));a.g.rotation.y+=d*Math.min(1,dt*10);}
+    const s=Math.sin(t*9.5);a.legArr[0].rotation.x=s*.55;a.legArr[1].rotation.x=-s*.55;
+    a.g.position.y=Math.abs(Math.cos(t*9.5))*.05;
+    tL.set(-.3,.28,.15+s*.14);tR.set(.3,.28,.15-s*.14);uz=s*.05;
+    if(w.i>=w.pts.length-1){placePose(a,w.to);a.walk=null;}
+  } else if(working){
+    const k1=Math.max(0,Math.sin(t*18+a.phase))*.05,k2=Math.max(0,Math.sin(t*18+a.phase+Math.PI))*.05;
+    tL.set(-.2,.55+k1,.45);tR.set(.2,.55+k2,.45);
+    hx=Math.sin(t*1.3+a.phase)*.05;hy=-.15+Math.sin(t*.37+a.phase)*.1;
+    switch(a.ges){
+      case"hammer":{const p=c%5.5;
+        if(p<1.3){const up=p<.85?ease(p/.85):1-ease((p-.85)/.2);tR.set(.34,.55+up*.6,.35-up*.12);
+          P.hammer.rotation.x=-up*1.4;hx=-.1*up;if(p>1.0&&p<1.3){const k=1-(p-1.0)/.3;deskGroups[a.mb.id].position.y=Math.sin(p*90)*.02*k;}}
+        else deskGroups[a.mb.id].position.y=0;
+        break;}
+      case"music":hx+=Math.sin(t*8.4)*.12;uz=Math.sin(t*4.2)*.05;notesOn=true;break;
+      case"sketch":{const w=win(c%7,0,3,.5);ux=.16*w;tL.lerp(new T.Vector3(-.07,.83,.34),w);hz=.12*w;hy*=1-w;break;}
+      case"clip":{tL.set(-.32,.62,.36);const w=win(c%4,0,1.1,.25);tR.lerp(new T.Vector3(-.24+Math.sin(t*14)*.03,.68,.42),w);hx+=.12*w;break;}
+      case"watch":{const w=win(c%6,0,1.8,.35);tR.lerp(new T.Vector3(-.5,.86,.6),w);hy=mix(hy,-.45,w);hx+=Math.sin(t*6)*.06*w;break;}
+      case"read":{const w=win(c%6,0,.9,.25);tR.lerp(new T.Vector3(0,1.0,.34),w);break;}
+      default:{const w=win(c%9,0,1.8,.4);tL.lerp(new T.Vector3(-.32,1.45,.05),w);tR.lerp(new T.Vector3(.32,1.45,.05),w);hx=mix(hx,-.28,w);closed=w>.5;yawn=w;}
+    }
+  } else {
+    // in pausa: gesto personale
+    hy=Math.sin(c*.35)*.35;
+    switch(a.ges){
+      case"watch":{tR.set(.3,.42,.25);const wW=win(c%7,.5,2.4,.35),wS=win(c%7,3.6,4.9,.3);
+        tL.lerp(new T.Vector3(-.06,.62,.3),wW);hx=.38*wW-.12*wS;hy=mix(hy,-.3,wW);tR.lerp(new T.Vector3(.1,.86,.3),wS);
+        a.legArr[1].rotation.x=-Math.max(0,Math.sin(t*8))*.18*(1-wW);break;}
+      case"sip":{tR.set(.3,.42,.25);const wS=win(c%6,2.6,3.9,.3);tR.lerp(new T.Vector3(.1,.86,.3),wS);hx=-.12*wS;break;}
+      case"read":{tL.set(-.08,.56,.36);tR.set(.16,.56,.36);hx=.3;hy*=.2;
+        const wF=win(c%6,2.5,3.4,.25),wG=win(c%6,4.5,5.3,.25);
+        tR.lerp(new T.Vector3(-.2,.64,.4),wF);if(P.paper)P.paper.rotation.y=-wF*1.2;
+        tR.lerp(new T.Vector3(0,1.0,.34),wG);hx=mix(hx,0,wG);break;}
+      case"clip":{tL.set(-.12,.42,.36);if(P.clip)P.clip.rotation.x=-.7;
+        tR.set(.04+Math.sin(t*9)*.04,.46+Math.sin(t*13)*.015,.4);hx=.32;hy*=.15;
+        const w=win(c%8,5,6.6,.35);tR.lerp(new T.Vector3(.06,.8,.33),w);hx=mix(hx,-.05,w);hy=mix(hy,Math.sin(t*1.5)*.5,w);break;}
+      case"nap":{closed=true;zzOn=true;hz=.25+Math.sin(t*.8)*.04;hx=.18+Math.sin(t*.8)*.06;
+        const w=win(c%11,7,7.7,.12);if(w>.3){closed=false;zzOn=false;}hz=mix(hz,0,w);hx=mix(hx,-.15,w);uz=.06*w;hy*=.2;blinkOK=false;break;}
+      case"stretch":{const wU=win(c%8,1,3,.45),wL=win(c%8,4,6,.4);
+        tL.lerp(new T.Vector3(-.32,1.45,0),wU);tR.lerp(new T.Vector3(.32,1.45,0),wU);hx=-.3*wU;closed=wU>.5;yawn=wU;
+        hy=mix(hy*.3,Math.sin(t*1.6)*.6,wL);break;}
+      case"sketch":{tL.set(-.1,.45,.38);if(P.book)P.book.rotation.x=-.7;
+        tR.set(.02+Math.cos(t*7)*.05,.48+Math.sin(t*9)*.02,.4);hx=.32;hy*=.15;
+        const w=win(c%9,5.5,7.5,.4);tL.lerp(new T.Vector3(-.05,.82,.42),w);if(P.book)P.book.rotation.x=mix(-.7,-.1,w);
+        tR.lerp(new T.Vector3(.28,.3,.22),w);hx=mix(hx,-.05,w);hz=.1*w;break;}
+      case"hammer":{tR.set(.3,.5,.3);const p=c%5;
+        if(p<2){P.hammerInner.rotation.z=ease(p/2)*Math.PI*4;}
+        else if(p<3.2){const q=(p-2)/1.2,hgt=Math.sin(q*Math.PI)*1.0;P.hammer.position.y=hgt;P.hammerInner.rotation.x=q*Math.PI*4;
+          tR.y=.5+Math.sin(Math.min(1,q*2.5)*Math.PI)*.15;hx=-.45*Math.sin(q*Math.PI);hy*=.2;}
+        else{const w=win(p,3.3,4.8,.3);tR.lerp(new T.Vector3(.24,.82,.05),w);P.hammer.rotation.x=.9*w;}
+        break;}
+      case"music":{notesOn=true;uz=Math.sin(t*4.2)*.1;hx=Math.sin(t*8.4)*.12;hy*=.4;
+        tL.set(-.32,.42+Math.max(0,Math.sin(t*4.2))*.18,.22);tR.set(.32,.42+Math.max(0,-Math.sin(t*4.2))*.18,.22);
+        a.legArr[0].rotation.z=Math.max(0,Math.sin(t*4.2))*.12;a.legArr[1].rotation.z=-Math.max(0,-Math.sin(t*4.2))*.12;break;}
     }
   }
+  // applica con morbidezza
+  const kH=1-Math.exp(-dt*16),kB=1-Math.exp(-dt*8);
+  a.hL.position.lerp(tL,kH);a.hR.position.lerp(tR,kH);
+  a.headG.rotation.x=mix(a.headG.rotation.x,hx,kB);a.headG.rotation.y=mix(a.headG.rotation.y,hy,kB);a.headG.rotation.z=mix(a.headG.rotation.z,hz,kB);
+  a.upper.rotation.x=mix(a.upper.rotation.x,ux,kB);a.upper.rotation.z=mix(a.upper.rotation.z,uz,kB);
+  a.upper.position.y=(a.seated?0:.42)+Math.sin(t*2+a.phase)*.012;
+  const blink=blinkOK&&Math.sin(t*1.7+a.phase*3)>.985;
+  a.eyesC.visible=closed;a.eyesO.visible=!closed;a.eyesO.scale.y=blink?.15:1;
+  a.mouth.scale.set(1+yawn*.4,1+yawn*4,1);
+  a.zz.forEach((z,i)=>{z.visible=zzOn;if(zzOn){const p=((t*.45+i*.5+a.phase)%1);z.position.set(.3+p*.35,1.45+p*.8,0);z.material.opacity=Math.sin(p*Math.PI);}});
+  a.notes.forEach((n,i)=>{n.visible=notesOn;if(notesOn){const p=((t*.5+i/3+a.phase)%1);n.position.set(Math.sin((p+i)*5)*.35,(sit?1.3:1.7)+p*.9,0);n.material.opacity=Math.sin(p*Math.PI);}});
+}
+
+function loop(ms){
+  const t=ms/1000,dt=Math.min(.05,prevMs?(ms-prevMs)/1000:.016);prevMs=ms;
+  for(const id in agents)animAgent(agents[id],REDUCED?0:t,REDUCED?1:dt);
   if(ms-lastT>60||REDUCED){for(const id in screens)drawScreen(screens[id],REDUCED?0:t);lastT=ms;}
   renderer.render(scene,camera);
   requestAnimationFrame(loop);

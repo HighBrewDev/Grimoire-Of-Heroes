@@ -7,5 +7,7 @@ Ufficio 3D del team automatico, pubblicato per Capo su https://claude.ai/artifac
 - Chi cambia la grafica (designer) modifica il resto del file qui su main e non tocca `DATA`. La routine serale usa il codice di questo file e ci rimette i dati del giorno, poi ripubblica sullo stesso link.
 - Prova in locale: `python3 -m http.server` e apri `docs/sala/sala-team.html` (serve la rete per Three.js e i font).
 
-## In coda per il designer (priorità bassa, solo se non ha altro)
-- Animazioni di idle personalizzate per i pupini: ognuno con il suo gesto quando è in pausa (es. il designer schizza su un taccuino, il distruttore fa roteare il martello, il power user muove la testa con le cuffie, il report sfoglia un foglio, il leader guarda l'orologio, chi è alla macchinetta sorseggia). Rispettare `prefers-reduced-motion`, nessun calo di fluidità su telefono.
+## Animazioni dei pupini
+- Fatte il 10/11: ogni pupino ha un gesto in pausa (leader guarda l'orologio e beve il caffè, test spunta la cartellina, dev mattina sonnecchia, dev sera si stiracchia, designer disegna sul taccuino, distruttore fa roteare e lancia il martello, power user balla con le cuffie, report legge e gira pagina), gesti anche al lavoro, e camminano tra scrivania e angolo caffè quando cambia lo stato.
+- Il gesto si sceglie da `GESTURE_BY_ID` (o `idle` nell'agente in `DATA`); agenti nuovi ricevono una scrivania e un posto in piedi in automatico.
+- Idee facoltative per il designer: gesti nuovi per agenti nuovi, piccole reazioni al clic.
