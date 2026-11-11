@@ -151,6 +151,12 @@ module.exports = {sezione:'levelup', test:[
     assert.ok(opts.includes('Rogue'), 'manca la classe attuale della riga');
     assert.ok(!opts.includes('Fighter'), 'la riga Rogue offre Fighter, che è già la classe principale (Fighter 3 / Fighter 1)');
   }],
+  ['B-031 talento Grappler al livello 4: +1 a Forza o Destrezza', async ({open}) => {
+    const app = await open(); await openLU(app);
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.set('#lu_feat', 'Grappler'); await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.abilities.str + h.abilities.dex, 31, `For ${h.abilities.str}, Des ${h.abilities.dex} (prima 16 e 14)`);
   ['B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1)', async ({open}) => {
     const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
     const opts = await app.page.$$eval('#f_class option', o => o.map(x => x.value));

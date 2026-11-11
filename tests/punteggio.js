@@ -35,6 +35,7 @@ const BUG_SEZIONE = {
   'B-013':'zaino', 'B-014':'eroe', 'B-015':'importexport',
   'B-016':'importexport', 'B-017':'zaino', 'B-018':'combattimento', 'B-019':'telefono', 'B-020':'workshop',
   'B-021':'levelup', 'B-022':'levelup', 'B-023':'combattimento', 'B-024':'importexport', 'B-025':'levelup',
+  'B-026':'caratteristiche', 'B-027':'levelup', 'B-028':'levelup', 'B-029':'robustezza', 'B-030':'telefono', 'B-031':'levelup',
   'B-026':'caratteristiche', 'B-027':'levelup', 'B-028':'levelup', 'B-029':'robustezza',
   'B-032':'caratteristiche', 'B-033':'levelup', 'B-034':'eroe', 'B-035':'combattimento', 'B-036':'combattimento', 'B-037':'incontro',
 };

@@ -1,63 +1,11 @@
 # Diario del team
 
-## 2026-11-11 · team leader
-- **Stato**: live = main (`grimoire-fs1110b`), controllo a 1440x900 e 390x844 sul sito e in locale senza errori. Supabase risponde dalla sandbox (401 senza chiave = attivo). PR #14 unita: B-027 chiuso, `levelup` 22/23. Punteggio +158 ↑ (193/210), nessuna sezione rossa.
-- **Piano**: Combattimento (0, la peggiore) prende entrambe le sessioni frontend (B-023 mattina, B-036 + B-037 + B-032 sera). Backend: revisione XSS a mezzogiorno, B-020 e avviso "nuova versione" di notte. Designer su B-014 (filtro dello scaffale). Tester su riposi, morte e payload XSS.
-- **Per Capo**: PR #16 (B-016, unico bug alto) e PR #6 da unire; ok per il keep-alive di Supabase; decisione su B-011.
-
-## 2026-11-11 · test
-- **Suite** su main 073375c: **193/210** superati, punteggio totale **+158** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento 0, caratteristiche +6, eroe +7. Dettagli in docs/scoreboard.md.
-- **Test nuovi** (8, in combattimento, la sezione più bassa): B-023 riposo breve per Rage (Barbaro 5), Wild Shape (Druido 5), Channel Divinity (Paladino 5 e Chierico 6), Bardic Inspiration (Bardo 5); B-036 danno massiccio; riposo breve dei Focus Points; riposo lungo che rimette tutte le risorse. Rossi i 6 legati a B-023/B-036, verdi gli altri 2.
-- **Test corretto** (errore del test, non dell'app): il vecchio B-018 cercava Import nel capitolo Combattimento, ora va prima su Eroe. Ora passa.
-- **Punteggio**: `tests/punteggio.js` riconosce anche "Risolto: backend · data" (B-017 e B-018 ora prendono il +3) e assegna B-026…B-029 alla loro sezione (B-029 a robustezza).
-- **Non toccato**: il test vecchio "livello 18 → 19 … può superare 20" segue ancora la regola sbagliata (passa grazie a B-027); lo corregge la PR #14, in attesa di Capo.
-
-## 2026-11-10 · backend notte
-- **Fatto** (su main) · sezione **Import/export e salvataggio**, nella zona del piano (`duplicate`, `importBackup`, `bindValue`):
-  - **B-024** ([f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab)) · `duplicate` dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…; copiare una copia la rinumera invece di accumulare "(copy)") e passa da `fixup`. `importBackup` conta gli eroi identici invece di usare un insieme: due copie mai modificate nel file tornano entrambe (il caso 38/39 del power user), e ripristinare due volte lo stesso file non crea doppioni.
-  - **B-035** ([ca54499](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/ca54499)) · `bindValue` legge i campi numerici con `Number` troncato (`1e3` → 1000, `2.9` → 2) e uscendo dal campo mostra sempre il valore salvato. Preso perché è nella mia zona di oggi (`bindValue`).
-  - `sw.js`: `CACHE` → `grimoire-bn1110b`.
-- **B-016 in [PR #16](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/16)** (non tocca Supabase; il piano prevede l'unione dopo i test, ma per prudenza non l'ho unita io): `renderPage` ricorda l'eroe per cui ha disegnato i campi (`G.pageHero`); `bindValue` scrive solo su quell'eroe. Se un'altra scheda l'ha cancellato, non salva niente e mostra "This hero was deleted in another tab: what you typed here is not saved." Mai su `active()` cambiato.
-- **Test**: 3 nuovi in `importexport` (B-024 due Duplicate dello stesso eroe + doppio ripristino; B-024 Duplicate a catena con nome di 80 caratteri; B-016 avviso), rossi prima della correzione. Suite completa prima **186/200** (main 756b88c), dopo **190/202** su main: passano B-024 e B-035, nessun test che passava ora fallisce. Nella PR **192/203**: passano anche B-016 ×3; `importexport` 20/20. File dei risultati ripristinato.
-- **Scelta prudente**: se l'eroe è stato cancellato altrove il testo scritto va perso (con avviso) invece di resuscitare l'eroe: la cancellazione è un gesto esplicito dell'altra scheda.
-- **Per Test e punteggio**: B-024 e B-035 in "Risolti" con test verde. Il test vecchio B-018 fallisce ancora solo perché cerca Import nel capitolo Combattimento (già segnalato).
-- **Supabase**: non provato (rete della sandbox), niente richieste verso il progetto.
-- **File**: index.html, sw.js, tests/sezioni/importexport.test.js, docs/bug-beta.md, docs/team-log.md, docs/team-plan.md.
-- **Resta**: B-020 (ciclo quadratico dell'import 5etools), revisione XSS dei campi homebrew, avviso "Nuova versione" del service worker.
-
-## 2026-11-10 · power user (sera)
-- **Fatto** · sessione di gioco con riposi e backup, come da piano, su main e9629ca: suite 186/198, nessuna regressione. Dettagli nel diario di docs/bug-beta.md.
-- **Bug nuovi** (2, ognuno con un test che oggi fallisce): **B-036 [media] combattimento** (un danno a 0 PF azzera i fallimenti dei tiri contro la morte: un eroe morente non muore mai per i colpi; danno massiccio non segnalato); **B-037 [bassa] incontro** (Heal dal tracciatore lascia i tiri contro la morte accesi). `tests/punteggio.js`: B-036 e B-037 in `BUG_SEZIONE`.
-- **Verifiche**: B-023 ancora aperto, allargato a Rage, Wild Shape, Channel Divinity del Paladino. B-024 ancora aperto, con un caso nuovo senza nomi lunghi (due copie identiche dello stesso originale → 38/39 al ripristino): la correzione del backend deve coprirlo.
-
-## 2026-11-10 · distruttore (sera, dopo il frontend)
-- **Fatto** · verifica di B-026/B-028 su main b8462eb: suite 186/194, nessuna regressione, B-026 e B-028 verdi. B-027 aspetta PR #14, B-016/B-024 la sessione backend.
-- **Bug nuovi** (4, tutti [bassa], ognuno con un test che oggi fallisce): B-032 caratteristiche (Cos al minimo + danno o Level up + Cos rialzata: PF massimi gonfiati, resto di B-026); B-033 level up (il menu della classe principale offre una classe già in multiclasse, resto di B-028); B-034 eroe (classe/specie/background fuori dai menu mostrati come Barbarian/Dragonborn/Acolyte); B-035 combattimento (`1e3` nel Max HP salva 1 e porta i PF attuali a 1).
-
-## 2026-11-10 · frontend sera
-- **Fatto** ([0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426), su main) · sezioni **Caratteristiche** e **Level up e multiclasse**, nella zona del piano (`conHp`, menu `data-mc`) più la riga della multiclasse in `fixup`:
-  - **B-026** · `conHp`: PF massimi mai sotto 1 per livello, danno subito invariato; quello che una Cos bassa non ha potuto togliere resta in `hp.conAdj` (si azzera se i PF cambiano per altro), quindi − e poi + ridanno gli stessi PF. Eroe a 0 PF non curato alzando la Cos.
-  - **B-028** · il menu della riga di multiclasse offre solo classi che l'eroe non ha; `fixup` unisce righe doppie e una riga uguale alla prima classe.
-  - `sw.js`: `CACHE` → `grimoire-fs1110a`.
-- **B-027 in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14)** (in attesa di Capo): "+2" e "+1/+1" fermi a 20 anche al 19; scegliendo un Epic Boon si sceglie la caratteristica che prende +1 fino a 30. **Scelta prudente**: il piano chiedeva di correggere anche il test vecchio "livello 18 → 19 … può superare 20" (si aspettava 22 da "+2", cioè il bug), ma la routine dice di non toccare i test; con la sola correzione quel test diventa rosso su main. Per questo codice e test corretto (ora Boon of Combat Prowess +1 Forza → 21) sono in PR, non su main. Nella PR suite 187/194, nessuna regressione.
-- **Test**: suite completa prima **184/194** (main 86a67ec), dopo **186/194** su main: passano B-026 e B-028. Nessun test che passava ora fallisce. `levelup` + `caratteristiche` 30/31 su main (resta B-027, chiuso dalla PR). File `tests/risultati/2026-11-10.json` ripristinato.
-- **Prova a mano** (Playwright, 1440x900 e 390x844): Mago 20 ferito 30/82 → Cos 1 0/20 → Cos 10 30/82 → Cos 30 230/282 → Cos 10 30/82; morente 0/82 → Cos 14 0/122 → Cos 10 0/82. Import "Fighter 3 + riga Fighter 2" → Fighter 3; "Rogue 2, rogue 1 (Thief), Wizard 2" → Rogue 3 (Thief) / Wizard 2. Console pulita, scrollWidth uguale alla finestra.
-- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md, docs/team-plan.md (PR #14 in "In attesa di Capo"); nella PR anche tests/sezioni/levelup.test.js.
-- **Per Test e punteggio**: B-026 e B-028 in "Risolti" con test verde. Il test B-018 vecchio cerca Import nel capitolo Combattimento (timeout), già segnalato dal backend.
-- **Resta**: B-029 (`modal()` trattiene il focus), B-031 dopo PR #6, B-023 riposo breve. I Boon offrono tutte le caratteristiche (alcuni nell'SRD ne limitano la scelta).
-
-## 2026-11-10 · backend
-- **Nota**: il piano non aveva un compito "Backend"; ho preso la voce 2 del backlog (B-017, B-018: validazione dei numeri), lontano da B-016/B-024 della sessione serale. Sessione interrotta presto su richiesta di Capo (stop fino alle 19): consegnato solo questo.
-- **Fatto** (su main) · sezioni **Zaino** e **Combattimento**: nuovi limiti `LIM` (PF 9999, monete 999.999.999, XP 9.999.999, regolazione CA ±20). `bindValue` rispetta `min`/`max` dei campi numerici e, al cambio, mostra il valore tenuto; `fixup` porta negli stessi intervalli monete, XP, PF e regolazione CA da import, sync e caricamento; `getAC` mai sotto 0; `hpNum` e `addXP` limitati. `sw.js`: alzata `CACHE`.
-- **Test**: 4 nuovi (B-017 XP negativa, B-017 import monete negative/enormi, B-018 PF massimi enormi nel campo, B-018 import PF 1e308), tutti rossi prima. Suite prima **179/190**, dopo **184/194**, nessuna regressione. File dei risultati ripristinato.
-- **Per Test e punteggio**: il test vecchio "B-018 CA e PF…" ora passa la parte CA ma poi clicca Import dal capitolo Combattimento, dove il pulsante non esiste (timeout): serve `go('hero')` prima dell'import. Non l'ho toccato.
-- **Scelta prudente**: un eroe già salvato con valori assurdi (es. monete negative) viene corretto al caricamento e poi risincronizzato; i valori normali non cambiano.
-- **File**: index.html, sw.js, tests/sezioni/zaino.test.js, tests/sezioni/combattimento.test.js, docs/bug-beta.md, docs/team-log.md.
-- **Resta**: B-020 (import 5etools quadratico, il test ora passa ma il ciclo va comunque cercato), avviso "Nuova versione" del service worker.
-## 2026-11-10 · team leader (aggiornamento delle 17:40)
-- **Stato**: live = main, controllo a 1440x900 e 390x844 senza problemi; Supabase non raggiungibile dalla sandbox. Suite adesso 179/190, nessuna regressione (rossi: B-014, B-016 ×2, B-017, B-018, B-023, B-024, B-026…B-029). Punteggio del mattino +105 ↓, Level up ancora ROSSO (giorno 1) per B-027/B-028.
-- **Piano** con la nuova divisione frontend/backend: frontend sera su B-027, B-026, B-028 (zona `applyLevelUp`/`conHp`); backend notte su B-016 come PR e B-024 (zona `bindValue`/`duplicate`/`importBackup`); distruttore e power user sulle correzioni di stasera e sui riposi (B-023). Backlog diviso in frontend, backend, design, con tour guidato e keep-alive di Supabase.
-- **Per Capo**: PR #6 del tester extra (solo bug e test) da unire; ok per il keep-alive di Supabase.
+## 2026-11-10 · tester extra
+- **Fatto**: sessione di beta test di circa un'ora, chiesta da Capo, sulle correzioni di oggi (Level up b5f0d49, Telefono 7cb1ec7). Live = main 4452eb8. Nessun codice dell'app toccato. Dettagli in docs/bug-beta.md, "Diario dei test".
+- **Reggono**: B-021 (Guerriero 1→20 da telefono, multiclasse anche sulla seconda classe), B-022 (Cos al massimo, +1/+1, PF tirati, multiclasse), B-025, B-019 nei casi del bug, pulsanti Level up 44 px.
+- **Bug**: nuovi **B-030 [media]** telefono: danno degli attacchi, privilegi/talenti, incantesimi homebrew e nome in Incontro allargano ancora la pagina (689–850 px); **B-031 [bassa]** Grappler non dà il +1. Confermati con casi in più B-026 (− e + della Cos curano anche un eroe a 0 PF) e B-027 (Epic Boon senza +1) del distruttore, trovati in parallelo.
+- **Test**: suite completa 179/186 su 4452eb8, nessuna regressione; 4 test nuovi che falliscono (telefono B-030 ×2, caratteristiche B-026 con eroe ferito, levelup B-031); B-026…B-031 in `BUG_SEZIONE`. File `tests/risultati/2026-11-10.json` non toccato.
+- **Per sviluppo**: B-026 e B-027/B-031 nascono da `conHp` e dal ramo `feat` di `applyLevelUp`; B-030 è lo stesso blocco CSS di B-019 esteso a `.chip`, `th` di Tratti, nomi degli incantesimi e righe dell'Incontro.
 
 ## 2026-11-10 · distruttore
 - **Fatto** · sessione serale sul Level up di stamattina (server locale = main 4452eb8). Suite 179/186, nessuna regressione; le correzioni B-021, B-022, B-025 reggono su tutte le 12 classi 1 → 20 e su una multiclasse a tre. La PR di B-016 non è ancora arrivata: niente da verificare sulle tre schede.

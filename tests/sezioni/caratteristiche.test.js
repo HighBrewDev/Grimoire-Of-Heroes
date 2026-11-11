@@ -66,6 +66,12 @@ module.exports = {sezione:'caratteristiche', test:[
     h = await app.hero();
     assert.deepStrictEqual([h.abilities.con, h.hp.max, h.hp.cur], [10, 82, 82], `dopo Cos 10 → 1 → 10 PF ${h.hp.cur}/${h.hp.max} invece di 82/82`);
   }],
+  ['B-026 eroe ferito: − e + sulla Costituzione non lo curano (Paladino 5 a 3/44 PF resta 3/44)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Paladin', subclass:'Devotion', level:5, abilities:{str:16,dex:10,con:14,int:8,wis:12,cha:14}, hp:{cur:3,max:44,temp:0}})]});
+    await app.go('abilities');
+    await app.click('stepAb', 'con:-1'); await app.click('stepAb', 'con:1');
+    const h = await app.hero();
+    assert.deepStrictEqual([h.abilities.con, h.hp.cur, h.hp.max], [14, 3, 44], `PF ${h.hp.cur}/${h.hp.max} dopo − e +`);
   ['B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20)', async ({open}) => {
     const app = await open({heroes:[fx.blank({class:'Wizard', subclass:'Evoker', level:20, xp:355000, hp:{cur:82,max:82,temp:0}})]}); await app.go('abilities');
     for (let i = 0; i < 9; i++) await app.click('stepAb', 'con:-1');
