@@ -745,7 +745,7 @@ function updateWorld(first){
   // cielo e luce
   const h=now.h, night=h<7||h>=17, dusk=(h>=16&&h<17)||(h>=7&&h<8);
   windowMat.color.set(night?"#1A2550":dusk?"#B9A6D9":"#9CCBEA");
-  baseH=night?.55:.68;baseS=night?.25:dusk?.55:.62;if(partyT<=0){hemi.intensity=baseH;sun.intensity=baseS;}
+  baseH=night?.55:dusk?.5:.42;baseS=night?.25:dusk?.42:.45;if(partyT<=0){hemi.intensity=baseH;sun.intensity=baseS;}
   if(cityLights){cityLights.opacity=night?1:dusk?.5:0;lampLight.intensity=night?.7:.25;}
   sun.color.set(dusk?"#FFD2A0":night?"#AFC3FF":"#FFFFFF");
   drawClock(now);
