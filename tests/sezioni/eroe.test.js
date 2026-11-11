@@ -122,4 +122,9 @@ module.exports = {sezione:'eroe', test:[
     });
     assert.ok(n > 0, 'nessun campo di ricerca/filtro vicino allo scaffale degli eroi');
   }],
+  ['B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Runecarver', species:'Popolo del Muschio', background:'Pirata', level:2, multi:[{class:'Blood Hunter', subclass:'', level:1}]})]});
+    const v = await app.page.evaluate(() => ['#f_class', '#f_species', '#f_bg', 'select[data-mc="0:class"]'].map(s => document.querySelector(s)?.value));
+    assert.deepStrictEqual(v, ['Runecarver', 'Popolo del Muschio', 'Pirata', 'Blood Hunter'], `i menu mostrano ${v.join(', ')} per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata`);
+  }],
 ]};

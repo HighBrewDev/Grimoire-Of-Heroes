@@ -35,6 +35,8 @@ const BUG_SEZIONE = {
   'B-013':'zaino', 'B-014':'eroe', 'B-015':'importexport',
   'B-016':'importexport', 'B-017':'zaino', 'B-018':'combattimento', 'B-019':'telefono', 'B-020':'workshop',
   'B-021':'levelup', 'B-022':'levelup', 'B-023':'combattimento', 'B-024':'importexport', 'B-025':'levelup',
+  'B-026':'caratteristiche', 'B-027':'levelup', 'B-028':'levelup', 'B-029':'robustezza',
+  'B-032':'caratteristiche', 'B-033':'levelup', 'B-034':'eroe', 'B-035':'combattimento', 'B-036':'combattimento', 'B-037':'incontro',
 };
 const INDIZI = [
   [/390|telefono|mobile|tocco/i, 'telefono'], [/workshop|homebrew/i, 'workshop'], [/level ?up|multiclass/i, 'levelup'],
@@ -59,7 +61,7 @@ function leggiBug(){
     const grav = ['critica', 'alta', 'media', 'bassa'].find(g => tag.includes(g)) || (tag.includes('ux') ? 'ux' : 'media');
     const ux = tag.includes('ux');
     const trovato = (b.match(/Trovato da:[^\n]*?(\d{4}-\d{2}-\d{2})/) || [])[1] || null;
-    const chiuso = (b.match(/Risolto\**\s*(?:il\s*)?(\d{4}-\d{2}-\d{2})/) || [])[1] || null;
+    const chiuso = (b.match(/Risolto\**:?[^\n\d]{0,40}?(\d{4}-\d{2}-\d{2})/) || [])[1] || null; // "Risolto 2026-11-10", "Risolto il …", "Risolto: backend · 2026-11-10"
     const dove = (b.match(/- Dove:([^\n]*)/) || [])[1] || m[4];
     const sezione = BUG_SEZIONE[m[1]] || (INDIZI.find(([re]) => re.test(dove + ' ' + m[4])) || [])[1] || 'robustezza';
     return {id:m[1], grav, ux, peso:ux && grav === 'bassa' ? PESO.ux : PESO[grav], titolo:m[4].trim(), trovato, chiuso, stato, sezione};

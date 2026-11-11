@@ -144,6 +144,28 @@ module.exports = {sezione:'importexport', test:[
     const n = (await b.store()).chars.length;
     assert.strictEqual(n, 5, `dopo il ripristino ${n - 1} eroi su 4 (${await b.toast()})`);
   }],
+  ['B-024 due Duplicate dello stesso eroe: nomi diversi e il ripristino li riporta tutti', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.KESSA)]});
+    await app.click('duplicate'); await app.click('pick', 'tkessa'); await app.click('duplicate');
+    const names = (await app.store()).chars.map(c => c.name);
+    assert.strictEqual(new Set(names).size, 3, 'nomi: ' + names.join(' | '));
+    await app.click('export');
+    const [dl] = await Promise.all([app.page.waitForEvent('download'), app.click('exportAll')]);
+    const txt = require('fs').readFileSync(await dl.path(), 'utf8');
+    const b = await open({heroes:[fx.hero(fx.VALERIA)]});
+    await importText(b, txt); await b.page.waitForTimeout(300);
+    assert.strictEqual((await b.store()).chars.length, 4, await b.toast());
+    await importText(b, txt); await b.page.waitForTimeout(300);
+    assert.strictEqual((await b.store()).chars.length, 4, 'secondo ripristino dello stesso file: doppioni');
+  }],
+  ['B-024 Duplicate a catena: il nome resta entro 80 caratteri e non accumula "(copy)"', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {name:'V'.repeat(80)})]});
+    for (let i = 0; i < 4; i++) await app.click('duplicate');
+    const names = (await app.store()).chars.map(c => c.name);
+    assert.strictEqual(new Set(names).size, 5, 'nomi uguali: ' + names.join(' | '));
+    assert.ok(names.every(n => n.length <= 80), 'nome oltre 80: ' + names.map(n => n.length).join(','));
+    assert.ok(names.every(n => (n.match(/\(copy/g) || []).length <= 1), 'copy ripetuto: ' + names.join(' | '));
+  }],
   ['import di un elenco di due eroi: entrano entrambi e restano dopo la ricarica', async ({open}) => {
     const app = await open();
     await importText(app, [fx.blank({id:'x1', name:'Primo Importato'}), fx.blank({id:'x2', name:'Secondo Importato'})]);

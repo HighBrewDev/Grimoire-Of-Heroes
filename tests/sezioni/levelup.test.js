@@ -151,4 +151,11 @@ module.exports = {sezione:'levelup', test:[
     assert.ok(opts.includes('Rogue'), 'manca la classe attuale della riga');
     assert.ok(!opts.includes('Fighter'), 'la riga Rogue offre Fighter, che è già la classe principale (Fighter 3 / Fighter 1)');
   }],
+  ['B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1)', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
+    const opts = await app.page.$$eval('#f_class option', o => o.map(x => x.value));
+    if (opts.includes('Rogue')) await app.set('#f_class', 'Rogue');
+    const h = await app.hero(), all = [h.class, ...h.multi.map(m => m.class)];
+    assert.strictEqual(new Set(all).size, all.length, `classe doppia dopo aver scelto Rogue come classe principale: ${all.join(' / ')}`);
+  }],
 ]};

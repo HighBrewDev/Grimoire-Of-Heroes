@@ -110,6 +110,7 @@ module.exports = {sezione:'combattimento', test:[
     await app.set('#f_acb', '-999');
     const v = parseInt(await ac(app), 10);
     assert.ok(v >= 0, `CA mostrata ${v}`);
+    await app.go('hero'); // il pulsante Import è nel capitolo Eroe
     await app.click('import'); await app.page.fill('#impTxt', JSON.stringify({name:'Enorme', abilities:{str:10}, class:'Fighter', level:20, hp:{cur:1e308, max:1e308, temp:1e308}})); await app.click('doImport');
     await app.go('combat');
     const t = await app.text('#page');
@@ -140,5 +141,59 @@ module.exports = {sezione:'combattimento', test:[
     await app.go('combat');
     const t = await app.text('#page');
     assert.ok(!/e\+\d/.test(t), 'PF in notazione esponenziale: ' + (t.match(/.{0,20}e\+\d+.{0,20}/) || [''])[0]);
+  }],
+  ['B-035 PF massimi scritti come 1e3: il campo non mostra un valore diverso da quello salvato e i PF attuali non crollano a 1', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.set('#f_hpmax', '1e3');
+    const h = await app.hero(), shown = await app.page.inputValue('#f_hpmax');
+    assert.strictEqual(shown, String(h.hp.max), `il campo mostra "${shown}" ma i PF massimi salvati sono ${h.hp.max}`);
+    assert.strictEqual(h.hp.cur, 32, `PF attuali di Valeria da 32 a ${h.hp.cur} (${h.hp.cur}/${h.hp.max})`);
+  }],
+  ['B-036 danno a 0 PF: un fallimento in più ai tiri contro la morte, non tutti azzerati', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.page.fill('#hpAmt', '32'); await app.click('damage');
+    await app.clickJS('setDeath', 'f:2');
+    assert.strictEqual((await app.hero()).death.f, 2);
+    await app.page.fill('#hpAmt', '3'); await app.click('damage');
+    const d = (await app.hero()).death;
+    assert.strictEqual(d.f, 3, `dopo 3 danni a 0 PF i fallimenti sono ${d.f} (prima 2)`);
+  }],
+  // B-023 esteso (aggiornamento power user 10/11 sera): altre risorse che le regole 2024 restituiscono (in parte) col riposo breve.
+  ...[
+    ['Barbarian', 5, 'rage_count', 3, 2, 'Rage (Barbaro 5) recupera un uso'],
+    ['Druid', 5, 'wild_shape_uses', 2, 1, 'Wild Shape (Druido 5) recupera un uso'],
+    ['Paladin', 5, 'channel_divinity_charges', 2, 1, 'Channel Divinity (Paladino 5) recupera un uso'],
+    ['Cleric', 6, 'channel_divinity_charges', 3, 2, 'Channel Divinity (Chierico 6) recupera un uso'],
+    ['Bard', 5, 'bardic_inspiration', 3, 0, 'Bardic Inspiration (Bardo 5, Font of Inspiration) torna tutta'],
+  ].map(([cls, lv, k, spent, atteso, nome]) => ['B-023 riposo breve: ' + nome, async ({open}) => {
+    const h = fx.blank({name:'Riposo ' + cls, class:cls, level:lv, abilities:{str:14,dex:12,con:14,int:10,wis:16,cha:16}, hp:{cur:40,max:40,temp:0}, res:{[k]:spent}});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    const pips = await app.page.$$eval(`#page [data-act="usePip"][data-arg^="${k}:"]`, b => b.length);
+    assert.ok(pips >= spent, `segnalini ${k}: ${pips}, attesi almeno ${spent}`);
+    await app.click('shortRest');
+    const used = (await app.hero()).res?.[k] || 0;
+    assert.strictEqual(used, atteso, `dopo il riposo breve ${k} usati ${used} (prima ${spent}), attesi ${atteso}`);
+  }]),
+  ['riposo breve: i Focus Points del Monaco tornano tutti', async ({open}) => {
+    const h = fx.blank({name:'Monaco', class:'Monk', level:5, hp:{cur:38,max:38,temp:0}, res:{focus_points:5}});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    await app.click('shortRest');
+    assert.strictEqual((await app.hero()).res?.focus_points || 0, 0, 'Focus Points ancora spesi dopo il riposo breve');
+  }],
+  ['riposo lungo: tutte le risorse di classe tornano', async ({open}) => {
+    const h = fx.blank({name:'Barbaro', class:'Barbarian', level:5, hp:{cur:20,max:55,temp:0}, res:{rage_count:3}});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    await app.click('longRest');
+    const c = await app.hero();
+    assert.strictEqual(c.res?.rage_count || 0, 0, 'Rage ancora spesa dopo il riposo lungo');
+    assert.strictEqual(c.hp.cur, 55, `PF dopo il riposo lungo ${c.hp.cur}/55`);
+  }],
+  ['B-036 danno massiccio: un danno che supera i PF massimi oltre lo 0 uccide (o lo dice)', async ({open}) => {
+    const h = fx.blank({name:'Paladino', class:'Paladin', level:5, hp:{cur:40,max:40,temp:0}});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    await app.page.fill('#hpAmt', '90'); await app.click('damage');
+    const c = await app.hero(), t = (await app.toast()) + ' ' + (await app.text('#page'));
+    assert.strictEqual(c.hp.cur, 0);
+    assert.ok((c.death?.f || 0) >= 3 || /instant|massive|dies|is dead|killed/i.test(t), `danno 90 a 40 PF: fallimenti ${c.death?.f || 0}/3 e nessun avviso di morte istantanea`);
   }],
 ]};
