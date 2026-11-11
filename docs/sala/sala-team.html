@@ -90,6 +90,23 @@ button:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--accen
 .screen{background:#0F1A19;color:#BFE9DF;font-family:var(--f-mono);font-size:13px;border-radius:10px;padding:12px 14px;display:grid;gap:3px;border:6px solid var(--metal)}
 .screen .g,.screen .y{font-family:var(--f-body);font-weight:700}
 .screen .c{color:#7FC8BA}.screen .y{color:#E8C979}.screen .g{color:#8DDC9F}
+.term{background:#0C1514;border-radius:12px;border:1px solid #24322F;overflow:hidden;box-shadow:inset 0 0 40px rgba(98,183,170,.07);position:relative}
+.term::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);pointer-events:none}
+.tbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#16221F;font-family:var(--f-mono);font-size:12px;color:#8FA8A1}
+.tbar i{width:9px;height:9px;border-radius:50%;background:#E8785A}.tbar i:nth-child(2){background:#E8C24A}.tbar i:nth-child(3){background:#6CC892}
+.tbar span{margin-left:6px}.tbar em{margin-left:auto;font-style:normal;font-variant-numeric:tabular-nums;color:#BFE9DF}
+.tbody{display:grid;gap:4px;padding:12px 14px 10px;font-family:var(--f-mono);font-size:13px;line-height:1.45;color:#D7F2EB;min-height:150px;align-content:start}
+.tbody .c{color:#7FC8BA}.tbody .y{color:#E8C979}.tbody .g{color:#8DDC9F}.tbody .d{color:#5F7A74}.tbody .bar{padding-left:19px;font-size:12px;letter-spacing:-1px;color:#BFE9DF}
+.tbody .mk{display:inline-block;width:11px;height:11px;margin-right:8px;border-radius:50%;vertical-align:-1px;box-sizing:border-box}.mk.ok{background:#8DDC9F}.mk.run{border:2px solid #4A4630;border-top-color:#E8C979;animation:spin .8s linear infinite}.mk.todo{border:2px solid #3A4D48}@keyframes spin{to{transform:rotate(360deg)}}.tbody .yb{color:#E8C979}.tbody .cur{color:#fff}.tbody .zz{font-size:20px;padding:6px 0}
+.term.off{filter:saturate(.5)}.term.off .tbody{color:#5F7A74}
+.tprog{height:4px;background:#16221F}.tprog b{display:block;height:100%;width:0;background:linear-gradient(90deg,#2C7369,#8DDC9F);transition:width .5s linear}
+.blink{animation:pulse 1s steps(1) infinite}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.tile{background:var(--sunk);border-radius:10px;padding:10px 12px;display:grid;gap:1px}
+.tile b{font-family:var(--f-display);font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile small{color:var(--muted);font-size:12.5px}
+.qlist{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:5px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){.mk.run{animation:none}.blink{animation:none}.tprog b{transition:none}}
 .box{background:var(--sunk);border-radius:10px;padding:12px 14px}
 
 /* bacheca in sughero */
@@ -281,8 +298,8 @@ function romeNow(){
 const onDay=(r,wd)=>r.days==="*"||r.days.includes(wd);
 function status(mb,now){
   const mins=now.h*60+now.m;
-  for(const r of (mb.extra||[])){const s=r.h*60+r.m; if(r.date===now.date&&mins>=s&&mins<s+(r.min||WORK_MIN)) return {work:true,since:`${pad(r.h)}:${pad(r.m)}`,why:r.why};}
-  for(const r of mb.runs){const s=r.h*60+r.m; if(onDay(r,now.wd)&&mins>=s&&mins<s+WORK_MIN) return {work:true,since:`${pad(r.h)}:${pad(r.m)}`};}
+  for(const r of (mb.extra||[])){const s=r.h*60+r.m; if(r.date===now.date&&mins>=s&&mins<s+(r.min||WORK_MIN)) return {work:true,since:`${pad(r.h)}:${pad(r.m)}`,why:r.why,dur:r.min||WORK_MIN};}
+  for(const r of mb.runs){const s=r.h*60+r.m; if(onDay(r,now.wd)&&mins>=s&&mins<s+WORK_MIN) return {work:true,since:`${pad(r.h)}:${pad(r.m)}`,dur:WORK_MIN};}
   let best=null;
   for(let off=0;off<=7&&!best;off++){const wd=(now.wd+off)%7;
     for(const c of mb.runs.filter(r=>onDay(r,wd)).map(r=>r.h*60+r.m).sort((a,b)=>a-b)){if(off>0||c>mins){best={off,wd,c};break;}}}
@@ -308,13 +325,13 @@ function cyl(rt,rb,h,c,seg=24){return mesh(new T.CylinderGeometry(rt,rb,h,seg),c
 function at(o,x,y,z){o.position.set(x,y,z);return o;}
 
 function labelTexture(text,dot,sub){
-  const c=document.createElement("canvas");c.width=512;c.height=sub?150:110;const g=c.getContext("2d");
-  g.fillStyle="rgba(248,249,246,.96)";const r=40,w=c.width,h=c.height-10;
+  const c=document.createElement("canvas");c.width=1024;c.height=sub?300:220;const g=c.getContext("2d");g.scale(2,2);
+  g.fillStyle="rgba(248,249,246,.96)";const r=40,w=512,h=(sub?150:110)-10;
   g.beginPath();g.moveTo(r,0);g.arcTo(w,0,w,h,r);g.arcTo(w,h,0,h,r);g.arcTo(0,h,0,0,r);g.arcTo(0,0,w,0,r);g.fill();
   g.fillStyle=dot;g.beginPath();g.arc(48,sub?52:h/2,16,0,7);g.fill();
   g.fillStyle="#1D2829";g.font="700 50px 'Alegreya Sans', 'Segoe UI', sans-serif";g.textBaseline="middle";g.fillText(text,80,sub?52:h/2+2);
   if(sub){g.fillStyle="#5B6866";g.font="500 36px 'Alegreya Sans', 'Segoe UI', sans-serif";g.fillText(sub,80,106);}
-  const t=new T.CanvasTexture(c);t.anisotropy=4;return t;
+  return crisp(new T.CanvasTexture(c));
 }
 const labels=[];
 function htmlLabel(anchor,name,dot,sub){
@@ -336,7 +353,7 @@ function updateLabels(){
 function sprite(tex,w){const s=new T.Sprite(new T.SpriteMaterial({map:tex,depthTest:true,transparent:true}));const im=tex.image;s.scale.set(w,w*im.height/im.width,1);return s;}
 function zTexture(){const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");g.fillStyle="#5B6866";g.font="700 52px 'Alegreya Sans', sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("z",32,34);return new T.CanvasTexture(c);}
 
-function screenCanvas(){const c=document.createElement("canvas");c.width=256;c.height=160;return c;}
+function screenCanvas(){const c=document.createElement("canvas");c.width=512;c.height=320;return c;}
 const CODE=[[0,38],[1,24],[2,44],[0,30],[3,18],[1,40],[2,28],[0,46],[3,22],[1,34],[2,26],[0,40]];
 const CODECOL=["#7FC8BA","#E8C979","#8DDC9F","#BFE9DF"];
 function drawScreen(s,t){
@@ -402,7 +419,7 @@ function buildRoom(){
   scene.add(at(box(1.72,2.12,.06,"#2B3238"),-9,2.55,-9.86));
   const poster=new T.Mesh(new T.PlaneGeometry(1.6,2),new T.MeshBasicMaterial({map:posterTex}));at(poster,-9,2.55,-9.82);scene.add(poster);
   // orologio
-  clockCanvas=document.createElement("canvas");clockCanvas.width=clockCanvas.height=256;clockTex=new T.CanvasTexture(clockCanvas);
+  clockCanvas=document.createElement("canvas");clockCanvas.width=clockCanvas.height=512;clockTex=crisp(new T.CanvasTexture(clockCanvas));
   const rim=cyl(.72,.72,.12,"#2B3238",40);rim.rotation.x=Math.PI/2;at(rim,2.7,2.9,-9.8);scene.add(rim);
   const face=new T.Mesh(new T.CircleGeometry(.64,40),new T.MeshBasicMaterial({map:clockTex}));at(face,2.7,2.9,-9.73);scene.add(face);
   // bacheca
@@ -433,7 +450,7 @@ function buildRoom(){
   mq.scale.setScalar(.84);at(mq,-3.2,4.41,-9.78);scene.add(mq);
   // insegna neon HighBrew, sopra la finestra
   {const hc=document.createElement("canvas");hc.width=1600;hc.height=560;const hg=hc.getContext("2d");
-   const hbTex=new T.CanvasTexture(hc);
+   const hbTex=crisp(new T.CanvasTexture(hc));
    const drawHB=()=>{hg.clearRect(0,0,1600,560);hg.textAlign="center";hg.textBaseline="middle";
     hg.strokeStyle="rgba(190,200,215,.55)";hg.lineWidth=14;hg.beginPath();hg.roundRect(60,40,1480,480,90);hg.stroke();
     hg.shadowColor="#38E8FF";hg.shadowBlur=40;hg.strokeStyle="#38E8FF";hg.lineWidth=9;hg.beginPath();hg.roundRect(60,40,1480,480,90);hg.stroke();hg.shadowBlur=0;hg.strokeStyle="#D8FBFF";hg.lineWidth=3;hg.stroke();
@@ -511,7 +528,7 @@ function buildRoom(){
 function crisp(t){t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t;}
 function plateTexture(text){const c=document.createElement("canvas");c.width=1024;c.height=205;const g=c.getContext("2d");
   g.fillStyle="#FFFFFF";g.textAlign="center";g.textBaseline="middle";let f=150;g.font=`800 ${f}px 'Alegreya Sans', 'Segoe UI', sans-serif`;const w=g.measureText(text).width;if(w>960){f=Math.floor(f*960/w);g.font=`800 ${f}px 'Alegreya Sans', 'Segoe UI', sans-serif`;}
-  g.shadowColor="rgba(0,0,0,.35)";g.shadowBlur=8;g.fillText(text,512,108);return crisp(new T.CanvasTexture(c));}
+  g.fillText(text,512,108);return crisp(new T.CanvasTexture(c));}
 function buildDesk(mb,i){
   const [x,z]=DESKS[i];const g=new T.Group();g.userData.who=mb.id;
   const blk="#2B3238",wht="#F7F5F0";
@@ -526,7 +543,7 @@ function buildDesk(mb,i){
   const mon=new T.Group();
   mon.add(at(cyl(.14,.14,.02,blk),0,.01,0));mon.add(at(box(.045,.36,.04,blk),0,.19,-.02));
   mon.add(at(rbox(1.02,.045,.6,.03,blk),0,.64,0));mon.children[2].rotation.x=Math.PI/2;
-  const sc=screenCanvas();const tex=new T.CanvasTexture(sc);
+  const sc=screenCanvas();const tex=crisp(new T.CanvasTexture(sc));sc.getContext("2d").scale(2,2);
   const scr=new T.Mesh(new T.PlaneGeometry(.96,.54),new T.MeshBasicMaterial({map:tex}));at(scr,0,.64,.027);mon.add(scr);
   at(mon,-.55,.95,-.1);mon.rotation.y=.55;g.add(mon);
   screens[mb.id]={ctx:sc.getContext("2d"),tex,on:false,hue:i*47};
@@ -576,7 +593,7 @@ function slotPlace(i){const s=SLOTS[i];return {kind:"lounge",pos:new T.Vector3(.
 const ease=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
 const win=(c,a,b,f=.3)=>ease((c-a)/f)*ease((b-c)/f);
 const mix=(x,y,k)=>x+(y-x)*k;
-function noteTexture(){const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");g.fillStyle="#2E6DA4";g.font="700 50px 'Alegreya Sans', 'Segoe UI Symbol', sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("♪",32,34);return new T.CanvasTexture(c);}
+function noteTexture(){const c=document.createElement("canvas");c.width=c.height=128;const g=c.getContext("2d");g.fillStyle=g.strokeStyle="#2E6DA4";g.lineWidth=9;g.lineCap="round";g.lineJoin="round";[[40,96],[88,84]].forEach(q=>{g.beginPath();g.ellipse(q[0],q[1],16,12,-.35,0,7);g.fill();});g.beginPath();g.moveTo(52,94);g.lineTo(52,30);g.lineTo(100,18);g.lineTo(100,82);g.stroke();g.lineWidth=14;g.beginPath();g.moveTo(52,36);g.lineTo(100,24);g.stroke();return new T.CanvasTexture(c);}
 
 /* materiali "toon" e contorno per i pupini */
 let _grad,_olm={};
@@ -792,7 +809,7 @@ function updateWorld(first){
   drawClock(now);
 }
 function drawClock(now){
-  const g=clockCanvas.getContext("2d");g.fillStyle="#F8F9F6";g.fillRect(0,0,256,256);
+  const g=clockCanvas.getContext("2d");g.setTransform(2,0,0,2,0,0);g.fillStyle="#F8F9F6";g.fillRect(0,0,256,256);
   g.fillStyle="#1D2829";for(let i=0;i<12;i++){const a=i*Math.PI/6;g.beginPath();g.arc(128+100*Math.cos(a),128+100*Math.sin(a),i%3?4:8,0,7);g.fill();}
   const hA=((now.h%12)*30+now.m*.5-90)*Math.PI/180,mA=(now.m*6-90)*Math.PI/180;
   g.lineCap="round";g.strokeStyle="#1D2829";g.lineWidth=12;g.beginPath();g.moveTo(128,128);g.lineTo(128+58*Math.cos(hA),128+58*Math.sin(hA));g.stroke();
@@ -930,7 +947,7 @@ function init3D(){
   const stage=document.getElementById("stage");
   if(!T){stage.innerHTML='<p class="fallback">La scena 3D non si è caricata. L\'elenco qui sotto mostra comunque chi lavora.</p>';return false;}
   try{renderer=new T.WebGLRenderer({antialias:true});}catch(e){stage.innerHTML='<p class="fallback">Questo dispositivo non mostra il 3D. L\'elenco qui sotto mostra comunque chi lavora.</p>';return false;}
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,3));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
   stage.appendChild(renderer.domElement);const tl=document.createElement("div");tl.id="tagLayer";stage.appendChild(tl);renderer.domElement.setAttribute("aria-label","Ufficio 3D del team. Trascina per girare la stanza, tocca un PC, un pupino o la bacheca.");renderer.domElement.setAttribute("role","img");
   scene=new T.Scene();scene.background=new T.Color(getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()||"#E9EDE8");
   camera=new T.PerspectiveCamera(34,1,.1,200);
@@ -1097,30 +1114,64 @@ function openPanel(html,wide){
   overlay.innerHTML=`<div class="scrim" data-close="1"><div class="panel ${wide?"wide":""}" role="dialog" aria-modal="true" aria-labelledby="pT">${html}</div></div>`;
   overlay.hidden=false;overlay.querySelector(".close").focus();
 }
-function closePanel(){overlay.hidden=true;overlay.innerHTML="";if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+function closePanel(){clearInterval(panelTimer);overlay.hidden=true;overlay.innerHTML="";if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 overlay.addEventListener("click",e=>{if(e.target.dataset.close||e.target.closest(".close"))closePanel();
   const pin=e.target.closest(".pin");if(pin&&pin.id!=="moreSolved"){pin.setAttribute("aria-expanded",pin.getAttribute("aria-expanded")==="true"?"false":"true");}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)closePanel();});
 
+let panelTimer=0;
+function nowSec(){return simTime?0:new Date().getSeconds();}
+function workedToday(mb,now){const mins=now.h*60+now.m;let tot=0,n=0;
+  mb.runs.forEach(r=>{const s=r.h*60+r.m;if(onDay(r,now.wd)&&mins>=s){tot+=Math.min(WORK_MIN,mins-s);n++;}});
+  (mb.extra||[]).forEach(r=>{const s=r.h*60+r.m;if(r.date===now.date&&mins>=s){tot+=Math.min(r.min||WORK_MIN,mins-s);n++;}});
+  return {tot,n};}
+function nextIn(mb,now){const mins=now.h*60+now.m;
+  for(let off=0;off<=7;off++){const wd=(now.wd+off)%7;for(const c of mb.runs.filter(r=>onDay(r,wd)).map(r=>r.h*60+r.m).sort((a,b)=>a-b)){if(off>0||c>mins){const d=off*1440+c-mins;return d>=1440?`tra ${Math.floor(d/1440)} g ${Math.floor(d%1440/60)} h`:d>=60?`tra ${Math.floor(d/60)} h ${pad(d%60)} min`:`tra ${d} min`;}}}
+  return "";}
+function fmtTok(n){return n>=1e6?(n/1e6).toFixed(1).replace(".",",")+" M":n>=1e3?Math.round(n/1e3)+" k":String(n);}
+const SPIN=["◐","◓","◑","◒"];
 function openAgent(id){
-  const mb=DATA.team.find(m=>m.id===id), st=status(mb,romeNow());
+  clearInterval(panelTimer);
+  const mb=DATA.team.find(m=>m.id===id);
+  const queue=DATA.running.filter(r=>r.who&&(r.who.startsWith(mb.name)||r.who.startsWith(mb.short)||r.who.split(" ·")[0]===mb.name.split(" ·")[0]&&mb.name.indexOf("·")<0));
   const runs=mb.runs.map(r=>`${r.days==="*"?"ogni giorno":r.days.map(d=>WDL[d]).join(", ")} alle ${pad(r.h)}:${pad(r.m)}`).join(" · ");
-  const work=st.work?`
-    <div class="screen" aria-label="Schermo del PC">
-      <span class="c">// ${esc(mb.name)} · ${st.why?esc(st.why)+" delle":"turno delle"} ${st.since}</span>
-      ${mb.task.map((t,i)=>`<span>${i===mb.task.length-1?'<span class="y">▶</span>':'<span class="g">✓</span>'} ${esc(t)}</span>`).join("")}
-      <span class="c">_</span>
-    </div>
-    <p><span class="lbl">Sta lavorando su</span>${esc(mb.next)}</p>`
-    :`<div class="box"><span class="lbl">Il PC è in standby</span>In pausa nell'angolo caffè. Torna ${esc(st.next)}.</div>
-    <p><span class="lbl">Al prossimo turno</span>${esc(mb.next)}</p>`;
+  const file=mb.short.toLowerCase().replace(/[^a-z0-9]+/g,"-");
   openPanel(`<div class="phead"><div><h2 id="pT">${esc(mb.name)}</h2><span style="color:var(--muted);font-size:14px">${esc(mb.role)}</span></div><button class="close" type="button" aria-label="Chiudi">✕</button></div>
     <div class="pbody">
-      <span class="chip st ${st.work?"st-work":"st-pause"}">${st.work?`● Al lavoro dalle ${st.since}`:`○ In pausa · torna ${esc(st.next)}`}</span>
-      ${work}
+      <div class="chips" id="agChips"></div>
+      <div class="term" aria-label="Schermo del PC"><div class="tbar"><i></i><i></i><i></i><span>${esc(file)}.log</span><em id="agClock"></em></div><div class="tbody" id="agTerm"></div><div class="tprog"><b id="agBar"></b></div></div>
+      <div class="tiles" id="agTiles"></div>
+      <p><span class="lbl" id="agNextL"></span>${esc(mb.next)}</p>
+      ${queue.length?`<div><span class="lbl">In coda per questo PC</span><ul class="qlist">${queue.map(q=>`<li><span class="tagm">${esc(q.tag||"")}</span> ${esc(q.t)}</li>`).join("")}</ul></div>`:""}
       <p><span class="lbl">Ultimo lavoro fatto</span>${esc(mb.did)}</p>
       <p style="font-size:13.5px;color:var(--muted)">Turno: ${runs}</p>
     </div>`);
+  const $=i=>document.getElementById(i);let tick=0,lastTerm="";
+  const draw=()=>{
+    if(overlay.hidden||!$("agTerm")){clearInterval(panelTimer);return;}
+    const now=romeNow(),st=status(mb,now),sec=nowSec(),wk=workedToday(mb,now);tick++;
+    $("agNextL").textContent=st.work?"Sta lavorando su":"Al prossimo turno";
+    let chips,term,frac=0;
+    if(st.work){
+      const [sh,sm]=st.since.split(":").map(Number),dur=st.dur||WORK_MIN,el=(now.h*60+now.m-sh*60-sm)*60+sec,endM=sh*60+sm+dur;frac=Math.min(1,el/(dur*60));
+      const n=mb.task.length,cur=Math.min(n-1,Math.floor(frac*n)),sub=Math.min(1,frac*n-cur),cells=Math.round(sub*14);
+      chips=`<span class="chip st st-work">● Al lavoro dalle ${st.since}</span><span class="chip time">da ${Math.floor(el/60)} min ${pad(el%60)} s</span><span class="chip snap">fine verso le ${pad(Math.floor(endM/60)%24)}:${pad(endM%60)}</span>`;
+      term=`<span class="c">$ avvia turno · ${st.why?esc(st.why):"turno delle "+st.since}</span>`+
+        mb.task.map((t,i)=>i<cur?`<span><i class="mk ok"></i>${esc(t)}</span>`:i===cur?`<span class="cur"><i class="mk run"></i>${esc(t)}</span><span class="bar"><span class="yb">${"█".repeat(cells)}</span><span class="d">${"░".repeat(14-cells)}</span> ${Math.round(sub*100)}%</span>`:`<span class="d"><i class="mk todo"></i>${esc(t)}</span>`).join("")+
+        `<span class="c">passo ${cur+1} di ${n}<span class="blink">_</span></span>`;
+      $("agClock").textContent=`${pad(now.h)}:${pad(now.m)}:${pad(sec)}`;
+    }else{
+      chips=`<span class="chip st st-pause">○ In pausa</span><span class="chip time">torna ${esc(st.next)}</span><span class="chip snap">${nextIn(mb,now)}</span>`;
+      term=`<span class="d">$ standby</span><span class="d">schermo spento, PC in attesa del prossimo turno</span><span class="c zz">${["z","z z","z z z","z z"][Math.floor(tick/2)%4]}</span><span class="d">riaccensione ${esc(st.next)}<span class="blink">_</span></span>`;
+      $("agClock").textContent="standby";
+    }
+    $("agChips").innerHTML=chips;if(term!==lastTerm){$("agTerm").innerHTML=term;lastTerm=term;}$("agTerm").parentNode.classList.toggle("off",!st.work);$("agBar").style.width=(frac*100).toFixed(1)+"%";
+    const tk=mb.tokens;
+    $("agTiles").innerHTML=`<div class="tile"><span class="lbl">Lavoro oggi</span><b>${wk.tot} min</b><small>${(tt=>tt?`${wk.n} ${wk.n===1?"turno":"turni"} su ${tt}`:"nessun turno oggi")(mb.runs.filter(r=>onDay(r,now.wd)).length+(mb.extra||[]).filter(r=>r.date===now.date).length)}</small></div>
+      <div class="tile"><span class="lbl">${st.work?"Avanzamento":"Prossimo turno"}</span><b>${st.work?Math.round(frac*100)+"%":esc(nextIn(mb,now)||"—")}</b><small>${st.work?"del turno in corso":esc(st.next)}</small></div>
+      ${tk?`<div class="tile"><span class="lbl">Token</span><b>${fmtTok(tk.today||0)}</b><small>oggi${tk.week?` · ${fmtTok(tk.week)} in settimana`:""}</small></div>`:""}`;
+  };
+  draw();if(!REDUCED)panelTimer=setInterval(draw,500);
 }
 
 function openBoard(){
