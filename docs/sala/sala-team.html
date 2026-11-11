@@ -1,7 +1,7 @@
 <title>Sala del Team Grimoire</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=Caveat:wght@600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Monoton&family=Tilt+Neon&family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=Caveat:wght@600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 /* Layout: un ufficio disegnato visto di fronte (scrivanie a sinistra, zona pausa a destra, bacheca e orologio sul muro); sotto, una fila di stati per chi è su telefono. Pannelli che si aprono sopra la scena. */
 :root{
@@ -158,47 +158,51 @@ footer a{color:var(--accent)}
 <script>
 /* ======== DATI: l'unica parte da aggiornare ======== */
 const DATA = {
-  snapshot: "2026-11-10T16:46:00+01:00",
-  commit: "4452eb8",
+  snapshot: "2026-11-11T13:29:00+01:00",
+  commit: "78f2cf6",
   repo: "https://github.com/HighBrewDev/Grimoire-Of-Heroes",
-  kpi: { score: 105, scoreYesterday: 107, testsPass: 169, testsTotal: 186, testsNow: 179, red: ["Level up"] },
+  kpi: { score: 173, scoreYesterday: 105, testsPass: 208, testsTotal: 225, testsNow: 208, red: [] },
   team: [
     { id:"lead", name:"Team leader", short:"Leader", role:"Decide chi lavora su cosa", shirt:"#3C5A99", hair:"#3B2A20", acc:"tie",
       runs:[{h:9,m:41,days:"*"}],
-      task:["Legge scoreboard, diario, bug e git log","Controlla l'app live a 1440 e 390 px","Riscrive docs/team-plan.md: Level up rosso, carico ALTO"],
-      did:"Piano del 10/11: Level up in rosso con carico alto, B-016 come PR, telefono al designer.",
-      next:"Domani rilegge i punteggi e rifà il piano. Tiene il tour guidato fisso nel backlog." },
+      task:["Legge scoreboard, diario e i bug nuovi B-032…B-035","Controlla l'app live a 1440 e 390 px","Riscrive il piano: Level up resta rosso?"],
+      did:"Piano delle 17:40: frontend su B-026, B-027, B-028; backend su B-016 come PR e B-024.",
+      next:"Domani alle 9:41: nuovo piano con i punteggi del mattino e i bug nuovi di stasera." },
     { id:"test", name:"Test e punteggio", short:"Test", role:"Suite automatica e classifica", shirt:"#2C7369", hair:"#1F1A17", acc:"clip",
       runs:[{h:8,m:47,days:"*"}],
-      task:["node tests/run.js su main","Calcola i punti di 14 sezioni","Aggiunge 5+ test nelle sezioni peggiori"],
-      did:"169/186 test, punteggio +105 (↓ da +107). 8 test nuovi, soprattutto in Level up.",
-      next:"Test per l'aumento nella seconda classe, talenti homebrew ripetibili, scaffale con specie lunga." },
-    { id:"devm", name:"Sviluppo · mattina", short:"Dev mattina", role:"Corregge il codice dell'app", shirt:"#5B4B8A", hair:"#7A4A24", acc:"hood",
+      task:["node tests/run.js su main","Punti per i bug chiusi e nuovi di oggi","B-020 meno sensibile al carico, test ASI e + Cos"],
+      did:"Oggi 208/225 test, punteggio +173 (↑ da +105), nessuna sezione rossa. Riparati 2 file di test rotti dall'unione; 10 test nuovi, tutti verdi.",
+      next:"Domani alle 8:47: suite, punteggio e subito dopo aggiorna questa Sala." },
+    { id:"devm", name:"Frontend · mattina", short:"Front mattina", role:"Interfaccia e regole nel client", shirt:"#5B4B8A", hair:"#7A4A24", acc:"hood",
       runs:[{h:10,m:23,days:"*"}],
-      task:["levelPlan: aumento a 4, 8, 12, 16 (B-021)","conHp: PF seguono la Costituzione (B-022)","featList senza talenti già presi (B-025)"],
+      task:["Legge il piano di domattina","B-029: la finestra Level up trattiene il focus","B-032, B-033: resti di B-026 e B-028"],
       did:"Level up da 14/20 a 20/20: B-021, B-022, B-025 risolti.",
-      next:"Domani: le due sezioni peggiori secondo il nuovo punteggio." },
-    { id:"deve", name:"Sviluppo · sera", short:"Dev sera", role:"Corregge il codice dell'app", shirt:"#8A4B5B", hair:"#2B2B2B", acc:"hood",
+      next:"Domani alle 10:23: il compito frontend del nuovo piano (probabile B-029 e i resti di stasera)." },
+    { id:"deve", name:"Frontend · sera", short:"Front sera", role:"Interfaccia e regole nel client", shirt:"#8A4B5B", hair:"#2B2B2B", acc:"hood",
       runs:[{h:18,m:23,days:"*"}],
-      task:["B-016 come PR: eroe cancellato in un'altra scheda","B-024 su main: copie con nomi distinti","Suite completa, nessuna regressione"],
-      did:"Ieri: backup di tutti gli eroi (B-015), B-005, B-006.",
-      next:"Stasera: B-016 come PR (due schede, eroe cancellato mentre scrivi) e B-024 su main." },
+      task:["Legge piano e diario del mattino","Corregge il compito serale del piano","Suite completa e CACHE alzata"],
+      did:"B-026 e B-028 risolti su main. B-027 in PR #14, aspetta il tuo ok.",
+      next:"Domani alle 18:23: continua il lavoro frontend del mattino." },
+    { id:"back", name:"Sviluppo backend", short:"Backend", role:"Dati, salvataggio, Supabase, sicurezza", shirt:"#4B6B3A", hair:"#5A3A22", acc:"hood", idle:"sip",
+      runs:[{h:12,m:53,days:"*"},{h:23,m:13,days:"*"}],
+      task:["B-016 come PR: il testo non finisce su un altro eroe","B-024: copie con nomi distinti, ripristino completo","importexport 17/17, suite senza regressioni"],
+      did:"B-017 e B-018 risolti: limiti su monete, XP, PF e CA. Sessione chiusa presto.",
+      next:"Stanotte alle 23:13: B-016 come pull request e B-024 su main." },
     { id:"design", name:"Designer", short:"Designer", role:"Interfaccia e telefono", shirt:"#C2703D", hair:"#A0522D", acc:"beret",
       runs:[{h:14,m:13,days:"*"}],
-      task:["B-019: overflow-wrap sui testi lunghi","Pulsanti Level up a 44 px su touch","Screenshot prima/dopo a 390, 768, 1440"],
+      task:["Proposta per B-014: cerca e ordina lo scaffale","Pallini e ✕ dei chip a 44 px","Screenshot prima/dopo a 390, 768, 1440"],
       did:"B-019 risolto: testi lunghi vanno a capo, pulsanti Level up a 44 px. Telefono 15/15.",
-      next:"Proposta per B-014 (cerca e ordina lo scaffale), poi pallini e ✕ a 44 px." },
+      next:"Domani alle 14:13: proposta per B-014, poi pallini e ✕ a 44 px." },
     { id:"destr", name:"Il distruttore", short:"Distruttore", role:"Beta tester: cerca di rompere tutto", shirt:"#B23A32", hair:"#111111", acc:"hammer",
       runs:[{h:21,m:7,days:"*"}],
-      extra:[{date:"2026-11-10",h:16,m:45,min:60,why:"Turno extra chiesto da Capo"}],
-      task:["Aumenti a ogni livello per le 12 classi","Multiclasse a tre, Costituzione a 30 e poi giù","Tre schede aperte contro la PR di B-016"],
-      did:"Ieri: 5 bug nuovi (B-016…B-020), il più grave B-016.",
-      next:"Stasera: attacca il level up corretto stamattina e la PR di B-016 con tre schede." },
+      task:["Tre schede contro la correzione di B-016","Backup con copie e nomi lunghi (B-024)","Solo tastiera nelle altre finestre (B-029)"],
+      did:"Due sessioni: 8 bug nuovi (B-026…B-029, B-032…B-035). B-026 e B-028 reggono.",
+      next:"Domani alle 21:07: attacca le correzioni di stanotte, B-016 e B-024." },
     { id:"power", name:"Il power user", short:"Power user", role:"Beta tester: gioca senza sosta", shirt:"#2E6DA4", hair:"#D9B26A", acc:"phones",
       runs:[{h:21,m:37,days:"*"}],
-      task:["Guerriero, Ladro, Mago/Chierico 1→20","Conta aumenti (7, 6, 5) e PF livello per livello","Backup con copie (B-024) e telefono vero (B-019)"],
-      did:"Ieri: Paladino 1→20 e 40 eroi da telefono. Trovato B-021 [alta].",
-      next:"Stasera: Guerriero, Ladro e Mago/Chierico 1→20, conta aumenti e PF. Verifica B-024 e B-019." },
+      task:["Party di 4, tre incontri, due riposi brevi","Backup e ripristino con 20 eroi e copie","Numeri nel diario, bug solo se riproducibili"],
+      did:"Stasera: sessione di gioco con riposi brevi (B-023). Il diario non è ancora arrivato.",
+      next:"Domani alle 21:37: verifica in gioco le correzioni di B-016 e B-024." },
     { id:"report", name:"Report settimanale", short:"Report", role:"Riassunto per Capo", shirt:"#6B7775", hair:"#C8C8C8", acc:"glasses",
       runs:[{h:8,m:33,days:[6]}],
       task:["Punteggi da inizio a fine settimana","Bug trovati e risolti","Consumo per agente in token e tempo"],
@@ -206,33 +210,44 @@ const DATA = {
       next:"Sabato 14: punteggi della settimana, bug, consumo in token e tempo per agente." }
   ],
   running: [
-    { t:"B-016 come pull request", who:"Sviluppo sera · 18:23", tag:"Import/export", d:"Se l'eroe che stai scrivendo viene cancellato in un'altra scheda, il testo non deve finire su un altro eroe: avviso e niente salvataggio, oppure l'eroe resta.", done:"importexport 17/17, test di B-002 ancora verdi, link alla PR nel diario. Si unisce da sola dopo i test." },
-    { t:"B-024 su main", who:"Sviluppo sera · 18:23", tag:"Import/export", d:"La copia di un eroe passa dal limite di 80 caratteri e prende nomi distinti, \"(copy 2)\". Il ripristino del backup non scarta eroi diversi con lo stesso nome.", done:"Suite completa senza regressioni." },
-    { t:"Attacco al level up corretto", who:"Distruttore · 21:07", tag:"Level up", d:"Aumenti a ogni livello per tutte le 12 classi, multiclassi a tre, eroi importati già al 20, Costituzione portata a 30 e poi abbassata, talenti homebrew ripetibili e no, finestra chiusa a metà.", done:"Voce nel diario e bug nuovi con passi e test." },
-    { t:"Verifica in gioco 1→20", who:"Power user · 21:37", tag:"Level up", d:"Un Guerriero, un Ladro e un Mago/Chierico dal livello 1 al 20, contando aumenti e PF.", done:"Attesi 7 aumenti per il Guerriero, 6 per il Ladro, 5 per gli altri più l'Epic Boon." },
-    { t:"Nuovi test di regressione", who:"Test e punteggio · domani 8:47", tag:"Test", d:"Aumento dei punteggi nella seconda classe in multiclasse, talenti homebrew ripetibili, scaffale con una specie homebrew dal nome lunghissimo.", done:"Almeno 5 test nuovi nelle sezioni peggiori." }
+    { t:"B-016 come pull request", who:"Backend · 23:13", tag:"Import/export", d:"Se l'eroe che stai scrivendo viene cancellato in un'altra scheda, il testo non deve finire su un altro eroe: avviso e niente salvataggio.", done:"importexport 17/17, test di B-002 e B-015 verdi, link alla PR nel diario." },
+    { t:"B-024 su main", who:"Backend · 23:13", tag:"Import/export", d:"La copia di un eroe prende nomi distinti entro 80 caratteri, \"(copy 2)\". Il ripristino non scarta eroi diversi con lo stesso nome.", done:"Suite completa senza regressioni." },
+    { t:"Sessione di gioco con riposi", who:"Power user · 21:37", tag:"Combattimento", d:"Party di 4 (Guerriero, Chierico, Bardo 5, Monaco) per tre incontri con due riposi brevi: conta cosa torna e cosa no. Poi backup con 20 eroi.", done:"Diario con numeri, bug solo se riproducibili." },
+    { t:"Suite e punteggio del mattino", who:"Test e punteggio · domani 8:47", tag:"Test", d:"Primo punteggio con i 10 bug nuovi di oggi e i 7 chiusi. B-020 meno sensibile al carico, test per l'aumento nella seconda classe e per il pulsante + Cos.", done:"Scoreboard nuovo e voce nel diario." },
+    { t:"Piano di domani", who:"Team leader · domani 9:41", tag:"Piano", d:"Assegna B-029 e i resti di stasera (B-032…B-035) tra frontend e backend.", done:"docs/team-plan.md riscritto." }
   ],
   decisions: [
-    { t:"Supabase non risponde", when:"Ti aspetta adesso", d:"Il progetto è probabilmente in pausa per inattività.", more:["Apri supabase.com/dashboard, entra nel progetto del Grimoire e premi Restore project.","Proposto un ping automatico ogni 3 giorni (gratis) per non farlo più addormentare.","Il piano Pro (circa 25 $/mese) serve quando partono i pagamenti."] },
+    { t:"PR #14 · Epic Boon al livello 19 (B-027)", when:"Ti aspetta adesso", d:"\"+2\" e \"+1/+1\" restano fermi a 20; solo l'Epic Boon dà +1 fino a 30.", more:["Corregge anche un test vecchio che si aspettava il valore sbagliato: per questo serve il tuo ok.","Nella PR la suite è 187/194, nessuna regressione.","https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14"] },
+    { t:"PR #6 · bug del tester extra", when:"Ti aspetta adesso", d:"Solo bug B-030, B-031 e 4 test nuovi, nessun codice dell'app.", more:["Il team consiglia di unirla: senza, B-030 e B-031 non entrano nel punteggio.","https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/6"] },
+    { t:"Keep-alive di Supabase", when:"Ti aspetta adesso", d:"Il progetto gratuito va in pausa dopo 7 giorni senza attività.", more:["Serve il tuo ok per assegnarlo al backend: un ping automatico ogni pochi giorni.","Se oggi è già in pausa: supabase.com/dashboard → progetto del Grimoire → Restore project.","Il piano Pro (circa 25 $/mese) serve quando partono i pagamenti."] },
+    { t:"Rete per testare login e sync", when:"Facoltativa", d:"Permettere l'host obahrlbwbplqqgokjqhf.supabase.co nella rete dell'ambiente cloud.", more:["Oggi la sandbox non raggiunge Supabase, quindi login e sync non si possono provare.","Senza, il team lavora solo sul codice e sui test locali."] },
     { t:"B-011 · limite homebrew gratuito", when:"Facoltativa", d:"L'import homebrew, anche da 5etools, ignora il limite di 3 elementi gratuiti.", more:["Oggi il paywall è spento in beta, quindi non pesa.","Scelta: applicare il limite anche all'import, oppure lasciare l'import libero."] },
     { t:"Dopo la fase intensiva", when:"23 novembre", d:"Come continuare quando finisce la fase a punteggio.", more:["Opzioni: stesso ritmo, ritmo ridotto (sviluppo una volta al giorno, tester a sere alterne) o solo sulle sezioni ancora rosse.","Il 23 ti arriva una scheda con la mia raccomandazione."] },
     { t:"Tour guidato delle funzioni", when:"Nessuna azione", d:"Indicatori che puntano ai pulsanti principali, avviabile dal menu e saltabile.", more:["È nel backlog fisso del team leader.","Parte dopo il 23 novembre, o prima se tutte le sezioni diventano verdi."] }
   ],
   bugs: [
-    { id:"B-016", sev:"alta", t:"Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe", sec:"Import/export", d:"Trovato dal distruttore il 9/11. Rischio di perdere dati: per questo va come PR. In lavorazione stasera." },
-    { id:"B-023", sev:"media", t:"Il riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration", sec:"Combattimento", d:"Trovato dal power user. Primo nel backlog per la prossima sessione libera di sviluppo." },
-    { id:"B-024", sev:"media", t:"Backup: eroi duplicati più volte persi al ripristino", sec:"Import/export", d:"Le copie con nome oltre 80 caratteri vengono scartate come \"già qui\". In lavorazione stasera." },
-    { id:"B-017", sev:"bassa", t:"Monete negative accettate nello Zaino", sec:"Zaino", d:"Anche l'XP accetta valori negativi." },
-    { id:"B-018", sev:"bassa", t:"CA e PF senza limiti: CA −981, PF 1e+308", sec:"Combattimento", d:"Serve un minimo e un massimo ragionevole sui campi numerici." },
-    { id:"B-020", sev:"bassa", t:"Import 5etools enorme: 20.000 voci bloccano la pagina per quasi 2 minuti", sec:"Workshop", d:"Il confronto dentro il ciclo rende l'import quadratico." },
-    { id:"B-014", sev:"bassa", t:"Con 30+ eroi lo scaffale non ha ricerca né ordine", sec:"Eroe", d:"UX: su telefono la fila diventa larga 7.400 px. Prima propone il designer, poi realizza lo sviluppo." },
+    { id:"B-016", sev:"alta", t:"Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe", sec:"Import/export", d:"Rischio di perdere dati: va come PR. Lo prende il backend stanotte alle 23:13." },
+    { id:"B-029", sev:"media", t:"Solo tastiera: Tab esce dalla finestra Level up e il livello va a un altro eroe", sec:"Robustezza", d:"La finestra non trattiene il focus e lo sfondo resta attivo. Nel backlog frontend." },
+    { id:"B-027", sev:"media", t:"Livello 19: \"+2\" supera 20 e l'Epic Boon non dà +1", sec:"Level up", d:"Correzione pronta in PR #14, aspetta il tuo ok." },
+    { id:"B-023", sev:"media", t:"Il riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration", sec:"Combattimento", d:"Il power user lo misura stasera in una sessione con riposi." },
+    { id:"B-024", sev:"media", t:"Backup: eroi duplicati più volte persi al ripristino", sec:"Import/export", d:"Le copie con nome oltre 80 caratteri vengono scartate come \"già qui\". Backend stanotte." },
+    { id:"B-035", sev:"bassa", t:"\"1e3\" nei PF massimi salva 1 e porta i PF attuali a 1", sec:"Combattimento", d:"Vale per tutti i campi numerici: il campo mostra un valore e ne salva un altro." },
+    { id:"B-034", sev:"bassa", t:"Classe, specie o background fuori dai menu mostrati come Barbarian, Dragonborn, Acolyte", sec:"Eroe", d:"Succede con homebrew cancellato o eroe importato. I dati restano giusti." },
+    { id:"B-033", sev:"bassa", t:"Il menu della classe principale offre una classe già in multiclasse", sec:"Level up", d:"Resto di B-028: alla ricarica l'eroe perde livelli senza avviso." },
+    { id:"B-032", sev:"bassa", t:"Cos al minimo, poi danno o Level up, poi Cos rialzata: PF gonfiati", sec:"Caratteristiche", d:"Resto di B-026: servono Cos 1–3 a livello alto." },
+    { id:"B-020", sev:"bassa", t:"Import 5etools enorme: 20.000 voci bloccano la pagina per quasi 2 minuti", sec:"Workshop", d:"Il test oggi passa, ma il ciclo quadratico c'è ancora." },
+    { id:"B-014", sev:"bassa", t:"Con 30+ eroi lo scaffale non ha ricerca né ordine", sec:"Eroe", d:"UX: prima propone il designer, poi realizza il frontend." },
     { id:"B-011", sev:"bassa", t:"L'import homebrew ignora il limite di 3 elementi gratuiti", sec:"Workshop", d:"Aspetta la tua decisione (vedi colonna Decisioni)." }
   ],
   solved: [
+    ["B-026","Cos giù e su: PF massimi gonfiati e PF attuali a 0","10 nov · Frontend sera"],
+    ["B-028","La stessa classe due volte in multiclasse","10 nov · Frontend sera"],
+    ["B-017","Monete e XP negative accettate","10 nov · Backend"],
+    ["B-018","CA e PF senza limiti","10 nov · Backend"],
     ["B-019","Telefono: parole e link lunghi allargavano la pagina","10 nov · Designer"],
-    ["B-021","Level up: aumento dei punteggi solo al livello 4","10 nov · Sviluppo"],
-    ["B-022","+2 Costituzione non alzava i PF dei livelli precedenti","10 nov · Sviluppo"],
-    ["B-025","Talento non ripetibile offerto di nuovo","10 nov · Sviluppo"],
+    ["B-021","Level up: aumento dei punteggi solo al livello 4","10 nov · Frontend mattina"],
+    ["B-022","+2 Costituzione non alzava i PF dei livelli precedenti","10 nov · Frontend mattina"],
+    ["B-025","Talento non ripetibile offerto di nuovo","10 nov · Frontend mattina"],
     ["B-015","Backup di tutti gli eroi in un file","9 nov · Sviluppo"],
     ["B-005","Aumento +2 abbassava a 20 un punteggio più alto","9 nov · Sviluppo"],
     ["B-006","Danni e cure negative davano PF strani","9 nov · Sviluppo"],
@@ -345,7 +360,7 @@ function potPlant(s,leafCol){const p=new T.Group();const pot=cyl(.3,.22,.5,"#F7F
   for(let i=0;i<9;i++){const a=i*2.4,h=.75+(i%3)*.28,r=.2+(i%4)*.09;const st=cyl(.018,.022,h,lm2,6);st.position.set(Math.cos(a)*r*.5,.5+h/2,Math.sin(a)*r*.5);st.rotation.set(Math.sin(a)*.25,0,-Math.cos(a)*.25);p.add(st);
     const l=lump(i%2?lm:lm2,Math.cos(a)*r,.5+h,Math.sin(a)*r,1.7,.35,2.5);l.rotation.set(.5,-a+Math.PI/2,0);p.add(l);}
   p.scale.setScalar(s||1);return p;}
-let cityLights,neonMat,lampLight,lampShade,arcade,fishes=[],steam=[];
+const marqueeBulbs=[];let hbMat,cityLights,neonMat,lampLight,lampShade,arcade,fishes=[],steam=[];
 
 function buildRoom(){
   // pavimento in rovere chiaro
@@ -401,11 +416,37 @@ function buildRoom(){
     const pin=sph(.035,"#8E2B22");pin.position.set(note.position.x,note.position.y+.14,.15);bg.add(pin);}});
   const ls=new T.Object3D();ls.position.set(0,-1.62,.3);bg.add(ls);htmlLabel(ls,"Bacheca","#94681F","tocca per aprire");
   at(bg,-3.2,2.55,-9.75);scene.add(bg);clickables.push(bg);
-  // insegna al neon
-  const nc=document.createElement("canvas");nc.width=2048;nc.height=400;const ng=nc.getContext("2d");ng.textAlign="center";ng.textBaseline="middle";
-  let nf=230;const nfont=()=>ng.font=`700 ${nf}px 'Alegreya SC', Georgia, serif`;nfont();const nw=ng.measureText("Grimoire of Heroes").width;if(nw>1800){nf=Math.floor(nf*1800/nw);nfont();}
-  ng.shadowColor="#FFFFFF";ng.shadowBlur=46;ng.fillStyle="#FFFFFF";ng.fillText("Grimoire of Heroes",1024,205);ng.shadowBlur=14;ng.fillText("Grimoire of Heroes",1024,205);
-  neonMat=new T.MeshBasicMaterial({map:crisp(new T.CanvasTexture(nc)),transparent:true,color:"#FF8FB5"});scene.add(at(new T.Mesh(new T.PlaneGeometry(4.4,.86),neonMat),-3.2,4.35,-9.82));
+  // insegna da cinema: pannello luminoso con lettere nere e lampadine
+  const nc=document.createElement("canvas");nc.width=2048;nc.height=512;const ng=nc.getContext("2d");
+  const ngr=ng.createLinearGradient(0,0,0,512);ngr.addColorStop(0,"#FFF9E6");ngr.addColorStop(.5,"#FFFDF4");ngr.addColorStop(1,"#FFF3D0");ng.fillStyle=ngr;ng.fillRect(0,0,2048,512);
+  ng.fillStyle="rgba(40,36,30,.55)";[150,170,440,460].forEach(y=>ng.fillRect(0,y,2048,5));
+  ng.textAlign="center";ng.textBaseline="alphabetic";ng.fillStyle="#17130F";
+  const letters=(txt,cy,size,maxW)=>{const font=sz=>ng.font=`900 ${sz}px Impact, 'Haettenschweiler', 'Arial Narrow', 'Alegreya Sans', sans-serif`;font(size);
+    const gap=size*.14;let ws=[...txt].map(ch=>ch===" "?size*.34:ng.measureText(ch).width+gap),tot=ws.reduce((a,b)=>a+b,0);
+    if(tot>maxW){size=Math.floor(size*maxW/tot);font(size);const g2=size*.14;ws=[...txt].map(ch=>ch===" "?size*.34:ng.measureText(ch).width+g2);tot=ws.reduce((a,b)=>a+b,0);}
+    let x=1024-tot/2;[...txt].forEach((ch,i)=>{const w=ws[i];if(ch!==" "){ng.save();ng.translate(x+w/2,cy);ng.rotate((((i*37+txt.length*11)%7)-3)*.008);ng.fillText(ch,0,((i*13)%5)-2);ng.restore();}x+=w;});};
+  letters("OGGI IN SALA",128,96,1500);letters("GRIMOIRE OF HEROES",425,236,1880);
+  neonMat=new T.MeshBasicMaterial({map:crisp(new T.CanvasTexture(nc)),color:"#FFFFFF"});
+  const mq=new T.Group();mq.add(at(box(4.9,1.36,.16,"#2B3238"),0,0,0));mq.add(at(new T.Mesh(new T.PlaneGeometry(4.5,1.12),neonMat),0,0,.085));
+  const bulbG=new T.SphereGeometry(.045,10,8);const addBulb=(x,y)=>{const b=new T.Mesh(bulbG,new T.MeshBasicMaterial({color:"#FFD76A"}));b.position.set(x,y,.1);mq.add(b);marqueeBulbs.push(b);};
+  for(let i=0;i<=22;i++)addBulb(-2.35+i*4.7/22,.62);for(let i=1;i<6;i++)addBulb(2.35,.62-i*1.24/6);for(let i=22;i>=0;i--)addBulb(-2.35+i*4.7/22,-.62);for(let i=5;i>0;i--)addBulb(-2.35,.62-i*1.24/6);
+  mq.scale.setScalar(.84);at(mq,-3.2,4.41,-9.78);scene.add(mq);
+  // insegna neon HighBrew, sopra la finestra
+  {const hc=document.createElement("canvas");hc.width=1600;hc.height=560;const hg=hc.getContext("2d");
+   const hbTex=new T.CanvasTexture(hc);
+   const drawHB=()=>{hg.clearRect(0,0,1600,560);hg.textAlign="center";hg.textBaseline="middle";
+    hg.strokeStyle="rgba(190,200,215,.55)";hg.lineWidth=14;hg.beginPath();hg.roundRect(60,40,1480,480,90);hg.stroke();
+    hg.shadowColor="#38E8FF";hg.shadowBlur=40;hg.strokeStyle="#38E8FF";hg.lineWidth=9;hg.beginPath();hg.roundRect(60,40,1480,480,90);hg.stroke();hg.shadowBlur=0;hg.strokeStyle="#D8FBFF";hg.lineWidth=3;hg.stroke();
+    hg.font="400 270px Monoton, Impact, sans-serif";const w=hg.measureText("HIGHBREW").width,s=Math.min(1,1300/w);hg.save();hg.translate(800,235);hg.scale(s,1);
+    hg.shadowColor="#FF3C8E";hg.shadowBlur=60;hg.fillStyle="#FF3C8E";hg.fillText("HIGHBREW",0,0);hg.shadowBlur=22;hg.fillText("HIGHBREW",0,0);hg.shadowBlur=0;hg.strokeStyle="#FFD3E6";hg.lineWidth=2.5;hg.strokeText("HIGHBREW",0,0);hg.restore();
+    hg.font="400 100px 'Tilt Neon', 'Trebuchet MS', sans-serif";if("letterSpacing" in hg)hg.letterSpacing="38px";
+    hg.shadowColor="#38E8FF";hg.shadowBlur=36;hg.strokeStyle="#38E8FF";hg.lineWidth=7;hg.strokeText("STUDIO",819,440);hg.shadowBlur=0;hg.strokeStyle="#D8FBFF";hg.lineWidth=2.5;hg.strokeText("STUDIO",819,440);if("letterSpacing" in hg)hg.letterSpacing="0px";
+    hbTex.needsUpdate=true;};
+   drawHB();try{Promise.all([document.fonts.load("270px Monoton"),document.fonts.load("100px 'Tilt Neon'")]).then(drawHB).catch(()=>{});}catch(e){}
+   hbMat=new T.MeshBasicMaterial({map:crisp(hbTex),transparent:true,depthWrite:false});
+   const hbm=new T.Mesh(new T.PlaneGeometry(4.0,1.4),hbMat);scene.add(at(hbm,7,4.3,-9.8));
+   [-1.7,1.7].forEach(x=>scene.add(at(box(.08,.08,.14,"#2B3238"),7+x,4.95,-9.86)));
+   [-1.7,1.7].forEach(x=>scene.add(at(box(.08,.08,.14,"#2B3238"),7+x,3.65,-9.86)));}
   // mobile basso con acquario
   scene.add(at(box(2.1,.7,.5,"#F7F5F0"),-8.6,.37,-9.55));scene.add(at(box(2.2,.06,.56,"#C59B6E"),-8.6,.75,-9.55));
   [-.5,.5].forEach(x=>scene.add(at(box(.9,.5,.02,"#E6E1D6"),-8.6+x,.37,-9.29)));
@@ -872,11 +913,11 @@ function updateLife(t,dt,ms){
   if(partyT>0){partyT=Math.max(0,partyT-dt);const k=ease(Math.min(1,(PARTY_LEN-partyT)/1.2,partyT/1.2));
     P.pg.visible=P.conf.visible=true;P.pg.position.y=mix(9,4.4,k);P.ball.rotation.y+=dt*1.6;P.bl.intensity=1.1*k;P.bl.color.setHSL((t*.35)%1,.8,.6);
     hemi.intensity=mix(baseH,.38,k);hemi.color.setHSL((t*.22)%1,.75*k,mix(1,.7,k));sun.intensity=mix(baseS,.1,k);
-    neonMat.color.setHSL((t*.6)%1,.9,.7);
+    neonMat.color.setHSL((t*.6)%1,.9,.82);marqueeBulbs.forEach((b,i)=>b.material.color.setHSL((t*.8+i*.05)%1,.95,.6));
     P.spots.forEach((m,i)=>{m.visible=true;const a=t*(.5+.07*i)*(i%2?1:-1)+i*1.3,r=1.5+i*.65;m.position.set(2.2+Math.cos(a)*r*1.25,.03,-3+Math.sin(a)*r*.6);m.material.opacity=.5*k;});
     const pa=P.conf.geometry.attributes.position;for(let i=0;i<pa.count;i++){let y=pa.getY(i)-dt*P.sp[i];if(y<0)y+=6;pa.setY(i,y);pa.setX(i,pa.getX(i)+Math.sin(t*3+i)*dt*.3);}pa.needsUpdate=true;P.conf.material.opacity=k;
-    if(partyT===0){P.pg.visible=P.conf.visible=false;P.spots.forEach(m=>m.visible=false);hemi.intensity=baseH;hemi.color.set("#FFFFFF");sun.intensity=baseS;neonMat.color.set("#FF8FB5");}
-  }else{neonMat.opacity=.88+Math.sin(t*2.3)*.06+(Math.sin(t*37)>.995?-.4:0);}
+    if(partyT===0){P.pg.visible=P.conf.visible=false;P.spots.forEach(m=>m.visible=false);hemi.intensity=baseH;hemi.color.set("#FFFFFF");sun.intensity=baseS;neonMat.color.set("#FFFFFF");}
+  }else{if(hbMat)hbMat.opacity=.92+Math.sin(t*3.1)*.05+(Math.sin(t*23+1.7)>.985?-.55:0);{const ph=Math.floor(t*3);marqueeBulbs.forEach((b,i)=>b.material.color.set((i+ph)%3?"#FFD76A":"#8A6A2A"));}}
 }
 
 function placeCamera(){
