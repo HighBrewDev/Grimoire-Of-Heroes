@@ -27,16 +27,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Test: `levelup` "B-031 …".
 
 
-### B-036 [media] Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
-- Trovato da: power user · 2026-11-10
-- Sezione: combattimento
-- Dove: III Combattimento → Damage e Death saves (anche il Danno dal tracciatore dell'Incontro, che usa la stessa funzione), 1440x900
-- Passi: 1. Lio (Bardo 5, 33 PF): Damage 33 → 0 PF. 2. Death saves → segna 2 fallimenti (o tirali con "Roll death save"). 3. Un nemico lo colpisce ancora: Damage 3.
-- Atteso: regole 2024: un danno mentre si è a 0 PF dà un fallimento (due se critico), quindi 3 fallimenti, l'eroe muore; e un danno che, dopo averlo portato a 0, supera i PF massimi (danno massiccio) lo uccide subito, almeno con un avviso.
-- Ottenuto: fallimenti **0/3** e successi azzerati: l'eroe morente torna "fresco" a ogni colpo e non può morire per i danni. `applyDamage` (index.html ~3342) fa `if (c.hp.cur === 0) c.death = {s:0, f:0}` anche se l'eroe era già a 0. Danno 90 a un Paladino da 40 PF: 0 PF, nessun avviso di morte istantanea. In una sessione simulata con 3 incontri il Bardo è "sopravvissuto" a 4 colpi da morente.
-- Console: nessun errore.
-- Test: `combattimento` "B-036 …".
-
 ### B-037 [bassa] Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
 - Trovato da: power user · 2026-11-10
 - Sezione: incontro
@@ -87,17 +77,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `robustezza` "B-029 …".
 
-### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
-- Trovato da: power user · 2026-11-09
-- Sezione: combattimento
-- Dove: III Combattimento → Short Rest, 1440x900
-- Passi: 1. Valeria (Fighter 3): usa i 2 Second Wind (segnalini). 2. Short Rest. 3. Lo stesso con un Chierico 6 (3 Channel Divinity) e un Bardo 5 (4 Bardic Inspiration).
-- Atteso: regole 2024: Second Wind e Channel Divinity recuperano un uso con un riposo breve; Bardic Inspiration dal livello 5 (Font of Inspiration) torna tutta.
-- Ottenuto: tutti i segnalini restano spesi fino al riposo lungo. Il riposo breve rimette solo Focus Points e slot del Patto (`SHORT_REST_RES = ['focus_points']`, index.html ~1214). Simulando una sessione di gioco con tre riposi brevi il giocatore deve ricordarsi a mano quali segnalini liberare.
-- Console: nessun errore.
-- Test: `combattimento` "B-023 …".
-- Aggiornamento power user 2026-11-10 sera (sessione con 3 incontri e 2 riposi brevi): ancora così su main e9629ca. Stessa causa, anche **Rage** (Barbaro 5), **Wild Shape** (Druido 5) e **Channel Divinity del Paladino** (5) restano spesi dopo il riposo breve (regole 2024: recuperano un uso). Tornano solo Focus Points e slot del Patto (corretto). Sorcery Points restano spesi: giusto, salvo Sorcerous Restoration del 5° livello che l'app non ha.
-
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
 - Sezione: import/export (salvataggio con più schede)
@@ -144,6 +123,31 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
+- Trovato da: power user · 2026-11-09
+- Sezione: combattimento
+- Dove: III Combattimento → Short Rest, 1440x900
+- Passi: 1. Valeria (Fighter 3): usa i 2 Second Wind (segnalini). 2. Short Rest. 3. Lo stesso con un Chierico 6 (3 Channel Divinity) e un Bardo 5 (4 Bardic Inspiration).
+- Atteso: regole 2024: Second Wind e Channel Divinity recuperano un uso con un riposo breve; Bardic Inspiration dal livello 5 (Font of Inspiration) torna tutta.
+- Ottenuto: tutti i segnalini restano spesi fino al riposo lungo. Il riposo breve rimette solo Focus Points e slot del Patto (`SHORT_REST_RES = ['focus_points']`, index.html ~1214). Simulando una sessione di gioco con tre riposi brevi il giocatore deve ricordarsi a mano quali segnalini liberare.
+- Console: nessun errore.
+- Test: `combattimento` "B-023 …".
+- Aggiornamento power user 2026-11-10 sera (sessione con 3 incontri e 2 riposi brevi): ancora così su main e9629ca. Stessa causa, anche **Rage** (Barbaro 5), **Wild Shape** (Druido 5) e **Channel Divinity del Paladino** (5) restano spesi dopo il riposo breve (regole 2024: recuperano un uso). Tornano solo Focus Points e slot del Patto (corretto). Sorcery Points restano spesi: giusto, salvo Sorcerous Restoration del 5° livello che l'app non ha.
+- Risolto: sviluppo · 2026-11-11 · `shortRestPartial`: un uso di Second Wind, Rage, Wild Shape, Channel Divinity; Bardic Inspiration tutta dal Bardo 5; test B-023 ×6 verdi.
+
+
+### B-036 [media] Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
+- Trovato da: power user · 2026-11-10
+- Sezione: combattimento
+- Dove: III Combattimento → Damage e Death saves (anche il Danno dal tracciatore dell'Incontro, che usa la stessa funzione), 1440x900
+- Passi: 1. Lio (Bardo 5, 33 PF): Damage 33 → 0 PF. 2. Death saves → segna 2 fallimenti (o tirali con "Roll death save"). 3. Un nemico lo colpisce ancora: Damage 3.
+- Atteso: regole 2024: un danno mentre si è a 0 PF dà un fallimento (due se critico), quindi 3 fallimenti, l'eroe muore; e un danno che, dopo averlo portato a 0, supera i PF massimi (danno massiccio) lo uccide subito, almeno con un avviso.
+- Ottenuto: fallimenti **0/3** e successi azzerati: l'eroe morente torna "fresco" a ogni colpo e non può morire per i danni. `applyDamage` (index.html ~3342) fa `if (c.hp.cur === 0) c.death = {s:0, f:0}` anche se l'eroe era già a 0. Danno 90 a un Paladino da 40 PF: 0 PF, nessun avviso di morte istantanea. In una sessione simulata con 3 incontri il Bardo è "sopravvissuto" a 4 colpi da morente.
+- Console: nessun errore.
+- Test: `combattimento` "B-036 …".
+- Risolto: sviluppo · 2026-11-11 · `applyDamage` suma un fallimento se il danno arriva a 0 PF e avvisa della morte istantanea (danno oltre i PF massimi); test B-036 ×2 verdi. Cura dall'Incontro (B-037) ancora aperta.
+
 
 ### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
 - **Risolto 2026-11-11** in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14) (unita da Capo): "+2" e "+1/+1" fermi a 20 a ogni livello; un talento Epic Boon al 19 chiede la caratteristica e dà +1 fino a 30. Il test vecchio "livello 18 → 19" ora sceglie Boon of Combat Prowess e si aspetta 21. Test `levelup` B-027 ora passa.

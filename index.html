@@ -1232,6 +1232,14 @@ const spellAb = c => c.spellAbility || abFor((classList(c).find(e => slotsFor(as
 
 const RES_LABEL = {rage_count:'Rage', second_wind_uses:'Second Wind', channel_divinity_charges:'Channel Divinity', wild_shape_uses:'Wild Shape', focus_points:'Focus Points', sorcery_points:'Sorcery Points', lay_on_hands_pool:'Lay on Hands (HP)'};
 const SHORT_REST_RES = ['focus_points'];
+/* SRD 5.2.1: one use back on a Short Rest (Second Wind, Rage, Wild Shape, Channel Divinity); Bardic Inspiration all back from Bard 5 (Font of Inspiration). */
+const SHORT_REST_ONE = {second_wind_uses:null, rage_count:null, wild_shape_uses:null, channel_divinity_charges:null};
+function shortRestPartial(c){
+  const r = c.res || (c.res = {});
+  Object.keys(SHORT_REST_ONE).forEach(k => { if (r[k] > 0) r[k] = r[k] - 1 || undefined; if (r[k] === undefined) delete r[k]; });
+  const bard = (multi(c).length ? classList(c).find(e => e.class === 'Bard') : (c.class === 'Bard' ? c : null));
+  if (bard && (bard.level || 0) >= 5) delete r.bardic_inspiration;
+}
 function resources(c){
   if (multi(c).length){
     const pool = [], stats = [];
@@ -3342,8 +3350,14 @@ function concCheck(c, dmg){
 }
 function applyDamage(c, a){
   const soak = Math.min(c.hp.temp || 0, a); c.hp.temp = (c.hp.temp || 0) - soak;
-  c.hp.cur = Math.max(0, c.hp.cur - (a - soak));
-  if (c.hp.cur === 0) c.death = {s:0, f:0};
+  const before = c.hp.cur, over = (a - soak) - before;
+  c.hp.cur = Math.max(0, before - (a - soak));
+  if (c.hp.cur === 0){
+    const d = c.death = c.death || {s:0, f:0};
+    if (before === 0 && a - soak > 0) d.f = Math.min(3, (d.f || 0) + 1);      // damage at 0 HP = one failed death save
+    else if (before > 0) c.death = {s:0, f:0};
+    if (over >= c.hp.max){ toast(`${c.name} takes massive damage: dies instantly under the 2024 rules (mark 3 failed saves).`); }
+  }
   concCheck(c, a);
 }
 const concChip = c => c.conc ? `<span class="chip conc" title="Concentrating">◎ ${esc(c.conc.n)} <button type="button" class="chipX" data-act="dropConc" data-arg="${esc(c.id)}" aria-label="End concentration">✕</button></span>` : '';
@@ -3679,7 +3693,7 @@ const ACT = {
     if (multi(c).length){ c.hitDice.by = c.hitDice.by || {}; c.hitDice.by[p.d] = (c.hitDice.by[p.d] || 0) + 1; }
     c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(c.hp.max, c.hp.cur + heal); save(); render();
     logRoll('Hit Die', `${r.parts} ${fmt(mod(c.abilities.con))} Con`, `+${heal} HP`); },
-  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
+  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); shortRestPartial(c); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
   longRest(){ mut(c => { c.hp.cur = c.hp.max; c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
   slot(arg){ const [lv, k] = arg.split(':').map(Number); mut(c => { const s = c.spells.slots[lv] = c.spells.slots[lv] || {used:0}; s.used = k < s.used ? k : k + 1; }, false); },
   resetSlots(){ mut(c => { c.spells.slots = {}; c.spells.pact = {used:0}; }, false); },

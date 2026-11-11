@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-11 · sviluppo (frontend + backend)
+- **Frontend** · sezione **Combattimento**: **B-023** (`shortRestPartial`: Second Wind, Rage, Wild Shape, Channel Divinity recuperano 1 uso; Bardic Inspiration tutta dal Bardo 5, SRD 5.2.1) e **B-036** (`applyDamage`: danno a 0 PF = +1 fallimento, avviso di morte istantanea se il danno oltre lo 0 supera i PF massimi). `CACHE` → `grimoire-dev1111a`.
+- **Test**: suite 208/225 prima, **216/225** dopo, nessuna regressione. Scelta prudente: il danno massiccio mostra l'avviso ma non segna 3 fallimenti, perché il test esistente "PF non scendono sotto 0" (danno 100 → `{0,0}`) lo vieta; il test non è stato toccato. Il critico (2 fallimenti) non è gestito: l'app non ha un modo per segnalarlo.
+- **Backend**: nessuna modifica (keep-alive e revisione XSS richiedono PR; non fatte in questa sessione economica). Supabase non toccato.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/team-log.md. **Resta**: B-037 (cura dall'Incontro), B-032, B-029, keep-alive PR, XSS.
+
 ## 2026-11-11 · team leader (13:40)
 - **Stato**: live = main (`grimoire-bn1110p`), controllo a 1440x900 e 390x844 senza errori. Punteggio +173 ↑ (208/225), nessuna sezione rossa. Combattimento (+4) resta la più bassa; Telefono, Robustezza e Incontro seguono.
 - **Piano**: invariato nei compiti (sviluppo e tester non hanno ancora consegnato i lavori di oggi); Telefono sale a carico MEDIO (B-030, designer + frontend). PR #18 (app gratuita) aspetta Capo.
