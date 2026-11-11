@@ -122,6 +122,13 @@ module.exports = {sezione:'eroe', test:[
     });
     assert.ok(n > 0, 'nessun campo di ricerca/filtro vicino allo scaffale degli eroi');
   }],
+  ['B-040 l\'ordine dello scaffale scelto resta dopo la ricarica', async ({open}) => {
+    const heroes = Array.from({length:12}, (_, i) => fx.blank({id:'tord' + i, name:'Eroe ' + (i + 1)}));
+    const app = await open({heroes});
+    await app.page.selectOption('#shelf_sort', 'name');
+    await app.reload();
+    assert.strictEqual(await app.page.inputValue('#shelf_sort'), 'name', 'dopo la ricarica l\'ordine è tornato "' + await app.page.inputValue('#shelf_sort') + '"');
+  }],
   ['B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu', async ({open}) => {
     const app = await open({heroes:[fx.blank({class:'Runecarver', species:'Popolo del Muschio', background:'Pirata', level:2, multi:[{class:'Blood Hunter', subclass:'', level:1}]})]});
     const v = await app.page.evaluate(() => ['#f_class', '#f_species', '#f_bg', 'select[data-mc="0:class"]'].map(s => document.querySelector(s)?.value));
