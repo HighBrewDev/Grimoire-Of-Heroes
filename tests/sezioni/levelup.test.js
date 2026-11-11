@@ -112,9 +112,11 @@ module.exports = {sezione:'levelup', test:[
     const app = await open({heroes:[fx.blank({class:'Fighter', subclass:'Champion', level:18, xp:265000, abilities:{str:20,dex:14,con:16,int:10,wis:12,cha:8}, hp:{cur:180,max:180,temp:0}})]});
     await openLU(app);
     assert.ok(/Epic Boon/.test(await app.text('#modalBk .modal')), 'manca la sezione Epic Boon al livello 19');
-    await app.set('#lu_a1', 'str'); await app.click('luApply');
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.set('#lu_feat', 'Boon of Combat Prowess'); await app.set('#lu_boonab', 'str'); await app.click('luApply');
     const h = await app.hero();
-    assert.deepStrictEqual([h.level, h.abilities.str], [19, 22]);
+    assert.deepStrictEqual([h.level, h.abilities.str], [19, 21]);
+    assert.ok(h.feats.some(f => f.n === 'Boon of Combat Prowess'));
   }],
   ['multiclasse: avanzare la seconda classe (Fighter 3 / Rogue 1 → Rogue 2, PF d8 medi 5 + Cos 2)', async ({open}) => {
     const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
@@ -155,5 +157,11 @@ module.exports = {sezione:'levelup', test:[
     await app.set('#lu_feat', 'Grappler'); await app.click('luApply');
     const h = await app.hero();
     assert.strictEqual(h.abilities.str + h.abilities.dex, 31, `For ${h.abilities.str}, Des ${h.abilities.dex} (prima 16 e 14)`);
+  ['B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1)', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
+    const opts = await app.page.$$eval('#f_class option', o => o.map(x => x.value));
+    if (opts.includes('Rogue')) await app.set('#f_class', 'Rogue');
+    const h = await app.hero(), all = [h.class, ...h.multi.map(m => m.class)];
+    assert.strictEqual(new Set(all).size, all.length, `classe doppia dopo aver scelto Rogue come classe principale: ${all.join(' / ')}`);
   }],
 ]};

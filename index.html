@@ -1051,14 +1051,17 @@ function sampleChars(){
 const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
 const objOr = (x, d) => isObj(x) ? x : d;
 const toNum = (x, d) => { const v = +x; return Number.isFinite(v) ? v : d; };
+// sane ranges for numbers people type or import (B-017, B-018): never negative coins/XP, no 1e308 hit points
+const LIM = {hp:9999, coin:999999999, xp:9999999, acb:20};
+const intIn = (x, d, a, b) => clamp(Math.round(toNum(x, d)), a, b);
 const toTxt = (x, max = 200) => (typeof x === 'string' ? x : typeof x === 'number' && Number.isFinite(x) ? String(x) : '').slice(0, max);
 const objList = x => Array.isArray(x) ? x.filter(isObj).map(o => (typeof o.n === 'string' ? o : {...o, n:toTxt(o.n, 120)})) : [];
 const txtList = x => Array.isArray(x) ? x.map(v => toTxt(v, 200)).filter(Boolean) : [];
 function fixup(c){
   const ab = objOr(c.abilities, {});
   c.abilities = Object.fromEntries(['str','dex','con','int','wis','cha'].map(k => [k, clamp(Math.round(toNum(ab[k], 10)), 1, 30)]));
-  const hp = objOr(c.hp, {cur:10, max:10, temp:0}), max = Math.max(1, Math.round(toNum(hp.max, 10)));
-  c.hp = {...hp, max, cur:Math.max(0, Math.round(toNum(hp.cur, max))), temp:Math.max(0, Math.round(toNum(hp.temp, 0)))};
+  const hp = objOr(c.hp, {cur:10, max:10, temp:0}), max = intIn(hp.max, 10, 1, LIM.hp);
+  c.hp = {...hp, max, cur:intIn(hp.cur, max, 0, LIM.hp), temp:intIn(hp.temp, 0, 0, LIM.hp)};
   c.hitDice = objOr(c.hitDice, {used:0}); c.death = objOr(c.death, {s:0,f:0});
   c.spells = objOr(c.spells, {}); c.spells.known = txtList(c.spells.known); c.spells.prep = txtList(c.spells.prep); c.spells.slots = objOr(c.spells.slots, {});
   ['attacks','feats','inventory'].forEach(k => c[k] = objList(c[k]));
@@ -1066,11 +1069,19 @@ function fixup(c){
   ['conditions','classFeats'].forEach(k => c[k] = txtList(c[k]));
   ['saves','skills','res','notes'].forEach(k => c[k] = objOr(c[k], {}));
   c.currency = objOr(c.currency, {cp:0,sp:0,ep:0,gp:0,pp:0});
+  ['cp','sp','ep','gp','pp'].forEach(k => { if (c.currency[k] != null) c.currency[k] = intIn(c.currency[k], 0, 0, LIM.coin); });
+  if (c.xp != null) c.xp = intIn(c.xp, 0, 0, LIM.xp);
+  if (c.acBonus != null) c.acBonus = intIn(c.acBonus, 0, -LIM.acb, LIM.acb);
   c.name = toTxt(c.name, 80).trim() || 'Nameless';
   ['class','subclass','species','background','alignment'].forEach(k => { if (typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
   ['player','portrait'].forEach(k => { if (c[k] != null && typeof c[k] !== 'string') c[k] = toTxt(c[k], 80); });
   let room = 19; const multi = [];
-  (Array.isArray(c.multi) ? c.multi : []).forEach(m => { if (!isObj(m) || !toTxt(m.class) || room < 1) return; const level = clamp(Math.round(toNum(m.level, 1)) || 1, 1, room); room -= level; multi.push({class:toTxt(m.class, 80), subclass:toTxt(m.subclass, 80), level}); });
+  /* a class appears once: a row repeating the first class gives its levels back to it, repeated rows are merged (B-028) */
+  const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  (Array.isArray(c.multi) ? c.multi : []).forEach(m => { if (!isObj(m) || !toTxt(m.class) || room < 1) return; const level = clamp(Math.round(toNum(m.level, 1)) || 1, 1, room); room -= level;
+    const cls = toTxt(m.class, 80), twin = multi.find(x => same(x.class, cls)); if (same(cls, c.class)) return;
+    if (twin){ twin.level += level; if (!twin.subclass) twin.subclass = toTxt(m.subclass, 80); return; }
+    multi.push({class:cls, subclass:toTxt(m.subclass, 80), level}); });
   c.multi = multi;
   c.level = clamp(Math.round(toNum(c.level, 1)) || 1, 1 + c.multi.reduce((t, m) => t + m.level, 0), 20); c.exhaustion = clamp(Math.round(toNum(c.exhaustion, 0)), 0, 6);
   return c;
@@ -1176,7 +1187,7 @@ function getAC(c){
   else ac = 10 + dex;
   const att = (c.inventory || []).filter(it => it.attuned).map(it => norm(it.n));
   const magic = att.filter(n => /^(ring|cloak) of protection$/.test(n)).length + (att.includes('bracers of defense') && !body && !shield ? 2 : 0);
-  return ac + (shield ? 2 : 0) + magic + (+c.acBonus || 0);
+  return Math.max(0, ac + (shield ? 2 : 0) + magic + clamp(+c.acBonus || 0, -LIM.acb, LIM.acb));
 }
 
 const THIRD = {3:[2],4:[3],5:[3],6:[3],7:[4,2],8:[4,2],9:[4,2],10:[4,3],11:[4,3],12:[4,3],13:[4,3,2],14:[4,3,2],15:[4,3,2],16:[4,3,3],17:[4,3,3],18:[4,3,3],19:[4,3,3,1],20:[4,3,3,1]};
@@ -1385,6 +1396,7 @@ function barsFrom(root, prefix){
 function renderPage(){
   const page = $('#page');
   page.innerHTML = pageHTML(G.chapter);
+  G.pageHero = active()?.id ?? null;   // B-016: the hero these fields were drawn for
   lockReadOnly();
   barsFrom(page, G.chapter + ':' + G.activeId + ':');
   afterRender();
@@ -1639,10 +1651,10 @@ hero(c){
         <div><label class="f" for="f_class">Class</label><select id="f_class" data-bind="class">${names('classes').map(s => opt(s, c.class)).join('')}</select></div>
         <div><label class="f" for="f_sub">Subclass</label>${subSelect('id="f_sub" data-bind="subclass"', c.class, c.subclass)}</div>
         <div><label class="f" for="f_level">${multi(c).length ? 'Total level' : 'Level (1–20)'}</label><input type="number" id="f_level" data-bind="level" data-type="int" min="1" max="20" value="${c.level}"></div>
-        <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" value="${c.xp || 0}"></div>
+        <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" max="${LIM.xp}" value="${c.xp || 0}"></div>
       </div>
       <div class="mcBox">${multi(c).length ? `<h4>Multiclass <span class="muted">${esc(c.class)} ${classList(c)[0].level} is the first class</span></h4>
-        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
+        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').filter(s => s === m.class || !classList(c).some(e => e.class === s)).map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
         ${c.level < 20 ? `<div class="row">${act('mcAdd', undefined, '＋ Add a class (multiclass)', 'sb')}<span class="muted small">or take one from Level up, which checks the rules</span></div>` : ''}</div>
       <label class="row mt"><input type="checkbox" id="f_insp" data-bind="inspiration" ${c.inspiration ? 'checked' : ''}> <b>Heroic Inspiration</b> <span class="muted">reroll one D20; Humans regain it each Long Rest</span></label>
       <div class="rule"></div>
@@ -1701,13 +1713,13 @@ combat(c){
       <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${c.hp.max}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= c.hp.max / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
       <div class="row mt"><label class="sr" for="hpAmt">Amount</label><input type="number" id="hpAmt" value="5" min="0">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
       <div class="rule"></div>
-      <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" value="${c.hp.max}"></div>
+      <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" max="${LIM.hp}" value="${c.hp.max}"></div>
       ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
       <div class="row mt">${act('spendHD', undefined, 'Spend Hit Die')}${act('shortRest', undefined, 'Short Rest')}${act('longRest', undefined, 'Long Rest')}</div>
       <p class="muted">Short Rest: spend Hit Dice, each heals the roll + Con. Long Rest (2024): regain all HP and all Hit Dice, reduce Exhaustion by 1.</p>`)}
     ${card('Armor & motion', `
       ${kv('Armor Class', `<span class="big num">${getAC(c)}</span>`)}
-      <div class="kv"><label for="f_acb">AC adjustment</label><input type="number" id="f_acb" data-bind="acBonus" data-type="int" value="${c.acBonus || 0}"></div>
+      <div class="kv"><label for="f_acb">AC adjustment</label><input type="number" id="f_acb" data-bind="acBonus" data-type="int" min="-${LIM.acb}" max="${LIM.acb}" value="${c.acBonus || 0}"></div>
       ${kv('Initiative', `${fmt(initBonus(c))}${hasFeat(c, 'Alert') ? ' <span class="muted">(Alert)</span>' : ''} ${act('rollInit', undefined, 'Roll')}`)}
       <div class="kv"><label for="f_spd">Speed</label><input type="text" id="f_spd" data-bind="speedOverride" value="${esc(c.speedOverride || '')}" placeholder="${esc(sp.speed ? sp.speed + ' ft.' : '30 ft.')}" style="width:110px"></div>
       <label class="f">Exhaustion</label><div class="row">${[0,1,2,3,4,5,6].map(n => act('setExh', n, n, 'sb' + (c.exhaustion === n ? ' on' : ''), `aria-pressed="${c.exhaustion === n}"`)).join('')} <button type="button" class="xref" data-act="detail" data-arg="Exhaustion">rules</button></div>
@@ -1839,7 +1851,7 @@ pack(c){
           <label class="row muted"><input type="checkbox" id="gear_att" ${G.gearAtt ? 'checked' : ''}> attunement</label></div>
         <div id="gearResults"></div>`}`)}
       ${card(`Coin purse <span class="muted num">≈ ${total.toFixed(1)} gp</span>`, `
-        <div class="fields">${['cp','sp','ep','gp','pp'].map(k => `<div><label class="f" for="coin_${k}">${k.toUpperCase()}</label><input type="number" id="coin_${k}" data-bind="currency.${k}" data-type="int" value="${coins[k] || 0}"></div>`).join('')}</div>
+        <div class="fields">${['cp','sp','ep','gp','pp'].map(k => `<div><label class="f" for="coin_${k}">${k.toUpperCase()}</label><input type="number" id="coin_${k}" data-bind="currency.${k}" data-type="int" min="0" max="${LIM.coin}" value="${coins[k] || 0}"></div>`).join('')}</div>
         <p class="muted">1 pp = 10 gp · 1 gp = 2 ep = 10 sp = 100 cp. Edits save as you type.</p>`)}
       <details class="fold"><summary>Weapons table (${(SRD.equipment || []).filter(e => e.dmg).length})</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Weapon</th><th>Damage</th><th>Mastery</th><th>Properties</th></tr></thead><tbody>${(SRD.equipment || []).filter(e => e.dmg).map(w => `<tr><td>${xref(w.n)}</td><td>${esc(w.dmg + ' ' + w.dt)}</td><td>${w.m ? xref(w.m) : ''}</td><td class="wrap">${esc((w.props || []).join(', '))}</td></tr>`).join('')}</tbody></table></div></details>
       <details class="fold"><summary>Armor table (${ARMORS.length})</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Armor</th><th>AC</th><th>Str</th><th>Stealth</th></tr></thead><tbody>${ARMORS.map(a => `<tr><td>${xref(a.n)}</td><td>${esc(a.ac)}</td><td>${a.strmin || '—'}</td><td>${a.stealth ? 'Disadvantage' : '—'}</td></tr>`).join('')}</tbody></table></div></details>
@@ -3295,7 +3307,7 @@ function renderOmni(){
 function mut(fn, full = true){ const c = active(); fn(c); save(); full ? render() : renderPage(); }
 const num = id => parseInt($('#' + id)?.value, 10) || 0;
 /* HP amounts are never negative (B-006): "-50" damage or healing does nothing. */
-const hpNum = id => Math.max(0, num(id));
+const hpNum = id => clamp(num(id), 0, LIM.hp);
 function weaponAttack(c, w){
   const props = (w.props || []).map(norm);
   const finesse = props.includes('finesse'), ranged = /ranged/i.test(w.cat || '');
@@ -3413,9 +3425,18 @@ PAGES.encounter = function(c){
 /* ================================================================== guided level up */
 const ASI_LEVELS = {Fighter:[4,6,8,12,14,16,19], Rogue:[4,8,10,12,16,19]};
 /* 2024: when the Constitution modifier changes, max HP changes as if it had been that from level 1 (B-022) */
+/* Max HP never drops below 1 per level and damage taken stays the same; what a low Constitution could not take away
+   (max kept at the floor, damage beyond 0 HP) is remembered in hp.conAdj, so − then + gives back the same HP (B-026).
+   The memory is dropped as soon as the HP change for any other reason. */
 function conHp(c, oldCon){
-  const n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * (c.level || 1); if (!n) return 0;
-  c.hp.max = Math.max(1, (+c.hp.max || 0) + n); c.hp.cur = clamp((+c.hp.cur || 0) + n, 0, c.hp.max); return n;
+  const lv = c.level || 1, n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * lv; if (!n) return 0;
+  const hp = c.hp, max0 = +hp.max || 0, cur0 = +hp.cur || 0, a = hp.conAdj, fresh = !!a && a.m === max0 && a.c === cur0;
+  const raw = max0 - (fresh ? +a.max || 0 : 0) + n, max = clamp(raw, lv, LIM.hp);
+  const dmg = max0 - cur0 + (fresh ? +a.cur || 0 : 0), dying = cur0 === 0 && !(fresh && a.cur);
+  const want = dying ? 0 : max - dmg, cur = clamp(want, 0, max);
+  hp.max = max; hp.cur = cur;
+  if (max !== raw || cur !== want) hp.conAdj = {max:max - raw, cur:cur - want, m:max, c:cur}; else delete hp.conAdj;
+  return max - max0;
 }
 /* feats already taken are not offered again unless repeatable (B-025) */
 const featOffered = (c, e) => !!(e.o?.rep) || !hasFeat(c, e.n);
@@ -3473,7 +3494,8 @@ function openLevelUp(keep){
         <label class="row"><input type="radio" name="lu_asi" value="two" checked> +2 to ${abSel('lu_a1')}</label>
         <label class="row"><input type="radio" name="lu_asi" value="split"> +1 to ${abSel('lu_b1')} and +1 to ${abSel('lu_b2')}</label>
         <label class="row"><input type="radio" name="lu_asi" value="feat"> Feat: <select id="lu_feat">${featList.map(e => `<option value="${esc(e.n)}">${esc(e.n)} · ${esc(e.k)}</option>`).join('')}</select></label>
-        <p class="muted">Scores can't go above 20 this way${P.boon ? ' (Epic Boons raise one score by 1, up to 30)' : ''}.</p></div>` : ''}
+        ${P.boon ? `<label class="row">An Epic Boon also gives +1 to ${abSel('lu_boonab')}</label>` : ''}
+        <p class="muted">+2 and +1/+1 can't take a score above 20${P.boon ? '; an Epic Boon raises one score by 1, up to 30' : ''}.</p></div>` : ''}
     ${slotRows || P.nx.cantrips !== P.old.cantrips || P.nx.prepared !== P.old.prepared ? `<h4>Spellcasting</h4><div class="tblWrap"><table class="ctable"><thead><tr><th>Slots</th><th>Now</th><th>Level ${P.N}</th></tr></thead><tbody>${slotRows}
       ${P.nx.cantrips !== P.old.cantrips && P.nx.cantrips !== undefined ? `<tr><td>Cantrips known</td><td>${P.old.cantrips ?? 0}</td><td><b>${P.nx.cantrips}</b></td></tr>` : ''}
       ${P.nx.prepared !== P.old.prepared && P.nx.prepared !== undefined ? `<tr><td>Prepared spells</td><td>${P.old.prepared ?? 0}</td><td><b>${P.nx.prepared}</b></td></tr>` : ''}</tbody></table></div>
@@ -3493,13 +3515,17 @@ function applyLevelUp(){
   if (P.needSub){ const s = $('#lu_sub').value.trim(); if (s){ const sc = s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '');
     if (T.isNew) T.subclass = sc; else if (T.main) c.subclass = sc; else c.multi[T.i].subclass = sc; notes.push(sc); } }
   if (P.asi || P.boon){
-    const m = $('input[name="lu_asi"]:checked')?.value, cap = P.boon ? 30 : 20;
+    /* 2024: the Ability Score Improvement stops at 20; only an Epic Boon feat gives +1 up to 30 (B-027) */
+    const m = $('input[name="lu_asi"]:checked')?.value;
     /* never lowers a score already above the cap (B-005) */
-    const up = (ab, n) => { const v = c.abilities[ab] || 10; c.abilities[ab] = Math.max(v, Math.min(cap, v + n)); return c.abilities[ab] - v; };
+    const up = (ab, n, cap = 20) => { const v = c.abilities[ab] || 10; c.abilities[ab] = Math.max(v, Math.min(cap, v + n)); return c.abilities[ab] - v; };
     const gained = (ab, g) => g ? `${ab.toUpperCase()} +${g}` : `${ab.toUpperCase()} already ${c.abilities[ab]}`;
     if (m === 'two'){ const a = $('#lu_a1').value; notes.push(gained(a, up(a, 2))); }
     else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } notes.push(gained(a, up(a, 1)) + ', ' + gained(b, up(b, 1))); }
-    else if (m === 'feat'){ const f = $('#lu_feat')?.value; if (!f){ toast('No feat left to pick: choose an ability increase.'); return; } c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
+    else if (m === 'feat'){ const f = $('#lu_feat')?.value; if (!f){ toast('No feat left to pick: choose an ability increase.'); return; }
+      const fe = ALL.find(e => e.cat === 'feats' && e.n === f), ab = $('#lu_boonab')?.value;
+      c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f);
+      if (ab && fe && /epic boon/i.test(fe.k || fe.o?.ty || '')) notes.push(gained(ab, up(ab, 1, 30))); }
   }
   if (T.isNew){ c.multi = multi(c); c.multi.push({class:T.class, subclass:T.subclass || '', level:1}); notes.unshift(`${T.class} 1`); }
   else if (!T.main) c.multi[T.i].level++;
@@ -3706,7 +3732,7 @@ const ACT = {
     mut(c => { c.inventory[i].q = (it.q || 1) + d; }, false); },
   delItem(i){ mut(c => c.inventory.splice(+i, 1), false); },
   wear(i){ mut(c => { const it = c.inventory[+i]; it.worn = it.worn === false; }, false); },
-  addXP(v){ mut(c => c.xp = (c.xp || 0) + +v, false); },
+  addXP(v){ mut(c => c.xp = intIn((c.xp || 0) + +v, c.xp || 0, 0, LIM.xp), false); },
   libCat(id){ G.libCat = id; G.libQ = ''; G.libF = {}; G.libSel = null; save(); renderPage(); },
   libPick(id){ G.libSel = id; const d = $('#libDetail'); d.innerHTML = entryCard(byId(id)); $$('#libList [aria-selected="true"]').forEach(b => b.setAttribute('aria-selected', 'false'));
     const b = $(`#libList [data-arg="${CSS.escape(id)}"]`); if (b) b.setAttribute('aria-selected', 'true');
@@ -3718,8 +3744,8 @@ const ACT = {
   wizard(){ openWizard(); },
   doWizard(){ doWizard(); },
   duplicate(){ const src = active(), c = JSON.parse(JSON.stringify(src)); LOCAL_FIELDS.concat(['createdAt']).forEach(k => delete c[k]); c.id = uid(); c.owner = me() || undefined;
-    c.name += isMine(src) ? ' (copy)' : ` (copy of ${src.ownerName || 'party'}'s)`; if (!isMine(src)) c.player = S.profile?.display_name || '';
-    G.chars.push(c); G.activeId = c.id; save(); render(); toast(`${c.name} is yours to change.`); },
+    c.name = copyName(src); if (!isMine(src)) c.player = S.profile?.display_name || '';
+    fixup(c); G.chars.push(c); G.activeId = c.id; save(); render(); toast(`${c.name} is yours to change.`); },
   deleteChar(){ if (G.chars.length <= 1 && !me()){ toast('This is your last hero, so it stays.'); return; }
     confirmBox(`Delete ${active().name}?`, 'Delete hero', () => { const gone = active(); if (me() && gone._rev){ S.tomb.push(gone.id); saveTomb(); }
       G.chars = G.chars.filter(c => c.id !== G.activeId); G.activeId = G.chars[0]?.id || null; save(); render(); toast('Hero deleted.'); }); },
@@ -3834,16 +3860,30 @@ const deviceName = () => /iPad/.test(navigator.userAgent) || /Macintosh/.test(na
 const LOCAL_FIELDS = ['_sig', '_dirty', '_rev', '_blocked', 'ownerName', 'updatedAt', 'editedOn'];
 /* Backups (B-015): every hero of yours in one file; importing it adds them as new heroes, skipping exact copies already in the tome. */
 const backupHeroes = () => G.chars.filter(c => isMine(c));
+/* B-024: a copy gets a name no other hero has, within the 80-character limit fixup keeps: "X (copy)", "X (copy 2)"…
+   Copying a copy numbers it again instead of piling up "(copy) (copy)". */
+function copyName(src){
+  const mine = isMine(src), who = String(src.ownerName || 'party').slice(0, 30);
+  const base = String(src.name || 'Nameless').replace(/ \(copy(?: \d+)?(?: of .*'s)?\)$/, '') || 'Nameless';
+  const taken = new Set(G.chars.map(c => c.name));
+  for (let i = 1; ; i++){
+    const n = i === 1 ? '' : ' ' + i, tag = mine ? ` (copy${n})` : ` (copy${n} of ${who}'s)`;
+    const name = (base.slice(0, 80 - tag.length).trimEnd() || 'Nameless') + tag;
+    if (!taken.has(name)) return name;
+  }
+}
 const sameHeroKey = c => { const o = heroData(c); ['id', 'owner', 'createdAt'].forEach(k => delete o[k]); return sigHash(JSON.stringify(o)); };
 function importBackup(list){
-  const have = new Set(G.chars.map(sameHeroKey)), prev = G.activeId, added = [];
+  // B-024: count copies, so two identical heroes in the file both come back; only as many as the tome already holds are skipped.
+  const have = new Map(), prev = G.activeId, added = [];
+  for (const c of G.chars){ const k = sameHeroKey(c); have.set(k, (have.get(k) || 0) + 1); }
   let bad = 0, same = 0;
   for (const raw of list){
     if (!isObj(raw) || raw.name == null || raw.name === '' || !isObj(raw.abilities)){ bad++; continue; }
     let h; try { h = JSON.parse(JSON.stringify(raw)); LOCAL_FIELDS.concat(['owner', 'createdAt']).forEach(k => delete h[k]); h.id = uid(); fixup(h); }
     catch (e) { console.warn('Backup hero rejected', e); bad++; continue; }
-    const k = sameHeroKey(h); if (have.has(k)){ same++; continue; }
-    have.add(k); added.push(h);
+    const k = sameHeroKey(h), n = have.get(k) || 0; if (n > 0){ have.set(k, n - 1); same++; continue; }
+    added.push(h);
   }
   if (!added.length){ toast(same ? `Every hero in that file is already in the tome${bad ? `; ${bad} damaged entr${bad === 1 ? 'y' : 'ies'} skipped` : ''}.` : 'That file has no heroes this tome can read.', same ? '' : 'fumble'); if (same) closeModal(); return; }
   try { G.chars.push(...added); G.activeId = added[0].id; render(); }
@@ -4350,16 +4390,29 @@ async function cloudBoot(){
 
 /* ================================================================== wiring */
 function setPath(obj, path, v){ const ks = path.split('.'); let o = obj; ks.slice(0, -1).forEach(k => o = o[k] = o[k] || {}); o[ks[ks.length - 1]] = v; }
-function bindValue(el){
-  const c = active(), path = el.dataset.bind;
+/* B-016: a field writes only to the hero it was drawn for. If another tab deleted that hero meanwhile,
+   what is typed is not saved anywhere (never onto whichever hero became active) and the page says so. */
+function heroGone(){
+  if (G.goneWarned !== G.pageHero){ G.goneWarned = G.pageHero; toast('This hero was deleted in another tab: what you typed here is not saved.', 'fumble'); }
+  G.needRender = true;
+}
+function bindValue(el, done){
+  const id = G.pageHero === undefined ? active()?.id : G.pageHero, c = G.chars.find(h => h.id === id), path = el.dataset.bind;
+  if (!c){ heroGone(); return; }
   let v = el.type === 'checkbox' ? el.checked : el.value;
-  if (el.dataset.type === 'int') v = parseInt(v, 10) || 0;
+  if (el.dataset.type === 'int'){   // B-017, B-018: the field's own min/max hold, typed or pasted
+    // B-035: read the number the field shows ("1e3" is 1000, "2.9" keeps 2), not just its leading digits
+    const f = Number(String(v).trim()), n = Number.isFinite(f) ? Math.trunc(f) : (parseInt(v, 10) || 0), lo = el.min === '' ? -LIM.coin : +el.min, hi = el.max === '' ? LIM.coin : +el.max;
+    v = clamp(n, lo, hi);
+    if (done && el.value !== '' && el.value !== String(v)) el.value = v;   // on change (not mid-typing) show what was kept
+  }
   if (path === 'level') v = clamp(v, 1 + multi(c).reduce((t, m) => t + m.level, 0), 20);
   if (path === 'hp.max'){ v = Math.max(1, v); c.hp.cur = Math.min(c.hp.cur, v); }
   if (path === 'name' && !String(v).trim()) return;
   if (path === 'class' && v !== c.class) c.subclass = '';
   setPath(c, path, v);
   save();
+  if (!G.chars.includes(c)) heroGone();   // this save found it deleted in the other tab
 }
 function mcValue(el){
   const [i, k] = el.dataset.mc.split(':');
@@ -4385,7 +4438,7 @@ function wire(){
     if (el.dataset.bind && !isMine(active())){ renderPage(); return; }
     if (el.dataset.mc !== undefined){ if (isMine(active())) mcValue(el); else renderPage(); return; }
     if (el.id === 'lu_cls'){ G.lu.cls = el.value; openLevelUp(true); return; }
-    if (el.dataset.bind){ bindValue(el); const quiet = el.tagName === 'TEXTAREA' || /^currency\.|^notes\./.test(el.dataset.bind); quiet ? null : render(); return; }
+    if (el.dataset.bind){ bindValue(el, true); const quiet = el.tagName === 'TEXTAREA' || /^currency\.|^notes\./.test(el.dataset.bind); quiet ? null : render(); return; }
     if (el.dataset.lib !== undefined){ G.libF[el.dataset.lib] = el.value; renderLibList(); return; }
     if (el.id === 'spell_mine'){ G.spellMine = el.checked; spellSearch($('#spell_q').value); }
     if (el.id === 'imp_file') importFiles([...el.files]);

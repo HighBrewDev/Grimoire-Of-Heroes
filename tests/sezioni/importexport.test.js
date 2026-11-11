@@ -144,6 +144,38 @@ module.exports = {sezione:'importexport', test:[
     const n = (await b.store()).chars.length;
     assert.strictEqual(n, 5, `dopo il ripristino ${n - 1} eroi su 4 (${await b.toast()})`);
   }],
+  ['B-024 due Duplicate dello stesso eroe: nomi diversi e il ripristino li riporta tutti', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.KESSA)]});
+    await app.click('duplicate'); await app.click('pick', 'tkessa'); await app.click('duplicate');
+    const names = (await app.store()).chars.map(c => c.name);
+    assert.strictEqual(new Set(names).size, 3, 'nomi: ' + names.join(' | '));
+    await app.click('export');
+    const [dl] = await Promise.all([app.page.waitForEvent('download'), app.click('exportAll')]);
+    const txt = require('fs').readFileSync(await dl.path(), 'utf8');
+    const b = await open({heroes:[fx.hero(fx.VALERIA)]});
+    await importText(b, txt); await b.page.waitForTimeout(300);
+    assert.strictEqual((await b.store()).chars.length, 4, await b.toast());
+    await importText(b, txt); await b.page.waitForTimeout(300);
+    assert.strictEqual((await b.store()).chars.length, 4, 'secondo ripristino dello stesso file: doppioni');
+  }],
+  ['B-024 Duplicate a catena: il nome resta entro 80 caratteri e non accumula "(copy)"', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {name:'V'.repeat(80)})]});
+    for (let i = 0; i < 4; i++) await app.click('duplicate');
+    const names = (await app.store()).chars.map(c => c.name);
+    assert.strictEqual(new Set(names).size, 5, 'nomi uguali: ' + names.join(' | '));
+    assert.ok(names.every(n => n.length <= 80), 'nome oltre 80: ' + names.map(n => n.length).join(','));
+    assert.ok(names.every(n => (n.match(/\(copy/g) || []).length <= 1), 'copy ripetuto: ' + names.join(' | '));
+  }],
+  ["B-016 due schede: se A cancella l'eroe che B sta scrivendo, B avvisa che il testo non è salvato", async ({open}) => {
+    const a = await open(); const b = await a.newTab();
+    await b.go('chronicle');
+    await b.page.click('[data-bind="notes.story"]'); await b.page.keyboard.type(' e poi');
+    await a.click('deleteChar'); await a.confirm(); await a.page.waitForTimeout(300);
+    await b.page.keyboard.type(' ancora'); await b.page.keyboard.press('Tab'); await b.page.waitForTimeout(300);
+    assert.ok(/deleted in another tab/i.test(await b.toast()), 'nessun avviso: ' + await b.toast());
+    const s = await b.store();
+    assert.ok(s.chars.every(c => !/ancora/.test(c.notes?.story || '')), 'testo finito su un altro eroe');
+  }],
   ['import di un elenco di due eroi: entrano entrambi e restano dopo la ricarica', async ({open}) => {
     const app = await open();
     await importText(app, [fx.blank({id:'x1', name:'Primo Importato'}), fx.blank({id:'x2', name:'Secondo Importato'})]);

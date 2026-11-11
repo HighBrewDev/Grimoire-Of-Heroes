@@ -35,36 +35,46 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: il focus resta nella finestra (`aria-modal="true"` lo promette) e il livello va a Eldrin.
 - Ottenuto: con la finestra ancora aperta e il titolo ancora "Eldrin … level 5", Invio sul ritratto cambia l'eroe attivo; "Become level 5" porta **Kessa** dal 2 al 3 ("Kessa Quickpaw is now level 3: +6 HP"), Eldrin resta 4. Non esiste un modo per togliere un livello. `modal()` (index.html ~1290) mette il focus nella finestra ma non lo trattiene e lo sfondo non è `inert`; `applyLevelUp` usa `active()` invece dell'eroe per cui la finestra è stata aperta. Col mouse non succede (lo sfondo copre).
 - Console: nessun errore.
-- Test: `robustezza` "B-029 …".
+- Test: `combattimento` "B-036 …".
 
-### B-028 [bassa] Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
-- Trovato da: distruttore · 2026-11-10
-- Sezione: level up/multiclasse
-- Dove: I Eroe → righe della multiclasse, 1440x900; anche Import
-- Passi: 1. Fighter 3 / Rogue 4 / Wizard 4 (preso dal Level up). 2. Nella pagina Eroe cambia la riga "Rogue" in "Wizard" (o in "Fighter"). 3. Apri Level up. Oppure importa `{"name":"Neg","class":"Fighter","level":3,"abilities":{"str":10},"multi":[{"class":"Fighter","level":2}]}`.
-- Atteso: il menu della riga offre solo classi che l'eroe non ha (o unisce i livelli), l'import unisce i doppioni.
-- Ottenuto: l'eroe diventa "Fighter 3 / Wizard 4 / Wizard 4"; Level up offre due volte "Wizard 4 → 5", quindi due volte l'aumento del livello 4, privilegi e incantesimi contati da due classi separate. Import: "Fighter 1 / … / Fighter 2" accettato. Il menu `data-mc="i:class"` (index.html ~1645) elenca tutte le classi, anche quella principale.
+### B-037 [bassa] Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
+- Trovato da: power user · 2026-11-10
+- Sezione: incontro
+- Dove: IV Encounter → Heal sulla riga di un eroe, poi III Combattimento → Death saves, 1440x900
+- Passi: 1. Lio a 0 PF con 1 successo e 2 fallimenti. 2. Encounter → aggiungi Lio → nella sua riga scrivi 5 → Heal. 3. Apri Combattimento.
+- Atteso: come con Heal nel Combattimento: a 5 PF i tiri contro la morte si azzerano.
+- Ottenuto: PF 5/33 ma Death saves mostra ancora **1 successo e 2 fallimenti** accesi (`death {s:1,f:2}`). `encHeal` (index.html ~3622) aggiorna solo `hp.cur`, mentre `heal()` azzera `death`. Si sistema da solo al colpo successivo solo per via di B-036.
 - Console: nessun errore.
-- Test: `levelup` "B-028 …".
+- Test: `incontro` "B-037 …".
 
-### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
+### B-034 [bassa] Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
+- Trovato da: distruttore · 2026-11-10
+- Sezione: eroe
+- Dove: I Eroe → menu Class, Species, Background e righe della multiclasse, 1440x900
+- Passi: 1. Workshop → Import file di una classe homebrew in Markdown ("# Class: Runecarver", d8, tiri salvezza Int e Cos). 2. Valeria Fighter 3 / Rogue 1: nella riga della multiclasse scegli Runecarver. 3. Workshop → cancella Runecarver (conferma). 4. Torna a Eroe. Oppure importa un eroe con classe "Artificer", specie "Popolo del Muschio", background "Pirata".
+- Atteso: il menu mostra ancora il valore dell'eroe (anche come voce "Runecarver (non più disponibile)"), come fa l'intestazione.
+- Ottenuto: intestazione "Fighter (Champion) 3 / Runecarver 1", ma il menu della riga mostra **Barbarian**; per l'eroe importato i menu mostrano Barbarian / Dragonborn / Acolyte mentre i dati dicono Artificer / Popolo del Muschio / Pirata. Il giocatore legge una classe sbagliata, e scegliere davvero Barbarian (la voce già mostrata) non fa partire il cambio. I dati non cambiano da soli e il Level up funziona ancora (Runecarver 1 → 2, +7 PF), nessun errore. `opt()` marca `selected` solo se il valore è nell'elenco (`names('classes')`, index.html ~1650 e ~1656).
+- Console: nessun errore.
+- Test: `eroe` "B-034 …".
+
+### B-033 [bassa] Multiclasse: il menu della classe principale offre una classe già presente nelle righe (resto di B-028)
 - Trovato da: distruttore · 2026-11-10
 - Sezione: level up/multiclasse
-- Dove: finestra Level up, livello 18 → 19 (qualsiasi classe), 1440x900
-- Passi: 1. Mago 18 con Intelligenza 20. 2. Level up: sezione "Epic Boon or Ability Score Improvement", lascia "+2 to Intelligence". 3. Become level 19. 4. Rifai scegliendo "Feat: Boon of …".
-- Atteso: regole 2024: l'aumento dei punteggi (talento Ability Score Improvement) arriva al massimo a 20; solo il talento Epic Boon dà +1 a un punteggio fino a 30.
-- Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
+- Dove: I Eroe → menu Class (classe principale), 1440x900
+- Passi: 1. Valeria Fighter 3 / Rogue 1 (livello 4). 2. Nel menu Class (la classe principale, non la riga) scegli Rogue. 3. Apri Level up. 4. Ricarica la pagina.
+- Atteso: il menu Class non offre Rogue (come fa ora la riga, B-028) oppure unisce i livelli dicendolo.
+- Ottenuto: intestazione "Rogue 3 / Rogue 1"; Level up offre due righe "Rogue 3 → 4" e "Rogue 1 → 2" (aumenti e privilegi contati da due classi separate, come in B-028). Alla ricarica `fixup` scarta la riga doppia: l'eroe diventa "Rogue 4" e i 3 livelli da Guerriero spariscono senza avviso. La correzione di B-028 ha filtrato solo il menu `data-mc`; `bindValue` per `class` (index.html ~4384) non guarda la multiclasse.
 - Console: nessun errore.
 - Conferma (tester extra, 2026-11-10): Guerriero 18, For 20 → Feat "Boon of Fate" → punteggi invariati (toast "+9 HP · Boon of Fate"); quindi un Boon su Costituzione non alza nemmeno i PF (B-022). Lo stesso succede con Grappler ai livelli normali (B-031).
 - Test: `levelup` "B-027 …".
 
-### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+### B-032 [bassa] Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
 - Trovato da: distruttore · 2026-11-10
 - Sezione: caratteristiche
-- Dove: II Caratteristiche → pulsanti − / + della Costituzione, 1440x900 (correzione B-022 di stamattina)
-- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1). 3. Premi + 9 volte (Cos 10).
-- Atteso: a Cos 1 PF massimi 20 (almeno 1 per livello); tornati a Cos 10, di nuovo 82/82.
-- Ottenuto: a Cos 1 PF **0/1** (l'eroe è a terra per un clic di troppo); tornati a Cos 10 PF **100/101** (+19 dal nulla). Con Cos 30 e ritorno a 10 resta 100/101. Anche un clic sbagliato su un eroe ferito lo cura: PF attuali portati a 0 dal −, poi il + li alza di livello × 1. `conHp` (index.html ~3416) taglia i massimi a 1 con `Math.max(1, …)` e i PF attuali a 0, poi il ritorno aggiunge l'intera differenza.
+- Dove: II Caratteristiche → − / + della Costituzione, con III Combattimento → Damage o Level up nel mezzo, 1440x900
+- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1, PF 20/20: corretto, minimo 1 per livello). 3. Combattimento → Damage 5 (PF 15/20). 4. Torna a Caratteristiche e premi + 9 volte (Cos 10). Variante: Mago 10 (42 PF), Cos 1, Level up all'11 (+1 PF, corretto), poi Cos 10.
+- Atteso: 77/82 (danno 5 sui PF di partenza); nella variante 46 PF massimi (6 + 10 × 4).
+- Ottenuto: **115/120** (+38 PF massimi dal nulla); variante **66/66** (+20). Con riposo lungo o cura nel mezzo invece torna giusto (82/82). La memoria `hp.conAdj` di B-026 vale solo se i PF non sono cambiati (`a.m === max0 && a.c === cur0`): un danno o un livello la cancellano e la differenza tolta dal minimo (qui 38) viene restituita due volte. Serve una Cos 1–3 a livello alto, quindi gravità bassa.
 - Console: nessun errore.
 - Conferma (tester extra, 2026-11-10): Paladino 5, Cos 14, PF 3/44 → un − e un + → **5/44**; Paladino 20 a 0 PF con 2 tiri contro la morte falliti, Cos 3 → tre − e tre + → **40/50**, tiri ancora segnati: un eroe morente torna in piedi correggendo un clic.
 - Test: `caratteristiche` "B-026 …" (2 test).
@@ -78,16 +88,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: tutti i segnalini restano spesi fino al riposo lungo. Il riposo breve rimette solo Focus Points e slot del Patto (`SHORT_REST_RES = ['focus_points']`, index.html ~1214). Simulando una sessione di gioco con tre riposi brevi il giocatore deve ricordarsi a mano quali segnalini liberare.
 - Console: nessun errore.
 - Test: `combattimento` "B-023 …".
-
-### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
-- Trovato da: power user · 2026-11-09
-- Sezione: import/export
-- Dove: I Eroe → Duplicate, poi Export → "Export all heroes" e Import del file, 390x844 e 1440x900
-- Passi: 1. Eroe con nome di 70 caratteri (o un nome normale duplicato più volte partendo dall'ultima copia: ogni copia aggiunge " (copy)"). 2. Duplicate tre volte. 3. Export all heroes. 4. In un altro browser (o dopo aver cancellato gli eroi) Import del file.
-- Atteso: tornano tutti e 4 gli eroi.
-- Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
-- Console: nessun errore.
-- Test: `importexport` "B-024 …".
+- Aggiornamento power user 2026-11-10 sera (sessione con 3 incontri e 2 riposi brevi): ancora così su main e9629ca. Stessa causa, anche **Rage** (Barbaro 5), **Wild Shape** (Druido 5) e **Channel Divinity del Paladino** (5) restano spesi dopo il riposo breve (regole 2024: recuperano un uso). Tornano solo Focus Points e slot del Patto (corretto). Sorcery Points restano spesi: giusto, salvo Sorcerous Restoration del 5° livello che l'app non ha.
 
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
@@ -98,26 +99,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: la storia di **Eldrin** diventa "A city guardsman who took up the adventuring road. scrive ancora" (testo di Valeria + quello scritto): la sua storia vera ("Apprentice of the Spire.") è persa senza avviso. Con il Nome: Eldrin si chiama "Valeria EDITATA in B". La pagina di B mostra ancora "Valeria Thorne · Chronicle". Causa probabile: `otherTabSaved`/`mergeStored` (index.html ~4015) tolgono l'eroe e spostano `G.activeId` sul primo eroe mentre si scrive (`isTyping` rimanda solo il render), poi `bindValue` (~4333) scrive su `active()`, che ora è un altro eroe.
 - Console: nessun errore.
 - Test: `importexport` "B-016 …" (2 test).
-
-### B-017 [bassa] Monete negative accettate nello Zaino
-- Trovato da: distruttore · 2026-11-09
-- Sezione: zaino
-- Dove: VII Pack & Riches → monete, 1440x900
-- Passi: 1. Scrivi `-100` in GP e `-3` in PP.
-- Atteso: valore portato a 0 (o rifiutato).
-- Ottenuto: salvati `gp:-100, pp:-3`. Anche l'import accetta `"currency":{"sp":-5}` e `"gp":1e308` (mostrato "≈ 1e+308 gp"). `bindValue` con `data-type="int"` non ha minimo; stessa cosa per XP (`-5000` salvato).
-- Console: nessun errore.
-- Test: `zaino` "B-017 …".
-
-### B-018 [bassa] CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
-- Trovato da: distruttore · 2026-11-09
-- Sezione: combattimento
-- Dove: III Combattimento, 1440x900
-- Passi: 1. AC adjustment `-999`. 2. Oppure Import `{"name":"Enorme","abilities":{"str":10},"class":"Fighter","level":20,"hp":{"cur":1e308,"max":1e308,"temp":1e308}}`. 3. Oppure PF massimi `999999999999` nel campo.
-- Atteso: CA mai sotto 0 e PF entro un massimo ragionevole (B-007 ha messo solo i minimi).
-- Ottenuto: CA mostrata -981; PF "1e+308 / 1e+308 · 1e+308 temp" (i danni non li scalfiscono); 999999999999 accettato dal campo.
-- Console: nessun errore.
-- Test: `combattimento` "B-018 …".
 
 ### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 - Trovato da: distruttore · 2026-11-09
@@ -155,6 +136,85 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
+- **Risolto 2026-11-11** in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14) (unita da Capo): "+2" e "+1/+1" fermi a 20 a ogni livello; un talento Epic Boon al 19 chiede la caratteristica e dà +1 fino a 30. Il test vecchio "livello 18 → 19" ora sceglie Boon of Combat Prowess e si aspetta 21. Test `levelup` B-027 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: finestra Level up, livello 18 → 19 (qualsiasi classe), 1440x900
+- Passi: 1. Mago 18 con Intelligenza 20. 2. Level up: sezione "Epic Boon or Ability Score Improvement", lascia "+2 to Intelligence". 3. Become level 19. 4. Rifai scegliendo "Feat: Boon of …".
+- Atteso: regole 2024: l'aumento dei punteggi (talento Ability Score Improvement) arriva al massimo a 20; solo il talento Epic Boon dà +1 a un punteggio fino a 30.
+- Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
+- Console: nessun errore.
+- Test: `levelup` "B-027 …".
+
+
+### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
+- **Risolto 2026-11-10** in [f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab): Duplicate dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…, una copia di una copia viene numerata invece di accumulare "(copy)") e passa da `fixup`; `importBackup` conta gli eroi identici, quindi due copie mai modificate tornano entrambe, e ripristinare due volte lo stesso file non crea doppioni. Test `importexport` B-024 (3) verdi.
+- Trovato da: power user · 2026-11-09
+- Sezione: import/export
+- Dove: I Eroe → Duplicate, poi Export → "Export all heroes" e Import del file, 390x844 e 1440x900
+- Passi: 1. Eroe con nome di 70 caratteri (o un nome normale duplicato più volte partendo dall'ultima copia: ogni copia aggiunge " (copy)"). 2. Duplicate tre volte. 3. Export all heroes. 4. In un altro browser (o dopo aver cancellato gli eroi) Import del file.
+- Atteso: tornano tutti e 4 gli eroi.
+- Ottenuto: "3 heroes back in the tome (1 already here)": una copia è persa e il messaggio dice che c'era già. `duplicate` (index.html ~3700) allunga il nome oltre il limite di 80 caratteri (B-009) senza passare da `fixup`; all'import `fixup` taglia i nomi a 80, due copie diventano identiche e `importBackup` (~3818) scarta la seconda come "già qui". Nella mia sessione: 43 eroi nel backup, 5 persi così (nomi da 81 a 123 caratteri). Anche il nome mostrato cresce senza limite: "Rinominato 9 Àèìòù (copy) (copy) … (copy)" con 15 duplicati.
+- Console: nessun errore.
+- Test: `importexport` "B-024 …".
+- Aggiornamento power user 2026-11-10 sera (preparazione della verifica): ancora così su main e9629ca. Si perde un eroe anche **senza nomi lunghi**: due Duplicate dello stesso originale (non a catena) danno due "Eroe 11 Warlock (copy)" identici; backup di 39 eroi → "38 heroes back in the tome (1 already here)". `sameHeroKey` confronta tutto tranne l'id, quindi due copie mai modificate sono "lo stesso eroe". Le copie a catena con nomi corti (fino a 37 caratteri) tornano tutte. Ripristinare due volte lo stesso file: "Every hero in that file is already in the tome", nessun doppione (corretto).
+
+### B-035 [bassa] PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
+- **Risolto 2026-11-10** in [ca54499](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/ca54499): `bindValue` legge i campi numerici con `Number` (troncato): `1e3` → 1000, `2.9` → 2; uscendo dal campo mostra sempre il valore salvato. Test `combattimento` B-035 verde.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: combattimento
+- Dove: III Combattimento → campo Max HP (vale per tutti i campi numerici con `data-type="int"`: monete, XP, livello, regolazione CA), 1440x900
+- Passi: 1. Valeria 32/32. 2. Nel campo Max HP scrivi `1e3` (il campo numerico del browser lo accetta: vuol dire 1000) ed esci dal campo. 3. Nello Zaino scrivi `1e3` o `2.9` nelle monete d'oro.
+- Atteso: 1000 PF massimi (32/1000), oppure il valore rifiutato senza toccare i PF attuali; il campo mostra ciò che è stato salvato.
+- Ottenuto: PF **1/1**: i 32 PF attuali sono persi (si rimette solo a mano). Nello Zaino il campo resta "1e3" / "2.9" ma vengono salvati **1** e **2** gp, senza segnale. `bindValue` (index.html ~4373) usa `parseInt` (1e3 → 1) e corregge il campo solo se il limite min/max ha cambiato il numero; per `hp.max` poi taglia `hp.cur` al nuovo massimo.
+- Console: nessun errore.
+- Test: `combattimento` "B-035 …".
+
+### B-026 [media] Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+- **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): `conHp` tiene i PF massimi ad almeno 1 per livello e lascia uguale il danno subito; quello che una Costituzione bassa non ha potuto togliere (massimo fermo al minimo, danno oltre 0 PF) resta in `hp.conAdj`, così − e poi + ridanno gli stessi PF. Un eroe a 0 PF non viene curato alzando la Cos. La memoria si azzera appena i PF cambiano per altro. Mago 20: 82/82 → Cos 1 20/20 → Cos 10 82/82; ferito 30/82 → 0/20 → 30/82; morente 0/82 resta a 0. Test `caratteristiche` B-026 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: caratteristiche
+- Dove: II Caratteristiche → pulsanti − / + della Costituzione, 1440x900 (correzione B-022 di stamattina)
+- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1). 3. Premi + 9 volte (Cos 10).
+- Atteso: a Cos 1 PF massimi 20 (almeno 1 per livello); tornati a Cos 10, di nuovo 82/82.
+- Ottenuto: a Cos 1 PF **0/1** (l'eroe è a terra per un clic di troppo); tornati a Cos 10 PF **100/101** (+19 dal nulla). Con Cos 30 e ritorno a 10 resta 100/101. Anche un clic sbagliato su un eroe ferito lo cura: PF attuali portati a 0 dal −, poi il + li alza di livello × 1. `conHp` (index.html ~3416) taglia i massimi a 1 con `Math.max(1, …)` e i PF attuali a 0, poi il ritorno aggiunge l'intera differenza.
+- Console: nessun errore.
+- Test: `caratteristiche` "B-026 …".
+
+### B-028 [bassa] Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
+- **Risolto 2026-11-10** in [0847426](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/0847426): il menu della riga di multiclasse (`data-mc`) offre solo la classe della riga e quelle che l'eroe non ha; `fixup` (import, sync) unisce le righe ripetute e restituisce alla prima classe i livelli di una riga uguale a lei (Fighter 3 con riga Fighter 2 → Fighter 3; Rogue 2 + rogue 1 → Rogue 3). Test `levelup` B-028 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: I Eroe → righe della multiclasse, 1440x900; anche Import
+- Passi: 1. Fighter 3 / Rogue 4 / Wizard 4 (preso dal Level up). 2. Nella pagina Eroe cambia la riga "Rogue" in "Wizard" (o in "Fighter"). 3. Apri Level up. Oppure importa `{"name":"Neg","class":"Fighter","level":3,"abilities":{"str":10},"multi":[{"class":"Fighter","level":2}]}`.
+- Atteso: il menu della riga offre solo classi che l'eroe non ha (o unisce i livelli), l'import unisce i doppioni.
+- Ottenuto: l'eroe diventa "Fighter 3 / Wizard 4 / Wizard 4"; Level up offre due volte "Wizard 4 → 5", quindi due volte l'aumento del livello 4, privilegi e incantesimi contati da due classi separate. Import: "Fighter 1 / … / Fighter 2" accettato. Il menu `data-mc="i:class"` (index.html ~1645) elenca tutte le classi, anche quella principale.
+- Console: nessun errore.
+- Test: `levelup` "B-028 …".
+
+### B-017 [bassa] Monete negative accettate nello Zaino
+- Trovato da: distruttore · 2026-11-09
+- Sezione: zaino
+- Dove: VII Pack & Riches → monete, 1440x900
+- Passi: 1. Scrivi `-100` in GP e `-3` in PP.
+- Atteso: valore portato a 0 (o rifiutato).
+- Ottenuto: salvati `gp:-100, pp:-3`. Anche l'import accetta `"currency":{"sp":-5}` e `"gp":1e308` (mostrato "≈ 1e+308 gp"). `bindValue` con `data-type="int"` non ha minimo; stessa cosa per XP (`-5000` salvato).
+- Console: nessun errore.
+- Test: `zaino` "B-017 …".
+- Risolto: backend · 2026-11-10. Monete 0…999.999.999 e XP 0…9.999.999 nei campi (min/max rispettati da `bindValue`, il campo mostra il valore tenuto), in `addXP` e in `fixup` (import, sync, caricamento). Test: `zaino` "B-017 …" ×3.
+
+### B-018 [bassa] CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
+- Trovato da: distruttore · 2026-11-09
+- Sezione: combattimento
+- Dove: III Combattimento, 1440x900
+- Passi: 1. AC adjustment `-999`. 2. Oppure Import `{"name":"Enorme","abilities":{"str":10},"class":"Fighter","level":20,"hp":{"cur":1e308,"max":1e308,"temp":1e308}}`. 3. Oppure PF massimi `999999999999` nel campo.
+- Atteso: CA mai sotto 0 e PF entro un massimo ragionevole (B-007 ha messo solo i minimi).
+- Ottenuto: CA mostrata -981; PF "1e+308 / 1e+308 · 1e+308 temp" (i danni non li scalfiscono); 999999999999 accettato dal campo.
+- Console: nessun errore.
+- Test: `combattimento` "B-018 …".
+- Risolto: backend · 2026-11-10. PF massimi/attuali/temporanei 0…9999 (campo, Damage/Heal/Temp, `fixup` per import e sync), regolazione CA −20…+20, CA mostrata mai sotto 0. Test: `combattimento` "B-018 …" (i due nuovi passano; quello vecchio clicca Import dal capitolo Combattimento, dove il pulsante non c'è: va corretto dal tester).
 
 ### B-019 [media] Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
 - **Risolto 2026-11-10** in [7cb1ec7](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/7cb1ec7) (designer, solo CSS): `overflow-wrap:anywhere` su nomi e note degli attacchi, nomi e descrizioni degli oggetti, slot di sintonia, titoli delle card, titolo e sottotitolo della pagina e card dello scaffale (`.hero` resta 210 px, nome e riga sotto al massimo 2 righe). A 390 px con specie, sottoclasse, attacco, nota, oggetto e link lunghissimi: scrollWidth 390 in tutti i 10 capitoli (prima 780–1.291). Test `telefono` B-019 ×2 ora passano.
@@ -235,7 +295,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: 1.460.000 caratteri in localStorage, di cui 749.600 (51%) sono il campo `_sig` (l'eroe intero ri-serializzato come stringa). `writeLocal` (index.html ~2866) salva `G.chars` così com'è, senza togliere i `LOCAL_FIELDS`. Con il limite misurato di ~5,24 milioni di caratteri ci stanno circa 118 eroi così invece di ~230: l'avviso "Not saved" (B-004) arriva al doppio della velocità. Anche l'Export (`export`/`downloadChar`, ~2581) include `_sig`, `updatedAt`, `editedOn` (nome del dispositivo) e `createdAt`: file da 60.789 caratteri, 29.555 sono `_sig`. Il re-import funziona (dati identici).
 - Console: nessun errore.
 
-
 ### B-013 [media] Oggetti con una categoria sconosciuta sono invisibili nello Zaino e non si possono cancellare
 - **Risolto 2026-11-09** in [9c791c1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/9c791c1): `fixup` porta ogni categoria sconosciuta al gruppo più vicino ("Treasure" → "Treasure & Valuables", "Weapon" → "Weapons", ecc.) o a "Quest & Misc"; anche `itemInfo` lo fa al render, quindi nessun oggetto resta senza riga. Verificato: eroe dei passi importato → 83 righe su 83, filtro "trophy" trova 25 oggetti, modifica e cancellazione ok, anche con il salvataggio già in localStorage.
 - Trovato da: power user · 2026-11-08
@@ -244,7 +303,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: gli oggetti compaiono (in "Quest & Misc" o con la categoria normalizzata da `fixup`).
 - Ottenuto: l'intestazione dice "Inventory 80 entries · 482.5 / 165 lb" ma le righe sono 55: i 25 oggetti "Treasure" non compaiono in nessun gruppo, il filtro dice "Nothing matches this filter.", il loro peso conta per il sovraccarico e non c'è modo di modificarli o cancellarli dall'app. Il render raggruppa solo per `INV_CATS` (index.html ~1714) e `fixup` non controlla `it.cat` (il nome giusto sarebbe "Treasure & Valuables").
 - Console: nessun errore.
-
 
 ### B-002 [critica] Due schede aperte: l'ultima che salva cancella gli eroi creati nell'altra
 - **Risolto 2026-11-08** con la PR [#1](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/1) (commit [55d1dda](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/55d1dda), unita da Capo): le schede uniscono le liste per `id` tramite l'evento `storage` e prima di ogni salvataggio.
@@ -327,3 +385,5 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - 2026-11-09 · power user · Sessione serale (Playwright/Chromium, server locale = main 8c56f8d, identico al live). Suite completa 164/172 (falliscono solo i test dei bug aperti B-014, B-016…B-020). Scenari: **Paladino dal livello 1 al 20** con sottoclasse, PF medi, +2 Cos, talenti ed Epic Boon (apertura level up 69–132 ms, conferma 51–252 ms) → **B-021**, **B-022**; sondaggio di tutte le 12 classi per ogni livello 2–20; **tripla multiclasse** Fighter 5 → Wizard 8 / Warlock 7 (livello 20): slot multiclasse, slot del Patto, Dadi Vita per tipo, PF (d6 +6, d8 +7) e competenze tutti corretti; **sessione di gioco** con 4 eroi: 10 danni di fila (64–154 ms), PF temporanei, cure, Dado Vita, 5 condizioni, Second Wind/Channel Divinity/Bardic Inspiration, slot, riposi breve e lungo, 30 tiri di dado (1–6 ms) → **B-023**; **homebrew sugli eroi**: classe mezza incantatrice d10 con aumenti a 4 e 8, specie velocità 40, talento e oggetto, eroe portato dal 2 all'8 (PF, slot e aumenti giusti) → **B-025**; **tutto da telefono 390x844**: 40 eroi dal wizard (tutte le classi, livelli 1–20), 10 rinominati con accenti, 15 duplicati a catena, 15 cancellati, incontro con 20 creature e 25 turni, tutti i capitoli senza scroll orizzontale; "Export all" di 43 eroi (56 KB) e import in un tomo vuoto in 0,37 s → **B-024**. Numeri: apertura del tomo 0,76 s, ricarica con 41 eroi 0,5–0,7 s, localStorage 39.700 caratteri per 43 eroi leggeri (~920 a eroe: B-012 regge), memoria JS 10 MB. Correzioni di oggi verificate nell'uso: B-005, B-006, B-012, B-013, B-015 reggono. Console pulita in tutte le prove.
 - 2026-11-10 · distruttore · Sessione serale sulla correzione del Level up (Playwright/Chromium, server locale = main 4452eb8, identico al live). Suite completa 179/186: falliscono solo i test dei bug aperti B-014, B-016 (×2), B-017, B-018, B-023, B-024; B-020 oggi passa (3,9 s, nessun commit lo tocca: probabile macchina più veloce, resta aperto). La PR di B-016 di stasera non c'è ancora, quindi niente da verificare sulle tre schede. **Correzioni di stamattina reggono**: tutte le 12 classi portate 1 → 20 dal Level up con +1/+1 a ogni scelta: aumenti a 4, 8, 12, 16 (Guerriero anche 6 e 14, Ladro 10) ed Epic Boon a 19, PF finali esatti (Barbaro 183, Mago 126 da 12 PF iniziali); multiclasse a tre Fighter 3 → Rogue 4 / Wizard 4 con aumenti al 4° livello di ciascuna classe e +2 Cos che alza i PF di 11 (91 esatti); Alert già preso non offerto; Magic Initiate e Skilled (ripetibili) offerti. Import di eroi già al 20 con multiclasse oltre 20 o negativa: livelli riportati a 20, nessun pulsante Level up, nessun errore. Tecniche nuove: Costituzione 10 → 1 → 30 → 10 coi pulsanti (**B-026**); scelta "+2" al 19 (**B-027**); righe della multiclasse cambiate in una classe già presente (**B-028**); solo tastiera dentro la finestra Level up (**B-029**); 320x640 e 720x450 (zoom 200%) su tutti i capitoli e nella finestra: nessuno scroll orizzontale; Esc chiude. Controllo leggero sulle sezioni verdi: suite verde. Console pulita in tutte le prove.
 - 2026-11-10 · tester extra · Sessione pomeridiana sulle correzioni di oggi (Playwright/Chromium, server locale = main 4452eb8, identico al live: stesso `index.html` e `CACHE` di sw.js). **Level up**: B-021 regge in tutti i casi provati: Guerriero 1→20 a 390x844 (aumenti a 4, 6, 8, 12, 14, 16 + Epic Boon al 19, nessun talento ripetuto), multiclasse Mago 7 / Guerriero 5 (8 e 6 entrambi con la scelta), Guerriero 3 / Ladro 9 (Ladro 10 e Guerriero 4 ok). B-022 regge: Cos 15 → 17, 19 → 20 (solo +1 di modificatore), 20 → "already 20" (nessun cambio), +1/+1 su For e Cos, PF tirati con eroe ferito e PF temporanei (temporanei intatti), multiclasse livello 13 (+13). B-025 regge: talenti già presi tolti anche scritti in minuscolo o con uno spazio finale; Skilled e Magic Initiate restano. Confermati B-026 e B-027 del distruttore con casi in più; nuovo **B-031** (Grappler senza +1). **Telefono**: i casi di B-019 reggono (Zaino, nome e note degli attacchi, scaffale) e "Roll"/"Become level" sono 44 px; ma testo lungo senza spazi allarga ancora Combattimento, Tratti, Incantesimi e Incontro (**B-030**). Nella finestra Level up a 390 px i `select` sono alti 33 px e le righe dei radio 23–33 px, come i `select` delle pagine: non registrato come bug. Suite completa 179/186 come dopo il commit del designer (nessuna regressione), più 4 test nuovi che oggi falliscono (B-026 eroe ferito, B-030 ×2, B-031). Console pulita in tutte le prove.
+- 2026-11-10 · distruttore · Seconda sessione serale, sulle correzioni del frontend sera (Playwright/Chromium, server locale = main b8462eb, identico al live). Suite completa **186/194**, nessuna regressione: B-026 e B-028 passano; rossi solo B-014, B-016 ×2, B-018 (test vecchio che cerca Import in Combattimento), B-023, B-024, B-027 (PR #14 non unita), B-029. B-016 e B-024 non verificabili: la sessione backend è più tardi. **B-026 regge** nel giro − / + puro, anche con cura o riposo lungo nel mezzo; si rompe con un danno o un Level up nel mezzo (**B-032**). **B-028 regge** nel menu della riga e all'import (test B-028 e prova a mano con Fighter 3 / Rogue 1), ma il menu della classe principale offre ancora le classi della multiclasse (**B-033**). Tecniche nuove: classe homebrew da Markdown usata in multiclasse e poi cancellata, eroe importato con classe/specie/background sconosciuti (**B-034**: i menu mostrano la prima voce; Level up e capitoli senza errori); numeri in notazione `1e3`, `2.9`, `0x10`, `-0`, 20 cifre nei campi Max HP e monete (**B-035**); Max HP riscritto a tastiera (Ctrl+A, cancella, 35): PF attuali intatti; doppio clic su "Become level" con tre classi: un solo livello. Telefono 390x844 con tre classi su 5 capitoli e nella finestra Level up: nessuno scroll orizzontale. Console pulita in tutte le prove.
+- 2026-11-10 · power user · Sessione serale sui riposi e sul backup (Playwright/Chromium, server locale = main e9629ca, identico al live). Suite completa **186/198**, nessuna regressione: rossi solo i bug aperti (B-014, B-016 ×2, B-018 test vecchio, B-023, B-024, B-027 in PR #14, B-029, B-032…B-035). **Party di 4** (Guerriero 5 Champion, Chierico 6 Life, Bardo 5 Lore, Monaco 5 Open Hand) per **3 incontri con 2 riposi brevi**: 60 colpi di danno, PF temporanei, cure, 8 Dadi Vita spesi, 4 slot, condizioni Poisoned e Prone, poi riposo lungo e ricarica (0,64 s, dati identici). Dopo ogni riposo breve: Second Wind 0/3, Channel Divinity 0/3, Bardic Inspiration 0/3 (B-023 confermato), Focus Points 5/5 (giusto); stesso difetto per Rage, Wild Shape e Channel Divinity del Paladino (aggiunto a B-023); slot del Patto del Warlock tornano (giusto); riposo lungo rimette PF, Dadi Vita, slot, risorse. Tiri contro la morte: un danno a 0 PF azzera i fallimenti (**B-036**), cura dall'Incontro li lascia accesi (**B-037**), danno massiccio non segnalato. **Backup**: 20 eroi pesanti (30 oggetti, storia da 2.800 caratteri) + 22 copie (5 eroi duplicati a catena ×3, 7 copie singole), 4 rinominati con accenti, 3 cancellati = 39 eroi; Export all 256 KB; ripristino in un tomo vuoto 0,19 s ma **38 su 39**: due copie identiche dello stesso originale contano come una (aggiunto a B-024); secondo ripristino dello stesso file: nessun doppione. **Telefono 390x844** con i 39 eroi: 8 capitoli 50–100 ms, cambio eroe mediana 24 ms (max 88), scrollWidth 390 ovunque. Numeri: danno 25 ms mediana (max 64), Duplicate 13–17 ms, ricarica con 39 eroi 0,69 s, localStorage 209.000 caratteri (~5.300 a eroe pesante), memoria JS 9,5–11,3 MB. Console pulita in tutte le prove.

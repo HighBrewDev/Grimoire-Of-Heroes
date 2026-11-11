@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-10** sul commit `b44618f` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-11** sul commit `073375c` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,94 +14,102 @@ Aggiornato il **2026-11-10** sul commit `b44618f` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **169 / 186**
-- Punteggio totale: **+105**, tendenza ↓ (ieri 107)
-- Sezioni rosse: levelup
+- Test superati: **193 / 210**
+- Punteggio totale: **+158**, tendenza ↑ (ieri 105)
+- Sezioni rosse: nessuna
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +11 | 12 | ↓ | 14/15 | B-014 (UX) | 🟡 GIALLO |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
-| Combattimento (PF, CA, attacchi, riposi) | +9 | 8 | ↑ | 15/17 | B-023 (media), B-018 (bassa) | 🟡 GIALLO |
-| Incontro (iniziativa, round) | +11 | 11 | = | 11/11 | — | 🟡 GIALLO |
-| Tratti e talenti | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
-| Incantesimi (slot, preparati, multiclasse) | +11 | 11 | = | 11/11 | — | 🟡 GIALLO |
-| Zaino e monete | +6 | 8,5 | ↓ | 10/11 | B-017 (bassa) | 🟡 GIALLO |
-| Cronaca | +7 | 7 | = | 7/7 | — | 🟡 GIALLO |
-| Biblioteca (ricerca regole) | +8 | 8 | = | 8/8 | — | 🟡 GIALLO |
-| Workshop homebrew | +21 | 17,5 | ↑ | 25/26 | B-020 (bassa), B-011 (bassa) | 🟡 GIALLO |
-| Level up e multiclasse | -9 | -1 | ↓ | 14/20 | B-021 (alta), B-022 (media), B-025 (bassa) | 🔴 ROSSO |
-| Import/export e salvataggio | +1 | 8 | ↓ | 14/17 | B-024 (media), B-016 (alta) | 🟡 GIALLO |
-| Telefono (390x844) | +1 | -10 | ↑ | 12/15 | B-019 (media) | 🟡 GIALLO |
-| Robustezza (console, offline, input strani) | +12 | 10 | ↑ | 12/12 | — | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +7 | 10,3 | ↓ | 14/16 | B-034 (bassa), B-014 (UX) | 🟡 GIALLO |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +6 | 7,3 | ↓ | 9/10 | B-032 (bassa) | 🟡 GIALLO |
+| Combattimento (PF, CA, attacchi, riposi) | 0 | 5,3 | ↓ | 21/29 | B-036 (media), B-023 (media) | 🟡 GIALLO |
+| Incontro (iniziativa, round) | +7 | 9,7 | ↓ | 11/12 | B-037 (bassa) | 🟡 GIALLO |
+| Tratti e talenti | +8 | 8 | = | 8/8 | — | 🟢 VERDE |
+| Incantesimi (slot, preparati, multiclasse) | +11 | 11 | = | 11/11 | — | 🟢 VERDE |
+| Zaino e monete | +16 | 11 | ↑ | 13/13 | — | 🟡 GIALLO |
+| Cronaca | +7 | 7 | = | 7/7 | — | 🟢 VERDE |
+| Biblioteca (ricerca regole) | +8 | 8 | = | 8/8 | — | 🟢 VERDE |
+| Workshop homebrew | +26 | 20,3 | ↑ | 26/26 | B-020 (bassa), B-011 (bassa) | 🟡 GIALLO |
+| Level up e multiclasse | +23 | 7 | ↑ | 21/23 | B-033 (bassa), B-027 (media) | 🟡 GIALLO |
+| Import/export e salvataggio | +14 | 10 | ↑ | 17/19 | B-016 (alta) | 🟡 GIALLO |
+| Telefono (390x844) | +18 | -0,7 | ↑ | 15/15 | — | 🟡 GIALLO |
+| Robustezza (console, offline, input strani) | +7 | 9 | ↓ | 12/13 | B-029 (media) | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
-- **levelup** -9 (14 × +1, 6 × −3, bug nuovi -8, bug chiusi +3)
-  - ✗ B-021 Paladino 7 → 8: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 8
-  - ✗ B-021 Guerriero 5 → 6: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 6
-  - ✗ B-022 +2 Costituzione al livello 4 alza i PF massimi anche per i livelli precedenti (28 → 40): PF massimi 36: 10 + 3 × 6 + 4 × Cos 3 = 40
-  - ✗ B-025 un talento non ripetibile già preso (Alert) non viene offerto di nuovo: Alert offerto anche se Valeria lo ha già
-  - ✗ B-021 Ladro 9 → 10: si sceglie aumento dei punteggi o talento (livello extra del Ladro): nessuna scelta di aumento dei punteggi o talento al livello 10
-  - ✗ B-021 Mago 11 → 12: si sceglie aumento dei punteggi o talento: nessuna scelta di aumento dei punteggi o talento al livello 12
-  - Bug nuovo B-021 [alta] -5: Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
-  - Bug nuovo B-022 [media] -2: Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
-  - Bug nuovo B-025 [bassa] -1: Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
-  - Bug chiuso B-005 con test che passa +3: Aumento dei punteggi +2 abbassa un punteggio sopra 20 a 20
-- **telefono** +1 (12 × +1, 3 × −3, bug nuovi -2)
-  - ✗ B-019 390 px: un link lungo nella descrizione di un oggetto non allarga la pagina: scrollWidth 1054px
-  - ✗ B-019 390 px: nome lungo senza spazi di un attacco non allarga Combattimento: scrollWidth 1291px
-  - ✗ tocco ≥44 px: pulsanti della finestra Level up: sotto 44 px: "Roll" 38×37, "Become level 4" 100×30
-  - Bug nuovo B-019 [media] -2: Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
-- **importexport** +1 (14 × +1, 3 × −3, bug nuovi -7, bug chiusi +3)
-  - ✗ B-016 due schede: se A cancella l'eroe che B sta scrivendo, le note di un altro eroe non cambiano: storia di Eldrin sovrascritta: "A city guardsman who took up the adventuring road. e poi ancora"
-  - ✗ B-016 due schede: se A cancella l'eroe che B sta rinominando, nessun altro eroe prende quel nome: Expected values to be strictly deep-equal:
-  - ✗ B-024 backup di eroi duplicati più volte: il ripristino li riporta tutti: dopo il ripristino 3 eroi su 4 (3 heroes back in the tome (1 already here).)
-  - Bug nuovo B-024 [media] -2: Backup: eroi duplicati più volte persi al ripristino ("già qui")
-  - Bug nuovo B-016 [alta] -5: Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
-  - Bug chiuso B-015 con test che passa +3: Nessun backup di tutti gli eroi insieme
-- **zaino** +6 (10 × +1, 1 × −3, bug nuovi -1)
-  - ✗ B-017 monete: un valore negativo non viene salvato: monete salvate: -100 gp, -3 pp
-  - Bug nuovo B-017 [bassa] -1: Monete negative accettate nello Zaino
+- **combattimento** 0 (21 × +1, 8 × −3, bug nuovi -3, bug chiusi +6)
+  - ✗ B-023 riposo breve: Second Wind recupera un uso: dopo il riposo breve Second Wind è ancora 0/2
+  - ✗ B-036 danno a 0 PF: un fallimento in più ai tiri contro la morte, non tutti azzerati: dopo 3 danni a 0 PF i fallimenti sono 0 (prima 2)
+  - ✗ B-023 riposo breve: Rage (Barbaro 5) recupera un uso: dopo il riposo breve rage_count usati 3 (prima 3), attesi 2
+  - ✗ B-023 riposo breve: Wild Shape (Druido 5) recupera un uso: dopo il riposo breve wild_shape_uses usati 2 (prima 2), attesi 1
+  - ✗ B-023 riposo breve: Channel Divinity (Paladino 5) recupera un uso: dopo il riposo breve channel_divinity_charges usati 2 (prima 2), attesi 1
+  - ✗ B-023 riposo breve: Channel Divinity (Chierico 6) recupera un uso: dopo il riposo breve channel_divinity_charges usati 3 (prima 3), attesi 2
+  - ✗ B-023 riposo breve: Bardic Inspiration (Bardo 5, Font of Inspiration) torna tutta: dopo il riposo breve bardic_inspiration usati 3 (prima 3), attesi 0
+  - ✗ B-036 danno massiccio: un danno che supera i PF massimi oltre lo 0 uccide (o lo dice): danno 90 a 40 PF: fallimenti 0/3 e nessun avviso di morte istantanea
+  - Bug nuovo B-036 [media] -2: Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
+  - Bug nuovo B-035 [bassa] -1: PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
+  - Bug chiuso B-035 con test che passa +3: PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
+  - Bug chiuso B-018 con test che passa +3: CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
+- **caratteristiche** +6 (9 × +1, 1 × −3, bug nuovi -3, bug chiusi +3)
+  - ✗ B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20): Cos 10 → 1, danno 5, Cos 10: PF 115/120 invece di 77/82
+  - Bug nuovo B-032 [bassa] -1: Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
+  - Bug nuovo B-026 [media] -2: Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+  - Bug chiuso B-026 con test che passa +3: Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+- **eroe** +7 (14 × +1, 2 × −3, bug nuovi -1)
+  - ✗ B-014 con 33 eroi lo scaffale offre un filtro per nome: nessun campo di ricerca/filtro vicino allo scaffale degli eroi
+  - ✗ B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu: i menu mostrano Barbarian, Dragonborn, Acolyte, Barbarian per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata
+  - Bug nuovo B-034 [bassa] -1: Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
+- **incontro** +7 (11 × +1, 1 × −3, bug nuovi -1)
+  - ✗ B-037 cura dal tracciatore a un eroe a 0 PF: i tiri contro la morte si azzerano come con Heal: a 5 PF i tiri contro la morte restano {"s":1,"f":2}
+  - Bug nuovo B-037 [bassa] -1: Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
+- **robustezza** +7 (12 × +1, 1 × −3, bug nuovi -2)
+  - ✗ B-029 solo tastiera: Tab nella finestra Level up non esce sugli eroi coperti e il livello va all'eroe del titolo: Kessa è passata al livello 3 dalla finestra "Eldrin reaches level 5" (focus uscito su: omni, theme, wizard, go:library, go:workshop, sound)
+  - Bug nuovo B-029 [media] -2: Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
 - **cronaca** +7 (7 × +1, 0 × −3): tutto verde oggi.
-- **caratteristiche** +8 (8 × +1, 0 × −3): tutto verde oggi.
 - **tratti** +8 (8 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +8 (8 × +1, 0 × −3): tutto verde oggi.
-- **combattimento** +9 (15 × +1, 2 × −3, bug nuovi -3, bug chiusi +3)
-  - ✗ B-018 CA e PF restano in un intervallo sensato (regolazione -999, PF 1e308 da import): CA mostrata -981
-  - ✗ B-023 riposo breve: Second Wind recupera un uso: dopo il riposo breve Second Wind è ancora 0/2
-  - Bug nuovo B-023 [media] -2: Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
-  - Bug nuovo B-018 [bassa] -1: CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
-  - Bug chiuso B-006 con test che passa +3: Danni negativi danno PF temporanei, cura negativa porta i PF sotto zero
-- **eroe** +11 (14 × +1, 1 × −3)
-  - ✗ B-014 con 33 eroi lo scaffale offre un filtro per nome: nessun campo di ricerca/filtro vicino allo scaffale degli eroi
-- **incontro** +11 (11 × +1, 0 × −3): tutto verde oggi.
 - **incantesimi** +11 (11 × +1, 0 × −3): tutto verde oggi.
-- **robustezza** +12 (12 × +1, 0 × −3): tutto verde oggi.
-- **workshop** +21 (25 × +1, 1 × −3, bug nuovi -1)
-  - ✗ B-020 import 5etools con 10.000 incantesimi: la finestra di scelta arriva in meno di 8 s: finestra dopo 8588 ms
-  - Bug nuovo B-020 [bassa] -1: Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
+- **importexport** +14 (17 × +1, 2 × −3, bug chiusi +3)
+  - ✗ B-016 due schede: se A cancella l'eroe che B sta scrivendo, le note di un altro eroe non cambiano: storia di Eldrin sovrascritta: "A city guardsman who took up the adventuring road. e poi ancora"
+  - ✗ B-016 due schede: se A cancella l'eroe che B sta rinominando, nessun altro eroe prende quel nome: Expected values to be strictly deep-equal:
+  - Bug chiuso B-024 con test che passa +3: Backup: eroi duplicati più volte persi al ripristino ("già qui")
+- **zaino** +16 (13 × +1, 0 × −3, bug chiusi +3)
+  - Bug chiuso B-017 con test che passa +3: Monete negative accettate nello Zaino
+- **telefono** +18 (15 × +1, 0 × −3, bug chiusi +3)
+  - Bug chiuso B-019 con test che passa +3: Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
+- **levelup** +23 (21 × +1, 2 × −3, bug nuovi -4, bug chiusi +12)
+  - ✗ B-027 livello 18 → 19: +2 ai punteggi (aumento, non Epic Boon) non porta Intelligenza oltre 20: Intelligenza 22: l'aumento dei punteggi arriva al massimo a 20
+  - ✗ B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1): classe doppia dopo aver scelto Rogue come classe principale: Rogue / Rogue
+  - Bug nuovo B-033 [bassa] -1: Multiclasse: il menu della classe principale offre una classe già presente nelle righe (resto di B-028)
+  - Bug nuovo B-027 [media] -2: Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
+  - Bug nuovo B-028 [bassa] -1: Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
+  - Bug chiuso B-028 con test che passa +3: Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
+  - Bug chiuso B-021 con test che passa +3: Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
+  - Bug chiuso B-022 con test che passa +3: Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
+  - Bug chiuso B-025 con test che passa +3: Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
+- **workshop** +26 (26 × +1, 0 × −3): tutto verde oggi.
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. levelup -9 · 14/20 · ROSSO
-2. telefono +1 · 12/15 · GIALLO
-3. importexport +1 · 14/17 · GIALLO
-4. zaino +6 · 10/11 · GIALLO
-5. cronaca +7 · 7/7 · GIALLO
-6. caratteristiche +8 · 8/8 · GIALLO
-7. tratti +8 · 8/8 · GIALLO
-8. biblioteca +8 · 8/8 · GIALLO
-9. combattimento +9 · 15/17 · GIALLO
-10. eroe +11 · 14/15 · GIALLO
-11. incontro +11 · 11/11 · GIALLO
-12. incantesimi +11 · 11/11 · GIALLO
-13. robustezza +12 · 12/12 · GIALLO
-14. workshop +21 · 25/26 · GIALLO
+1. combattimento 0 · 21/29 · GIALLO
+2. caratteristiche +6 · 9/10 · GIALLO
+3. eroe +7 · 14/16 · GIALLO
+4. incontro +7 · 11/12 · GIALLO
+5. robustezza +7 · 12/13 · GIALLO
+6. cronaca +7 · 7/7 · VERDE
+7. tratti +8 · 8/8 · VERDE
+8. biblioteca +8 · 8/8 · VERDE
+9. incantesimi +11 · 11/11 · VERDE
+10. importexport +14 · 17/19 · GIALLO
+11. zaino +16 · 13/13 · GIALLO
+12. telefono +18 · 15/15 · GIALLO
+13. levelup +23 · 21/23 · GIALLO
+14. workshop +26 · 26/26 · GIALLO
 
 ## Storico
 
 ```
 2026-11-09  totale  +107  test 140/154  1028d8d
 2026-11-10  totale  +105  test 169/186  b44618f
+2026-11-11  totale  +158  test 193/210  073375c
 ```
