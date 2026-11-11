@@ -166,6 +166,16 @@ module.exports = {sezione:'importexport', test:[
     assert.ok(names.every(n => n.length <= 80), 'nome oltre 80: ' + names.map(n => n.length).join(','));
     assert.ok(names.every(n => (n.match(/\(copy/g) || []).length <= 1), 'copy ripetuto: ' + names.join(' | '));
   }],
+  ["B-016 due schede: se A cancella l'eroe che B sta scrivendo, B avvisa che il testo non è salvato", async ({open}) => {
+    const a = await open(); const b = await a.newTab();
+    await b.go('chronicle');
+    await b.page.click('[data-bind="notes.story"]'); await b.page.keyboard.type(' e poi');
+    await a.click('deleteChar'); await a.confirm(); await a.page.waitForTimeout(300);
+    await b.page.keyboard.type(' ancora'); await b.page.keyboard.press('Tab'); await b.page.waitForTimeout(300);
+    assert.ok(/deleted in another tab/i.test(await b.toast()), 'nessun avviso: ' + await b.toast());
+    const s = await b.store();
+    assert.ok(s.chars.every(c => !/ancora/.test(c.notes?.story || '')), 'testo finito su un altro eroe');
+  }],
   ['import di un elenco di due eroi: entrano entrambi e restano dopo la ricarica', async ({open}) => {
     const app = await open();
     await importText(app, [fx.blank({id:'x1', name:'Primo Importato'}), fx.blank({id:'x2', name:'Secondo Importato'})]);
