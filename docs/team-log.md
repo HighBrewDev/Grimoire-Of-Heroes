@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-11 · test
+- **Suite** su main 073375c: **193/210** superati, punteggio totale **+158** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento 0, caratteristiche +6, eroe +7. Dettagli in docs/scoreboard.md.
+- **Test nuovi** (8, in combattimento, la sezione più bassa): B-023 riposo breve per Rage (Barbaro 5), Wild Shape (Druido 5), Channel Divinity (Paladino 5 e Chierico 6), Bardic Inspiration (Bardo 5); B-036 danno massiccio; riposo breve dei Focus Points; riposo lungo che rimette tutte le risorse. Rossi i 6 legati a B-023/B-036, verdi gli altri 2.
+- **Test corretto** (errore del test, non dell'app): il vecchio B-018 cercava Import nel capitolo Combattimento, ora va prima su Eroe. Ora passa.
+- **Punteggio**: `tests/punteggio.js` riconosce anche "Risolto: backend · data" (B-017 e B-018 ora prendono il +3) e assegna B-026…B-029 alla loro sezione (B-029 a robustezza).
+- **Non toccato**: il test vecchio "livello 18 → 19 … può superare 20" segue ancora la regola sbagliata (passa grazie a B-027); lo corregge la PR #14, in attesa di Capo.
+
 ## 2026-11-10 · backend notte
 - **Fatto** (su main) · sezione **Import/export e salvataggio**, nella zona del piano (`duplicate`, `importBackup`, `bindValue`):
   - **B-024** ([f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab)) · `duplicate` dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…; copiare una copia la rinumera invece di accumulare "(copy)") e passa da `fixup`. `importBackup` conta gli eroi identici invece di usare un insieme: due copie mai modificate nel file tornano entrambe (il caso 38/39 del power user), e ripristinare due volte lo stesso file non crea doppioni.
