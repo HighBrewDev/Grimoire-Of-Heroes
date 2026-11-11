@@ -116,6 +116,8 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+- **Risolto 2026-11-11** in [PR #19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19) (frontend): B-037, `encHeal` azzera i tiri contro la morte quando l'eroe supera 0 PF. Test `incontro` B-037 verde.
+
 ### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
 - **Risolto 2026-11-11** (designer): sopra lo scaffale, da 8 eroi in su, compare la barra "Filter heroes" (nome, specie, classe) con ordine "Shelf order / By name / Last used" e il conteggio; su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (non più 7.400 px di fila). Test `eroe` B-014 verde, `telefono` senza nuovi rossi.
 - Trovato da: power user · 2026-11-08

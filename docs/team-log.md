@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-11 · frontend mattina
+- **Fatto** · sezioni **Combattimento** e **Incontro**. B-023 e B-036 erano già su main ([b3ffd47](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b3ffd47), altra sessione): la mia versione, quasi identica, è stata scartata per non avere due codici per la stessa cosa. Resta mio **B-037**: `encHeal` azzera i tiri contro la morte quando l'eroe torna sopra 0 PF, come Heal.
+- **Test**: prima 198/215 (due file di test non caricabili per l'unione di PR #6, poi riparati su main da 78f2cf6); dopo **218/225** su main + B-037, nessuna regressione. Rossi solo bug aperti: B-029, B-030 ×2, B-031, B-032, B-033, B-034.
+- **File**: index.html, sw.js (`grimoire-fm1111b`), docs. **PR**: [#19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19). Prova a mano su telefono non fatta (modifica di una riga, coperta dal test).
+- **Resta**: B-032, B-033, B-034, B-029, B-031, B-030.
+
 ## 2026-11-11 · design
 - **Fatto** · **B-014** (compito del piano, Eroe): sopra lo scaffale, da 8 eroi in su, barra "Filter heroes" (nome, specie, classe), ordine "Shelf order / By name / Last used" e conteggio; messaggio se nessun eroe corrisponde. Su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (scrollWidth dello scaffale da 7.410 px a 356). Su 768 e 1440 resta la fila che scorre, ma col filtro. Ordine e filtro solo di visualizzazione: non cambiano i dati salvati. `CACHE` → `grimoire-ds1111a`.
 - **File**: index.html (HTML sopra `#shelf`, `renderShelf`, CSS scaffale, gestori input/change), sw.js, docs/bug-beta.md (B-014 in Risolti), docs/design/note-design.md, screenshot `docs/design/2026-11-11-scaffale-*.png`.
