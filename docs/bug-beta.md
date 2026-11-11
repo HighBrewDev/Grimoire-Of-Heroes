@@ -65,17 +65,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `robustezza` "B-029 …".
 
-### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
-- Trovato da: distruttore · 2026-11-10
-- Sezione: level up/multiclasse
-- Dove: finestra Level up, livello 18 → 19 (qualsiasi classe), 1440x900
-- Passi: 1. Mago 18 con Intelligenza 20. 2. Level up: sezione "Epic Boon or Ability Score Improvement", lascia "+2 to Intelligence". 3. Become level 19. 4. Rifai scegliendo "Feat: Boon of …".
-- Atteso: regole 2024: l'aumento dei punteggi (talento Ability Score Improvement) arriva al massimo a 20; solo il talento Epic Boon dà +1 a un punteggio fino a 30.
-- Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
-- Console: nessun errore.
-- Test: `levelup` "B-027 …".
-- **Correzione in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14)** (2026-11-10, frontend sera), in attesa di Capo perché cambia anche il test vecchio "livello 18 → 19 … può superare 20".
-
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09
 - Sezione: combattimento
@@ -133,6 +122,18 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-027 [media] Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
+- **Risolto 2026-11-11** in [PR #14](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/14) (unita da Capo): "+2" e "+1/+1" fermi a 20 a ogni livello; un talento Epic Boon al 19 chiede la caratteristica e dà +1 fino a 30. Il test vecchio "livello 18 → 19" ora sceglie Boon of Combat Prowess e si aspetta 21. Test `levelup` B-027 ora passa.
+- Trovato da: distruttore · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: finestra Level up, livello 18 → 19 (qualsiasi classe), 1440x900
+- Passi: 1. Mago 18 con Intelligenza 20. 2. Level up: sezione "Epic Boon or Ability Score Improvement", lascia "+2 to Intelligence". 3. Become level 19. 4. Rifai scegliendo "Feat: Boon of …".
+- Atteso: regole 2024: l'aumento dei punteggi (talento Ability Score Improvement) arriva al massimo a 20; solo il talento Epic Boon dà +1 a un punteggio fino a 30.
+- Ottenuto: Intelligenza **22** (anche +1/+1 fino a 30); scegliendo invece un vero Epic Boon dal menu il talento viene aggiunto ma nessun punteggio sale (dal codice: il ramo `feat` fa solo `c.feats.push`). In `applyLevelUp` `cap = P.boon ? 30 : 20` vale per tutte le scelte. Nota per Test e punteggio: il test esistente "livello 18 → 19: si sceglie un Epic Boon e il punteggio può superare 20" si aspetta Forza 22 con "+2", cioè la regola sbagliata: va rivisto insieme alla correzione (non l'ho toccato).
+- Console: nessun errore.
+- Test: `levelup` "B-027 …".
+
 
 ### B-024 [media] Backup: eroi duplicati più volte persi al ripristino ("già qui")
 - **Risolto 2026-11-10** in [f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab): Duplicate dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…, una copia di una copia viene numerata invece di accumulare "(copy)") e passa da `fixup`; `importBackup` conta gli eroi identici, quindi due copie mai modificate tornano entrambe, e ripristinare due volte lo stesso file non crea doppioni. Test `importexport` B-024 (3) verdi.
