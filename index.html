@@ -3493,7 +3493,8 @@ function openLevelUp(keep){
         <label class="row"><input type="radio" name="lu_asi" value="two" checked> +2 to ${abSel('lu_a1')}</label>
         <label class="row"><input type="radio" name="lu_asi" value="split"> +1 to ${abSel('lu_b1')} and +1 to ${abSel('lu_b2')}</label>
         <label class="row"><input type="radio" name="lu_asi" value="feat"> Feat: <select id="lu_feat">${featList.map(e => `<option value="${esc(e.n)}">${esc(e.n)} · ${esc(e.k)}</option>`).join('')}</select></label>
-        <p class="muted">Scores can't go above 20 this way${P.boon ? ' (Epic Boons raise one score by 1, up to 30)' : ''}.</p></div>` : ''}
+        ${P.boon ? `<label class="row">An Epic Boon also gives +1 to ${abSel('lu_boonab')}</label>` : ''}
+        <p class="muted">+2 and +1/+1 can't take a score above 20${P.boon ? '; an Epic Boon raises one score by 1, up to 30' : ''}.</p></div>` : ''}
     ${slotRows || P.nx.cantrips !== P.old.cantrips || P.nx.prepared !== P.old.prepared ? `<h4>Spellcasting</h4><div class="tblWrap"><table class="ctable"><thead><tr><th>Slots</th><th>Now</th><th>Level ${P.N}</th></tr></thead><tbody>${slotRows}
       ${P.nx.cantrips !== P.old.cantrips && P.nx.cantrips !== undefined ? `<tr><td>Cantrips known</td><td>${P.old.cantrips ?? 0}</td><td><b>${P.nx.cantrips}</b></td></tr>` : ''}
       ${P.nx.prepared !== P.old.prepared && P.nx.prepared !== undefined ? `<tr><td>Prepared spells</td><td>${P.old.prepared ?? 0}</td><td><b>${P.nx.prepared}</b></td></tr>` : ''}</tbody></table></div>
@@ -3513,13 +3514,17 @@ function applyLevelUp(){
   if (P.needSub){ const s = $('#lu_sub').value.trim(); if (s){ const sc = s.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '');
     if (T.isNew) T.subclass = sc; else if (T.main) c.subclass = sc; else c.multi[T.i].subclass = sc; notes.push(sc); } }
   if (P.asi || P.boon){
-    const m = $('input[name="lu_asi"]:checked')?.value, cap = P.boon ? 30 : 20;
+    /* 2024: the Ability Score Improvement stops at 20; only an Epic Boon feat gives +1 up to 30 (B-027) */
+    const m = $('input[name="lu_asi"]:checked')?.value;
     /* never lowers a score already above the cap (B-005) */
-    const up = (ab, n) => { const v = c.abilities[ab] || 10; c.abilities[ab] = Math.max(v, Math.min(cap, v + n)); return c.abilities[ab] - v; };
+    const up = (ab, n, cap = 20) => { const v = c.abilities[ab] || 10; c.abilities[ab] = Math.max(v, Math.min(cap, v + n)); return c.abilities[ab] - v; };
     const gained = (ab, g) => g ? `${ab.toUpperCase()} +${g}` : `${ab.toUpperCase()} already ${c.abilities[ab]}`;
     if (m === 'two'){ const a = $('#lu_a1').value; notes.push(gained(a, up(a, 2))); }
     else if (m === 'split'){ const a = $('#lu_b1').value, b = $('#lu_b2').value; if (a === b){ toast('Pick two different abilities for +1/+1.'); return; } notes.push(gained(a, up(a, 1)) + ', ' + gained(b, up(b, 1))); }
-    else if (m === 'feat'){ const f = $('#lu_feat')?.value; if (!f){ toast('No feat left to pick: choose an ability increase.'); return; } c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f); }
+    else if (m === 'feat'){ const f = $('#lu_feat')?.value; if (!f){ toast('No feat left to pick: choose an ability increase.'); return; }
+      const fe = ALL.find(e => e.cat === 'feats' && e.n === f), ab = $('#lu_boonab')?.value;
+      c.feats.push({n:f, src:`Level ${P.N}`}); notes.push(f);
+      if (ab && fe && /epic boon/i.test(fe.k || fe.o?.ty || '')) notes.push(gained(ab, up(ab, 1, 30))); }
   }
   if (T.isNew){ c.multi = multi(c); c.multi.push({class:T.class, subclass:T.subclass || '', level:1}); notes.unshift(`${T.class} 1`); }
   else if (!T.main) c.multi[T.i].level++;

@@ -112,9 +112,11 @@ module.exports = {sezione:'levelup', test:[
     const app = await open({heroes:[fx.blank({class:'Fighter', subclass:'Champion', level:18, xp:265000, abilities:{str:20,dex:14,con:16,int:10,wis:12,cha:8}, hp:{cur:180,max:180,temp:0}})]});
     await openLU(app);
     assert.ok(/Epic Boon/.test(await app.text('#modalBk .modal')), 'manca la sezione Epic Boon al livello 19');
-    await app.set('#lu_a1', 'str'); await app.click('luApply');
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.set('#lu_feat', 'Boon of Combat Prowess'); await app.set('#lu_boonab', 'str'); await app.click('luApply');
     const h = await app.hero();
-    assert.deepStrictEqual([h.level, h.abilities.str], [19, 22]);
+    assert.deepStrictEqual([h.level, h.abilities.str], [19, 21]);
+    assert.ok(h.feats.some(f => f.n === 'Boon of Combat Prowess'));
   }],
   ['multiclasse: avanzare la seconda classe (Fighter 3 / Rogue 1 → Rogue 2, PF d8 medi 5 + Cos 2)', async ({open}) => {
     const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
