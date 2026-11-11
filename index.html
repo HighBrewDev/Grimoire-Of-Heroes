@@ -795,7 +795,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
     <p class="stats">3 sample heroes · 339 spells · 341 creatures<br>243 magic items · the full SRD 5.2.1, offline</p>
     <button type="button" class="btn" style="font-size:18px;padding:12px 26px;margin-top:8px" data-act="enter">Open the Grimoire</button>
     <p style="font-size:13.5px">Turn pages with the arrows, ← → keys or a swipe.</p>
-    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a></p>
+    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a><span id="coverCoffee"></span></p>
     <label class="coverOpt"><input type="checkbox" id="coverStart" checked> Show this cover each time the tome opens</label>
   </div>
 </div>
@@ -3834,11 +3834,12 @@ function welcome(force){
     <p>Thank you for opening the tome this early. <b>Grimoire of Heroes</b> is a character sheet that behaves like a book: every hero, spell and rule of the SRD 5.2.1 in one place, working offline, built for the table rather than for forms.</p>
     <h4>What you can do today</h4>
     <ul class="perks"><li>Build heroes with guided level up, spells, gear and notes</li><li>Run fights with the encounter tracker and the dice tray</li><li>Search the whole SRD from any page (Ctrl+K or /)</li><li>Sign in to keep your heroes in sync and share a party</li></ul>
-    <h4>Where it is going</h4>
+    ${SUBS ? `<h4>Where it is going</h4>
     <p>The tome stays free: unlimited heroes on your device, the full SRD and the combat tools. After the beta, <b>Grimoire<span class="plus">+</span></b> (${esc(PRICES.monthly)} or ${esc(PRICES.yearly)}) will add sync of every hero, hero history, parties, the printable sheet and themes. During the beta all of it is free.</p>
-    <div class="planBox founder" style="margin:12px 0"><span class="tag">First 100 only</span><b>Founder</b><span>${esc(PRICES.founder)}: Grimoire<span class="plus">+</span> for life, for the readers who believe in the tome first.</span></div>
+    <div class="planBox founder" style="margin:12px 0"><span class="tag">First 100 only</span><b>Founder</b><span>${esc(PRICES.founder)}: Grimoire<span class="plus">+</span> for life, for the readers who believe in the tome first.</span></div>` : `<h4>Free, all of it</h4>
+    <p>The whole tome is free for everyone: unlimited heroes, sync between your devices, hero history, parties, the printable sheet, night pages and homebrew. There is no subscription.${DONATE ? ' If the tome earns a place at your table and you want to help HighBrew keep it growing, you can buy us a coffee.' : ''}</p>`}
     <p class="muted small">This is a beta: things can break. Export heroes you care about, and tell HighBrew what to fix.${LEGAL ? ` <a href="${LEGAL}" target="_blank" rel="noopener">Terms and privacy</a>.` : ''}</p>
-    <div class="row mt">${act('close', undefined, 'Start writing', 'btn')}${CLOUD ? act('plus', undefined, 'See the Founder plan', 'btn ghost') : site ? `<span class="muted small">Founder plans open on <b>${esc(site)}</b></span>` : ''}</div>`, {label:'Welcome to the beta'});
+    <div class="row mt">${act('close', undefined, 'Start writing', 'btn')}${!SUBS ? coffee('btn ghost') : CLOUD ? act('plus', undefined, 'See the Founder plan', 'btn ghost') : site ? `<span class="muted small">Founder plans open on <b>${esc(site)}</b></span>` : ''}</div>`, {label:'Welcome to the beta'});
 }
 function refreshAfterModalAction(){
   const m = $('#modalBk .modal'); const h = m?.querySelector('h2')?.textContent;
@@ -4213,6 +4214,13 @@ function syncBadge(){
 /* ---- Grimoire+ ----
    The server decides (sync quota, parties, history): see supabase/schema.sql. The app only mirrors it to explain
    what is locked, and gates the two purely local extras (PDF sheet, night pages) on the same answer. */
+// For now the tome is free for everyone, with no subscription. Set subscriptions:true in config.js to bring Grimoire+ back
+// (and turn the paywall on in app_settings); everything below still works as it did.
+const SUBS = CFG.subscriptions === true;
+// "Buy me a coffee": the donation link appears only when donateUrl (config.js) holds an https address.
+const DONATE = /^https:\/\/\S+$/i.test(CFG.donateUrl || '') ? CFG.donateUrl : '';
+const coffee = (cls = 'sb') => DONATE ? `<a class="${cls} coffee" href="${esc(DONATE)}" target="_blank" rel="noopener">☕ Buy HighBrew a coffee</a>` : '';
+{ const cc = document.getElementById('coverCoffee'); if (cc && DONATE) cc.innerHTML = ` · <a href="${esc(DONATE)}" target="_blank" rel="noopener">buy us a coffee</a>`; }
 const PRICES = Object.assign({monthly:'€1.99 / month', yearly:'€14.99 / year', founder:'€24.99 once'}, CFG.prices || {});
 const BILL_KEY = 'grimoire-bill-v1';
 function setBill(b){
@@ -4222,7 +4230,7 @@ function setBill(b){
   try { localStorage.setItem(BILL_KEY, JSON.stringify({paywall:!!b.paywall})); if (me()) localStorage.setItem(BILL_KEY + ':' + me(), JSON.stringify(b)); } catch (e) {} }
 function loadBill(){ try { S.bill = JSON.parse(localStorage.getItem(BILL_KEY + ':' + me()) || 'null'); } catch (e) { S.bill = null; } }
 const paywallOn = () => { if (S.bill) return !!S.bill.paywall; try { return !!JSON.parse(localStorage.getItem(BILL_KEY) || '{}').paywall; } catch (e) { return false; } };
-const plusOK = () => !CLOUD || !paywallOn() || !!(me() && S.bill?.plus);
+const plusOK = () => !SUBS || !CLOUD || !paywallOn() || !!(me() && S.bill?.plus);
 const PLUS_WHY = {pdf:'The printable sheet and PDF are part of Grimoire+.', themes:'Night pages and the other themes are part of Grimoire+.',
   history:'Grimoire+ keeps a history of every hero, so you can bring back yesterday\'s sheet.', party:'Creating a party is part of Grimoire+. Joining one is free for everybody.',
   sync:'A free account keeps one hero in the cloud. Grimoire+ syncs all of them, on every device.',
@@ -4265,6 +4273,7 @@ function plusModal(why){
 }
 function planLine(){
   const b = S.bill;
+  if (!SUBS) return `<p><b>Free</b> · every feature, for everyone, with no subscription.</p>${DONATE || b?.can_manage ? `<div class="row">${coffee()}${b?.can_manage ? act('manage', undefined, 'Payments', 'sb') : ''}</div>` : ''}`;
   if (!b) return '<p class="muted">Plan: checking…</p>';
   if (!b.paywall) return '<p><b>Grimoire+ beta</b> · every feature is free while the tome is in beta.</p>';
   const d = b.period_end ? new Date(b.period_end).toLocaleDateString() : '';
@@ -4314,7 +4323,7 @@ function accountModal(view){
     <div class="rule"></div>
     <div class="fields"><div><label class="f" for="ac_dn">Player name</label><input type="text" id="ac_dn" value="${esc(S.profile?.display_name || '')}"></div><div style="align-self:end">${act('saveName', undefined, 'Save name', 'sb')}</div></div>
     <p>${mineN} hero${mineN === 1 ? '' : 'es'} of yours${theirs ? ` · ${theirs} from your party, read-only` : ''}${G.chars.some(c => c._blocked) ? ` · ${G.chars.filter(c => c._blocked).length} only on this device` : ''}.</p>
-    <h4>Plan</h4>
+    <h4>${SUBS ? 'Plan' : 'Support the tome'}</h4>
     ${planLine()}
     <h4>Party</h4>
     ${p ? `<p><b>${esc(p.name)}</b> · invite code <span class="chip">${esc(p.code)}</span></p>

@@ -3,11 +3,16 @@
 //   supabaseUrl : the Project URL, like https://abcdefghijkl.supabase.co
 //   supabaseKey : the public "anon" key or the "publishable" key (sb_publishable_…). Never the service_role / secret key.
 //   siteUrl     : the address of your GitHub Pages site, used for the links in confirmation and password mails.
-//   prices      : (optional) only the labels the app shows; the real prices live in Stripe.
+//   donateUrl   : the "buy me a coffee" link (PayPal.me, Ko-fi, Buy Me a Coffee…). Empty: no donation link is shown.
+//   subscriptions: false keeps the whole tome free with no Grimoire+ anywhere. true brings the paid plans back
+//                  (then also: update public.app_settings set paywall = true;).
+//   prices      : (optional, only with subscriptions) the labels the app shows; the real prices live in Stripe.
 // Leave the placeholders as they are and the tome simply works on this device only, without accounts.
 window.GRIMOIRE_CONFIG = {
   supabaseUrl: 'https://obahrlbwbplqqgokjqhf.supabase.co',
   supabaseKey: 'sb_publishable_aGee4sOAIxKRW6Icmasztg_XfZjRbCy',
   siteUrl: 'https://highbrewdev.github.io/Grimoire-Of-Heroes/',
+  donateUrl: 'https://paypal.me/damianocannizzaro',
+  subscriptions: false,
   // prices: {monthly: '€1.99 / month', yearly: '€14.99 / year', founder: '€24.99 once'},
 };
