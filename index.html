@@ -1231,7 +1231,27 @@ const abFor = cls => SPELL_AB[cls] || clsInfo({class:cls}).spellAb || 'int';
 const spellAb = c => c.spellAbility || abFor((classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class);
 
 const RES_LABEL = {rage_count:'Rage', second_wind_uses:'Second Wind', channel_divinity_charges:'Channel Divinity', wild_shape_uses:'Wild Shape', focus_points:'Focus Points', sorcery_points:'Sorcery Points', lay_on_hands_pool:'Lay on Hands (HP)'};
-const SHORT_REST_RES = ['focus_points'];
+// Short Rest recovery (SRD 5.2.1): how many expended uses come back, Infinity = all. c.res[k] counts the uses spent.
+const classLv = (c, n) => classList(c).filter(e => e.class === n).reduce((t, e) => t + e.level, 0);
+const SHORT_REST_RES = {
+  focus_points: () => Infinity,            // Monk: Focus Points
+  second_wind_uses: () => 1,               // Fighter: Second Wind
+  rage_count: () => 1,                     // Barbarian: Rage
+  wild_shape_uses: () => 1,                // Druid: Wild Shape
+  channel_divinity_charges: () => 1,       // Cleric and Paladin: Channel Divinity
+  bardic_inspiration: c => classLv(c, 'Bard') >= 5 ? Infinity : 0, // Bard 5: Font of Inspiration
+};
+function shortRestRes(c){
+  const back = [];
+  c.res = c.res || {};
+  for (const [k, n] of Object.entries(SHORT_REST_RES)){
+    const used = +c.res[k] || 0, got = Math.min(used, n(c));
+    if (!got) continue;
+    if (used - got > 0) c.res[k] = used - got; else delete c.res[k];
+    back.push((RES_LABEL[k] || 'Bardic Inspiration') + (got === used && n(c) === Infinity ? '' : ` +${got}`));
+  }
+  return back;
+}
 function resources(c){
   if (multi(c).length){
     const pool = [], stats = [];
@@ -1711,7 +1731,7 @@ combat(c){
   return `<div class="grid3">
     ${card('Hit points', `${hpBar(c)}
       <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${c.hp.max}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= c.hp.max / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
-      <div class="row mt"><label class="sr" for="hpAmt">Amount</label><input type="number" id="hpAmt" value="5" min="0">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
+      <div class="row mt"><label class="sr" for="hpAmt">Amount</label><input type="number" id="hpAmt" value="5" min="0">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}${c.hp.cur === 0 ? '<label class="row muted"><input type="checkbox" id="hpCrit"> Critical hit (2 failures)</label>' : ''}</div>
       <div class="rule"></div>
       <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" max="${LIM.hp}" value="${c.hp.max}"></div>
       ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
@@ -3340,10 +3360,24 @@ function concCheck(c, dmg){
   logRoll(`Concentration (${c.conc.n}) DC ${dc}`, `${r.txt} ${fmt(b)}${exh ? ' ' + exh : ''} Con save`, `${tot} · ${ok ? 'holds' : 'broken!'}`, ok ? '' : 'fumble');
   if (!ok) c.conc = null;
 }
-function applyDamage(c, a){
-  const soak = Math.min(c.hp.temp || 0, a); c.hp.temp = (c.hp.temp || 0) - soak;
-  c.hp.cur = Math.max(0, c.hp.cur - (a - soak));
-  if (c.hp.cur === 0) c.death = {s:0, f:0};
+// Damage and 0 HP (SRD 5.2.1): dropping to 0 starts fresh death saves; damage left over that reaches the HP maximum kills
+// outright (warned and logged, saves stay 0/0 so the player decides); any damage taken at 0 HP is one Death Saving Throw failure (two from a Critical Hit) and kills if it reaches the maximum.
+function applyDamage(c, a, crit = false){
+  if (!(a > 0)) return;
+  c.death = c.death || {s:0, f:0};
+  const was = c.hp.cur, soak = Math.min(c.hp.temp || 0, a), hurt = a - soak;
+  c.hp.temp = (c.hp.temp || 0) - soak;
+  c.hp.cur = Math.max(0, was - hurt);
+  const name = c.name || 'The hero';
+  if (was > 0 && c.hp.cur === 0){
+    c.death = {s:0, f:0};
+    if (hurt - was >= c.hp.max){ toast(`Massive damage: ${name} dies instantly (${hurt - was} left over ≥ ${c.hp.max} HP max).`); logRoll('Massive damage', `${hurt} damage at ${was} HP`, `${name} dies instantly`, 'fumble'); }
+    else toast(`${name} drops to 0 HP: death saves start.`);
+  } else if (was === 0){
+    if (hurt >= c.hp.max){ c.death = {s:c.death.s || 0, f:3}; toast(`${name} takes ${hurt} damage at 0 HP (≥ ${c.hp.max} HP max) and dies.`); logRoll('Massive damage', `${hurt} damage at 0 HP`, `${name} dies`, 'fumble'); }
+    else { c.death.f = Math.min(3, (c.death.f || 0) + (crit ? 2 : 1));
+      toast(c.death.f >= 3 ? `${name} takes damage at 0 HP: third failure, ${name} dies.` : `Damage at 0 HP: ${crit ? 'two failures' : 'one failure'} (${c.death.f}/3).`); }
+  }
   concCheck(c, a);
 }
 const concChip = c => c.conc ? `<span class="chip conc" title="Concentrating">◎ ${esc(c.conc.n)} <button type="button" class="chipX" data-act="dropConc" data-arg="${esc(c.id)}" aria-label="End concentration">✕</button></span>` : '';
@@ -3661,7 +3695,7 @@ const ACT = {
   rollSpellAtk(){ const c = active(); testRoll('Spell attack', mod(c.abilities[spellAb(c)]) + profFor(c.level)); },
   toggleSave(ab){ mut(c => c.saves[ab] = c.saves[ab] ? 0 : 1, false); },
   cycleSkill(id){ mut(c => c.skills[id] = ((c.skills[id] || 0) + 1) % 3, false); },
-  damage(){ mut(c => applyDamage(c, hpNum('hpAmt'))); },
+  damage(){ mut(c => applyDamage(c, hpNum('hpAmt'), !!$('#hpCrit')?.checked)); },
   heal(){ mut(c => { c.hp.cur = Math.min(c.hp.max, c.hp.cur + hpNum('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
   tempHP(){ mut(c => c.hp.temp = Math.max(c.hp.temp || 0, hpNum('hpAmt'))); },
   setExh(n){ mut(c => c.exhaustion = +n, false); },
@@ -3679,7 +3713,7 @@ const ACT = {
     if (multi(c).length){ c.hitDice.by = c.hitDice.by || {}; c.hitDice.by[p.d] = (c.hitDice.by[p.d] || 0) + 1; }
     c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(c.hp.max, c.hp.cur + heal); save(); render();
     logRoll('Hit Die', `${r.parts} ${fmt(mod(c.abilities.con))} Con`, `+${heal} HP`); },
-  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
+  shortRest(){ let back = []; mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; back = shortRestRes(c); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '') + (back.length ? ' Recovered: ' + back.join(', ') + '.' : '')); },
   longRest(){ mut(c => { c.hp.cur = c.hp.max; c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
   slot(arg){ const [lv, k] = arg.split(':').map(Number); mut(c => { const s = c.spells.slots[lv] = c.spells.slots[lv] || {used:0}; s.used = k < s.used ? k : k + 1; }, false); },
   resetSlots(){ mut(c => { c.spells.slots = {}; c.spells.pact = {used:0}; }, false); },
