@@ -1,5 +1,30 @@
 # Diario del team
 
+## 2026-11-11 · team leader
+- **Stato**: live = main (`grimoire-fs1110b`), controllo a 1440x900 e 390x844 sul sito e in locale senza errori. Supabase risponde dalla sandbox (401 senza chiave = attivo). PR #14 unita: B-027 chiuso, `levelup` 22/23. Punteggio +158 ↑ (193/210), nessuna sezione rossa.
+- **Piano**: Combattimento (0, la peggiore) prende entrambe le sessioni frontend (B-023 mattina, B-036 + B-037 + B-032 sera). Backend: revisione XSS a mezzogiorno, B-020 e avviso "nuova versione" di notte. Designer su B-014 (filtro dello scaffale). Tester su riposi, morte e payload XSS.
+- **Per Capo**: PR #16 (B-016, unico bug alto) e PR #6 da unire; ok per il keep-alive di Supabase; decisione su B-011.
+
+## 2026-11-11 · test
+- **Suite** su main 073375c: **193/210** superati, punteggio totale **+158** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento 0, caratteristiche +6, eroe +7. Dettagli in docs/scoreboard.md.
+- **Test nuovi** (8, in combattimento, la sezione più bassa): B-023 riposo breve per Rage (Barbaro 5), Wild Shape (Druido 5), Channel Divinity (Paladino 5 e Chierico 6), Bardic Inspiration (Bardo 5); B-036 danno massiccio; riposo breve dei Focus Points; riposo lungo che rimette tutte le risorse. Rossi i 6 legati a B-023/B-036, verdi gli altri 2.
+- **Test corretto** (errore del test, non dell'app): il vecchio B-018 cercava Import nel capitolo Combattimento, ora va prima su Eroe. Ora passa.
+- **Punteggio**: `tests/punteggio.js` riconosce anche "Risolto: backend · data" (B-017 e B-018 ora prendono il +3) e assegna B-026…B-029 alla loro sezione (B-029 a robustezza).
+- **Non toccato**: il test vecchio "livello 18 → 19 … può superare 20" segue ancora la regola sbagliata (passa grazie a B-027); lo corregge la PR #14, in attesa di Capo.
+
+## 2026-11-10 · backend notte
+- **Fatto** (su main) · sezione **Import/export e salvataggio**, nella zona del piano (`duplicate`, `importBackup`, `bindValue`):
+  - **B-024** ([f6479ab](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/f6479ab)) · `duplicate` dà nomi sempre diversi entro 80 caratteri ("X (copy)", "X (copy 2)"…; copiare una copia la rinumera invece di accumulare "(copy)") e passa da `fixup`. `importBackup` conta gli eroi identici invece di usare un insieme: due copie mai modificate nel file tornano entrambe (il caso 38/39 del power user), e ripristinare due volte lo stesso file non crea doppioni.
+  - **B-035** ([ca54499](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/ca54499)) · `bindValue` legge i campi numerici con `Number` troncato (`1e3` → 1000, `2.9` → 2) e uscendo dal campo mostra sempre il valore salvato. Preso perché è nella mia zona di oggi (`bindValue`).
+  - `sw.js`: `CACHE` → `grimoire-bn1110b`.
+- **B-016 in [PR #16](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/16)** (non tocca Supabase; il piano prevede l'unione dopo i test, ma per prudenza non l'ho unita io): `renderPage` ricorda l'eroe per cui ha disegnato i campi (`G.pageHero`); `bindValue` scrive solo su quell'eroe. Se un'altra scheda l'ha cancellato, non salva niente e mostra "This hero was deleted in another tab: what you typed here is not saved." Mai su `active()` cambiato.
+- **Test**: 3 nuovi in `importexport` (B-024 due Duplicate dello stesso eroe + doppio ripristino; B-024 Duplicate a catena con nome di 80 caratteri; B-016 avviso), rossi prima della correzione. Suite completa prima **186/200** (main 756b88c), dopo **190/202** su main: passano B-024 e B-035, nessun test che passava ora fallisce. Nella PR **192/203**: passano anche B-016 ×3; `importexport` 20/20. File dei risultati ripristinato.
+- **Scelta prudente**: se l'eroe è stato cancellato altrove il testo scritto va perso (con avviso) invece di resuscitare l'eroe: la cancellazione è un gesto esplicito dell'altra scheda.
+- **Per Test e punteggio**: B-024 e B-035 in "Risolti" con test verde. Il test vecchio B-018 fallisce ancora solo perché cerca Import nel capitolo Combattimento (già segnalato).
+- **Supabase**: non provato (rete della sandbox), niente richieste verso il progetto.
+- **File**: index.html, sw.js, tests/sezioni/importexport.test.js, docs/bug-beta.md, docs/team-log.md, docs/team-plan.md.
+- **Resta**: B-020 (ciclo quadratico dell'import 5etools), revisione XSS dei campi homebrew, avviso "Nuova versione" del service worker.
+
 ## 2026-11-10 · power user (sera)
 - **Fatto** · sessione di gioco con riposi e backup, come da piano, su main e9629ca: suite 186/198, nessuna regressione. Dettagli nel diario di docs/bug-beta.md.
 - **Bug nuovi** (2, ognuno con un test che oggi fallisce): **B-036 [media] combattimento** (un danno a 0 PF azzera i fallimenti dei tiri contro la morte: un eroe morente non muore mai per i colpi; danno massiccio non segnalato); **B-037 [bassa] incontro** (Heal dal tracciatore lascia i tiri contro la morte accesi). `tests/punteggio.js`: B-036 e B-037 in `BUG_SEZIONE`.
