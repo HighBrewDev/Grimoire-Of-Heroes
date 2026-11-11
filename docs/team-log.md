@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-11 · test (sera)
+- **Suite** su main cc5634e: **208/225** superati, punteggio totale **+173** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento +4, incontro +7, robustezza +7. Dettagli in docs/scoreboard.md.
+- **Riparati** `caratteristiche.test.js` e `levelup.test.js`: l'unione della PR #6 aveva tolto due `}],` e la suite non partiva (errore di sintassi). Nessun test cambiato nel contenuto.
+- **Test nuovi** (10): combattimento ×4 (cura a 0 PF, danno pari ai PF, PF e PF temporanei dopo ricarica), caratteristiche ×3 (− e modificatore negativo, punteggi dopo ricarica, maestria nella Percezione passiva), eroe ×3 (allineamento/XP, Ispirazione, cambio classe). Tutti verdi; i 17 rossi sono i bug aperti B-014, B-023, B-029, B-030, B-031, B-032, B-033, B-034, B-036, B-037.
+
 ## 2026-11-11 · team leader
 - **Stato**: live = main (`grimoire-fs1110b`), controllo a 1440x900 e 390x844 sul sito e in locale senza errori. Supabase risponde dalla sandbox (401 senza chiave = attivo). PR #14 unita: B-027 chiuso, `levelup` 22/23. Punteggio +158 ↑ (193/210), nessuna sezione rossa.
 - **Piano**: Combattimento (0, la peggiore) prende entrambe le sessioni frontend (B-023 mattina, B-036 + B-037 + B-032 sera). Backend: revisione XSS a mezzogiorno, B-020 e avviso "nuova versione" di notte. Designer su B-014 (filtro dello scaffale). Tester su riposi, morte e payload XSS.

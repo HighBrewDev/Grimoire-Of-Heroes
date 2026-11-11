@@ -196,4 +196,30 @@ module.exports = {sezione:'combattimento', test:[
     assert.strictEqual(c.hp.cur, 0);
     assert.ok((c.death?.f || 0) >= 3 || /instant|massive|dies|is dead|killed/i.test(t), `danno 90 a 40 PF: fallimenti ${c.death?.f || 0}/3 e nessun avviso di morte istantanea`);
   }],
+  ['una cura a 0 PF rialza l\'eroe e azzera i tiri contro la morte', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {hp:{cur:0, max:32, temp:0}, death:{s:1, f:2}})]}); await app.go('combat');
+    await hpAct(app, 'heal', 5);
+    const h = await app.hero();
+    assert.deepStrictEqual([h.hp.cur, h.death], [5, {s:0, f:0}], `PF ${h.hp.cur}, tiri contro la morte ${JSON.stringify(h.death)}`);
+  }],
+  ['un danno pari ai PF attuali porta a 0 senza uccidere né segnare fallimenti', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await hpAct(app, 'damage', 32);
+    const h = await app.hero();
+    assert.deepStrictEqual([h.hp.cur, h.death.f], [0, 0], `PF ${h.hp.cur}, fallimenti ${h.death.f}`);
+  }],
+  ['i PF dopo danno e cura restano dopo la ricarica della pagina', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await hpAct(app, 'damage', 9); await hpAct(app, 'heal', 4);
+    await app.reload(); await app.go('combat');
+    assert.strictEqual((await app.hero()).hp.cur, 27);
+    assert.ok((await app.text('#page')).includes('27'));
+  }],
+  ['i PF temporanei restano dopo la ricarica e non finiscono nei PF massimi', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await hpAct(app, 'tempHP', 7);
+    await app.reload();
+    const h = await app.hero();
+    assert.deepStrictEqual([h.hp.cur, h.hp.max, h.hp.temp], [32, 32, 7]);
+  }],
 ]};

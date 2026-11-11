@@ -127,4 +127,25 @@ module.exports = {sezione:'eroe', test:[
     const v = await app.page.evaluate(() => ['#f_class', '#f_species', '#f_bg', 'select[data-mc="0:class"]'].map(s => document.querySelector(s)?.value));
     assert.deepStrictEqual(v, ['Runecarver', 'Popolo del Muschio', 'Pirata', 'Blood Hunter'], `i menu mostrano ${v.join(', ')} per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata`);
   }],
+  ['cambiare allineamento ed esperienza salva e resta dopo la ricarica', async ({open}) => {
+    const app = await open();
+    await app.set('#f_align', 'Chaotic Neutral'); await app.set('#f_xp', '1234');
+    await app.reload();
+    const h = await app.hero();
+    assert.deepStrictEqual([h.alignment, h.xp], ['Chaotic Neutral', 1234]);
+  }],
+  ['l\'Ispirazione Eroica si attiva e si disattiva dalla casella', async ({open}) => {
+    const app = await open({heroes:[fx.blank({inspiration:false})]});
+    await app.page.locator('#f_insp').check();
+    assert.strictEqual((await app.hero()).inspiration, true);
+    await app.page.locator('#f_insp').uncheck();
+    assert.ok(!(await app.hero()).inspiration);
+  }],
+  ['cambiare classe a un eroe fa aggiornare le abilità di classe senza errori di console', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Fighter', level:3, xp:900})]});
+    await app.set('#f_class', 'Cleric'); await app.set('#f_class', 'Rogue');
+    const h = await app.hero();
+    assert.strictEqual(h.class, 'Rogue');
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
 ]};

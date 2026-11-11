@@ -72,6 +72,7 @@ module.exports = {sezione:'caratteristiche', test:[
     await app.click('stepAb', 'con:-1'); await app.click('stepAb', 'con:1');
     const h = await app.hero();
     assert.deepStrictEqual([h.abilities.con, h.hp.cur, h.hp.max], [14, 3, 44], `PF ${h.hp.cur}/${h.hp.max} dopo − e +`);
+  }],
   ['B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20)', async ({open}) => {
     const app = await open({heroes:[fx.blank({class:'Wizard', subclass:'Evoker', level:20, xp:355000, hp:{cur:82,max:82,temp:0}})]}); await app.go('abilities');
     for (let i = 0; i < 9; i++) await app.click('stepAb', 'con:-1');
@@ -80,5 +81,23 @@ module.exports = {sezione:'caratteristiche', test:[
     for (let i = 0; i < 9; i++) await app.click('stepAb', 'con:1');
     const h = await app.hero();
     assert.deepStrictEqual([h.abilities.con, h.hp.max, h.hp.cur], [10, 82, 77], `Cos 10 → 1, danno 5, Cos 10: PF ${h.hp.cur}/${h.hp.max} invece di 77/82`);
+  }],
+  ['il pulsante − abbassa il punteggio, salva e il modificatore diventa negativo (10 → 8 = −1)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({abilities:{str:10,dex:10,con:10,int:10,wis:10,cha:10}})]}); await app.go('abilities');
+    await app.click('stepAb', 'str:-1'); await app.click('stepAb', 'str:-1');
+    assert.strictEqual((await app.hero()).abilities.str, 8);
+    assert.ok(/[-−–]\s?1/.test(await app.text('#page')), 'nessun modificatore −1 visibile');
+  }],
+  ['i punteggi cambiati restano dopo la ricarica della pagina', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    const prima = (await app.hero()).abilities.int;
+    await app.click('stepAb', 'int:1'); await app.click('stepAb', 'int:1');
+    await app.reload();
+    assert.strictEqual((await app.hero()).abilities.int, prima + 2);
+  }],
+  ['abilità con maestria: il bonus raddoppia la competenza (Percezione passiva 15 a livello 3, Sag 12)', async ({open}) => {
+    const app = await open({heroes:[fx.blank({level:3, xp:900, abilities:{str:10,dex:10,con:10,int:10,wis:12,cha:10}, skills:{perception:2}})]});
+    const v = await app.page.evaluate(() => [...document.querySelectorAll('.kv')].find(k => /Passive Perception/.test(k.textContent))?.lastElementChild?.textContent.trim());
+    assert.strictEqual(v, '15', `Percezione passiva ${v} invece di 10 + 1 + 2×2 = 15`);
   }],
 ]};
