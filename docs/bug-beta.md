@@ -97,14 +97,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `workshop` "B-020 …".
 
-### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
-- Trovato da: power user · 2026-11-08
-- Dove: scaffale degli eroi, 390x844 (anche 1440x900)
-- Passi: 1. Tomo con 33 eroi. 2. Su telefono cerca il trentesimo eroe.
-- Atteso: un filtro per nome o la possibilità di riordinare/fissare gli eroi in uso.
-- Ottenuto: scaffale orizzontale con `scrollWidth` 7.410 px su 356 visibili: il 30° eroe è a 6.600 px, solo scorrendo. Gli eroi restano nell'ordine di creazione; non esistono riordino, ordinamento o ricerca (la ricerca Ctrl+K cerca solo le regole).
-- Console: nessun errore.
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -123,6 +115,16 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
+- **Risolto 2026-11-11** (designer): sopra lo scaffale, da 8 eroi in su, compare la barra "Filter heroes" (nome, specie, classe) con ordine "Shelf order / By name / Last used" e il conteggio; su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (non più 7.400 px di fila). Test `eroe` B-014 verde, `telefono` senza nuovi rossi.
+- Trovato da: power user · 2026-11-08
+- Dove: scaffale degli eroi, 390x844 (anche 1440x900)
+- Passi: 1. Tomo con 33 eroi. 2. Su telefono cerca il trentesimo eroe.
+- Atteso: un filtro per nome o la possibilità di riordinare/fissare gli eroi in uso.
+- Ottenuto: scaffale orizzontale con `scrollWidth` 7.410 px su 356 visibili: il 30° eroe è a 6.600 px, solo scorrendo. Gli eroi restano nell'ordine di creazione; non esistono riordino, ordinamento o ricerca (la ricerca Ctrl+K cerca solo le regole).
+- Console: nessun errore.
+
 
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09

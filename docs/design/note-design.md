@@ -53,6 +53,12 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-11
+- **Fatto**: B-014, scaffale con filtro e ordine (da 8 eroi, `SHELF_MIN`). Stato in `G.shelfQ` / `G.shelfSort`, non salvato. Su ≤560 px `.shelf.many` va a capo in 2 colonne con altezza massima 236 px e scroll verticale; da 768 px in su resta la fila orizzontale.
+- **Prima/dopo**: [prima 390](2026-11-11-scaffale-prima-390.png), [dopo 390](2026-11-11-scaffale-dopo-390.png), [filtro 390](2026-11-11-scaffale-filtro-390.png), [768](2026-11-11-scaffale-dopo-768.png), [1440](2026-11-11-scaffale-dopo-1440.png).
+- **Imparato**: `git pull` su checkout staccato non aggiorna: usare `git fetch origin main && git checkout -B main origin/main`.
+- **Prossime idee**: B-030 solo CSS (telefono 17/17), `.dot` e "✕" a 44 px, contrasto e aria-label.
+
 ### 2026-11-10
 - **Fatto**: B-019 e tocco nella finestra Level up (compito del piano, solo CSS). Testi e link lunghi vanno a capo in Combattimento, Zaino, titoli e scaffale; `.sb` a 44 px di larghezza su touch; finestre senza piega 3D con "riduci animazioni". Telefono 15/15, suite 179/186 senza regressioni.
 - **Prima/dopo**: [testi lunghi 390](2026-11-10-b019-testi-lunghi-390.jpg), [Level up 390](2026-11-10-levelup-tocco-390.jpg).

@@ -121,6 +121,17 @@ button.chip:hover{filter:brightness(1.12)}
 .hero .lv{position:absolute;top:8px;right:8px;background:#2b1d10;color:var(--gold2);font-family:var(--f-display);font-size:12px;padding:2px 8px;border-radius:20px}
 .hero .hp{height:4px;border-radius:2px;background:#cdb283;margin-top:6px;overflow:hidden}
 .hero .hp i{display:block;height:100%;background:var(--verdigris)}
+.shelfBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px}
+.shelfBar[hidden]{display:none}
+.shelfBar input[type=search]{flex:1 1 200px;max-width:420px;min-width:0}
+.shelfBar select{flex:0 1 160px}
+.shelfCount{font-family:var(--f-display);font-size:12px;letter-spacing:.04em;color:var(--onLeather)}
+.shelfNone{flex:1 0 100%;margin:4px 2px;color:var(--onLeather);font-style:italic}
+@media (max-width:560px){
+  .shelf.many{flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:236px;overscroll-behavior:contain}
+  .shelf.many .hero{flex:1 1 calc(50% - 5px);min-width:0}
+  .shelf.many .shelfAdd{flex:1 0 100%;min-height:44px}
+}
 .shelfAdd{flex:0 0 130px;border:2px dashed var(--gold3);color:var(--onLeather);background:transparent;border-radius:10px;font-family:var(--f-display);font-size:14px}
 
 /* ---------- book ---------- */
@@ -740,6 +751,11 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
     </div>
   </header>
 
+  <div class="shelfBar" id="shelfBar" hidden>
+    <input type="search" id="shelf_q" placeholder="Filter heroes" aria-label="Filter heroes" autocomplete="off" maxlength="80">
+    <select id="shelf_sort" aria-label="Order heroes"><option value="manual">Shelf order</option><option value="name">By name</option><option value="recent">Last used</option></select>
+    <span class="shelfCount" id="shelfCount" aria-live="polite"></span>
+  </div>
   <nav class="shelf" id="shelf" aria-label="Heroes"></nav>
 
   <div class="bookWrap">
@@ -1360,8 +1376,24 @@ const BOOKISH = id => id === 'library' || id === 'workshop';
 const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 
 function render(){ renderShelf(); renderTabs(); renderPage(); }
+const SHELF_MIN = 8;
+function shelfList(){
+  const q = (G.shelfQ || '').trim().toLowerCase(), many = G.chars.length >= SHELF_MIN;
+  let l = G.chars.slice();
+  if (many && q) l = l.filter(c => [c.name, c.species, c.class, c.subclass, classLabel(c)].join(' ').toLowerCase().includes(q));
+  if (many && G.shelfSort === 'name') l.sort((a, b) => String(a.name).localeCompare(String(b.name), undefined, {sensitivity:'base'}));
+  else if (many && G.shelfSort === 'recent') l.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  return l;
+}
 function renderShelf(){
-  $('#shelf').innerHTML = G.chars.map(c => `
+  const many = G.chars.length >= SHELF_MIN, list = shelfList(), bar = $('#shelfBar');
+  bar.hidden = !many; $('#shelf').classList.toggle('many', many);
+  if (many){
+    const sel = $('#shelf_sort'); if (sel.value !== (G.shelfSort || 'manual')) sel.value = G.shelfSort || 'manual';
+    const inp = $('#shelf_q'); if (inp.value !== (G.shelfQ || '')) inp.value = G.shelfQ || '';
+    $('#shelfCount').textContent = list.length === G.chars.length ? G.chars.length + ' heroes' : list.length + ' of ' + G.chars.length;
+  }
+  $('#shelf').innerHTML = (many && !list.length ? '<p class="shelfNone">No hero matches “' + esc(G.shelfQ) + '”.</p>' : '') + list.map(c => `
     <button type="button" class="hero" data-act="pick" data-arg="${esc(c.id)}" aria-current="${c.id === G.activeId}">
       <span class="lv">Lv ${c.level}</span>
       <div class="p">${portrait(c)}</div>
@@ -4445,6 +4477,7 @@ function wire(){
     if (el.classList.contains('dbtn') && el.dataset.act === 'die' && !reduceMotion()) el.animate([{transform:'rotate(0) scale(1)'}, {transform:'rotate(-200deg) scale(1.12)', offset:.6}, {transform:'rotate(-360deg) scale(1)'}], {duration:520, easing:'cubic-bezier(.3,.8,.3,1)'});
   });
   document.addEventListener('change', e => {
+    if (e.target.id === 'shelf_sort'){ G.shelfSort = e.target.value; renderShelf(); return; }
     const el = e.target;
     if (el.tagName === 'SELECT' && el.value === '__custom'){   // subclass picker: swap in a text field for one the library doesn't have
       const t = document.createElement('input'); t.type = 'text'; for (const a of el.attributes) t.setAttribute(a.name, a.value);
@@ -4469,6 +4502,7 @@ function wire(){
     if (el.id === 'spell_q') spellSearch(el.value);
     if (el.id === 'gear_q'){ G.gearQ = el.value; gearSearch(); }
     if (el.id === 'inv_q'){ G.invQ = el.value; const pos = el.selectionStart; renderPage(); const n = $('#inv_q'); n.focus(); n.setSelectionRange(pos, pos); }
+    if (el.id === 'shelf_q'){ G.shelfQ = el.value; renderShelf(); }
     if (el.id === 'lib_q'){ G.libQ = el.value; renderLibList(); }
     if (el.id === 'brew_q'){ G.brewQ = el.value; const l = $('#hb_list'); if (l) l.innerHTML = brewListHTML(); }
     if (el.closest?.('#bwForm')) brewLivePreview();

@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-11 · design
+- **Fatto** · **B-014** (compito del piano, Eroe): sopra lo scaffale, da 8 eroi in su, barra "Filter heroes" (nome, specie, classe), ordine "Shelf order / By name / Last used" e conteggio; messaggio se nessun eroe corrisponde. Su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (scrollWidth dello scaffale da 7.410 px a 356). Su 768 e 1440 resta la fila che scorre, ma col filtro. Ordine e filtro solo di visualizzazione: non cambiano i dati salvati. `CACHE` → `grimoire-ds1111a`.
+- **File**: index.html (HTML sopra `#shelf`, `renderShelf`, CSS scaffale, gestori input/change), sw.js, docs/bug-beta.md (B-014 in Risolti), docs/design/note-design.md, screenshot `docs/design/2026-11-11-scaffale-*.png`.
+- **Verifica**: `eroe` 18/19 (resta B-034, frontend), `telefono` 15/17 (restano i due B-030, non toccati da me); console senza errori provando filtro, ordine, nessun risultato e scelta di un eroe; 33 eroi a 390, 768, 1440 senza scroll orizzontale della pagina. Zone di index.html del frontend non toccate.
+- **Prossima idea**: B-030 (testi lunghi, solo CSS) per portare `telefono` a 17/17; poi `.dot` e "✕" a 44 px.
+
 ## 2026-11-11 · sviluppo (frontend + backend)
 - **Frontend** · sezione **Combattimento**: **B-023** (`shortRestPartial`: Second Wind, Rage, Wild Shape, Channel Divinity recuperano 1 uso; Bardic Inspiration tutta dal Bardo 5, SRD 5.2.1) e **B-036** (`applyDamage`: danno a 0 PF = +1 fallimento, avviso di morte istantanea se il danno oltre lo 0 supera i PF massimi). `CACHE` → `grimoire-dev1111a`.
 - **Test**: suite 208/225 prima, **216/225** dopo, nessuna regressione. Scelta prudente: il danno massiccio mostra l'avviso ma non segna 3 fallimenti, perché il test esistente "PF non scendono sotto 0" (danno 100 → `{0,0}`) lo vieta; il test non è stato toccato. Il critico (2 fallimenti) non è gestito: l'app non ha un modo per segnalarlo.
