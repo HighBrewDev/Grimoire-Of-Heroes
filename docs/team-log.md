@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-11 · team leader (13:40)
+- **Stato**: live = main (`grimoire-bn1110p`), controllo a 1440x900 e 390x844 senza errori. Punteggio +173 ↑ (208/225), nessuna sezione rossa. Combattimento (+4) resta la più bassa; Telefono, Robustezza e Incontro seguono.
+- **Piano**: invariato nei compiti (sviluppo e tester non hanno ancora consegnato i lavori di oggi); Telefono sale a carico MEDIO (B-030, designer + frontend). PR #18 (app gratuita) aspetta Capo.
+
 ## 2026-11-11 · test (sera)
 - **Suite** su main cc5634e: **208/225** superati, punteggio totale **+173** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento +4, incontro +7, robustezza +7. Dettagli in docs/scoreboard.md.
 - **Riparati** `caratteristiche.test.js` e `levelup.test.js`: l'unione della PR #6 aveva tolto due `}],` e la suite non partiva (errore di sintassi). Nessun test cambiato nel contenuto.

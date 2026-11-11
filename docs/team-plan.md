@@ -1,11 +1,11 @@
-# Piano del team · mercoledì 11 novembre 2026
+# Piano del team · mercoledì 11 novembre 2026 (aggiornato 13:40)
 
 ## Stato dell'app
-- **Frontend**: live = main (`CACHE` `grimoire-fs1110b` sia sul sito sia nel repo). Controllo delle 9:40 con Playwright a 1440x900 e 390x844, sito live e server locale: carica, scrollWidth uguale alla finestra, console senza errori. Niente di rotto da ieri.
-- PR #14 unita alle 9:28: **B-027 chiuso**, `levelup` adesso **22/23** (resta B-033). Ieri sera chiusi B-024, B-035 (backend) e B-026, B-028 (frontend).
-- **Backend**: Supabase **risponde** dalla sandbox (`/auth/v1/health` → 401 senza chiave, cioè progetto attivo e non in pausa). B-016 [alta] corretto con PR #16, unita stamattina.
-- **Punteggio totale +158, tendenza ↑** (ieri +105, prima +107). Test 193/210 sul commit 073375c. Nessuna sezione rossa, nessuna regressione.
-- La peggiore è **Combattimento (0, 21/29)**: 8 test rossi tutti su B-023 e B-036. Oggi riceve tutte e due le sessioni frontend.
+- **Frontend**: live = main (`CACHE` `grimoire-bn1110p`). Controllo delle 13:40 con Playwright a 1440x900 e 390x844, sito live e server locale: carica, scrollWidth uguale alla finestra, console senza errori. Niente di rotto da stamattina.
+- Punteggio totale **+173, tendenza ↑** (ieri +105, stamattina +158). Test **208/225** su cc5634e, 10 test nuovi del tester; nessuna sezione rossa, nessuna regressione. Il tester ha riparato due file di test rotti dall'unione di PR #6 (solo sintassi).
+- Da stamattina nessun commit di sviluppo su main: le sessioni Frontend 10:23 e Backend 12:53 del piano non hanno ancora lasciato risultati, quindi i loro compiti restano validi (verificare nel log prima di ripartire).
+- **Backend**: Supabase risponde (401 senza chiave = progetto attivo). Aperta **PR #18** (app gratuita + link "offrimi un caffè"), in attesa di Capo.
+- Le più basse: **Combattimento (+4, 25/33)**, **Telefono** (15/17, B-030), **Robustezza** (B-029), **Incontro** (B-037). Zaino e Level up salgono.
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
@@ -18,7 +18,8 @@
 | Import/export e salvataggio | 🟡 GIALLO | MEDIO | backend | B-016 [alta] chiuso da PR #16 (da verificare) |
 | Workshop homebrew | 🟡 GIALLO | MEDIO | backend | B-020 (B-011 non si applica: app gratuita) |
 | Level up e multiclasse | 🟡 GIALLO | MEDIO | frontend | B-033 |
-| Zaino, Telefono | 🟡 GIALLO | BASSO | backend / designer | tutto verde, verso il VERDE: solo controlli |
+| Telefono | 🟡 GIALLO | MEDIO | designer + frontend | B-030 (2 test rossi, 390 px) |
+| Zaino | 🟡 GIALLO | BASSO | backend | tutto verde, verso il VERDE: solo controlli |
 | Tratti, Incantesimi, Cronaca, Biblioteca | 🟢 VERDE | BASSO | — | nessun lavoro, solo controlli leggeri dei tester |
 
 ## Oggi
@@ -59,6 +60,7 @@ Zone di index.html oggi: **Frontend** possiede `shortRest`/`longRest` (~3681), `
 - Ogni rilascio alza `CACHE` in sw.js. Rispettare le zone di index.html scritte sopra. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- PR #16 (B-016) e PR #6 (B-030, B-031) **unite da Capo l'11/11**: niente in attesa di unione.
+- **[PR #18](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/18)** · app gratuita con link "offrimi un caffè" (tocca pagamenti/abbonamento): da rivedere e unire.
+- PR #16 e PR #6 già unite da Capo l'11/11.
 - **Keep-alive di Supabase**: ok di Capo arrivato l'11/11; la PR del backend mezzogiorno arriverà qui per l'unione (tocca Supabase).
 - **Deciso da Capo l'11/11**: per ora l'app è gratuita, senza abbonamento in vista (link "offrimi un caffè" seguito a parte). B-011 non si applica: Test e punteggio lo sposta in "Risolti" come "non applicabile", senza +3.
