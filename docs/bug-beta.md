@@ -27,13 +27,13 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Test: `levelup` "B-031 …".
 
 
-### B-029 [media] Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
-- Trovato da: distruttore · 2026-11-10
-- Sezione: robustezza
-- Dove: finestra Level up (vale per tutte le finestre di `modal()`), 1440x900, solo tastiera
-- Passi: 1. Eroe attivo Eldrin (Wizard 4), apri Level up: titolo "Eldrin Moonwhisper reaches level 5". 2. Premi Tab: dopo "Not yet" il focus esce dalla finestra e passa ai controlli coperti (ricerca, tema, wizard, capitoli, poi i ritratti dello scaffale). 3. Arrivato sul ritratto di Kessa premi Invio. 4. Premi "Become level 5".
-- Atteso: il focus resta nella finestra (`aria-modal="true"` lo promette) e il livello va a Eldrin.
-- Ottenuto: con la finestra ancora aperta e il titolo ancora "Eldrin … level 5", Invio sul ritratto cambia l'eroe attivo; "Become level 5" porta **Kessa** dal 2 al 3 ("Kessa Quickpaw is now level 3: +6 HP"), Eldrin resta 4. Non esiste un modo per togliere un livello. `modal()` (index.html ~1290) mette il focus nella finestra ma non lo trattiene e lo sfondo non è `inert`; `applyLevelUp` usa `active()` invece dell'eroe per cui la finestra è stata aperta. Col mouse non succede (lo sfondo copre).
+### B-036 [media] Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
+- Trovato da: power user · 2026-11-10
+- Sezione: combattimento
+- Dove: III Combattimento → Damage e Death saves (anche il Danno dal tracciatore dell'Incontro, che usa la stessa funzione), 1440x900
+- Passi: 1. Lio (Bardo 5, 33 PF): Damage 33 → 0 PF. 2. Death saves → segna 2 fallimenti (o tirali con "Roll death save"). 3. Un nemico lo colpisce ancora: Damage 3.
+- Atteso: regole 2024: un danno mentre si è a 0 PF dà un fallimento (due se critico), quindi 3 fallimenti, l'eroe muore; e un danno che, dopo averlo portato a 0, supera i PF massimi (danno massiccio) lo uccide subito, almeno con un avviso.
+- Ottenuto: fallimenti **0/3** e successi azzerati: l'eroe morente torna "fresco" a ogni colpo e non può morire per i danni. `applyDamage` (index.html ~3342) fa `if (c.hp.cur === 0) c.death = {s:0, f:0}` anche se l'eroe era già a 0. Danno 90 a un Paladino da 40 PF: 0 PF, nessun avviso di morte istantanea. In una sessione simulata con 3 incontri il Bardo è "sopravvissuto" a 4 colpi da morente.
 - Console: nessun errore.
 - Test: `combattimento` "B-036 …".
 
@@ -65,8 +65,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: il menu Class non offre Rogue (come fa ora la riga, B-028) oppure unisce i livelli dicendolo.
 - Ottenuto: intestazione "Rogue 3 / Rogue 1"; Level up offre due righe "Rogue 3 → 4" e "Rogue 1 → 2" (aumenti e privilegi contati da due classi separate, come in B-028). Alla ricarica `fixup` scarta la riga doppia: l'eroe diventa "Rogue 4" e i 3 livelli da Guerriero spariscono senza avviso. La correzione di B-028 ha filtrato solo il menu `data-mc`; `bindValue` per `class` (index.html ~4384) non guarda la multiclasse.
 - Console: nessun errore.
-- Conferma (tester extra, 2026-11-10): Guerriero 18, For 20 → Feat "Boon of Fate" → punteggi invariati (toast "+9 HP · Boon of Fate"); quindi un Boon su Costituzione non alza nemmeno i PF (B-022). Lo stesso succede con Grappler ai livelli normali (B-031).
-- Test: `levelup` "B-027 …".
+- Test: `levelup` "B-033 …".
 
 ### B-032 [bassa] Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
 - Trovato da: distruttore · 2026-11-10
@@ -76,8 +75,17 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Atteso: 77/82 (danno 5 sui PF di partenza); nella variante 46 PF massimi (6 + 10 × 4).
 - Ottenuto: **115/120** (+38 PF massimi dal nulla); variante **66/66** (+20). Con riposo lungo o cura nel mezzo invece torna giusto (82/82). La memoria `hp.conAdj` di B-026 vale solo se i PF non sono cambiati (`a.m === max0 && a.c === cur0`): un danno o un livello la cancellano e la differenza tolta dal minimo (qui 38) viene restituita due volte. Serve una Cos 1–3 a livello alto, quindi gravità bassa.
 - Console: nessun errore.
-- Conferma (tester extra, 2026-11-10): Paladino 5, Cos 14, PF 3/44 → un − e un + → **5/44**; Paladino 20 a 0 PF con 2 tiri contro la morte falliti, Cos 3 → tre − e tre + → **40/50**, tiri ancora segnati: un eroe morente torna in piedi correggendo un clic.
-- Test: `caratteristiche` "B-026 …" (2 test).
+- Test: `caratteristiche` "B-032 …".
+
+### B-029 [media] Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
+- Trovato da: distruttore · 2026-11-10
+- Sezione: robustezza
+- Dove: finestra Level up (vale per tutte le finestre di `modal()`), 1440x900, solo tastiera
+- Passi: 1. Eroe attivo Eldrin (Wizard 4), apri Level up: titolo "Eldrin Moonwhisper reaches level 5". 2. Premi Tab: dopo "Not yet" il focus esce dalla finestra e passa ai controlli coperti (ricerca, tema, wizard, capitoli, poi i ritratti dello scaffale). 3. Arrivato sul ritratto di Kessa premi Invio. 4. Premi "Become level 5".
+- Atteso: il focus resta nella finestra (`aria-modal="true"` lo promette) e il livello va a Eldrin.
+- Ottenuto: con la finestra ancora aperta e il titolo ancora "Eldrin … level 5", Invio sul ritratto cambia l'eroe attivo; "Become level 5" porta **Kessa** dal 2 al 3 ("Kessa Quickpaw is now level 3: +6 HP"), Eldrin resta 4. Non esiste un modo per togliere un livello. `modal()` (index.html ~1290) mette il focus nella finestra ma non lo trattiene e lo sfondo non è `inert`; `applyLevelUp` usa `active()` invece dell'eroe per cui la finestra è stata aperta. Col mouse non succede (lo sfondo copre).
+- Console: nessun errore.
+- Test: `robustezza` "B-029 …".
 
 ### B-023 [media] Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
 - Trovato da: power user · 2026-11-09
