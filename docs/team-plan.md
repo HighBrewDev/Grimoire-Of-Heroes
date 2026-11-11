@@ -16,7 +16,7 @@
 | Incontro | 🟡 GIALLO | MEDIO | frontend | B-037 (stessa logica di B-036) |
 | Robustezza | 🟡 GIALLO | MEDIO | frontend (B-029) + backend (XSS) | B-029, revisione sicurezza |
 | Import/export e salvataggio | 🟡 GIALLO | MEDIO | backend | B-016 [alta] in PR #16 |
-| Workshop homebrew | 🟡 GIALLO | MEDIO | backend | B-020, B-011 (attende Capo) |
+| Workshop homebrew | 🟡 GIALLO | MEDIO | backend | B-020 (B-011 non si applica: app gratuita) |
 | Level up e multiclasse | 🟡 GIALLO | MEDIO | frontend | B-033 |
 | Zaino, Telefono | 🟡 GIALLO | BASSO | backend / designer | tutto verde, verso il VERDE: solo controlli |
 | Tratti, Incantesimi, Cronaca, Biblioteca | 🟢 VERDE | BASSO | — | nessun lavoro, solo controlli leggeri dei tester |
@@ -25,7 +25,7 @@
 Zone di index.html oggi: **Frontend** possiede `shortRest`/`longRest` (~3681), `applyDamage` (~3342), `heal`/`setDeath` (~3664), il tracciatore `data-enc` (~3398), `conHp` (~3430). **Backend** possiede `md()` (~912) e l'escape nei template, `brewImport` (~2303), la registrazione del service worker (~4368) e sw.js. **Designer** possiede `renderShelf` (~1355) e il CSS dello scaffale. Nessun altro tocca queste zone.
 
 - **Frontend mattina (10:23) · Combattimento, B-023.** In `shortRest` le risorse "Short or Long Rest" recuperano come da SRD 5.2.1: Second Wind 1 uso, Rage 1 uso, Wild Shape 1 uso, Channel Divinity 1 uso (Chierico e Paladino), Bardic Inspiration tutta con Font of Inspiration (Bardo 5+). Meglio una tabella delle risorse che casi sparsi. *Fatto* = i 6 test B-023 verdi, `node tests/run.js combattimento` senza rossi tranne B-036, suite senza regressioni, B-023 in "Risolti", `CACHE` alzata.
-- **Backend mezzogiorno (12:53) · Robustezza, revisione XSS.** Prova payload (`<img onerror>`, `javascript:` nei link, `"><script>`) in nome eroe, note, homebrew, Markdown importato e file 5etools. Correggi l'escape in `md()` e nei template; link solo `http(s)`/`mailto`. Aggiungi i test in `tests/sezioni/robustezza.test.js` con ID B-0xx se trovi bug. Se serve cambiare il formato dei dati salvati: PR. *Fatto* = test nuovi verdi, suite senza regressioni, voce nel log con i payload provati.
+- **Backend mezzogiorno (12:53) · Keep-alive di Supabase (ok di Capo dell'11/11), poi Robustezza XSS.** 1) **Come PR**: workflow GitHub Actions pianificato (es. ogni 3 giorni + avvio manuale) che fa una lettura leggera al progetto con la chiave pubblica anon già in config.js (nessun segreto nuovo, nessuna scrittura su dati utenti); se la risposta non è 2xx il workflow fallisce e si vede. *Fatto* = PR aperta con un'esecuzione manuale riuscita o spiegata, link nel log. 2) Revisione XSS: payload (`<img onerror>`, `javascript:` nei link, `"><script>`) in nome eroe, note, homebrew, Markdown importato e file 5etools; correggi l'escape in `md()` e nei template, link solo `http(s)`/`mailto`; test in `robustezza` con ID B-0xx. *Fatto* = test nuovi verdi, suite senza regressioni.
 - **Designer (14:13) · Eroe, B-014.** Campo "Filter heroes" sopra lo scaffale (appare da 8 eroi in su) e ordine per nome/ultimo usato; su 390 px niente fila larga 7.400 px (lo scaffale va a capo o scorre dentro sé stesso). *Fatto* = test B-014 verde, `telefono` 15/15, screenshot prima/dopo in docs/design/.
 - **Frontend sera (18:23) · Combattimento B-036, poi Incontro B-037, poi Caratteristiche B-032.** `applyDamage`: danno a 0 PF = 1 fallimento (2 se critico), danno che supera i PF massimi oltre lo 0 = morte istantanea con avviso; mai azzerare i fallimenti. Cura dal tracciatore dell'Incontro azzera i tiri contro la morte come Heal. Se resta tempo B-032 in `conHp`. *Fatto* = test B-036 ×2 e B-037 verdi, `combattimento` e `incontro` senza rossi, suite senza regressioni, `CACHE` alzata.
 - **Backend notte (23:13) · Workshop B-020, poi service worker.** In `brewImport` togli il confronto quadratico (indice per nome in una `Map`); 20.000 voci sotto 5 s. Poi avviso "New version available, reload" quando sw.js trova un index.html nuovo (non ricarica da solo). Se Capo ha unito PR #16, verifica B-016 su main. *Fatto* = test B-020 veloce anche con CPU lenta, suite senza regressioni.
@@ -41,10 +41,10 @@ Zone di index.html oggi: **Frontend** possiede `shortRest`/`longRest` (~3681), `
 4. B-031 talenti con +1 (Grappler…): scelta della caratteristica nel level up (dopo PR #6).
 5. B-030 testi lunghi in attacchi, privilegi, incantesimi, Incontro (con il designer, dopo PR #6).
 **Backend**
-6. Keep-alive di Supabase (appena Capo dà l'ok; vedi sotto).
+6. Keep-alive di Supabase: assegnato oggi al backend mezzogiorno (PR).
 7. Prova di login e sync reali ora che Supabase risponde dalla sandbox (solo lettura, nessun dato utente toccato).
 8. Zaino lento con CPU 4x al cambio eroe (performance dei dati).
-9. B-011 limite di 3 elementi gratuiti all'import homebrew (solo dopo la decisione di Capo, come PR).
+9. Revisione delle PR del backend prima dell'unione (Capo).
 **Design**
 10. Accessibilità: contrasto, focus visibile, `aria-label`, pallini `.dot` e "✕" a 44 px.
 11. Stampa/PDF della scheda su A4.
@@ -61,5 +61,5 @@ Zone di index.html oggi: **Frontend** possiede `shortRest`/`longRest` (~3681), `
 ## In attesa di Capo
 - **[PR #16](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/16)** · B-016 [alta], l'unico bug alto aperto: un campo scrive solo sull'eroe per cui è stato aperto. Non tocca Supabase né il formato dei salvataggi, suite 192/203 senza regressioni. Consiglio di unirla.
 - **[PR #6](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/6)** · solo bug B-030, B-031 e 4 test, nessun codice dell'app. Consiglio di unirla, così entrano nel punteggio.
-- **Keep-alive di Supabase**: serve il tuo ok per assegnarlo al backend (il progetto gratuito va in pausa dopo 7 giorni senza attività). Oggi il progetto è attivo.
-- **Decisione (facoltativa)**: B-011, l'import homebrew deve rispettare il limite di 3 elementi gratuiti?
+- **Keep-alive di Supabase**: ok di Capo arrivato l'11/11; la PR del backend mezzogiorno arriverà qui per l'unione (tocca Supabase).
+- **Deciso da Capo l'11/11**: per ora l'app è gratuita, senza abbonamento in vista (link "offrimi un caffè" seguito a parte). B-011 non si applica: Test e punteggio lo sposta in "Risolti" come "non applicabile", senza +3.
