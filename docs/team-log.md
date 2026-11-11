@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-11 · team leader
+- **Stato**: live = main (`grimoire-fs1110b`), controllo a 1440x900 e 390x844 sul sito e in locale senza errori. Supabase risponde dalla sandbox (401 senza chiave = attivo). PR #14 unita: B-027 chiuso, `levelup` 22/23. Punteggio +158 ↑ (193/210), nessuna sezione rossa.
+- **Piano**: Combattimento (0, la peggiore) prende entrambe le sessioni frontend (B-023 mattina, B-036 + B-037 + B-032 sera). Backend: revisione XSS a mezzogiorno, B-020 e avviso "nuova versione" di notte. Designer su B-014 (filtro dello scaffale). Tester su riposi, morte e payload XSS.
+- **Per Capo**: PR #16 (B-016, unico bug alto) e PR #6 da unire; ok per il keep-alive di Supabase; decisione su B-011.
+
 ## 2026-11-11 · test
 - **Suite** su main 073375c: **193/210** superati, punteggio totale **+158** (ieri +105, ↑). Sezioni rosse: nessuna. Peggiori: combattimento 0, caratteristiche +6, eroe +7. Dettagli in docs/scoreboard.md.
 - **Test nuovi** (8, in combattimento, la sezione più bassa): B-023 riposo breve per Rage (Barbaro 5), Wild Shape (Druido 5), Channel Divinity (Paladino 5 e Chierico 6), Bardic Inspiration (Bardo 5); B-036 danno massiccio; riposo breve dei Focus Points; riposo lungo che rimette tutte le risorse. Rossi i 6 legati a B-023/B-036, verdi gli altri 2.
