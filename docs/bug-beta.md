@@ -5,16 +5,25 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-030 [media] Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
-- Trovato da: tester extra · 2026-11-10
-- Sezione: telefono (seguito di B-019)
-- Dove: III Combattimento, V Tratti, VI Incantesimi, IV Incontro, 390x844
-- Passi: 1. Combattimento → attacco personalizzato "Spada", +5, danno `1d8+3 https://example.com/regole/abcdefghij…` (60 caratteri senza spazi) → Add custom. 2. Tratti → "Add a feature" con un link lungo → Add.
-- Atteso: il testo va a capo, nessuno scroll orizzontale (come per nome e note degli attacchi dopo 7cb1ec7).
-- Ottenuto: `scrollWidth` 743 px in Combattimento (il `chip light` del danno non va a capo), 689 px in Tratti (`th` della tabella privilegi). Stesso problema con dati da import o homebrew: talento o fonte del talento di 80 caratteri (Tratti 772–850 px), incantesimo homebrew di 80 caratteri (Incantesimi 819 px), nome eroe di 80 caratteri senza spazi, permesso dal `maxlength` (Incontro 806 px; con 43 caratteri già 405 px). Eroe, Zaino, Cronaca, Biblioteca, Workshop restano a 390.
+### B-039 [alta] XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
+- Trovato da: distruttore · 2026-11-11
+- Sezione: robustezza
+- Dove: Import (eroe da file o testo), poi Zaino / Combattimento, 1440x900
+- Passi: 1. Importa `{"name":"X","inventory":[{"n":"Corda","q":"<img src=x onerror=\"window.__xq=1\">"}]}`. 2. Apri Zaino. Stesso con `conditions:["Poisoned"], condDur:{"Poisoned":"<img …>"}` e apri Combattimento.
+- Atteso: il testo compare escapato o `q` e `condDur` sono ridotti a numeri da `fixup`.
+- Ottenuto: `onerror` viene eseguito. `objList` (index.html ~1074) copia gli oggetti senza ripulire i campi diversi da `n`; `×${it.q || 1}` (~1867) e `(${c.condDur[n]} rd)` (~1767) entrano nell'HTML senza `esc`. Un eroe condiviso come file può eseguire codice nell'origine dell'app. Provati 19 campi con 4 payload: gli altri (nome, specie, classe, note, attacchi, talenti, incantesimi, monete, PF, `conc`, id, multiclasse) sono escapati o ripuliti. Lo stesso `fixup` non ripulisce nemmeno `res`, vedi B-038.
 - Console: nessun errore.
-- Test: `telefono` "B-030 …" (2 test).
+- Test: `robustezza` "B-039 …" (×2).
 
+### B-038 [bassa] Import: i contatori delle risorse (`res`) accettano negativi, frazioni e testo
+- Trovato da: distruttore · 2026-11-11
+- Sezione: import/export
+- Dove: Import di un eroe con `res`, poi Combattimento → Short Rest, 1440x900
+- Passi: 1. Importa un Chierico 6 con `res:{channel_divinity_charges:2.5, second_wind_uses:-3, rage_count:"x"}`. 2. Combattimento → Short Rest.
+- Atteso: `res` ridotto a interi 0–20 all'import.
+- Ottenuto: `fixup` (index.html ~1086) fa solo `objOr` su `res`: i valori restano e dopo il riposo breve `channel_divinity_charges` vale 1.5 e un contatore -3 resta -3.
+- Console: nessun errore.
+- Test: `importexport` "B-038 …".
 
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
@@ -117,6 +126,28 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 ## Risolti
 
 - **Risolto 2026-11-11** in [PR #19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19) (frontend): B-037, `encHeal` azzera i tiri contro la morte quando l'eroe supera 0 PF. Test `incontro` B-037 verde.
+### B-040 [bassa] [UX] Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
+- **Risolto 2026-11-12** (designer): `G.shelfSort` entra nelle preferenze (`savePrefs()`, valori ammessi manual/name/recent); l'ordine sopravvive alla ricarica.
+- **Data / tester / sezione**: 2026-11-11 · power user · eroe
+- **Passi**: tomo con 33 eroi; nel menu sopra lo scaffale scegli "By name"; ricarica la pagina.
+- **Atteso**: l'ordine scelto resta (come capitolo e preferenze), o almeno si ripete con un clic solo.
+- **Ottenuto**: il menu torna a "Shelf order" (`G.shelfSort` vive solo in memoria, riga ~4489 di index.html); con 30+ eroi va rifatto a ogni apertura, su telefono compreso.
+- **Errore in console**: nessuno.
+- **Test**: `tests/sezioni/eroe.test.js` · "B-040 …" (oggi fallisce).
+
+
+### B-030 [media] Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
+- **Risolto 2026-11-12** (designer, solo CSS): `overflow-wrap:anywhere` e `min-width:0` su chip degli attacchi, `.kv` (privilegi, talenti), titoli dei `fold`, celle delle tabelle e nomi dell'Incontro; il chip del danno va a capo con raggio 14 px. `telefono` 17/17.
+- Trovato da: tester extra · 2026-11-10
+- Sezione: telefono (seguito di B-019)
+- Dove: III Combattimento, V Tratti, VI Incantesimi, IV Incontro, 390x844
+- Passi: 1. Combattimento → attacco personalizzato "Spada", +5, danno `1d8+3 https://example.com/regole/abcdefghij…` (60 caratteri senza spazi) → Add custom. 2. Tratti → "Add a feature" con un link lungo → Add.
+- Atteso: il testo va a capo, nessuno scroll orizzontale (come per nome e note degli attacchi dopo 7cb1ec7).
+- Ottenuto: `scrollWidth` 743 px in Combattimento (il `chip light` del danno non va a capo), 689 px in Tratti (`th` della tabella privilegi). Stesso problema con dati da import o homebrew: talento o fonte del talento di 80 caratteri (Tratti 772–850 px), incantesimo homebrew di 80 caratteri (Incantesimi 819 px), nome eroe di 80 caratteri senza spazi, permesso dal `maxlength` (Incontro 806 px; con 43 caratteri già 405 px). Eroe, Zaino, Cronaca, Biblioteca, Workshop restano a 390.
+- Console: nessun errore.
+- Test: `telefono` "B-030 …" (2 test).
+
+
 
 ### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
 - **Risolto 2026-11-11** (designer): sopra lo scaffale, da 8 eroi in su, compare la barra "Filter heroes" (nome, specie, classe) con ordine "Shelf order / By name / Last used" e il conteggio; su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (non più 7.400 px di fila). Test `eroe` B-014 verde, `telefono` senza nuovi rossi.
@@ -403,3 +434,5 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - 2026-11-10 · tester extra · Sessione pomeridiana sulle correzioni di oggi (Playwright/Chromium, server locale = main 4452eb8, identico al live: stesso `index.html` e `CACHE` di sw.js). **Level up**: B-021 regge in tutti i casi provati: Guerriero 1→20 a 390x844 (aumenti a 4, 6, 8, 12, 14, 16 + Epic Boon al 19, nessun talento ripetuto), multiclasse Mago 7 / Guerriero 5 (8 e 6 entrambi con la scelta), Guerriero 3 / Ladro 9 (Ladro 10 e Guerriero 4 ok). B-022 regge: Cos 15 → 17, 19 → 20 (solo +1 di modificatore), 20 → "already 20" (nessun cambio), +1/+1 su For e Cos, PF tirati con eroe ferito e PF temporanei (temporanei intatti), multiclasse livello 13 (+13). B-025 regge: talenti già presi tolti anche scritti in minuscolo o con uno spazio finale; Skilled e Magic Initiate restano. Confermati B-026 e B-027 del distruttore con casi in più; nuovo **B-031** (Grappler senza +1). **Telefono**: i casi di B-019 reggono (Zaino, nome e note degli attacchi, scaffale) e "Roll"/"Become level" sono 44 px; ma testo lungo senza spazi allarga ancora Combattimento, Tratti, Incantesimi e Incontro (**B-030**). Nella finestra Level up a 390 px i `select` sono alti 33 px e le righe dei radio 23–33 px, come i `select` delle pagine: non registrato come bug. Suite completa 179/186 come dopo il commit del designer (nessuna regressione), più 4 test nuovi che oggi falliscono (B-026 eroe ferito, B-030 ×2, B-031). Console pulita in tutte le prove.
 - 2026-11-10 · distruttore · Seconda sessione serale, sulle correzioni del frontend sera (Playwright/Chromium, server locale = main b8462eb, identico al live). Suite completa **186/194**, nessuna regressione: B-026 e B-028 passano; rossi solo B-014, B-016 ×2, B-018 (test vecchio che cerca Import in Combattimento), B-023, B-024, B-027 (PR #14 non unita), B-029. B-016 e B-024 non verificabili: la sessione backend è più tardi. **B-026 regge** nel giro − / + puro, anche con cura o riposo lungo nel mezzo; si rompe con un danno o un Level up nel mezzo (**B-032**). **B-028 regge** nel menu della riga e all'import (test B-028 e prova a mano con Fighter 3 / Rogue 1), ma il menu della classe principale offre ancora le classi della multiclasse (**B-033**). Tecniche nuove: classe homebrew da Markdown usata in multiclasse e poi cancellata, eroe importato con classe/specie/background sconosciuti (**B-034**: i menu mostrano la prima voce; Level up e capitoli senza errori); numeri in notazione `1e3`, `2.9`, `0x10`, `-0`, 20 cifre nei campi Max HP e monete (**B-035**); Max HP riscritto a tastiera (Ctrl+A, cancella, 35): PF attuali intatti; doppio clic su "Become level" con tre classi: un solo livello. Telefono 390x844 con tre classi su 5 capitoli e nella finestra Level up: nessuno scroll orizzontale. Console pulita in tutte le prove.
 - 2026-11-10 · power user · Sessione serale sui riposi e sul backup (Playwright/Chromium, server locale = main e9629ca, identico al live). Suite completa **186/198**, nessuna regressione: rossi solo i bug aperti (B-014, B-016 ×2, B-018 test vecchio, B-023, B-024, B-027 in PR #14, B-029, B-032…B-035). **Party di 4** (Guerriero 5 Champion, Chierico 6 Life, Bardo 5 Lore, Monaco 5 Open Hand) per **3 incontri con 2 riposi brevi**: 60 colpi di danno, PF temporanei, cure, 8 Dadi Vita spesi, 4 slot, condizioni Poisoned e Prone, poi riposo lungo e ricarica (0,64 s, dati identici). Dopo ogni riposo breve: Second Wind 0/3, Channel Divinity 0/3, Bardic Inspiration 0/3 (B-023 confermato), Focus Points 5/5 (giusto); stesso difetto per Rage, Wild Shape e Channel Divinity del Paladino (aggiunto a B-023); slot del Patto del Warlock tornano (giusto); riposo lungo rimette PF, Dadi Vita, slot, risorse. Tiri contro la morte: un danno a 0 PF azzera i fallimenti (**B-036**), cura dall'Incontro li lascia accesi (**B-037**), danno massiccio non segnalato. **Backup**: 20 eroi pesanti (30 oggetti, storia da 2.800 caratteri) + 22 copie (5 eroi duplicati a catena ×3, 7 copie singole), 4 rinominati con accenti, 3 cancellati = 39 eroi; Export all 256 KB; ripristino in un tomo vuoto 0,19 s ma **38 su 39**: due copie identiche dello stesso originale contano come una (aggiunto a B-024); secondo ripristino dello stesso file: nessun doppione. **Telefono 390x844** con i 39 eroi: 8 capitoli 50–100 ms, cambio eroe mediana 24 ms (max 88), scrollWidth 390 ovunque. Numeri: danno 25 ms mediana (max 64), Duplicate 13–17 ms, ricarica con 39 eroi 0,69 s, localStorage 209.000 caratteri (~5.300 a eroe pesante), memoria JS 9,5–11,3 MB. Console pulita in tutte le prove.
+- 2026-11-11 · distruttore · Sessione serale su riposi, morte e XSS (Playwright/Chromium, server locale = main 3efdbe5). Suite `combattimento` 33/33: **B-023 e B-036 reggono**. Provati: 12 riposi brevi di fila su Guerriero 10 / Chierico 5 con contatori anomali; danni 1, 10, `1e1`, 9.999.999.999 con PF temporanei e fallimenti già segnati (nessun fallimento oltre 3, cura azzera, PF temporanei ok, nessun errore); danno massiccio solo segnalato (scelta del team, non registrato). **XSS**: 19 campi × 4 payload (`<img onerror>`, `"><svg onload>`, `javascript:` Markdown e HTML) su tutti i capitoli: escapati tutti tranne `q` e `condDur` (**B-039**, alta) e `res` non ripulito (**B-038**, bassa). Un 404 in console sull'avvio con eroi seminati non è dell'app (risorsa mancante del server di prova), da ricontrollare. Sezioni verdi non toccate.
+- 2026-11-11 · power user · Serata di gioco con l'Incontro e scaffale con 33 eroi (Playwright/Chromium, server locale = main 069b1e6). Party di 4 livello 5 (Guerriero, Mago, Ladro, Chierico) con 3 creature personalizzate: setup dell'incontro 1,1 s, danno dal tracciatore 16 ms; un eroe da 30 PF a 0 con 35 danni (0 PF, nessun fallimento: giusto), altro danno a 0 PF = 1 fallimento (B-036 regge), cura di 6 PF dal tracciatore: PF 6 ma fallimenti ancora 1 (B-037 ancora aperto); 50 danni a un eroe da 44 PF: 0 PF, nessuna morte istantanea (l'eccesso è sotto i PF massimi, giusto); ricarica a metà incontro: round, turno e 7 combattenti intatti; svuotato l'incontro e rifatto con gli stessi 4 eroi, 8 turni → round 3 senza errori; riposo breve a 0 PF lascia i tiri contro la morte (regola), riposo lungo li azzera. **Scaffale con 33 eroi** (1440 e 390 px): barra filtro visibile, "zara" → 11 di 33, "xyz" → "No hero matches" con "＋ New hero", ordine per nome/ultimo usato/manuale, cambio eroe da filtro attivo 66–73 ms; a 1440 lo scaffale scorre dentro sé stesso (7.410 px in 1.286), a 390 va a capo (scrollWidth 390, nessun scroll della pagina): **B-014 regge**. Ricarica con 33 eroi 0,6–0,65 s, localStorage 17.100 caratteri (eroi leggeri), memoria JS 18 MB. L'ordine scelto non sopravvive alla ricarica (**B-040**). Console pulita in tutte le prove.

@@ -184,4 +184,11 @@ module.exports = {sezione:'importexport', test:[
     assert.ok(nomi.includes('Primo Importato') && nomi.includes('Secondo Importato'), 'eroi presenti: ' + nomi.join(', '));
     assert.strictEqual(nomi.length, 5);
   }],
+  ['B-038 import con risorse (res) negative, frazionarie o di testo: salvate entro valori sensati e il riposo breve non le rende frazionarie', async ({open}) => {
+    const h = fx.blank({name:'Risorse sporche', class:'Cleric', level:6, hp:{cur:30,max:30,temp:0}, res:{channel_divinity_charges:2.5, second_wind_uses:-3, rage_count:'x'}});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    await app.click('shortRest');
+    const r = (await app.hero()).res || {};
+    for (const [k, v] of Object.entries(r)) assert.ok(Number.isInteger(v) && v >= 0 && v <= 20, `res.${k} = ${JSON.stringify(v)} dopo il riposo breve (valori ammessi: interi 0-20)`);
+  }],
 ]};

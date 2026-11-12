@@ -95,4 +95,21 @@ module.exports = {sezione:'robustezza', test:[
     assert.strictEqual(lv('tkessa'), 2, `Kessa è passata al livello ${lv('tkessa')} dalla finestra "Eldrin reaches level 5" (focus uscito su: ${fuori.slice(0, 6).join(', ')})`);
     assert.deepStrictEqual(fuori, [], `il focus esce dalla finestra: ${fuori.slice(0, 6).join(', ')}`);
   }],
+  // B-039: campi degli oggetti importati non passano da fixup() e finiscono nell'HTML senza escape.
+  ['B-039 XSS: quantità (q) di un oggetto importato come testo HTML non esegue codice nello Zaino', async ({open}) => {
+    const app = await open();
+    const hero = fx.blank({id:'xq', name:'Quantità XSS', inventory:[{n:'Corda', q:'<img src=x onerror="window.__xq=1">', d:''}]});
+    await app.click('import'); await app.page.fill('#impTxt', JSON.stringify(hero)); await app.click('doImport');
+    for (const ch of ['pack', 'spells', 'combat', 'hero']) await app.go(ch);
+    await app.page.waitForTimeout(300);
+    assert.strictEqual(await app.page.evaluate(() => window.__xq), undefined, 'onerror eseguito: la quantità non è escapata né ridotta a numero');
+  }],
+  ['B-039 XSS: durata di una condizione (condDur) importata come testo HTML non esegue codice in Combattimento', async ({open}) => {
+    const app = await open();
+    const hero = fx.blank({id:'xc', name:'Durata XSS', conditions:['Poisoned'], condDur:{Poisoned:'<img src=x onerror="window.__xc=1">'}});
+    await app.click('import'); await app.page.fill('#impTxt', JSON.stringify(hero)); await app.click('doImport');
+    for (const ch of ['combat', 'encounter', 'hero']) await app.go(ch);
+    await app.page.waitForTimeout(300);
+    assert.strictEqual(await app.page.evaluate(() => window.__xc), undefined, 'onerror eseguito: condDur non è escapato né ridotto a numero');
+  }],
 ]};
