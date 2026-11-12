@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-12 · team leader
+- **Stato**: main bff0a97, controllo a 1440x900 e 390x844 senza errori. Punteggio +208 ↑ (226/235), nessuna sezione rossa.
+- **Piano**: priorità alla sicurezza: B-039 [alta] e B-038 al backend (una sessione sviluppo, poi frontend su B-029, B-033, B-034, B-032, B-031) e PR del keep-alive di Supabase. Designer su accessibilità. PR #19 (B-037) aspetta Capo.
+
 ## 2026-11-12 · test
 - **Fatto** · suite eseguita su main `afc1c73`: 226/235 test superati, sezioni rosse: nessuna. Punteggio totale +208 (ieri +173). Aggiunti 6 test (caratteristiche ×2, incontro ×2, robustezza, eroe); nessun test cambiato per farlo passare.
 - **Ancora rossi** · 9 test su bug aperti: B-029, B-031, B-032, B-033, B-034, B-037, B-038, B-039 (×2). Le sezioni più basse sono robustezza (+4), cronaca (+7) e tratti (+8).

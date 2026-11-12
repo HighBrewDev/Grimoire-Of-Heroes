@@ -1,66 +1,56 @@
-# Piano del team · mercoledì 11 novembre 2026 (aggiornato 13:40)
+# Piano del team · giovedì 12 novembre 2026
 
 ## Stato dell'app
-- **Frontend**: live = main (`CACHE` `grimoire-bn1110p`). Controllo delle 13:40 con Playwright a 1440x900 e 390x844, sito live e server locale: carica, scrollWidth uguale alla finestra, console senza errori. Niente di rotto da stamattina.
-- Punteggio totale **+173, tendenza ↑** (ieri +105, stamattina +158). Test **208/225** su cc5634e, 10 test nuovi del tester; nessuna sezione rossa, nessuna regressione. Il tester ha riparato due file di test rotti dall'unione di PR #6 (solo sintassi).
-- Da stamattina nessun commit di sviluppo su main: le sessioni Frontend 10:23 e Backend 12:53 del piano non hanno ancora lasciato risultati, quindi i loro compiti restano validi (verificare nel log prima di ripartire).
-- **Backend**: Supabase risponde (401 senza chiave = progetto attivo). Aperta **PR #18** (app gratuita + link "offrimi un caffè"), in attesa di Capo.
-- Le più basse: **Combattimento (+4, 25/33)**, **Telefono** (15/17, B-030), **Robustezza** (B-029), **Incontro** (B-037). Zaino e Level up salgono.
+- Live = main (`CACHE` `grimoire-ds1112a`, commit bff0a97). Controllo con Chromium a 1440x900 e 390x844 in locale: carica, scrollWidth uguale alla finestra, console senza errori. Niente di rotto da ieri.
+- Punteggio totale **+208, tendenza ↑** (ieri +173). Test **226/235**; nessuna sezione rossa, nessuna regressione. Ieri sono stati chiusi B-014, B-023, B-030, B-036, B-040.
+- Il punto debole è la **sicurezza**: B-039 [alta] (XSS da import in `q` e `condDur`) è aperto e il backend non ha ancora fatto né la revisione XSS né il keep-alive di Supabase (ok di Capo dell'11/11). Sono la priorità di oggi.
+- Le più basse: Robustezza (+4), Incontro, Import/export. Quattro sezioni VERDI (Tratti, Incantesimi, Cronaca, Biblioteca).
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
 |---|---|---|---|---|
-| Combattimento | 🟡 GIALLO (peggiore) | **ALTO** | frontend | B-023 ×6 test, B-036 ×2 |
+| Robustezza | 🟡 GIALLO (peggiore) | **ALTO** | backend (XSS) + frontend (B-029) | B-039 ×2 test, B-029 |
+| Import/export e salvataggio | 🟡 GIALLO | **ALTO** | backend | B-039 [alta], B-038, B-016 da verificare |
+| Incontro | 🟡 GIALLO | MEDIO | frontend | B-037 (PR #19 già pronta, aspetta Capo) |
 | Caratteristiche | 🟡 GIALLO | MEDIO | frontend | B-032 |
-| Eroe | 🟡 GIALLO | MEDIO | designer + frontend | B-014 (designer), B-034 |
-| Incontro | 🟡 GIALLO | MEDIO | frontend | B-037 (stessa logica di B-036) |
-| Robustezza | 🟡 GIALLO | MEDIO | frontend (B-029) + backend (XSS) | B-029, revisione sicurezza |
-| Import/export e salvataggio | 🟡 GIALLO | MEDIO | backend | B-016 [alta] chiuso da PR #16 (da verificare) |
-| Workshop homebrew | 🟡 GIALLO | MEDIO | backend | B-020 (B-011 non si applica: app gratuita) |
-| Level up e multiclasse | 🟡 GIALLO | MEDIO | frontend | B-033 |
-| Telefono | 🟡 GIALLO | MEDIO | designer + frontend | B-030 (2 test rossi, 390 px) |
-| Zaino | 🟡 GIALLO | BASSO | backend | tutto verde, verso il VERDE: solo controlli |
-| Tratti, Incantesimi, Cronaca, Biblioteca | 🟢 VERDE | BASSO | — | nessun lavoro, solo controlli leggeri dei tester |
+| Level up e multiclasse | 🟡 GIALLO | MEDIO | frontend | B-031, B-033 |
+| Eroe | 🟡 GIALLO | MEDIO | frontend | B-034 |
+| Workshop homebrew | 🟡 GIALLO | MEDIO | backend | B-020 (B-011 non applicabile) |
+| Combattimento, Telefono, Zaino | 🟡 GIALLO | BASSO | designer | tutti i test verdi, solo controlli |
+| Tratti, Incantesimi, Cronaca, Biblioteca | 🟢 VERDE | BASSO | — | solo controlli leggeri dei tester |
 
 ## Oggi
-Zone di index.html oggi: **Frontend** possiede `shortRest`/`longRest` (~3681), `applyDamage` (~3342), `heal`/`setDeath` (~3664), il tracciatore `data-enc` (~3398), `conHp` (~3430). **Backend** possiede `md()` (~912) e l'escape nei template, `brewImport` (~2303), la registrazione del service worker (~4368) e sw.js. **Designer** possiede `renderShelf` (~1355) e il CSS dello scaffale. Nessun altro tocca queste zone.
+Zone di index.html oggi: **Backend** (per prima) possiede `md()` e l'escape nei template, rendering di Zaino (`q`) e condizioni (`condDur`), import eroe (validazione di `res`, `q`, `condDur`), `brewImport`, sw.js. **Frontend** (dopo il backend) possiede `modal()`/level up, menu classe (`classOptions` e righe multiclasse), `conHp`, scelta talenti. **Designer** possiede solo CSS e `docs/design/`. Nessuno esce dalla propria zona.
 
-- **Frontend mattina (10:23) · Combattimento, B-023.** In `shortRest` le risorse "Short or Long Rest" recuperano come da SRD 5.2.1: Second Wind 1 uso, Rage 1 uso, Wild Shape 1 uso, Channel Divinity 1 uso (Chierico e Paladino), Bardic Inspiration tutta con Font of Inspiration (Bardo 5+). Meglio una tabella delle risorse che casi sparsi. *Fatto* = i 6 test B-023 verdi, `node tests/run.js combattimento` senza rossi tranne B-036, suite senza regressioni, B-023 in "Risolti", `CACHE` alzata.
-- **Backend mezzogiorno (12:53) · Keep-alive di Supabase (ok di Capo dell'11/11), poi Robustezza XSS.** 1) **Come PR**: workflow GitHub Actions pianificato (es. ogni 3 giorni + avvio manuale) che fa una lettura leggera al progetto con la chiave pubblica anon già in config.js (nessun segreto nuovo, nessuna scrittura su dati utenti); se la risposta non è 2xx il workflow fallisce e si vede. *Fatto* = PR aperta con un'esecuzione manuale riuscita o spiegata, link nel log. 2) Revisione XSS: payload (`<img onerror>`, `javascript:` nei link, `"><script>`) in nome eroe, note, homebrew, Markdown importato e file 5etools; correggi l'escape in `md()` e nei template, link solo `http(s)`/`mailto`; test in `robustezza` con ID B-0xx. *Fatto* = test nuovi verdi, suite senza regressioni.
-- **Designer (14:13) · Eroe, B-014.** Campo "Filter heroes" sopra lo scaffale (appare da 8 eroi in su) e ordine per nome/ultimo usato; su 390 px niente fila larga 7.400 px (lo scaffale va a capo o scorre dentro sé stesso). *Fatto* = test B-014 verde, `telefono` 15/15, screenshot prima/dopo in docs/design/.
-- **Frontend sera (18:23) · Combattimento B-036, poi Incontro B-037, poi Caratteristiche B-032.** `applyDamage`: danno a 0 PF = 1 fallimento (2 se critico), danno che supera i PF massimi oltre lo 0 = morte istantanea con avviso; mai azzerare i fallimenti. Cura dal tracciatore dell'Incontro azzera i tiri contro la morte come Heal. Se resta tempo B-032 in `conHp`. *Fatto* = test B-036 ×2 e B-037 verdi, `combattimento` e `incontro` senza rossi, suite senza regressioni, `CACHE` alzata.
-- **Backend notte (23:13) · Workshop B-020, poi service worker.** In `brewImport` togli il confronto quadratico (indice per nome in una `Map`); 20.000 voci sotto 5 s. Poi avviso "New version available, reload" quando sw.js trova un index.html nuovo (non ricarica da solo). Verifica B-016 su main (PR #16 unita) e spostalo in "Risolti". *Fatto* = test B-020 veloce anche con CPU lenta, suite senza regressioni.
-- **Distruttore (21:07) · Riposi e morte.** Attacca B-023 e B-036 corretti: riposi brevi ripetuti, multiclasse (Guerriero/Chierico), risorse già piene, critici a 0 PF, danno massiccio con PF temporanei. Poi i payload XSS del backend su tutti i campi liberi. *Fatto* = diario, bug nuovi con passi e test.
-- **Power user (21:37) · Serata di gioco con l'Incontro.** Party di 4 livello 5 in due incontri dal tracciatore, un eroe che va a 0 PF e viene curato, un riposo breve fra i due. Poi scaffale con 33 eroi e il filtro del designer. *Fatto* = diario con numeri, bug solo se riproducibili.
-- **Test e punteggio (domani 8:47)**: B-030 e B-031 (PR #6 unita) entrano nel punteggio; se il backend non li ha scritti, test XSS in `robustezza`. Nessun test nuovo nelle sezioni VERDI.
+- **Sviluppo 10:23, una sessione, prima BACKEND** · Robustezza/Import, **B-039 + B-038**. Escape o riduzione a numero di `q` e `condDur` al rendering e all'import (interi, intervallo sensato); `res` interi 0-20. Poi **come PR**: workflow GitHub Actions per il keep-alive di Supabase (lettura leggera con la chiave anon di config.js, ogni 3 giorni + avvio manuale, fallisce se non 2xx). *Fatto* = test B-039 ×2 e B-038 verdi, `robustezza` e `importexport` senza regressioni, B-039/B-038 in "Risolti", PR keep-alive aperta con link.
+- **Sviluppo, poi FRONTEND** · **B-029** (`modal()` trattiene il focus, sfondo `inert`, level up all'eroe della finestra), poi B-033, B-034, B-032, B-031 finché c'è tempo, in quest'ordine. *Fatto* = test del bug verde, sezione senza rossi nuovi, suite completa senza regressioni, `CACHE` alzata, log aggiornato.
+- **Designer 14:13 · Accessibilità (Telefono/Eroe).** Focus visibile, contrasto, `aria-label` sui pulsanti a icona, `.dot` e "✕" a 44 px su 390 px. Solo CSS e attributi, senza toccare le zone sopra. *Fatto* = `telefono` 17/17, suite senza regressioni, screenshot prima/dopo in docs/design/.
+- **Distruttore 21:07 · Sicurezza dell'import.** Riprova B-039/B-038 corretti: `<img onerror>`, `javascript:`, `"><script>` in nome, note, homebrew, Markdown, 5etools, `q`, `condDur`, `res`, ogni campo libero di un eroe importato. *Fatto* = diario, bug nuovi con passi e test.
+- **Power user 21:37 · Level up e multiclasse.** Eroe 1→10 in due classi (Guerriero/Ladro), talenti con +1, backup e ripristino, poi Incontro con un eroe curato a 0 PF. *Fatto* = diario con numeri, bug solo se riproducibili.
+- **Test e punteggio (domani 8:47)**: B-039/B-038 e quelli chiusi oggi entrano nel punteggio; nessun test nuovo nelle sezioni VERDI.
 
 ## Backlog (ordinato)
-**Frontend**
-1. B-029 `modal()` trattiene il focus, sfondo `inert`; il level up va all'eroe della finestra.
-2. B-033 il menu della classe principale non offre classi già nelle righe.
-3. B-034 classe/specie/background fuori dai menu: mostrarli come voce "(not in list)" invece di Barbarian/Dragonborn/Acolyte.
-4. B-031 talenti con +1 (Grappler…): scelta della caratteristica nel level up.
-5. B-030 testi lunghi in attacchi, privilegi, incantesimi, Incontro (con il designer, solo CSS).
 **Backend**
-6. Keep-alive di Supabase: assegnato oggi al backend mezzogiorno (PR).
-7. Prova di login e sync reali ora che Supabase risponde dalla sandbox (solo lettura, nessun dato utente toccato).
-8. Zaino lento con CPU 4x al cambio eroe (performance dei dati).
-9. Revisione delle PR del backend prima dell'unione (Capo).
+1. B-039 / B-038 (oggi).
+2. Keep-alive di Supabase (PR oggi).
+3. B-020 `brewImport` con `Map`, 20.000 voci sotto 5 s.
+4. Avviso "New version available" quando sw.js trova un index.html nuovo.
+5. Verifica B-016 su main (PR #16 unita) e spostalo in "Risolti".
+6. Prova di login e sync reali (sola lettura).
+**Frontend**
+7. B-029, 8. B-033, 9. B-034, 10. B-032, 11. B-031.
 **Design**
-10. Accessibilità: contrasto, focus visibile, `aria-label`, pallini `.dot` e "✕" a 44 px.
-11. Stampa/PDF della scheda su A4.
-12. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile): designer + frontend dopo il 23 novembre, o prima se tutte le sezioni sono VERDI.
-13. Sala del Team (docs/sala/): solo nei giorni senza compiti UI.
-14. Bozza di post in docs/promo/ quando non ci sono più bug alti (solo bozza, niente Reddit/Discord).
+12. Accessibilità (oggi), poi stampa/PDF A4 della scheda.
+13. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI.
+14. Bozza di post in docs/promo/ quando non ci sono più bug alti (solo bozza). Sala del Team solo nei giorni senza compiti UI.
 
 ## Regole per tutti
-- Solo contenuti SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo l'attribuzione CC-BY).
-- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**, che aspettano Capo.
-- Mai cambiare un test per farlo passare se l'app è sbagliata. Ogni correzione: test della sezione + suite completa, nessuna regressione, `tests/risultati` ripristinato.
-- Ogni rilascio alza `CACHE` in sw.js. Rispettare le zone di index.html scritte sopra. Ogni agente lascia una voce in docs/team-log.md.
+- Solo SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
+- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**.
+- Mai cambiare un test per farlo passare se l'app è sbagliata. Ogni correzione: test della sezione + suite completa, `tests/risultati` ripristinato.
+- Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- **[PR #18](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/18)** · app gratuita con link "offrimi un caffè" (tocca pagamenti/abbonamento): da rivedere e unire.
-- PR #16 e PR #6 già unite da Capo l'11/11.
-- **Keep-alive di Supabase**: ok di Capo arrivato l'11/11; la PR del backend mezzogiorno arriverà qui per l'unione (tocca Supabase).
-- **Deciso da Capo l'11/11**: per ora l'app è gratuita, senza abbonamento in vista (link "offrimi un caffè" seguito a parte). B-011 non si applica: Test e punteggio lo sposta in "Risolti" come "non applicabile", senza +3.
+- **[PR #19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19)** · B-037, cura dal tracciatore dell'Incontro: da rivedere e unire.
+- **PR keep-alive di Supabase**: arriva oggi dal backend, da unire.
+- App gratuita (PR #18 già unita); B-011 non applicabile.
