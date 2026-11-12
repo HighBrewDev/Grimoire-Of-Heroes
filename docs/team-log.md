@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-12 · design
+- **Fatto** · **B-030** (testi lunghi su telefono, solo CSS): chip del danno degli attacchi, privilegi e talenti (`.kv`), titoli dei riquadri a scomparsa, celle di tabella e nomi dell'Incontro vanno a capo (`overflow-wrap:anywhere`, `min-width:0`); il chip del danno su più righe ha raggio 14 px. **B-040**: l'ordine dello scaffale ("By name", "Last used") ora resta dopo la ricarica (`savePrefs()`, `shelfSort` nelle preferenze, valore validato). `CACHE` → `grimoire-ds1112a`.
+- **File**: index.html (CSS riga ~688, `save`/`savePrefs`, `load`, gestore `shelf_sort`), sw.js, docs/bug-beta.md (B-030, B-040 in Risolti), docs/design/note-design.md, screenshot `docs/design/2026-11-12-testi-lunghi-*.png`.
+- **Verifica**: `telefono` 17/17 e `eroe` senza rossi nuovi (resta B-034, frontend); scrollWidth con danno e privilegio da 60 caratteri senza spazi: 743→390 e 689→390 a 390 px, 768 e 1440 invariati; console senza errori. Zone del frontend non toccate. Scelta prudente: non ho verificato a mano incantesimi homebrew e nome eroe da 80 caratteri in Incontro oltre ai test (le regole CSS li coprono ma senza screenshot).
+- **Prossima idea**: `.dot` e "✕" dei chip a 44 px, contrasto e `aria-label`.
+
 ## 2026-11-11 · design
 - **Fatto** · **B-014** (compito del piano, Eroe): sopra lo scaffale, da 8 eroi in su, barra "Filter heroes" (nome, specie, classe), ordine "Shelf order / By name / Last used" e conteggio; messaggio se nessun eroe corrisponde. Su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (scrollWidth dello scaffale da 7.410 px a 356). Su 768 e 1440 resta la fila che scorre, ma col filtro. Ordine e filtro solo di visualizzazione: non cambiano i dati salvati. `CACHE` → `grimoire-ds1111a`.
 - **File**: index.html (HTML sopra `#shelf`, `renderShelf`, CSS scaffale, gestori input/change), sw.js, docs/bug-beta.md (B-014 in Risolti), docs/design/note-design.md, screenshot `docs/design/2026-11-11-scaffale-*.png`.

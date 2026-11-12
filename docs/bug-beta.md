@@ -5,14 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-040 [bassa] [UX] Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
-- **Data / tester / sezione**: 2026-11-11 · power user · eroe
-- **Passi**: tomo con 33 eroi; nel menu sopra lo scaffale scegli "By name"; ricarica la pagina.
-- **Atteso**: l'ordine scelto resta (come capitolo e preferenze), o almeno si ripete con un clic solo.
-- **Ottenuto**: il menu torna a "Shelf order" (`G.shelfSort` vive solo in memoria, riga ~4489 di index.html); con 30+ eroi va rifatto a ogni apertura, su telefono compreso.
-- **Errore in console**: nessuno.
-- **Test**: `tests/sezioni/eroe.test.js` · "B-040 …" (oggi fallisce).
-
 ### B-039 [alta] XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
 - Trovato da: distruttore · 2026-11-11
 - Sezione: robustezza
@@ -32,17 +24,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Ottenuto: `fixup` (index.html ~1086) fa solo `objOr` su `res`: i valori restano e dopo il riposo breve `channel_divinity_charges` vale 1.5 e un contatore -3 resta -3.
 - Console: nessun errore.
 - Test: `importexport` "B-038 …".
-
-### B-030 [media] Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
-- Trovato da: tester extra · 2026-11-10
-- Sezione: telefono (seguito di B-019)
-- Dove: III Combattimento, V Tratti, VI Incantesimi, IV Incontro, 390x844
-- Passi: 1. Combattimento → attacco personalizzato "Spada", +5, danno `1d8+3 https://example.com/regole/abcdefghij…` (60 caratteri senza spazi) → Add custom. 2. Tratti → "Add a feature" con un link lungo → Add.
-- Atteso: il testo va a capo, nessuno scroll orizzontale (come per nome e note degli attacchi dopo 7cb1ec7).
-- Ottenuto: `scrollWidth` 743 px in Combattimento (il `chip light` del danno non va a capo), 689 px in Tratti (`th` della tabella privilegi). Stesso problema con dati da import o homebrew: talento o fonte del talento di 80 caratteri (Tratti 772–850 px), incantesimo homebrew di 80 caratteri (Incantesimi 819 px), nome eroe di 80 caratteri senza spazi, permesso dal `maxlength` (Incontro 806 px; con 43 caratteri già 405 px). Eroe, Zaino, Cronaca, Biblioteca, Workshop restano a 390.
-- Console: nessun errore.
-- Test: `telefono` "B-030 …" (2 test).
-
 
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
@@ -143,6 +124,29 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-040 [bassa] [UX] Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
+- **Risolto 2026-11-12** (designer): `G.shelfSort` entra nelle preferenze (`savePrefs()`, valori ammessi manual/name/recent); l'ordine sopravvive alla ricarica.
+- **Data / tester / sezione**: 2026-11-11 · power user · eroe
+- **Passi**: tomo con 33 eroi; nel menu sopra lo scaffale scegli "By name"; ricarica la pagina.
+- **Atteso**: l'ordine scelto resta (come capitolo e preferenze), o almeno si ripete con un clic solo.
+- **Ottenuto**: il menu torna a "Shelf order" (`G.shelfSort` vive solo in memoria, riga ~4489 di index.html); con 30+ eroi va rifatto a ogni apertura, su telefono compreso.
+- **Errore in console**: nessuno.
+- **Test**: `tests/sezioni/eroe.test.js` · "B-040 …" (oggi fallisce).
+
+
+### B-030 [media] Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
+- **Risolto 2026-11-12** (designer, solo CSS): `overflow-wrap:anywhere` e `min-width:0` su chip degli attacchi, `.kv` (privilegi, talenti), titoli dei `fold`, celle delle tabelle e nomi dell'Incontro; il chip del danno va a capo con raggio 14 px. `telefono` 17/17.
+- Trovato da: tester extra · 2026-11-10
+- Sezione: telefono (seguito di B-019)
+- Dove: III Combattimento, V Tratti, VI Incantesimi, IV Incontro, 390x844
+- Passi: 1. Combattimento → attacco personalizzato "Spada", +5, danno `1d8+3 https://example.com/regole/abcdefghij…` (60 caratteri senza spazi) → Add custom. 2. Tratti → "Add a feature" con un link lungo → Add.
+- Atteso: il testo va a capo, nessuno scroll orizzontale (come per nome e note degli attacchi dopo 7cb1ec7).
+- Ottenuto: `scrollWidth` 743 px in Combattimento (il `chip light` del danno non va a capo), 689 px in Tratti (`th` della tabella privilegi). Stesso problema con dati da import o homebrew: talento o fonte del talento di 80 caratteri (Tratti 772–850 px), incantesimo homebrew di 80 caratteri (Incantesimi 819 px), nome eroe di 80 caratteri senza spazi, permesso dal `maxlength` (Incontro 806 px; con 43 caratteri già 405 px). Eroe, Zaino, Cronaca, Biblioteca, Workshop restano a 390.
+- Console: nessun errore.
+- Test: `telefono` "B-030 …" (2 test).
+
+
 
 ### B-014 [bassa] [UX] Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
 - **Risolto 2026-11-11** (designer): sopra lo scaffale, da 8 eroi in su, compare la barra "Filter heroes" (nome, specie, classe) con ordine "Shelf order / By name / Last used" e il conteggio; su 390 px lo scaffale va a capo in 2 colonne e scorre in verticale dentro sé stesso (non più 7.400 px di fila). Test `eroe` B-014 verde, `telefono` senza nuovi rossi.

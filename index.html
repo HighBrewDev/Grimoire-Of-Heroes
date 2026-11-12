@@ -685,7 +685,9 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 /* B-019 (design 2026-11-10): long links and words in items, attacks, notes, homebrew species/subclass
    wrap anywhere. "anywhere" (unlike break-word) also lowers the min-content width, so grid and flex
    cells shrink instead of pushing the page wider. Shelf cards stay 210 px. */
-.pageHead h2,.pageHead .sub,.card h3,.entry > .row > b,.entry > .meta,.invN,.aslotBody,.await .kv > span:first-child,.hero{overflow-wrap:anywhere}
+.pageHead h2,.pageHead .sub,.card h3,.entry > .row > b,.entry > .meta,.invN,.aslotBody,.await .kv > span:first-child,.hero,
+.kv > span:first-child,.entry .chip,.fold summary,.fold summary .muted,.tblWrap th,.tblWrap td,.encList b,.encList .nm{overflow-wrap:anywhere;min-width:0}
+.entry .chip{max-width:100%;white-space:normal;text-align:left;border-radius:14px}
 .invN,.aslotBody{min-width:0}
 .hero{min-width:0}
 .hero .n,.hero .s{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;padding-inline:3px;margin-inline:-3px}
@@ -1104,7 +1106,10 @@ function fixup(c){
 }
 function save(){
   stampHeroes(); writeLocal();
-  try { localStorage.setItem(PREF, JSON.stringify({chapter:G.chapter, libCat:G.libCat, adv:G.adv, sound:G.sound, theme:G.theme, coverOnStart:G.coverOnStart})); } catch (e) {}
+  savePrefs();
+}
+function savePrefs(){
+  try { localStorage.setItem(PREF, JSON.stringify({chapter:G.chapter, libCat:G.libCat, adv:G.adv, sound:G.sound, theme:G.theme, coverOnStart:G.coverOnStart, shelfSort:G.shelfSort})); } catch (e) {}
 }
 async function load(){
   let data = null;
@@ -1116,6 +1121,7 @@ async function load(){
   G.chars.forEach(c => { c._sig = c._sig ? normSig(c._sig) : sigOf(c); });
   markBase(data?.chars ? raw : null);
   try { Object.assign(G, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
+  if (!['manual','name','recent'].includes(G.shelfSort)) G.shelfSort = 'manual';
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
 }
 const active = () => G.chars.find(c => c.id === G.activeId) || G.chars[0];
@@ -4486,7 +4492,7 @@ function wire(){
     if (el.classList.contains('dbtn') && el.dataset.act === 'die' && !reduceMotion()) el.animate([{transform:'rotate(0) scale(1)'}, {transform:'rotate(-200deg) scale(1.12)', offset:.6}, {transform:'rotate(-360deg) scale(1)'}], {duration:520, easing:'cubic-bezier(.3,.8,.3,1)'});
   });
   document.addEventListener('change', e => {
-    if (e.target.id === 'shelf_sort'){ G.shelfSort = e.target.value; renderShelf(); return; }
+    if (e.target.id === 'shelf_sort'){ G.shelfSort = e.target.value; savePrefs(); renderShelf(); return; }
     const el = e.target;
     if (el.tagName === 'SELECT' && el.value === '__custom'){   // subclass picker: swap in a text field for one the library doesn't have
       const t = document.createElement('input'); t.type = 'text'; for (const a of el.attributes) t.setAttribute(a.name, a.value);
