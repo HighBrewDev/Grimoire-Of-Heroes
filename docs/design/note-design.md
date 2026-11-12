@@ -53,6 +53,12 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-12
+- **Fatto**: B-030 (testi lunghi su telefono, solo CSS) e B-040 (ordine dello scaffale ricordato). Il selettore `overflow-wrap:anywhere` ora copre anche `.entry .chip`, `.kv > span:first-child`, `.fold summary`, celle di tabella e nomi dell'Incontro (regola in cima al CSS, riga ~688). `savePrefs()` scrive solo le preferenze senza toccare `updatedAt` degli eroi.
+- **Prima/dopo**: [prima 390](2026-11-12-testi-lunghi-prima-390.png), [dopo 390](2026-11-12-testi-lunghi-dopo-390.png), [768](2026-11-12-testi-lunghi-dopo-768.png), [1440](2026-11-12-testi-lunghi-dopo-1440.png).
+- **Imparato**: all'apertura compaiono copertina e finestra "Welcome to the beta": negli script di screenshot cliccare "Open the Grimoire" e "Start writing".
+- **Prossime idee**: `.dot` e "✕" a 44 px, contrasto, `aria-label`, stampa A4.
+
 ### 2026-11-11
 - **Fatto**: B-014, scaffale con filtro e ordine (da 8 eroi, `SHELF_MIN`). Stato in `G.shelfQ` / `G.shelfSort`, non salvato. Su ≤560 px `.shelf.many` va a capo in 2 colonne con altezza massima 236 px e scroll verticale; da 768 px in su resta la fila orizzontale.
 - **Prima/dopo**: [prima 390](2026-11-11-scaffale-prima-390.png), [dopo 390](2026-11-11-scaffale-dopo-390.png), [filtro 390](2026-11-11-scaffale-filtro-390.png), [768](2026-11-11-scaffale-dopo-768.png), [1440](2026-11-11-scaffale-dopo-1440.png).
