@@ -3678,7 +3678,7 @@ const ACT_EXTRA = {
     if (h){ applyDamage(h, a); save(); } else { const soak = Math.min(r.temp || 0, a); r.temp = (r.temp || 0) - soak; r.hp = Math.max(0, r.hp - (a - soak)); if (r.hp === 0) toast(`${r.n} drops!`); }
     saveEnc(); render(); },
   encHeal(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = hpNum('amt_' + id), h = heroOf(r); if (!a) return;
-    if (h){ h.hp.cur = Math.min(h.hp.max, h.hp.cur + a); save(); } else r.hp = Math.min(r.max, r.hp + a); saveEnc(); render(); },
+    if (h){ h.hp.cur = Math.min(h.hp.max, h.hp.cur + a); if (h.hp.cur > 0) h.death = {s:0, f:0}; save(); } else r.hp = Math.min(r.max, r.hp + a); saveEnc(); render(); },
   encAddCond(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, h = heroOf(r), n = $('#cn_' + id).value, rd = $('#cr_' + id).value === '' ? null : Math.max(1, num('cr_' + id));
     if (h){ if (!h.conditions.includes(n)) h.conditions.push(n); h.condDur = h.condDur || {}; if (rd) h.condDur[n] = rd; else delete h.condDur[n]; save(); }
     else { r.conds = (r.conds || []).filter(c => c.n !== n); r.conds.push({n, r:rd}); }

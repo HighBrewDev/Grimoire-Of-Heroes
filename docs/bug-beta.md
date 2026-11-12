@@ -125,6 +125,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+- **Risolto 2026-11-11** in [PR #19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19) (frontend): B-037, `encHeal` azzera i tiri contro la morte quando l'eroe supera 0 PF. Test `incontro` B-037 verde.
 ### B-040 [bassa] [UX] Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
 - **Risolto 2026-11-12** (designer): `G.shelfSort` entra nelle preferenze (`savePrefs()`, valori ammessi manual/name/recent); l'ordine sopravvive alla ricarica.
 - **Data / tester / sezione**: 2026-11-11 · power user · eroe
