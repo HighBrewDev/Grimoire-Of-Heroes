@@ -112,4 +112,11 @@ module.exports = {sezione:'robustezza', test:[
     await app.page.waitForTimeout(300);
     assert.strictEqual(await app.page.evaluate(() => window.__xc), undefined, 'onerror eseguito: condDur non è escapato né ridotto a numero');
   }],
+  ['XSS: il nome dell\'eroe con HTML non esegue codice nelle pagine principali', async ({open}) => {
+    const app = await open();
+    await app.set('#f_name', '<img src=x onerror="window.__nm=1">');
+    for (const ch of ['combat', 'encounter', 'traits', 'spells', 'pack', 'chronicle', 'hero']) await app.go(ch);
+    await app.page.waitForTimeout(300);
+    assert.strictEqual(await app.page.evaluate(() => window.__nm), undefined, 'onerror eseguito dal nome eroe');
+  }],
 ]};

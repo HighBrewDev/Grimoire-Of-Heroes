@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-12 · test
+- **Fatto** · suite eseguita su main `afc1c73`: 226/235 test superati, sezioni rosse: nessuna. Punteggio totale +208 (ieri +173). Aggiunti 6 test (caratteristiche ×2, incontro ×2, robustezza, eroe); nessun test cambiato per farlo passare.
+- **Ancora rossi** · 9 test su bug aperti: B-029, B-031, B-032, B-033, B-034, B-037, B-038, B-039 (×2). Le sezioni più basse sono robustezza (+4), cronaca (+7) e tratti (+8).
+
 ## 2026-11-12 · design
 - **Fatto** · **B-030** (testi lunghi su telefono, solo CSS): chip del danno degli attacchi, privilegi e talenti (`.kv`), titoli dei riquadri a scomparsa, celle di tabella e nomi dell'Incontro vanno a capo (`overflow-wrap:anywhere`, `min-width:0`); il chip del danno su più righe ha raggio 14 px. **B-040**: l'ordine dello scaffale ("By name", "Last used") ora resta dopo la ricarica (`savePrefs()`, `shelfSort` nelle preferenze, valore validato). `CACHE` → `grimoire-ds1112a`.
 - **File**: index.html (CSS riga ~688, `save`/`savePrefs`, `load`, gestore `shelf_sort`), sw.js, docs/bug-beta.md (B-030, B-040 in Risolti), docs/design/note-design.md, screenshot `docs/design/2026-11-12-testi-lunghi-*.png`.

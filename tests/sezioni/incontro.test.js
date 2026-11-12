@@ -98,4 +98,17 @@ module.exports = {sezione:'incontro', test:[
     assert.strictEqual(c.hp.cur, 5);
     assert.deepStrictEqual([c.death.s || 0, c.death.f || 0], [0, 0], `a 5 PF i tiri contro la morte restano ${JSON.stringify(c.death)}`);
   }],
+  ['XSS: il nome di un combattente personalizzato con HTML non esegue codice', async ({open}) => {
+    const app = await open(); await app.go('encounter');
+    await custom(app, '<img src=x onerror="window.__en=1">', 12);
+    await app.page.waitForTimeout(300);
+    assert.strictEqual(await app.page.evaluate(() => window.__en), undefined, 'onerror eseguito dal nome del combattente');
+    assert.strictEqual((await names(app)).length, 1);
+  }],
+  ['il combattimento personalizzato resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('encounter');
+    await custom(app, 'Goblin', 14, 7, 13); await app.reload(); await app.go('encounter');
+    assert.deepStrictEqual(await names(app), ['Goblin']);
+    assert.ok((await app.text('.encList')).includes('Goblin'));
+  }],
 ]};

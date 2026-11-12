@@ -100,4 +100,16 @@ module.exports = {sezione:'caratteristiche', test:[
     const v = await app.page.evaluate(() => [...document.querySelectorAll('.kv')].find(k => /Passive Perception/.test(k.textContent))?.lastElementChild?.textContent.trim());
     assert.strictEqual(v, '15', `Percezione passiva ${v} invece di 10 + 1 + 2×2 = 15`);
   }],
+  ['modificatori ai limiti: 1 → −5, 8 → −1, 9 → −1, 10 → +0, 30 → +10', async ({open}) => {
+    const app = await open({heroes:[fx.blank({abilities:{str:1,dex:8,con:9,int:10,wis:30,cha:11}})]}); await app.go('abilities');
+    const want = {STR:'-5', DEX:'-1', CON:'-1', INT:'+0', WIS:'+10', CHA:'+0'};
+    for (const [k, mo] of Object.entries(want)) assert.strictEqual((await abil(app, k)).mo.replace('−', '-'), mo, k);
+  }],
+  ['il pulsante − abbassa il punteggio e il valore resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    await app.click('stepAb', 'dex:-1'); await app.click('stepAb', 'dex:-1');
+    assert.strictEqual((await app.hero()).abilities.dex, 12);
+    await app.reload(); await app.go('abilities');
+    assert.deepStrictEqual(await abil(app, 'DEX'), {sc:'12', mo:'+1'});
+  }],
 ]};
