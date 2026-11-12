@@ -155,4 +155,11 @@ module.exports = {sezione:'eroe', test:[
     assert.strictEqual(h.class, 'Rogue');
     assert.deepStrictEqual(app.pageErrors, []);
   }],
+  ['il nome modificato resta dopo la ricarica', async ({open}) => {
+    const app = await open();
+    await app.set('#f_name', 'Nome Nuovo');
+    await app.reload();
+    assert.strictEqual((await app.hero()).name, 'Nome Nuovo');
+    assert.strictEqual(await app.page.inputValue('#f_name'), 'Nome Nuovo');
+  }],
 ]};

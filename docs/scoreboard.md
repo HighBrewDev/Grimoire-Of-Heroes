@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-11** sul commit `cc5634e` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-12** sul commit `afc1c73` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,100 +14,76 @@ Aggiornato il **2026-11-11** sul commit `cc5634e` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **208 / 225**
-- Punteggio totale: **+173**, tendenza ↑ (ieri 105)
+- Test superati: **226 / 235**
+- Punteggio totale: **+208**, tendenza ↑ (ieri 173)
 - Sezioni rosse: nessuna
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +10 | 11,3 | ↓ | 17/19 | B-034 (bassa), B-014 (UX) | 🟡 GIALLO |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +10 | 8,7 | ↑ | 13/14 | B-032 (bassa) | 🟡 GIALLO |
-| Combattimento (PF, CA, attacchi, riposi) | +4 | 6,7 | ↓ | 25/33 | B-036 (media), B-023 (media) | 🟡 GIALLO |
-| Incontro (iniziativa, round) | +7 | 9,7 | ↓ | 11/12 | B-037 (bassa) | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +20 | 13,5 | ↑ | 20/21 | B-034 (bassa) | 🟡 GIALLO |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +12 | 9,5 | ↑ | 15/16 | B-032 (bassa) | 🟡 GIALLO |
+| Combattimento (PF, CA, attacchi, riposi) | +42 | 15,5 | ↑ | 33/33 | — | 🟡 GIALLO |
+| Incontro (iniziativa, round) | +10 | 9,8 | ↑ | 13/14 | B-037 (bassa) | 🟡 GIALLO |
 | Tratti e talenti | +8 | 8 | = | 8/8 | — | 🟢 VERDE |
 | Incantesimi (slot, preparati, multiclasse) | +11 | 11 | = | 11/11 | — | 🟢 VERDE |
-| Zaino e monete | +16 | 11 | ↑ | 13/13 | — | 🟡 GIALLO |
+| Zaino e monete | +13 | 11,5 | ↓ | 13/13 | — | 🟡 GIALLO |
 | Cronaca | +7 | 7 | = | 7/7 | — | 🟢 VERDE |
 | Biblioteca (ricerca regole) | +8 | 8 | = | 8/8 | — | 🟢 VERDE |
-| Workshop homebrew | +26 | 20,3 | ↑ | 26/26 | B-020 (bassa), B-011 (bassa) | 🟡 GIALLO |
-| Level up e multiclasse | +26 | 8 | ↑ | 22/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
-| Import/export e salvataggio | +23 | 13 | ↑ | 20/20 | B-016 (alta) | 🟡 GIALLO |
-| Telefono (390x844) | +10 | -3,3 | ↑ | 15/17 | B-030 (media) | 🟡 GIALLO |
-| Robustezza (console, offline, input strani) | +7 | 9 | ↓ | 12/13 | B-029 (media) | 🟡 GIALLO |
+| Workshop homebrew | +26 | 21,8 | = | 26/26 | B-020 (bassa), B-011 (bassa) | 🟡 GIALLO |
+| Level up e multiclasse | +16 | 10 | ↓ | 22/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
+| Import/export e salvataggio | +11 | 12,5 | ↓ | 20/21 | B-039 (alta), B-038 (bassa), B-016 (alta) | 🟡 GIALLO |
+| Telefono (390x844) | +20 | 2,5 | ↑ | 17/17 | — | 🟡 GIALLO |
+| Robustezza (console, offline, input strani) | +4 | 7,8 | ↓ | 13/16 | B-029 (media) | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
-- **combattimento** +4 (25 × +1, 8 × −3, bug nuovi -3, bug chiusi +6)
-  - ✗ B-023 riposo breve: Second Wind recupera un uso: dopo il riposo breve Second Wind è ancora 0/2
-  - ✗ B-036 danno a 0 PF: un fallimento in più ai tiri contro la morte, non tutti azzerati: dopo 3 danni a 0 PF i fallimenti sono 0 (prima 2)
-  - ✗ B-023 riposo breve: Rage (Barbaro 5) recupera un uso: dopo il riposo breve rage_count usati 3 (prima 3), attesi 2
-  - ✗ B-023 riposo breve: Wild Shape (Druido 5) recupera un uso: dopo il riposo breve wild_shape_uses usati 2 (prima 2), attesi 1
-  - ✗ B-023 riposo breve: Channel Divinity (Paladino 5) recupera un uso: dopo il riposo breve channel_divinity_charges usati 2 (prima 2), attesi 1
-  - ✗ B-023 riposo breve: Channel Divinity (Chierico 6) recupera un uso: dopo il riposo breve channel_divinity_charges usati 3 (prima 3), attesi 2
-  - ✗ B-023 riposo breve: Bardic Inspiration (Bardo 5, Font of Inspiration) torna tutta: dopo il riposo breve bardic_inspiration usati 3 (prima 3), attesi 0
-  - ✗ B-036 danno massiccio: un danno che supera i PF massimi oltre lo 0 uccide (o lo dice): danno 90 a 40 PF: fallimenti 0/3 e nessun avviso di morte istantanea
-  - Bug nuovo B-036 [media] -2: Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
-  - Bug nuovo B-035 [bassa] -1: PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
-  - Bug chiuso B-035 con test che passa +3: PF massimi scritti come "1e3": il campo mostra 1e3, salva 1 e i PF attuali crollano a 1
-  - Bug chiuso B-018 con test che passa +3: CA e PF senza limite superiore/inferiore: CA -981, PF 1e+308
-- **incontro** +7 (11 × +1, 1 × −3, bug nuovi -1)
-  - ✗ B-037 cura dal tracciatore a un eroe a 0 PF: i tiri contro la morte si azzerano come con Heal: a 5 PF i tiri contro la morte restano {"s":1,"f":2}
-  - Bug nuovo B-037 [bassa] -1: Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
-- **robustezza** +7 (12 × +1, 1 × −3, bug nuovi -2)
+- **robustezza** +4 (13 × +1, 3 × −3)
   - ✗ B-029 solo tastiera: Tab nella finestra Level up non esce sugli eroi coperti e il livello va all'eroe del titolo: Kessa è passata al livello 3 dalla finestra "Eldrin reaches level 5" (focus uscito su: omni, theme, wizard, go:library, go:workshop, sound)
-  - Bug nuovo B-029 [media] -2: Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
+  - ✗ B-039 XSS: quantità (q) di un oggetto importato come testo HTML non esegue codice nello Zaino: onerror eseguito: la quantità non è escapata né ridotta a numero
+  - ✗ B-039 XSS: durata di una condizione (condDur) importata come testo HTML non esegue codice in Combattimento: onerror eseguito: condDur non è escapato né ridotto a numero
 - **cronaca** +7 (7 × +1, 0 × −3): tutto verde oggi.
 - **tratti** +8 (8 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +8 (8 × +1, 0 × −3): tutto verde oggi.
-- **telefono** +10 (15 × +1, 2 × −3, bug nuovi -2, bug chiusi +3)
-  - ✗ B-030 390 px: un link nel danno di un attacco non allarga Combattimento: scrollWidth 743px
-  - ✗ B-030 390 px: un link in un privilegio di classe non allarga Tratti: scrollWidth 689px
-  - Bug nuovo B-030 [media] -2: Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
-  - Bug chiuso B-019 con test che passa +3: Telefono: un link o una parola lunga in oggetti e attacchi allarga la pagina fino a 1.400 px
-- **eroe** +10 (17 × +1, 2 × −3, bug nuovi -1)
-  - ✗ B-014 con 33 eroi lo scaffale offre un filtro per nome: nessun campo di ricerca/filtro vicino allo scaffale degli eroi
-  - ✗ B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu: i menu mostrano Barbarian, Dragonborn, Acolyte, Barbarian per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata
-  - Bug nuovo B-034 [bassa] -1: Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
-- **caratteristiche** +10 (13 × +1, 1 × −3, bug nuovi -3, bug chiusi +3)
-  - ✗ B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20): Cos 10 → 1, danno 5, Cos 10: PF 115/120 invece di 77/82
-  - Bug nuovo B-032 [bassa] -1: Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
-  - Bug nuovo B-026 [media] -2: Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
-  - Bug chiuso B-026 con test che passa +3: Costituzione giù e su con − / +: PF massimi gonfiati e PF attuali a 0
+- **incontro** +10 (13 × +1, 1 × −3)
+  - ✗ B-037 cura dal tracciatore a un eroe a 0 PF: i tiri contro la morte si azzerano come con Heal: a 5 PF i tiri contro la morte restano {"s":1,"f":2}
+- **importexport** +11 (20 × +1, 1 × −3, bug nuovi -6)
+  - ✗ B-038 import con risorse (res) negative, frazionarie o di testo: salvate entro valori sensati e il riposo breve non le rende frazionarie: res.channel_divinity_charges = 1.5 dopo il riposo breve (valori ammessi: interi 0-20)
+  - Bug nuovo B-039 [alta] -5: XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
+  - Bug nuovo B-038 [bassa] -1: Import: i contatori delle risorse (`res`) accettano negativi, frazioni e testo
 - **incantesimi** +11 (11 × +1, 0 × −3): tutto verde oggi.
-- **zaino** +16 (13 × +1, 0 × −3, bug chiusi +3)
-  - Bug chiuso B-017 con test che passa +3: Monete negative accettate nello Zaino
-- **importexport** +23 (20 × +1, 0 × −3, bug chiusi +3)
-  - Bug chiuso B-024 con test che passa +3: Backup: eroi duplicati più volte persi al ripristino ("già qui")
-- **levelup** +26 (22 × +1, 2 × −3, bug nuovi -5, bug chiusi +15)
+- **caratteristiche** +12 (15 × +1, 1 × −3)
+  - ✗ B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20): Cos 10 → 1, danno 5, Cos 10: PF 115/120 invece di 77/82
+- **zaino** +13 (13 × +1, 0 × −3): tutto verde oggi.
+- **levelup** +16 (22 × +1, 2 × −3)
   - ✗ B-031 talento Grappler al livello 4: +1 a Forza o Destrezza: For 16, Des 14 (prima 16 e 14)
   - ✗ B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1): classe doppia dopo aver scelto Rogue come classe principale: Rogue / Rogue
-  - Bug nuovo B-031 [bassa] -1: Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
-  - Bug nuovo B-033 [bassa] -1: Multiclasse: il menu della classe principale offre una classe già presente nelle righe (resto di B-028)
-  - Bug nuovo B-027 [media] -2: Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
-  - Bug nuovo B-028 [bassa] -1: Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
-  - Bug chiuso B-027 con test che passa +3: Livello 19: "+2" porta un punteggio oltre 20 e l'Epic Boon scelto come talento non dà +1
-  - Bug chiuso B-028 con test che passa +3: Multiclasse: la stessa classe può comparire due volte (pagina Eroe e import)
-  - Bug chiuso B-021 con test che passa +3: Level up: aumento dei punteggi o talento solo al livello 4: mancano 8, 12, 16 (Guerriero 6 e 14, Ladro 10) per tutte le classi
-  - Bug chiuso B-022 con test che passa +3: Level up: +2 a Costituzione non alza i PF massimi dei livelli precedenti
-  - Bug chiuso B-025 con test che passa +3: Level up: un talento non ripetibile già preso viene offerto e preso di nuovo
+- **eroe** +20 (20 × +1, 1 × −3, bug chiusi +3)
+  - ✗ B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu: i menu mostrano Barbarian, Dragonborn, Acolyte, Barbarian per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata
+  - Bug chiuso B-014 con test che passa +3: Con 30+ eroi lo scaffale non ha ricerca né ordine: su telefono la fila è larga 7.400 px
+- **telefono** +20 (17 × +1, 0 × −3, bug chiusi +3)
+  - Bug chiuso B-030 con test che passa +3: Telefono: B-019 non copre danno degli attacchi, privilegi e talenti, incantesimi e nome in Incontro
 - **workshop** +26 (26 × +1, 0 × −3): tutto verde oggi.
+- **combattimento** +42 (33 × +1, 0 × −3, bug chiusi +9)
+  - Bug chiuso B-040 con test che passa +3: Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
+  - Bug chiuso B-023 con test che passa +3: Riposo breve non restituisce Second Wind, Channel Divinity e Bardic Inspiration
+  - Bug chiuso B-036 con test che passa +3: Danno a un eroe già a 0 PF: i fallimenti dei tiri contro la morte tornano a zero invece di salire
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. combattimento +4 · 25/33 · GIALLO
-2. incontro +7 · 11/12 · GIALLO
-3. robustezza +7 · 12/13 · GIALLO
-4. cronaca +7 · 7/7 · VERDE
-5. tratti +8 · 8/8 · VERDE
-6. biblioteca +8 · 8/8 · VERDE
-7. telefono +10 · 15/17 · GIALLO
-8. eroe +10 · 17/19 · GIALLO
-9. caratteristiche +10 · 13/14 · GIALLO
-10. incantesimi +11 · 11/11 · VERDE
-11. zaino +16 · 13/13 · GIALLO
-12. importexport +23 · 20/20 · GIALLO
-13. levelup +26 · 22/24 · GIALLO
-14. workshop +26 · 26/26 · GIALLO
+1. robustezza +4 · 13/16 · GIALLO
+2. cronaca +7 · 7/7 · VERDE
+3. tratti +8 · 8/8 · VERDE
+4. biblioteca +8 · 8/8 · VERDE
+5. incontro +10 · 13/14 · GIALLO
+6. importexport +11 · 20/21 · GIALLO
+7. incantesimi +11 · 11/11 · VERDE
+8. caratteristiche +12 · 15/16 · GIALLO
+9. zaino +13 · 13/13 · GIALLO
+10. levelup +16 · 22/24 · GIALLO
+11. eroe +20 · 20/21 · GIALLO
+12. telefono +20 · 17/17 · GIALLO
+13. workshop +26 · 26/26 · GIALLO
+14. combattimento +42 · 33/33 · GIALLO
 
 ## Storico
 
@@ -115,4 +91,5 @@ Aggiornato il **2026-11-11** sul commit `cc5634e` di main dall'agente "Test e pu
 2026-11-09  totale  +107  test 140/154  1028d8d
 2026-11-10  totale  +105  test 169/186  b44618f
 2026-11-11  totale  +173  test 208/225  cc5634e
+2026-11-12  totale  +208  test 226/235  afc1c73
 ```
