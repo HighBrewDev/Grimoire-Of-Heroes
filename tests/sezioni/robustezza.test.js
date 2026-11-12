@@ -112,6 +112,26 @@ module.exports = {sezione:'robustezza', test:[
     await app.page.waitForTimeout(300);
     assert.strictEqual(await app.page.evaluate(() => window.__xc), undefined, 'onerror eseguito: condDur non è escapato né ridotto a numero');
   }],
+  // B-041: l'import 5etools della Biblioteca salva il JSON grezzo e extMeta/extBody ne inseriscono alcuni campi senza esc.
+  ['B-041 XSS: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle o PF non esegue codice', async ({open}) => {
+    const app = await open();
+    const P = t => `<img src=x onerror="(window.__f=window.__f||[]).push('${t}')">`;
+    const pack = {
+      spell:[{name:'Sonda', level:P('level'), school:P('school'), entries:['x', {type:'table', rows:[[{roll:{exact:P('rollexact')}}, {roll:{min:P('rmin'), max:P('rmax')}}]]}]}],
+      monster:[{name:'Mostro', size:['M'], type:'beast', str:P('str'), dex:10, con:10, int:10, wis:10, cha:10, ac:[10], hp:{average:10},
+        spellcasting:[{name:'SC', daily:{[P('dailykey')]:['a']}, spells:{[P('lvkey')]:{slots:P('slots'), spells:['a']}}}]}],
+    };
+    await app.go('library'); await app.clickJS('libCat', 'import');
+    await app.page.setInputFiles('#imp_file', {name:'sonda.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify(pack))});
+    await app.page.waitForTimeout(800);
+    for (const c of ['spells', 'monsters']) {
+      await app.clickJS('libCat', c); await app.page.waitForTimeout(100);
+      await app.page.evaluate(() => document.querySelectorAll('[data-act="libPick"]').forEach(b => { if (/Sonda|Mostro/.test(b.textContent)) b.click(); }));
+      await app.page.waitForTimeout(200);
+    }
+    const fired = await app.page.evaluate(() => window.__f || []);
+    assert.deepStrictEqual(fired, [], 'onerror eseguito da campi non escapati: ' + fired.join(', '));
+  }],
   ['XSS: il nome dell\'eroe con HTML non esegue codice nelle pagine principali', async ({open}) => {
     const app = await open();
     await app.set('#f_name', '<img src=x onerror="window.__nm=1">');
