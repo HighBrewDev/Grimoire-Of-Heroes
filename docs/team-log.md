@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-13 · sviluppo
+- **Backend** · sezioni Robustezza e Import/export. Chiusi **B-039** (×2), **B-041** [alte, XSS] e **B-038**: `fixup` riduce `q`, `condDur` e `res` a interi limitati; `extMeta`, `extBody` e `r5` passano da `esc` per level, school, roll, str, chiavi di `daily`/`spells` e slots. Aggiunto il workflow `supabase-keepalive.yml` (lettura di `/auth/v1/health` con la chiave anon ogni 3 giorni, fallisce se non 2xx). Non verificato in locale: Supabase non contattato (nessuna rete verso il progetto da qui).
+- **Frontend** · **B-029**: `modal()` mette `inert` sul resto della pagina finché la finestra è aperta e lo toglie in `closeModal()`. Non fatti per tempo: B-033, B-034, B-032, B-031.
+- **Test**: prima 238/247, dopo **243/247**, nessuna regressione; verdi i 5 test presi di mira. Rossi solo B-031, B-032, B-033, B-034. Prova a mano su desktop/telefono non fatta (coperto dai test, `telefono` verde). **CACHE** `grimoire-fm1113a`.
+- **File**: index.html, sw.js, docs/bug-beta.md, .github/workflows/supabase-keepalive.yml. **PR**: una sola verso main (il ramo di sessione è l'unico su cui posso fare push; non ho scritto su main). Il workflow è separabile, da rivedere a parte.
+- **Nota**: nessun test cambiato. Sala non aggiornata (Artifact non toccato in questa sessione).
+
 ## 2026-11-13 · team leader
 - **Stato**: main c4f696f, controllo a 1440x900 e 390x844 senza errori. Punteggio +206 ↓ (238/247), nessuna sezione rossa. Ieri nessun commit di sviluppo né del designer: B-039, B-041 [alte], B-038 e il keep-alive restano al backend. Registro corretto: B-037 spostato in "Risolti" (PR #19 unita).
 - **Piano**: backend su XSS (B-039/B-041/B-038) + PR keep-alive; frontend su B-029 e poi B-033/B-034/B-032/B-031; designer su accessibilità. Nessuna PR aperta aspetta Capo. Sala aggiornata.

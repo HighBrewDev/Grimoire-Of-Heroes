@@ -5,36 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-041 [alta] XSS guardado: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle, forza o slot esegue codice a ogni apertura della voce
-- Trovato da: distruttore · 2026-11-12
-- Sezione: robustezza
-- Dove: Biblioteca → Import → file `.json` (o URL), poi aprire la voce, 1440x900
-- Passi: 1. Biblioteca → Import → scegli un file `{"spell":[{"name":"Sonda","level":"<img src=x onerror=…>","school":"<img …>","entries":[{"type":"table","rows":[[{"roll":{"exact":"<img …>"}}]]}]}],"monster":[{"name":"Mostro","str":"<img …>",…,"spellcasting":[{"daily":{"<img …>":["a"]},"spells":{"<img …>":{"slots":"<img …>","spells":["a"]}}}]}]}`. 2. Apri "Sonda" tra gli incantesimi e "Mostro" tra i mostri.
-- Atteso: il testo compare escapato (o i campi numerici sono ridotti a numeri).
-- Ottenuto: `onerror` viene eseguito per `level`, `school`, `roll.exact`, `roll.min/max`, `str` (e le altre caratteristiche), `daily` (chiave), `spells` (chiave) e `slots`. `ingest5` (index.html ~2068) salva il JSON grezzo, `extMeta` (~2079) e `extBody` (~2108) inseriscono quei campi nell'HTML senza `esc`, e `r5` (~1007, ~1021–1022) fa lo stesso per le celle `roll` e le chiavi di spellcasting. Il file resta in IndexedDB, quindi il codice viene eseguito di nuovo a ogni apertura della voce finché la fonte non viene rimossa. Stessa classe di B-039 ma altra via d'ingresso: la correzione di B-039 non la copre. Un file 5etools condiviso in un forum può eseguire codice nell'origine dell'app. Provati anche i campi di rarità, tipo, `from` dell'armatura, velocità, `cr`: sono già escapati. L'import homebrew (JSON Grimoire con 11 categorie e 60 chiavi) regge.
-- Console: nessun errore.
-- Test: `robustezza` "B-041 …".
-
-### B-039 [alta] XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
-- Trovato da: distruttore · 2026-11-11
-- Sezione: robustezza
-- Dove: Import (eroe da file o testo), poi Zaino / Combattimento, 1440x900
-- Passi: 1. Importa `{"name":"X","inventory":[{"n":"Corda","q":"<img src=x onerror=\"window.__xq=1\">"}]}`. 2. Apri Zaino. Stesso con `conditions:["Poisoned"], condDur:{"Poisoned":"<img …>"}` e apri Combattimento.
-- Atteso: il testo compare escapato o `q` e `condDur` sono ridotti a numeri da `fixup`.
-- Ottenuto: `onerror` viene eseguito. `objList` (index.html ~1074) copia gli oggetti senza ripulire i campi diversi da `n`; `×${it.q || 1}` (~1867) e `(${c.condDur[n]} rd)` (~1767) entrano nell'HTML senza `esc`. Un eroe condiviso come file può eseguire codice nell'origine dell'app. Provati 19 campi con 4 payload: gli altri (nome, specie, classe, note, attacchi, talenti, incantesimi, monete, PF, `conc`, id, multiclasse) sono escapati o ripuliti. Lo stesso `fixup` non ripulisce nemmeno `res`, vedi B-038.
-- Console: nessun errore.
-- Test: `robustezza` "B-039 …" (×2).
-
-### B-038 [bassa] Import: i contatori delle risorse (`res`) accettano negativi, frazioni e testo
-- Trovato da: distruttore · 2026-11-11
-- Sezione: import/export
-- Dove: Import di un eroe con `res`, poi Combattimento → Short Rest, 1440x900
-- Passi: 1. Importa un Chierico 6 con `res:{channel_divinity_charges:2.5, second_wind_uses:-3, rage_count:"x"}`. 2. Combattimento → Short Rest.
-- Atteso: `res` ridotto a interi 0–20 all'import.
-- Ottenuto: `fixup` (index.html ~1086) fa solo `objOr` su `res`: i valori restano e dopo il riposo breve `channel_divinity_charges` vale 1.5 e un contatore -3 resta -3.
-- Console: nessun errore.
-- Test: `importexport` "B-038 …".
-
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
 - Sezione: level up/multiclasse
@@ -76,16 +46,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `caratteristiche` "B-032 …".
 
-### B-029 [media] Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
-- Trovato da: distruttore · 2026-11-10
-- Sezione: robustezza
-- Dove: finestra Level up (vale per tutte le finestre di `modal()`), 1440x900, solo tastiera
-- Passi: 1. Eroe attivo Eldrin (Wizard 4), apri Level up: titolo "Eldrin Moonwhisper reaches level 5". 2. Premi Tab: dopo "Not yet" il focus esce dalla finestra e passa ai controlli coperti (ricerca, tema, wizard, capitoli, poi i ritratti dello scaffale). 3. Arrivato sul ritratto di Kessa premi Invio. 4. Premi "Become level 5".
-- Atteso: il focus resta nella finestra (`aria-modal="true"` lo promette) e il livello va a Eldrin.
-- Ottenuto: con la finestra ancora aperta e il titolo ancora "Eldrin … level 5", Invio sul ritratto cambia l'eroe attivo; "Become level 5" porta **Kessa** dal 2 al 3 ("Kessa Quickpaw is now level 3: +6 HP"), Eldrin resta 4. Non esiste un modo per togliere un livello. `modal()` (index.html ~1290) mette il focus nella finestra ma non lo trattiene e lo sfondo non è `inert`; `applyLevelUp` usa `active()` invece dell'eroe per cui la finestra è stata aperta. Col mouse non succede (lo sfondo copre).
-- Console: nessun errore.
-- Test: `robustezza` "B-029 …".
-
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09
 - Sezione: import/export (salvataggio con più schede)
@@ -124,6 +84,50 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-041 [alta] XSS guardado: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle, forza o slot esegue codice a ogni apertura della voce
+- Trovato da: distruttore · 2026-11-12
+- Sezione: robustezza
+- Dove: Biblioteca → Import → file `.json` (o URL), poi aprire la voce, 1440x900
+- Passi: 1. Biblioteca → Import → scegli un file `{"spell":[{"name":"Sonda","level":"<img src=x onerror=…>","school":"<img …>","entries":[{"type":"table","rows":[[{"roll":{"exact":"<img …>"}}]]}]}],"monster":[{"name":"Mostro","str":"<img …>",…,"spellcasting":[{"daily":{"<img …>":["a"]},"spells":{"<img …>":{"slots":"<img …>","spells":["a"]}}}]}]}`. 2. Apri "Sonda" tra gli incantesimi e "Mostro" tra i mostri.
+- Atteso: il testo compare escapato (o i campi numerici sono ridotti a numeri).
+- Ottenuto: `onerror` viene eseguito per `level`, `school`, `roll.exact`, `roll.min/max`, `str` (e le altre caratteristiche), `daily` (chiave), `spells` (chiave) e `slots`. `ingest5` (index.html ~2068) salva il JSON grezzo, `extMeta` (~2079) e `extBody` (~2108) inseriscono quei campi nell'HTML senza `esc`, e `r5` (~1007, ~1021–1022) fa lo stesso per le celle `roll` e le chiavi di spellcasting. Il file resta in IndexedDB, quindi il codice viene eseguito di nuovo a ogni apertura della voce finché la fonte non viene rimossa. Stessa classe di B-039 ma altra via d'ingresso: la correzione di B-039 non la copre. Un file 5etools condiviso in un forum può eseguire codice nell'origine dell'app. Provati anche i campi di rarità, tipo, `from` dell'armatura, velocità, `cr`: sono già escapati. L'import homebrew (JSON Grimoire con 11 categorie e 60 chiavi) regge.
+- Console: nessun errore.
+- Test: `robustezza` "B-041 …".
+- Risolto: 2026-11-13 · sviluppo · escape di level, school, roll, str, chiavi e slots in `extMeta`/`extBody`/`r5`.
+
+### B-039 [alta] XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
+- Trovato da: distruttore · 2026-11-11
+- Sezione: robustezza
+- Dove: Import (eroe da file o testo), poi Zaino / Combattimento, 1440x900
+- Passi: 1. Importa `{"name":"X","inventory":[{"n":"Corda","q":"<img src=x onerror=\"window.__xq=1\">"}]}`. 2. Apri Zaino. Stesso con `conditions:["Poisoned"], condDur:{"Poisoned":"<img …>"}` e apri Combattimento.
+- Atteso: il testo compare escapato o `q` e `condDur` sono ridotti a numeri da `fixup`.
+- Ottenuto: `onerror` viene eseguito. `objList` (index.html ~1074) copia gli oggetti senza ripulire i campi diversi da `n`; `×${it.q || 1}` (~1867) e `(${c.condDur[n]} rd)` (~1767) entrano nell'HTML senza `esc`. Un eroe condiviso come file può eseguire codice nell'origine dell'app. Provati 19 campi con 4 payload: gli altri (nome, specie, classe, note, attacchi, talenti, incantesimi, monete, PF, `conc`, id, multiclasse) sono escapati o ripuliti. Lo stesso `fixup` non ripulisce nemmeno `res`, vedi B-038.
+- Console: nessun errore.
+- Test: `robustezza` "B-039 …" (×2).
+- Risolto: 2026-11-13 · sviluppo · `fixup` riduce `q` e `condDur` a interi.
+
+### B-038 [bassa] Import: i contatori delle risorse (`res`) accettano negativi, frazioni e testo
+- Trovato da: distruttore · 2026-11-11
+- Sezione: import/export
+- Dove: Import di un eroe con `res`, poi Combattimento → Short Rest, 1440x900
+- Passi: 1. Importa un Chierico 6 con `res:{channel_divinity_charges:2.5, second_wind_uses:-3, rage_count:"x"}`. 2. Combattimento → Short Rest.
+- Atteso: `res` ridotto a interi 0–20 all'import.
+- Ottenuto: `fixup` (index.html ~1086) fa solo `objOr` su `res`: i valori restano e dopo il riposo breve `channel_divinity_charges` vale 1.5 e un contatore -3 resta -3.
+- Console: nessun errore.
+- Test: `importexport` "B-038 …".
+- Risolto: 2026-11-13 · sviluppo · `fixup` riduce `res` a interi 0-20.
+
+### B-029 [media] Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
+- Trovato da: distruttore · 2026-11-10
+- Sezione: robustezza
+- Dove: finestra Level up (vale per tutte le finestre di `modal()`), 1440x900, solo tastiera
+- Passi: 1. Eroe attivo Eldrin (Wizard 4), apri Level up: titolo "Eldrin Moonwhisper reaches level 5". 2. Premi Tab: dopo "Not yet" il focus esce dalla finestra e passa ai controlli coperti (ricerca, tema, wizard, capitoli, poi i ritratti dello scaffale). 3. Arrivato sul ritratto di Kessa premi Invio. 4. Premi "Become level 5".
+- Atteso: il focus resta nella finestra (`aria-modal="true"` lo promette) e il livello va a Eldrin.
+- Ottenuto: con la finestra ancora aperta e il titolo ancora "Eldrin … level 5", Invio sul ritratto cambia l'eroe attivo; "Become level 5" porta **Kessa** dal 2 al 3 ("Kessa Quickpaw is now level 3: +6 HP"), Eldrin resta 4. Non esiste un modo per togliere un livello. `modal()` (index.html ~1290) mette il focus nella finestra ma non lo trattiene e lo sfondo non è `inert`; `applyLevelUp` usa `active()` invece dell'eroe per cui la finestra è stata aperta. Col mouse non succede (lo sfondo copre).
+- Console: nessun errore.
+- Test: `robustezza` "B-029 …".
+- Risolto: 2026-11-13 · sviluppo · `modal()` mette `inert` sul resto della pagina finché è aperta.
 
 ### B-037 [bassa] Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
 - Trovato da: power user · 2026-11-10

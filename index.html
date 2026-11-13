@@ -1004,7 +1004,7 @@ function r5(e, depth = 0){
     case 'item':
       return `<p>${nm}${e.entry ? tag5(esc(e.entry)) : ''}</p>${e.entries ? kids(e.entries) : ''}`;
     case 'table': {
-      const cell = c => typeof c === 'object' && c ? (c.roll ? (c.roll.exact ?? `${c.roll.min}–${c.roll.max}`) : r5(c.entry || c.entries || '', depth + 1).replace(/^<p>|<\/p>$/g, '')) : tag5(esc(c));
+      const cell = c => typeof c === 'object' && c ? (c.roll ? esc(c.roll.exact ?? `${c.roll.min}–${c.roll.max}`) : r5(c.entry || c.entries || '', depth + 1).replace(/^<p>|<\/p>$/g, '')) : tag5(esc(c));
       return (e.caption ? `<h4>${esc(e.caption)}</h4>` : '') + '<div class="tblWrap"><table>' +
         (e.colLabels ? '<thead><tr>' + e.colLabels.map(c => `<th>${tag5(esc(c))}</th>`).join('') + '</tr></thead>' : '') +
         '<tbody>' + (e.rows || []).map(r => '<tr>' + (Array.isArray(r) ? r : r.row || []).map(c => `<td>${cell(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
@@ -1018,8 +1018,8 @@ function r5(e, depth = 0){
     case 'spellcasting':
       return `<p>${nm}</p>${kids(e.headerEntries)}` +
         (e.will ? `<p>At will: ${tag5(esc(e.will.join(', ')))}</p>` : '') +
-        (e.daily ? Object.entries(e.daily).map(([k, v]) => `<p>${k.replace('e', '/day each')}: ${tag5(esc(v.join(', ')))}</p>`).join('') : '') +
-        (e.spells ? Object.entries(e.spells).map(([lv, v]) => `<p>${lv === '0' ? 'Cantrips' : 'Level ' + lv}${v.slots ? ` (${v.slots} slots)` : ''}: ${tag5(esc((v.spells || []).join(', ')))}</p>`).join('') : '') +
+        (e.daily ? Object.entries(e.daily).map(([k, v]) => `<p>${esc(k).replace('e', '/day each')}: ${tag5(esc(v.join(', ')))}</p>`).join('') : '') +
+        (e.spells ? Object.entries(e.spells).map(([lv, v]) => `<p>${lv === '0' ? 'Cantrips' : 'Level ' + esc(lv)}${v.slots ? ` (${esc(v.slots)} slots)` : ''}: ${tag5(esc((v.spells || []).join(', ')))}</p>`).join('') : '') +
         kids(e.footerEntries);
     default:
       if (e.entries || e.entry) {
@@ -1086,6 +1086,10 @@ function fixup(c){
   c.inventory.forEach(it => { if (it.cat == null || it.cat === '') delete it.cat; else it.cat = invCat(it.cat); });
   ['conditions','classFeats'].forEach(k => c[k] = txtList(c[k]));
   ['saves','skills','res','notes'].forEach(k => c[k] = objOr(c[k], {}));
+  /* B-038/B-039: numeric fields end up in HTML and arithmetic; reduce them to bounded integers */
+  c.res = Object.fromEntries(Object.entries(c.res).map(([k, v]) => [k, intIn(v, 0, 0, 20)]));
+  c.inventory.forEach(it => { if (it.q != null) it.q = intIn(it.q, 1, 1, 9999); });
+  if (isObj(c.condDur)) c.condDur = Object.fromEntries(Object.entries(c.condDur).filter(([, v]) => v != null).map(([k, v]) => [k, intIn(v, 1, 1, 999)])); else delete c.condDur;
   c.currency = objOr(c.currency, {cp:0,sp:0,ep:0,gp:0,pp:0});
   ['cp','sp','ep','gp','pp'].forEach(k => { if (c.currency[k] != null) c.currency[k] = intIn(c.currency[k], 0, 0, LIM.coin); });
   if (c.xp != null) c.xp = intIn(c.xp, 0, 0, LIM.xp);
@@ -1334,11 +1338,14 @@ function modal(html, opts = {}){
   bk.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(opts.label || 'Dialog')}">${html}</div>`;
   bk.addEventListener('click', e => { if (e.target === bk) closeModal(); });
   document.body.appendChild(bk);
+  /* B-029: keyboard focus and screen readers stay inside the dialog */
+  [...document.body.children].forEach(n => { if (n !== bk && n.id !== 'toast' && n.tagName !== 'SCRIPT' && !n.closest('[inert]')) n.setAttribute('inert', ''); });
   const f = bk.querySelector('[autofocus]') || bk.querySelector('.modal'); f.tabIndex = f.tabIndex < 0 ? -1 : f.tabIndex; f.focus({preventScroll:true});
   return bk;
 }
 function closeModal(){
   const m = $('#modalBk'); if (!m) return;
+  document.querySelectorAll('body > [inert]').forEach(n => n.removeAttribute('inert'));
   if (G.needRender){ G.needRender = false; setTimeout(render, 0); }
   m.removeAttribute('id'); m.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
   if (reduceMotion()){ m.remove(); return; }
@@ -2078,7 +2085,7 @@ function extMeta(e){
   const o = e.o, src = o.source ? ` · ${esc(o.source)}${o.page ? ' p.' + o.page : ''}` : '';
   if (e.cat === 'spells'){
     const time = (o.time || []).map(t => `${t.number || ''} ${t.unit || ''}`.trim()).join(' or ');
-    return `${o.level ? `Level ${o.level} ${SCHOOL[o.school] || o.school || ''}` : `${SCHOOL[o.school] || o.school || ''} cantrip`}${time ? ' · ' + esc(time) : ''}${src}`;
+    return `${o.level ? `Level ${esc(o.level)} ${esc(SCHOOL[o.school] || o.school || '')}` : `${esc(SCHOOL[o.school] || o.school || '')} cantrip`}${time ? ' · ' + esc(time) : ''}${src}`;
   }
   if (e.cat === 'monsters'){
     const size = Array.isArray(o.size) ? o.size.map(s => ({T:'Tiny',S:'Small',M:'Medium',L:'Large',H:'Huge',G:'Gargantuan'}[s] || s)).join('/') : '';
@@ -2102,7 +2109,7 @@ function extBody(e){
     const spd = o.speed ? Object.entries(o.speed).filter(([k]) => k !== 'canHover').map(([k, v]) => `${k === 'walk' ? '' : k + ' '}${typeof v === 'object' ? v.number : v} ft.`).join(', ') : '';
     const blocks = [['Traits', o.trait], ['Actions', o.action], ['Bonus Actions', o.bonus], ['Reactions', o.reaction], ['Legendary Actions', o.legendary]];
     return `<div class="statblock">${kv('Armor Class', esc(ac))}${kv('Hit Points', esc(o.hp ? (o.hp.average ?? '') + (o.hp.formula ? ` (${o.hp.formula})` : '') : ''))}${kv('Speed', esc(spd))}
-      <div class="abl">${['str','dex','con','int','wis','cha'].map(a => `<div><b>${a.toUpperCase()}</b><span class="num">${o[a]} (${fmt(mod(o[a]))})</span></div>`).join('')}</div>
+      <div class="abl">${['str','dex','con','int','wis','cha'].map(a => `<div><b>${a.toUpperCase()}</b><span class="num">${esc(o[a])} (${fmt(mod(o[a]))})</span></div>`).join('')}</div>
       ${o.senses ? kv('Senses', esc([].concat(o.senses).join(', ')) + (o.passive ? `, passive Perception ${o.passive}` : '')) : ''}${o.languages ? kv('Languages', esc([].concat(o.languages).join(', '))) : ''}
       ${o.cr ? kv('Challenge', esc(typeof o.cr === 'object' ? o.cr.cr : o.cr)) : ''}
       ${(o.spellcasting || []).length ? `<h4>Spellcasting</h4><div class="prose">${r5(o.spellcasting.map(s => ({...s, type:'spellcasting'})))}</div>` : ''}
