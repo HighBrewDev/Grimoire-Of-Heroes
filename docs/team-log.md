@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-13 · team leader
+- **Stato**: main c4f696f, controllo a 1440x900 e 390x844 senza errori. Punteggio +206 ↓ (238/247), nessuna sezione rossa. Ieri nessun commit di sviluppo né del designer: B-039, B-041 [alte], B-038 e il keep-alive restano al backend. Registro corretto: B-037 spostato in "Risolti" (PR #19 unita).
+- **Piano**: backend su XSS (B-039/B-041/B-038) + PR keep-alive; frontend su B-029 e poi B-033/B-034/B-032/B-031; designer su accessibilità. Nessuna PR aperta aspetta Capo. Sala aggiornata.
+
 ## 2026-11-13 · test
 - **Fatto** · suite eseguita su main `f77121d`: 238/247 test superati, sezioni rosse: nessuna. Punteggio totale +206 (ieri +208). Aggiunti 11 test (cronaca ×3, tratti ×3, biblioteca ×3, robustezza ×2), tutti verdi; nessun test cambiato per farlo passare.
 - **Ancora rossi** · 9 test su bug aperti: B-029, B-031, B-032, B-033, B-034, B-038, B-039 (×2), B-041. Le sezioni più basse sono robustezza (+3), cronaca/tratti e caratteristiche (+12).

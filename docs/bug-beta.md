@@ -46,16 +46,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Test: `levelup` "B-031 …".
 
 
-### B-037 [bassa] Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
-- Trovato da: power user · 2026-11-10
-- Sezione: incontro
-- Dove: IV Encounter → Heal sulla riga di un eroe, poi III Combattimento → Death saves, 1440x900
-- Passi: 1. Lio a 0 PF con 1 successo e 2 fallimenti. 2. Encounter → aggiungi Lio → nella sua riga scrivi 5 → Heal. 3. Apri Combattimento.
-- Atteso: come con Heal nel Combattimento: a 5 PF i tiri contro la morte si azzerano.
-- Ottenuto: PF 5/33 ma Death saves mostra ancora **1 successo e 2 fallimenti** accesi (`death {s:1,f:2}`). `encHeal` (index.html ~3622) aggiorna solo `hp.cur`, mentre `heal()` azzera `death`. Si sistema da solo al colpo successivo solo per via di B-036.
-- Console: nessun errore.
-- Test: `incontro` "B-037 …".
-
 ### B-034 [bassa] Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
 - Trovato da: distruttore · 2026-11-10
 - Sezione: eroe
@@ -134,6 +124,17 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-037 [bassa] Cura dal tracciatore dell'Incontro a un eroe a 0 PF: i tiri contro la morte restano segnati
+- Trovato da: power user · 2026-11-10
+- Sezione: incontro
+- Dove: IV Encounter → Heal sulla riga di un eroe, poi III Combattimento → Death saves, 1440x900
+- Passi: 1. Lio a 0 PF con 1 successo e 2 fallimenti. 2. Encounter → aggiungi Lio → nella sua riga scrivi 5 → Heal. 3. Apri Combattimento.
+- Atteso: come con Heal nel Combattimento: a 5 PF i tiri contro la morte si azzerano.
+- Ottenuto: PF 5/33 ma Death saves mostra ancora **1 successo e 2 fallimenti** accesi (`death {s:1,f:2}`). `encHeal` (index.html ~3622) aggiorna solo `hp.cur`, mentre `heal()` azzera `death`. Si sistema da solo al colpo successivo solo per via di B-036.
+- Console: nessun errore.
+- Test: `incontro` "B-037 …".
+- Risolto: 2026-11-11 · sviluppo frontend · commit bc4640f (PR #19 unita il 12/11); test `incontro` B-037 verde (verifica del leader 13/11).
 
 - **Risolto 2026-11-11** in [PR #19](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/19) (frontend): B-037, `encHeal` azzera i tiri contro la morte quando l'eroe supera 0 PF. Test `incontro` B-037 verde.
 ### B-040 [bassa] [UX] Lo scaffale: l'ordine scelto ("By name", "Last used") torna a "Shelf order" a ogni ricarica
