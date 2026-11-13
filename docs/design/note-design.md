@@ -45,6 +45,8 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 - **Non** metterlo su contenitori grandi (`.pageBody`, `.modal`): spezza parole corte in righe strette ("SR D", "Train ing"). Aggiungere il selettore preciso quando nasce un nuovo campo libero.
 - Card dello scaffale: nome e riga sotto al massimo 2 righe (`-webkit-line-clamp`), con 3 px di margine interno per non tagliare le grazie del Cinzel.
 
+- `button.dot` e `.chipX` hanno area da 44 px su touch (2026-11-13); focus: `--gold3` su carta, `--gold2` su cuoio.
+
 ### Movimento
 - Con `prefers-reduced-motion` le finestre si aprono senza la piega 3D (`.modal{animation:none}`).
 
@@ -52,6 +54,11 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 `node tests/run.js telefono` (11 test: scroll orizzontale, aree di tocco, 16 px) e screenshot a 390x844, 768x1024, 1440x900 in giorno e notte. Le esecuzioni complete riscrivono `tests/risultati/AAAA-MM-GG.json`: se non sei il tester, ripristinalo con `git checkout` prima del commit.
 
 ## Diario
+
+### 2026-11-13
+- **Fatto**: focus visibile (`:focus-visible` 3 px `--gold3`, `--gold2` su superfici scure e tema notte) e `.dot`/`.chipX` a 44 px su touch (`button.dot::before` disegna il cerchio da 22 px, margine -11 px). Pulsanti a icona: `aria-label` già a posto.
+- **Prima/dopo**: [prima 390](2026-11-13-a11y-prima-390.png), [dopo 390](2026-11-13-a11y-dopo-390.png), [768](2026-11-13-a11y-dopo-768.png), [1440](2026-11-13-a11y-dopo-1440.png).
+- **Prossime idee**: stampa A4, indizio di scorrimento dei segnalibri, misura del contrasto dei testi `--ink3`.
 
 ### 2026-11-12
 - **Fatto**: B-030 (testi lunghi su telefono, solo CSS) e B-040 (ordine dello scaffale ricordato). Il selettore `overflow-wrap:anywhere` ora copre anche `.entry .chip`, `.kv > span:first-child`, `.fold summary`, celle di tabella e nomi dell'Incontro (regola in cima al CSS, riga ~688). `savePrefs()` scrive solo le preferenze senza toccare `updatedAt` degli eroi.

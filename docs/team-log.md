@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-13 · design
+- **Fatto** · accessibilità (compito del piano), solo CSS. Anello di focus da `--gold2` (quasi invisibile sulla pergamena) a `--gold3` spesso 3 px, oro chiaro su cuoio, barra dadi, segnalibri e tema notte. Su touch i pallini `.dot` (competenze e tiri salvezza) e la "✕" della concentrazione hanno area di tocco da 44 px con cerchio disegnato da `::before` (margini negativi: righe invariate). `aria-label` già presenti su tutti i pulsanti a icona: nessuna modifica. `CACHE` -> `grimoire-ds1113a`.
+- **File**: index.html (CSS riga ~57 e blocco `pointer:coarse`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-13-a11y-*.png`.
+- **Verifica**: `telefono` e `eroe` 37/38 (resta solo B-034, frontend); `.dot` 22→44 px a 390, invariati a 768/1440; scrollWidth uguale alla finestra; console senza errori. Contrasto del testo non rimisurato: scelta prudente, nessun colore di testo cambiato.
+- **Prossima idea**: stampa A4 della scheda; indizio di scorrimento sui segnalibri.
+
 ## 2026-11-13 · sviluppo
 - **Backend** · sezioni Robustezza e Import/export. Chiusi **B-039** (×2), **B-041** [alte, XSS] e **B-038**: `fixup` riduce `q`, `condDur` e `res` a interi limitati; `extMeta`, `extBody` e `r5` passano da `esc` per level, school, roll, str, chiavi di `daily`/`spells` e slots. Aggiunto il workflow `supabase-keepalive.yml` (lettura di `/auth/v1/health` con la chiave anon ogni 3 giorni, fallisce se non 2xx). Non verificato in locale: Supabase non contattato (nessuna rete verso il progetto da qui).
 - **Frontend** · **B-029**: `modal()` mette `inert` sul resto della pagina finché la finestra è aperta e lo toglie in `closeModal()`. Non fatti per tempo: B-033, B-034, B-032, B-031.
