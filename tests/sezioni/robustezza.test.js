@@ -132,6 +132,25 @@ module.exports = {sezione:'robustezza', test:[
     const fired = await app.page.evaluate(() => window.__f || []);
     assert.deepStrictEqual(fired, [], 'onerror eseguito da campi non escapati: ' + fired.join(', '));
   }],
+  // B-042: resto di B-041: `page` (extMeta, riga della fonte) e `passive` (extBody, mostri) importati da 5etools finiscono nell'HTML senza esc.
+  ['B-042 XSS: page e passive di un file 5etools importato nella Biblioteca non eseguono codice', async ({open}) => {
+    const app = await open();
+    const P = t => `<img src=x onerror="(window.__f=window.__f||[]).push('${t}')">`;
+    const pack = {
+      spell:[{name:'Sonda', source:'X', page:P('page'), level:1, school:'E', entries:['x']}],
+      monster:[{name:'Mostro', source:'X', size:['M'], type:'beast', str:10, dex:10, con:10, int:10, wis:10, cha:10, ac:[10], hp:{average:10}, senses:['darkvision 60 ft.'], passive:P('passive')}],
+    };
+    await app.go('library'); await app.clickJS('libCat', 'import');
+    await app.page.setInputFiles('#imp_file', {name:'sonda.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify(pack))});
+    await app.page.waitForTimeout(800);
+    for (const c of ['spells', 'monsters']) {
+      await app.clickJS('libCat', c); await app.page.waitForTimeout(100);
+      await app.page.evaluate(() => document.querySelectorAll('[data-act="libPick"]').forEach(b => { if (/Sonda|Mostro/.test(b.textContent)) b.click(); }));
+      await app.page.waitForTimeout(200);
+    }
+    const fired = await app.page.evaluate(() => window.__f || []);
+    assert.deepStrictEqual(fired, [], 'onerror eseguito da campi non escapati: ' + [...new Set(fired)].join(', '));
+  }],
   ['XSS: il nome dell\'eroe con HTML non esegue codice nelle pagine principali', async ({open}) => {
     const app = await open();
     await app.set('#f_name', '<img src=x onerror="window.__nm=1">');
