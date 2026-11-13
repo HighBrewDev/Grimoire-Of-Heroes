@@ -139,4 +139,17 @@ module.exports = {sezione:'robustezza', test:[
     await app.page.waitForTimeout(300);
     assert.strictEqual(await app.page.evaluate(() => window.__nm), undefined, 'onerror eseguito dal nome eroe');
   }],
+  ['nome eroe con HTML e 80 caratteri: escapato in scaffale e capitolo Eroe', async ({open}) => {
+    const app = await open(); await app.go('hero');
+    await app.set('#f_name', '<img src=x onerror="window.__xss=1">'.padEnd(80, 'x'));
+    await app.go('combat'); await app.go('hero');
+    assert.strictEqual(await app.page.evaluate(() => window.__xss), undefined);
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
+  ['nome eroe vuoto o di soli spazi non viene salvato', async ({open}) => {
+    const app = await open(); await app.go('hero');
+    const prima = (await app.hero()).name;
+    await app.set('#f_name', '   ');
+    assert.strictEqual((await app.hero()).name, prima);
+  }],
 ]};

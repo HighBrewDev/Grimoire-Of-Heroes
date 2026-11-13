@@ -311,6 +311,84 @@
      "tot": 16
     }
    }
+  },
+  "2026-11-13": {
+   "commit": "f77121d",
+   "totale": 206,
+   "superati": 238,
+   "totali": 247,
+   "sezioni": {
+    "eroe": {
+     "punti": 17,
+     "sup": 20,
+     "tot": 21
+    },
+    "caratteristiche": {
+     "punti": 12,
+     "sup": 15,
+     "tot": 16
+    },
+    "combattimento": {
+     "punti": 33,
+     "sup": 33,
+     "tot": 33
+    },
+    "incontro": {
+     "punti": 14,
+     "sup": 14,
+     "tot": 14
+    },
+    "tratti": {
+     "punti": 11,
+     "sup": 11,
+     "tot": 11
+    },
+    "incantesimi": {
+     "punti": 11,
+     "sup": 11,
+     "tot": 11
+    },
+    "zaino": {
+     "punti": 13,
+     "sup": 13,
+     "tot": 13
+    },
+    "cronaca": {
+     "punti": 10,
+     "sup": 10,
+     "tot": 10
+    },
+    "biblioteca": {
+     "punti": 11,
+     "sup": 11,
+     "tot": 11
+    },
+    "workshop": {
+     "punti": 26,
+     "sup": 26,
+     "tot": 26
+    },
+    "levelup": {
+     "punti": 16,
+     "sup": 22,
+     "tot": 24
+    },
+    "importexport": {
+     "punti": 12,
+     "sup": 20,
+     "tot": 21
+    },
+    "telefono": {
+     "punti": 17,
+     "sup": 17,
+     "tot": 17
+    },
+    "robustezza": {
+     "punti": 3,
+     "sup": 15,
+     "tot": 19
+    }
+   }
   }
  },
  "bugContati": {
@@ -341,7 +419,8 @@
   "B-026": "2026-11-11",
   "B-028": "2026-11-11",
   "B-039": "2026-11-12",
-  "B-038": "2026-11-12"
+  "B-038": "2026-11-12",
+  "B-041": "2026-11-13"
  },
  "bugPremiati": {
   "B-012": "2026-11-09",

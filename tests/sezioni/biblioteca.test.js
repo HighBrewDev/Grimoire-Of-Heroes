@@ -57,4 +57,20 @@ module.exports = {sezione:'biblioteca', test:[
     await app.page.waitForSelector('#modalBk .modal h2');
     assert.ok((await app.text('#modalBk h2')).includes('Prone'));
   }],
+  ['ricerca con caratteri da espressione regolare non dà errori', async ({open}) => {
+    const app = await open(); await app.go('library');
+    for (const q of ['(', '[a-', '.*', '\\', '<b>']) await app.page.fill('#lib_q', q);
+    assert.deepStrictEqual([...app.consoleErrors, ...app.pageErrors], []);
+  }],
+  ['svuotare la ricerca ripristina la lista completa', async ({open}) => {
+    const app = await open(); await app.go('library');
+    const tot = (await listNames(app)).length;
+    await app.page.fill('#lib_q', 'qwxzv'); await app.page.fill('#lib_q', '');
+    assert.strictEqual((await listNames(app)).length, tot);
+  }],
+  ['la ricerca ignora le maiuscole ("FIREBALL")', async ({open}) => {
+    const app = await open(); await app.go('library');
+    await app.page.fill('#lib_q', 'FIREBALL');
+    assert.strictEqual((await listNames(app))[0], 'Fireball');
+  }],
 ]};

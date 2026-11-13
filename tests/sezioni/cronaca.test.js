@@ -40,4 +40,26 @@ module.exports = {sezione:'cronaca', test:[
     const cls = await app.page.locator('#page [data-act="levelUp"]').getAttribute('class');
     assert.ok(!/ghost/.test(cls), cls);
   }],
+  ['aspetto del personaggio: si salva e resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    await app.page.fill('#n_look', 'Cicatrice sull\'occhio sinistro');
+    assert.strictEqual((await app.hero()).notes.look, 'Cicatrice sull\'occhio sinistro');
+    await app.reload(); await app.go('hero'); await app.go('chronicle');
+    assert.strictEqual(await app.page.inputValue('#n_look'), 'Cicatrice sull\'occhio sinistro');
+  }],
+  ['note con HTML restano testo e non eseguono codice dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    await app.page.fill('#n_story', '</textarea><img src=x onerror="window.__xss=1">');
+    await app.reload(); await app.go('hero'); await app.go('chronicle');
+    assert.strictEqual(await app.page.evaluate(() => window.__xss), undefined);
+    assert.strictEqual(await app.page.inputValue('#n_story'), '</textarea><img src=x onerror="window.__xss=1">');
+  }],
+  ['le note sono per eroe: cambiando eroe non si mescolano', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    const first = (await app.store()).activeId;
+    await app.page.fill('#n_story', 'Solo del primo eroe');
+    await app.click('pick', 'teldrin'); await app.go('chronicle');
+    assert.ok(!(await app.page.inputValue('#n_story')).includes('Solo del primo eroe'));
+    assert.strictEqual((await app.heroById(first)).notes.story, 'Solo del primo eroe');
+  }],
 ]};

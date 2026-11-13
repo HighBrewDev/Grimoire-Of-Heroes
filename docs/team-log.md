@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-13 · test
+- **Fatto** · suite eseguita su main `f77121d`: 238/247 test superati, sezioni rosse: nessuna. Punteggio totale +206 (ieri +208). Aggiunti 11 test (cronaca ×3, tratti ×3, biblioteca ×3, robustezza ×2), tutti verdi; nessun test cambiato per farlo passare.
+- **Ancora rossi** · 9 test su bug aperti: B-029, B-031, B-032, B-033, B-034, B-038, B-039 (×2), B-041. Le sezioni più basse sono robustezza (+3), cronaca/tratti e caratteristiche (+12).
+
 ## 2026-11-11 · frontend mattina
 - **Fatto** · sezioni **Combattimento** e **Incontro**. B-023 e B-036 erano già su main ([b3ffd47](https://github.com/HighBrewDev/Grimoire-Of-Heroes/commit/b3ffd47), altra sessione): la mia versione, quasi identica, è stata scartata per non avere due codici per la stessa cosa. Resta mio **B-037**: `encHeal` azzera i tiri contro la morte quando l'eroe torna sopra 0 PF, come Heal.
 - **Test**: prima 198/215 (due file di test non caricabili per l'unione di PR #6, poi riparati su main da 78f2cf6); dopo **218/225** su main + B-037, nessuna regressione. Rossi solo bug aperti: B-029, B-030 ×2, B-031, B-032, B-033, B-034.

@@ -48,4 +48,22 @@ module.exports = {sezione:'tratti', test:[
     await app.go('traits'); await app.set('#feat_pick', 'Alert'); await app.click('addFeat'); await app.go('hero');
     assert.ok((await init()).startsWith('+4'), await init());
   }],
+  ['talento personalizzato con HTML nel nome non esegue codice', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#feat_custom', '<img src=x onerror="window.__xss=1">'); await app.click('addFeatCustom');
+    assert.strictEqual(await app.page.evaluate(() => window.__xss), undefined);
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
+  ['privilegio personalizzato senza nome non viene aggiunto', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    const prima = (await app.hero()).classFeats.length;
+    await app.page.fill('#cf_n', '   '); await app.click('addClassFeat');
+    assert.strictEqual((await app.hero()).classFeats.length, prima);
+  }],
+  ['i talenti restano dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.set('#feat_pick', 'Grappler'); await app.click('addFeat');
+    await app.reload(); await app.go('traits');
+    assert.ok((await app.text('#page')).includes('Grappler'));
+  }],
 ]};
