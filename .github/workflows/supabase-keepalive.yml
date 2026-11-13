@@ -1,0 +1,20 @@
+name: Supabase keep-alive
+# Light read every 3 days so the free Supabase project is not paused for inactivity.
+on:
+  schedule:
+    - cron: '17 6 */3 * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read from Supabase with the public (anon) key from config.js
+        run: |
+          url=$(sed -n "s/.*supabaseUrl: *'\([^']*\)'.*/\1/p" <(curl -fsS https://highbrewdev.github.io/Grimoire-Of-Heroes/config.js))
+          key=$(sed -n "s/.*supabaseKey: *'\([^']*\)'.*/\1/p" <(curl -fsS https://highbrewdev.github.io/Grimoire-Of-Heroes/config.js))
+          test -n "$url" && test -n "$key"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $key" "$url/auth/v1/health")
+          echo "Supabase answered HTTP $code"
+          case "$code" in 2*) ;; *) exit 1;; esac
