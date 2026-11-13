@@ -171,4 +171,13 @@ module.exports = {sezione:'robustezza', test:[
     await app.set('#f_name', '   ');
     assert.strictEqual((await app.hero()).name, prima);
   }],
+  ["B-043 homebrew importato con la scuola come oggetto con `toString`: nessun errore di pagina e l'utente vede un messaggio o la finestra di verifica", async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const buffer = Buffer.from(JSON.stringify({grimoireHomebrew:[{id:'x', cat:'spells', o:{n:'Scuola strana', lv:1, sc:{toString:1}, cls:['Wizard'], x:'Un lampo.'}}]}));
+    await app.page.setInputFiles('#brew_file', {name:'strano.json', mimeType:'application/json', buffer});
+    await app.page.waitForTimeout(1200);
+    const feedback = (await app.page.locator('#modalBk .b5List').count()) > 0 || (await app.toast()) !== '';
+    assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
+    assert.ok(feedback, "nessuna finestra di verifica né messaggio: l'import sparisce nel nulla");
+  }],
 ]};
