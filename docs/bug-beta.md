@@ -68,16 +68,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `caratteristiche` "B-032 …".
 
-### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
-- Trovato da: distruttore · 2026-11-09
-- Sezione: import/export (salvataggio con più schede)
-- Dove: I Eroe (campo Nome) e VIII Cronaca (note), 1440x900, due schede sullo stesso sito
-- Passi: 1. Apri il sito nelle schede A e B, entrambe su Valeria Thorne. 2. In B apri Chronicle e scrivi qualcosa nella storia di Valeria (o cambia il Nome nella scheda Eroe senza uscire dal campo). 3. In A cancella Valeria (Delete → conferma). 4. Torna in B e continua a scrivere, poi esci dal campo.
-- Atteso: B si accorge che Valeria non c'è più (avviso, il testo non viene salvato su nessun altro eroe) oppure Valeria resta perché era in modifica.
-- Ottenuto: la storia di **Eldrin** diventa "A city guardsman who took up the adventuring road. scrive ancora" (testo di Valeria + quello scritto): la sua storia vera ("Apprentice of the Spire.") è persa senza avviso. Con il Nome: Eldrin si chiama "Valeria EDITATA in B". La pagina di B mostra ancora "Valeria Thorne · Chronicle". Causa probabile: `otherTabSaved`/`mergeStored` (index.html ~4015) tolgono l'eroe e spostano `G.activeId` sul primo eroe mentre si scrive (`isTyping` rimanda solo il render), poi `bindValue` (~4333) scrive su `active()`, che ora è un altro eroe.
-- Console: nessun errore.
-- Test: `importexport` "B-016 …" (2 test).
-
 ### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 - Trovato da: distruttore · 2026-11-09
 - Sezione: workshop
@@ -106,6 +96,17 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
+- Trovato da: distruttore · 2026-11-09
+- Sezione: import/export (salvataggio con più schede)
+- Dove: I Eroe (campo Nome) e VIII Cronaca (note), 1440x900, due schede sullo stesso sito
+- Passi: 1. Apri il sito nelle schede A e B, entrambe su Valeria Thorne. 2. In B apri Chronicle e scrivi qualcosa nella storia di Valeria (o cambia il Nome nella scheda Eroe senza uscire dal campo). 3. In A cancella Valeria (Delete → conferma). 4. Torna in B e continua a scrivere, poi esci dal campo.
+- Atteso: B si accorge che Valeria non c'è più (avviso, il testo non viene salvato su nessun altro eroe) oppure Valeria resta perché era in modifica.
+- Ottenuto: la storia di **Eldrin** diventa "A city guardsman who took up the adventuring road. scrive ancora" (testo di Valeria + quello scritto): la sua storia vera ("Apprentice of the Spire.") è persa senza avviso. Con il Nome: Eldrin si chiama "Valeria EDITATA in B". La pagina di B mostra ancora "Valeria Thorne · Chronicle". Causa probabile: `otherTabSaved`/`mergeStored` (index.html ~4015) tolgono l'eroe e spostano `G.activeId` sul primo eroe mentre si scrive (`isTyping` rimanda solo il render), poi `bindValue` (~4333) scrive su `active()`, che ora è un altro eroe.
+- Console: nessun errore.
+- Test: `importexport` "B-016 …" (2 test).
+- Risolto: 2026-11-10 · PR #16 (un campo scrive solo sull'eroe per cui è stato aperto); test `importexport` B-016 verdi. Registro corretto dal team leader 2026-11-14.
 
 ### B-041 [alta] XSS guardado: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle, forza o slot esegue codice a ogni apertura della voce
 - Trovato da: distruttore · 2026-11-12
