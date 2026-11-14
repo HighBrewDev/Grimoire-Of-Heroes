@@ -5,6 +5,50 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-044 [alta] Biblioteca: un file 5etools con `source` (o `cls`) come oggetto con `toString` blocca l'avvio dell'app per sempre
+- Trovato da: distruttore · 2026-11-14
+- Sezione: import/export
+- Dove: Biblioteca → Import, 1440x900
+- Passi: 1. Biblioteca → Import → scegli un file `{"spell":[{"name":"Strano","source":{"toString":1},"level":1,"school":"E","entries":["x"]}]}`. 2. Ricarica la pagina (anche una seconda volta).
+- Atteso: voce scartata o convertita in testo, app avviata.
+- Ottenuto: l'import riesce (e va in IndexedDB), ma `buildIndex()` (riga ~910, `e.o.cls || e.o.source` concatenato) lancia a ogni avvio, `boot()` si ferma prima di `wire()`/`render()`: nessun segnalibro, nessuna scheda; gli eroi restano in localStorage (3/3) ma non si raggiungono né si esportano. Si recupera solo cancellando i dati del sito. Stessa famiglia di B-043 ma persistente. Nota: con `level`, `school`, `rarity`, `className` ecc. come oggetti con `toString` lancia invece `key5` già all'import e l'import sparisce senza messaggio (nessuna persistenza).
+- Console: `PAGEERROR Cannot convert object to primitive value` (buildIndex ← boot)
+- Test: `tests/sezioni/robustezza.test.js` · "B-044 …" (oggi fallisce).
+- Suggerimento: in `ingest5` ridurre `source`, `cls`, `level`, `school`, `rarity`, `className`… a testo (`typeof === 'string'`) prima di `key5` e dell'id; proteggere `buildIndex` con try/catch per voce così un pacchetto malformato non blocca l'avvio.
+
+### B-047 [bassa] Import homebrew: oggetti con `toString` in altri campi (incantesimi `cls`/`lv`, talenti) fanno sparire l'import senza messaggio (resto di B-043)
+- Trovato da: distruttore · 2026-11-14
+- Sezione: workshop
+- Dove: Workshop → Import file, 1440x900
+- Passi: 1. Importa `{"grimoireHomebrew":[{"id":"x","cat":"spells","o":{"n":"Z","lv":{"toString":1},"cls":{"toString":1}}}]}` (oppure `cat:"feats"` con tutti i campi `{"toString":1}`).
+- Atteso: finestra di verifica o messaggio.
+- Ottenuto: nessuna finestra, nessun messaggio; l'app resta viva e nulla viene salvato (provati 8 valori strani per ogni campo di ogni tipo: 4 casi su 64, nessuna esecuzione di codice, nessun blocco all'avvio).
+- Console: `PAGEERROR Cannot convert object to primitive value` (brewKey, `String`/`join`)
+- Test: nessuno ancora.
+- Suggerimento: ridurre a testo ogni campo in `cleanBrew`/`checkBrew` come per `sc`.
+
+### B-045 [bassa] Biblioteca: una voce 5etools con un campo del tipo sbagliato (`ac: 15`, `trait` non array, `will` non array…) non si apre e non dice nulla
+- Trovato da: distruttore · 2026-11-14
+- Sezione: biblioteca
+- Dove: Biblioteca → Mostri, 1440x900
+- Passi: 1. Importa `{"monster":[{"name":"Goblin Capo","source":"HB","size":["S"],"type":"humanoid","ac":15,"hp":{"average":20},"str":10,"dex":14,"con":10,"int":10,"wis":10,"cha":8}]}`. 2. Cerca "Goblin Capo" e cliccalo.
+- Atteso: scheda del mostro (CA 15) o un avviso.
+- Ottenuto: il riquadro resta "Choose an entry to read it here." senza messaggio. Stessa cosa con `a.from` non array, `trait`/`action`/`legendary` non array, `spellcasting` non array, `daily`/`will` non array, `entries` con `colLabels` non array, `hp` come testo. Dopo la ricarica l'app parte (non è persistente). Nessuna esecuzione di codice in 8 tipi di voce × ogni campo × 16 valori strani (B-042 regge).
+- Console: `PAGEERROR (o.ac || []).map is not a function`
+- Test: `tests/sezioni/robustezza.test.js` · "B-045 …" (oggi fallisce).
+- Suggerimento: avvolgere `entryCard` in try/catch con un messaggio "Questa voce non si può mostrare", o usare `[].concat(x)` / `Array.isArray` nei punti di `extBody` e `r5`.
+
+### B-046 [bassa] Biblioteca: una voce 5etools con `source` non testuale (numero, array) rompe la ricerca della sua categoria
+- Trovato da: distruttore · 2026-11-14
+- Sezione: biblioteca
+- Dove: Biblioteca → Talenti (o Specie, Background, Oggetti…), 1440x900
+- Passi: 1. Importa `{"feat":[{"name":"Dono Strano","source":5,"entries":["x"]}]}`. 2. Talenti → scrivi "alert" nella ricerca.
+- Atteso: ricerca normale.
+- Ottenuto: errore a ogni tasto, la lista non si aggiorna come dovrebbe (`key5` restituisce `o.source` com'è e `libFiltered` chiama `.toLowerCase()`).
+- Console: `PAGEERROR (e.k || "").toLowerCase is not a function`
+- Test: `tests/sezioni/robustezza.test.js` · "B-046 …" (oggi fallisce).
+- Suggerimento: come B-044, ridurre `source` a testo in `key5` (`String(...)` solo se `typeof` è string/number).
+
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
 - Sezione: level up/multiclasse
@@ -479,3 +523,4 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - 2026-11-12 · power user · Sessione serale sul Level up/multiclasse, sul backup e sull'Incontro (Playwright/Chromium, server locale = main f3c56ce). Sezioni `levelup`, `importexport`, `incontro`, `caratteristiche`: 71/75, falliscono solo i test dei bug già aperti (B-031, B-033 e due altri già elencati), nessuna regressione. **Eroe 1 → 20 in tre classi** (Fighter 9 / Rogue 4 / Wizard 7 con +1/+1 ad ogni scelta, sottoclassi Thief ed Evoker): 19 level up di fila, livello sempre quello atteso, aperture+conferma 120–480 ms (mediana ~220 ms), PF finali 184, Costituzione 19, Forza 20 (tetto rispettato), console pulita. **Telefono 390x844 con 24 eroi pesanti** (20 oggetti ciascuno): 15 Duplicate (mediana 68 ms, max 159), 10 cancellazioni (102 ms, max 146), 10 rinomine con accenti (28 ms), 20 danni/cure (58 ms, max 145), riposo breve e lungo ok; "Export all" di 29 eroi 70 KB e ripristino in un tomo con un eroe: 630 ms, 30 eroi, nessuno mancante, nessun doppione; ricarica 0,6 s, localStorage 47.300 caratteri (~1.600 a eroe), memoria JS 13,6 MB, scrollWidth 390. **Incontro**: eroi aggiunti al tracciatore, poi uno cancellato dal tomo (la riga sparisce, nessun errore), un altro rinominato (nome aggiornato nel tracciatore), 15 turni di fila fino al round 6 senza errori. Nessun problema nuovo; B-037 ancora aperto (test rosso). Console pulita in tutte le prove.
 - 2026-11-13 · distruttore · Sessione serale sulla sicurezza dell'import dopo le correzioni (Playwright/Chromium, server locale = main 69a3e3a). Suite completa 243/247: rossi solo B-031, B-032, B-033, B-034. **B-039 e B-038 reggono**: eroe importato con ogni foglia (valori) e poi con ogni chiave di inventario/condDur/res/slots/note avvelenata con `<img onerror>`, tutti i 10 capitoli visitati → nessuna esecuzione, nessun errore. **B-041 regge solo in parte**: pacchetto 5etools con ogni campo avvelenato (spell, monster, item, feat, race, background, class, subclass, features, condition, rules, deity, baseitem; 14 categorie) → eseguono ancora `page` (riga della fonte, 3 categorie) e `passive` (mostri): **B-042** [alta], test scritto. Altre tecniche: localStorage cancellato mentre l'app è aperta e poi una modifica (riscrive tutti gli eroi dalla memoria, nessun errore); import eroe con JSON troncato, vuoto, solo spazi, `[`, livello 1e20/PF NaN/For -5/Des 1e999 (accettato e ripulito, nessun errore nei capitoli) e nome da 3 MB (rifiutato, finestra aperta senza messaggio chiaro: non registrato). B-016 non riprovato per tempo. Console pulita (solo il 404 del server di prova). Sezioni verdi: suite verde.
 - 2026-11-13 · power user · Sessione serale su Robustezza, Import/export, Level up/multiclasse ed Eroe (Playwright/Chromium, server locale = main 1d661a4). **Homebrew sugli eroi**: classe Artificer importata da .md (artificer-armorer), usata come classe principale a livello 5 (slot 4/2, mezzo incantatore, giusto); **multiclasse a tre classi** Fighter 4 / Wizard 5 / Artificer 3: livello totale 12, slot 4/3/3/1 (livello incantatore 7: giusto), poi 3 level up di fila a livello 15 con PF 32 → 56 (+8 a livello), console pulita. **XSS dall'homebrew**: file homebrew con `"><img onerror>` in ogni campo di testo di tutte le categorie (le voci con selezioni non valide sono scartate dalla verifica; entrate 4: sottoclasse, talento, specie, oggetto), usate su un eroe e aperte in Workshop, Biblioteca ed Eroe: nessun codice eseguito. **Scaffale da telefono (390x844, tocco)**: 40 eroi dal wizard (mediana 355 ms, max 440), 15 duplicati (87 ms, max 115), 15 rinomine con HTML e accenti (51 ms), 15 cancellazioni con conferma (308 ms), 43 eroi → localStorage 38.800 caratteri; livello 5 dal Level up, 30 danni/cure di fila (83 ms, max 276), 20 dadi (42 ms), 5 riposi brevi + lunghi: PF tornati al massimo, scrollWidth 390. **Backup**: Export all 43 eroi 55 KB, import in un tomo con un eroe 605 ms → 44 eroi, nomi e livelli uguali; secondo import dello stesso file → "già nel tomo", nessun doppione; ricarica 0,73 s, localStorage 40.400, memoria JS 9,4 MB, cambio capitolo 124–195 ms. Un problema nuovo: **B-043** (robustezza, bassa: homebrew con `sc` oggetto). B-042 ancora aperto. Console pulita altrove.
+- 2026-11-14 · distruttore · Sessione serale sull'import dopo le correzioni di B-042/B-043 (Playwright/Chromium, server locale = main a188552). **B-042 e B-043 reggono**: 8 tipi di voce 5etools (incantesimi, mostri, oggetti, talenti, specie, background, tratti di classe/sottoclasse) con ogni campo sostituito da 16 valori strani (HTML con onerror, `toString`, array, oggetti, numeri, null, 200.000 caratteri, tabelle/liste annidate) e homebrew JSON (ogni campo di ogni tipo × 8 valori): nessun codice eseguito. Trovato invece il blocco dell'avvio: **B-044 [alta]** (`source` come oggetto con `toString` → app morta a ogni ricarica), **B-045** (campi del tipo sbagliato, es. `ac: 15`, la voce non si apre), **B-046** (ricerca rotta con `source` non testuale), **B-047** (import homebrew silenzioso, resto di B-043). Test rossi B-044/045/046 in robustezza. Non provati stasera: sezioni verdi, due schede, offline.

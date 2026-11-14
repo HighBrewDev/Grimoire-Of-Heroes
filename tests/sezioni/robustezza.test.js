@@ -180,4 +180,35 @@ module.exports = {sezione:'robustezza', test:[
     assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
     assert.ok(feedback, "nessuna finestra di verifica né messaggio: l'import sparisce nel nulla");
   }],
+  // B-044: un pacchetto 5etools con `source` (o `cls`) non testuale entra in IndexedDB; a ogni avvio buildIndex() lancia e boot() si ferma.
+  ['B-044 un pacchetto 5etools con `source` come oggetto con `toString` non blocca l\'avvio dell\'app alla ricarica', async ({open}) => {
+    const app = await open(); await app.go('library'); await app.clickJS('libCat', 'import');
+    await app.page.setInputFiles('#imp_file', {name:'strano.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify({spell:[{name:'Strano', source:{toString:1}, level:1, school:'E', entries:['x']}]}))});
+    await app.page.waitForTimeout(1000);
+    await app.page.reload(); await app.page.waitForTimeout(1200);
+    const tabs = await app.page.locator('#chapTabs button').count();
+    assert.ok(tabs > 0, `dopo la ricarica non c'è nessun capitolo (${tabs} segnalibri): l'app non si avvia più. Errori: ${app.pageErrors.join(' | ')}`);
+  }],
+  // B-045: extBody assume array/oggetti di forma 5etools; con `ac: 15` la voce non si apre e non c'è nessun messaggio.
+  ['B-045 una voce 5etools con `ac` numerico (non array) si apre nella Biblioteca senza errori', async ({open}) => {
+    const app = await open(); await app.go('library'); await app.clickJS('libCat', 'import');
+    await app.page.setInputFiles('#imp_file', {name:'goblin.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify({monster:[{name:'Goblin Capo', source:'HB', size:['S'], type:'humanoid', ac:15, hp:{average:20}, str:10, dex:14, con:10, int:10, wis:10, cha:8}]}))});
+    await app.page.waitForTimeout(900);
+    await app.clickJS('libCat', 'monsters');
+    await app.page.fill('#lib_q', 'Goblin Capo'); await app.page.waitForTimeout(200);
+    await app.page.evaluate(() => [...document.querySelectorAll('#libList [data-act="libPick"]')].find(b => /Goblin Capo/.test(b.textContent))?.click());
+    await app.page.waitForTimeout(300);
+    const det = await app.page.evaluate(() => document.querySelector('#libDetail')?.innerText || '');
+    assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
+    assert.ok(/Goblin Capo/.test(det), 'la voce non si apre: il riquadro resta "' + det.slice(0, 40) + '"');
+  }],
+  // B-046: libFiltered chiama `(e.k || '').toLowerCase()` ma key5 restituisce `o.source` com\'è: se non è testo la ricerca lancia.
+  ['B-046 una voce 5etools con `source` non testuale non rompe la ricerca della Biblioteca', async ({open}) => {
+    const app = await open(); await app.go('library'); await app.clickJS('libCat', 'import');
+    await app.page.setInputFiles('#imp_file', {name:'strano.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify({feat:[{name:'Dono Strano', source:5, entries:['x']}]}))});
+    await app.page.waitForTimeout(900);
+    await app.clickJS('libCat', 'feats');
+    await app.page.fill('#lib_q', 'alert'); await app.page.waitForTimeout(300);
+    assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
+  }],
 ]};
