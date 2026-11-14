@@ -33,6 +33,7 @@ module.exports = {sezione:'telefono', test:[
   tapTest('tocco ≥44 px: eroi sullo scaffale', null, '#shelf .hero, #shelf .shelfAdd'),
   tapTest('tocco ≥44 px: danni, cura e riposi', app => app.go('combat'), '#page [data-act="damage"], #page [data-act="heal"], #page [data-act="tempHP"], #page [data-act="shortRest"], #page [data-act="longRest"], #hpAmt'),
   tapTest('tocco ≥44 px: + e − delle caratteristiche', app => app.go('abilities'), '#page .stepper button'),
+  tapTest('B-048 tocco ≥44 px: pulsanti Roll dei tratti di classe', app => app.go('traits'), '#page [data-act="roll"]'),
   tapTest('tocco ≥44 px: slot degli incantesimi', app => app.click('pick', 'teldrin').then(() => app.go('spells')), '#page [data-act="slot"]'),
   ['i campi di testo hanno carattere ≥16 px (niente zoom automatico su iPhone)', async ({open}) => {
     const app = await open(PHONE);
