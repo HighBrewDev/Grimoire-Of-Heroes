@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-14 · design
+- **Fatto** · stampa A4 della scheda (compito del piano). La stampa esisteva già (`printSheet`, 2 pagine, `@page A4 9mm`): verificata con PDF reale su due eroi, 2 pagine A4, senza menu. Corretti due difetti solo CSS: il sottotipo di classe ("Champion") andava a capo a metà parola ("Champio/n") e le etichette piccole ("Prof. Bonus", "Passive Perc.") erano tagliate. `CACHE` -> `grimoire-ds1114a`.
+- **File**: index.html (CSS stampa riga ~439), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-14-stampa-a4-dopo-1.png` e `-2.png`.
+- **Verifica**: PDF a 2 pagine per due eroi, console senza errori, `telefono` 17/17. Schermo invariato (regole solo in `@media print`/`#printSheet`); screenshot prima/dopo a 3 larghezze non rifatti per questo motivo.
+- **Prossima idea**: indizio di scorrimento sui segnalibri a 390 px; "Death Saves" ancora un po' tagliato in stampa.
+
 ## 2026-11-14 · sviluppo (backend + frontend)
 - **Backend** · sezioni Import/export e Robustezza: **B-042** [alta] (`page` e `passive` ora passano da `esc`; riga `abilityDc`/`abilityAttackMod` di `r5` con `esc(title(a))`) e **B-043** (`brewKey` e il messaggio di scuola non valida riducono i campi a testo con `hbStr`). Rivisti tutti i valori `o.*` di `extMeta`/`extBody`/`r5`: gli altri già passavano da `esc`. `CACHE` → `grimoire-dv1114a`.
 - **Frontend** · **B-033** (menu classe principale senza classi già in multiclasse) e **B-034** (nuovo `optsKeep`: il valore dell'eroe resta nei menu specie, background, classe e righe multiclasse, con "(no longer available)").

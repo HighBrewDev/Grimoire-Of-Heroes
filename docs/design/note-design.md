@@ -55,6 +55,9 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-14
+- **Fatto**: scheda stampabile A4 (`printSheet`, 2 pagine) controllata con PDF reale; sottotipo senza spezzare le parole (`.sHead .sBox:not(.sName) .sVal` 10,5 pt) ed etichette `.sBox.sm .sLab` a 5 pt. Nessuna nuova risorsa/licenza. Immagini: [pag. 1](2026-11-14-stampa-a4-dopo-1.png), [pag. 2](2026-11-14-stampa-a4-dopo-2.png).
+
 ### 2026-11-13
 - **Fatto**: focus visibile (`:focus-visible` 3 px `--gold3`, `--gold2` su superfici scure e tema notte) e `.dot`/`.chipX` a 44 px su touch (`button.dot::before` disegna il cerchio da 22 px, margine -11 px). Pulsanti a icona: `aria-label` già a posto.
 - **Prima/dopo**: [prima 390](2026-11-13-a11y-prima-390.png), [dopo 390](2026-11-13-a11y-dopo-390.png), [768](2026-11-13-a11y-dopo-768.png), [1440](2026-11-13-a11y-dopo-1440.png).
