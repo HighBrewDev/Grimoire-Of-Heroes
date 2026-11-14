@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-13** sul commit `f77121d` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,70 +14,72 @@ Aggiornato il **2026-11-13** sul commit `f77121d` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **238 / 247**
-- Punteggio totale: **+206**, tendenza ↓ (ieri 208)
+- Test superati: **249 / 255**
+- Punteggio totale: **+237**, tendenza ↑ (ieri 206)
 - Sezioni rosse: nessuna
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +17 | 14,2 | ↓ | 20/21 | B-034 (bassa) | 🟡 GIALLO |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +12 | 10 | = | 15/16 | B-032 (bassa) | 🟡 GIALLO |
-| Combattimento (PF, CA, attacchi, riposi) | +33 | 19 | ↓ | 33/33 | — | 🟡 GIALLO |
-| Incontro (iniziativa, round) | +14 | 10,6 | ↑ | 14/14 | B-037 (bassa) | 🟡 GIALLO |
-| Tratti e talenti | +11 | 8,6 | ↑ | 11/11 | — | 🟢 VERDE |
-| Incantesimi (slot, preparati, multiclasse) | +11 | 11 | = | 11/11 | — | 🟢 VERDE |
-| Zaino e monete | +13 | 11,8 | = | 13/13 | — | 🟢 VERDE |
-| Cronaca | +10 | 7,6 | ↑ | 10/10 | — | 🟢 VERDE |
-| Biblioteca (ricerca regole) | +11 | 8,6 | ↑ | 11/11 | — | 🟢 VERDE |
-| Workshop homebrew | +26 | 22,6 | = | 26/26 | B-020 (bassa), B-011 (bassa) | 🟢 VERDE |
-| Level up e multiclasse | +16 | 11,2 | = | 22/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
-| Import/export e salvataggio | +12 | 12,4 | ↑ | 20/21 | B-041 (alta), B-039 (alta), B-038 (bassa), B-016 (alta) | 🟡 GIALLO |
-| Telefono (390x844) | +17 | 5,4 | ↓ | 17/17 | — | 🟡 GIALLO |
-| Robustezza (console, offline, input strani) | +3 | 6,8 | ↓ | 15/19 | B-029 (media) | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +17 | 14,7 | = | 20/21 | B-034 (bassa) | 🟡 GIALLO |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +12 | 10,3 | = | 15/16 | B-032 (bassa) | 🟡 GIALLO |
+| Combattimento (PF, CA, attacchi, riposi) | +33 | 21,3 | = | 33/33 | — | 🟢 VERDE |
+| Incontro (iniziativa, round) | +14 | 11,2 | = | 14/14 | — | 🟡 GIALLO |
+| Tratti e talenti | +13 | 9,3 | ↑ | 13/13 | — | 🟢 VERDE |
+| Incantesimi (slot, preparati, multiclasse) | +13 | 11,3 | ↑ | 13/13 | — | 🟢 VERDE |
+| Zaino e monete | +13 | 12 | = | 13/13 | — | 🟢 VERDE |
+| Cronaca | +12 | 8,3 | ↑ | 12/12 | — | 🟢 VERDE |
+| Biblioteca (ricerca regole) | +11 | 9 | = | 11/11 | — | 🟢 VERDE |
+| Workshop homebrew | +25 | 23 | ↓ | 26/26 | B-043 (bassa), B-020 (bassa), B-011 (bassa) | 🟢 VERDE |
+| Level up e multiclasse | +16 | 12 | = | 22/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
+| Import/export e salvataggio | +25 | 14,5 | ↑ | 21/21 | B-042 (alta), B-016 (alta) | 🟡 GIALLO |
+| Telefono (390x844) | +17 | 7,3 | = | 17/17 | — | 🟢 VERDE |
+| Robustezza (console, offline, input strani) | +16 | 8,3 | ↑ | 19/21 | — | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
-- **robustezza** +3 (15 × +1, 4 × −3)
-  - ✗ B-029 solo tastiera: Tab nella finestra Level up non esce sugli eroi coperti e il livello va all'eroe del titolo: Kessa è passata al livello 3 dalla finestra "Eldrin reaches level 5" (focus uscito su: omni, theme, wizard, go:library, go:workshop, sound)
-  - ✗ B-039 XSS: quantità (q) di un oggetto importato come testo HTML non esegue codice nello Zaino: onerror eseguito: la quantità non è escapata né ridotta a numero
-  - ✗ B-039 XSS: durata di una condizione (condDur) importata come testo HTML non esegue codice in Combattimento: onerror eseguito: condDur non è escapato né ridotto a numero
-  - ✗ B-041 XSS: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle o PF non esegue codice: onerror eseguito da campi non escapati: rmax, school, rollexact, rmin, level, str, slots, lvkey
-- **cronaca** +10 (10 × +1, 0 × −3): tutto verde oggi.
-- **tratti** +11 (11 × +1, 0 × −3): tutto verde oggi.
-- **incantesimi** +11 (11 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +11 (11 × +1, 0 × −3): tutto verde oggi.
 - **caratteristiche** +12 (15 × +1, 1 × −3)
   - ✗ B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20): Cos 10 → 1, danno 5, Cos 10: PF 115/120 invece di 77/82
-- **importexport** +12 (20 × +1, 1 × −3, bug nuovi -5)
-  - ✗ B-038 import con risorse (res) negative, frazionarie o di testo: salvate entro valori sensati e il riposo breve non le rende frazionarie: res.channel_divinity_charges = 1.5 dopo il riposo breve (valori ammessi: interi 0-20)
-  - Bug nuovo B-041 [alta] -5: XSS guardado: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle, forza o slot esegue codice a ogni apertura della voce
+- **cronaca** +12 (12 × +1, 0 × −3): tutto verde oggi.
+- **tratti** +13 (13 × +1, 0 × −3): tutto verde oggi.
+- **incantesimi** +13 (13 × +1, 0 × −3): tutto verde oggi.
 - **zaino** +13 (13 × +1, 0 × −3): tutto verde oggi.
 - **incontro** +14 (14 × +1, 0 × −3): tutto verde oggi.
+- **robustezza** +16 (19 × +1, 2 × −3, bug chiusi +3)
+  - ✗ B-042 XSS: page e passive di un file 5etools importato nella Biblioteca non eseguono codice: onerror eseguito da campi non escapati: page, passive
+  - ✗ B-043 homebrew importato con la scuola come oggetto con `toString`: nessun errore di pagina e l'utente vede un messaggio o la finestra di verifica: errore di pagina: Cannot convert object to primitive value
+  - Bug chiuso B-029 con test che passa +3: Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
 - **levelup** +16 (22 × +1, 2 × −3)
   - ✗ B-031 talento Grappler al livello 4: +1 a Forza o Destrezza: For 16, Des 14 (prima 16 e 14)
   - ✗ B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1): classe doppia dopo aver scelto Rogue come classe principale: Rogue / Rogue
 - **eroe** +17 (20 × +1, 1 × −3)
   - ✗ B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu: i menu mostrano Barbarian, Dragonborn, Acolyte, Barbarian per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata
 - **telefono** +17 (17 × +1, 0 × −3): tutto verde oggi.
-- **workshop** +26 (26 × +1, 0 × −3): tutto verde oggi.
+- **workshop** +25 (26 × +1, 0 × −3, bug nuovi -1)
+  - Bug nuovo B-043 [bassa] -1: Import homebrew: un incantesimo con la scuola (`sc`) come oggetto con `toString` blocca l'import senza messaggio
+- **importexport** +25 (21 × +1, 0 × −3, bug nuovi -5, bug chiusi +9)
+  - Bug nuovo B-042 [alta] -5: XSS: `page` e `passive` di un file 5etools importato nella Biblioteca eseguono codice (resto di B-041)
+  - Bug chiuso B-041 con test che passa +3: XSS guardado: un file 5etools importato nella Biblioteca con HTML in livello, scuola, tabelle, forza o slot esegue codice a ogni apertura della voce
+  - Bug chiuso B-039 con test che passa +3: XSS guardado: l'import di un eroe con `q` (quantità di un oggetto) o `condDur` (durata di una condizione) come testo HTML esegue codice
+  - Bug chiuso B-038 con test che passa +3: Import: i contatori delle risorse (`res`) accettano negativi, frazioni e testo
 - **combattimento** +33 (33 × +1, 0 × −3): tutto verde oggi.
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. robustezza +3 · 15/19 · GIALLO
-2. cronaca +10 · 10/10 · VERDE
-3. tratti +11 · 11/11 · VERDE
-4. incantesimi +11 · 11/11 · VERDE
-5. biblioteca +11 · 11/11 · VERDE
-6. caratteristiche +12 · 15/16 · GIALLO
-7. importexport +12 · 20/21 · GIALLO
-8. zaino +13 · 13/13 · VERDE
-9. incontro +14 · 14/14 · GIALLO
-10. levelup +16 · 22/24 · GIALLO
-11. eroe +17 · 20/21 · GIALLO
-12. telefono +17 · 17/17 · GIALLO
-13. workshop +26 · 26/26 · VERDE
-14. combattimento +33 · 33/33 · GIALLO
+1. biblioteca +11 · 11/11 · VERDE
+2. caratteristiche +12 · 15/16 · GIALLO
+3. cronaca +12 · 12/12 · VERDE
+4. tratti +13 · 13/13 · VERDE
+5. incantesimi +13 · 13/13 · VERDE
+6. zaino +13 · 13/13 · VERDE
+7. incontro +14 · 14/14 · GIALLO
+8. robustezza +16 · 19/21 · GIALLO
+9. levelup +16 · 22/24 · GIALLO
+10. eroe +17 · 20/21 · GIALLO
+11. telefono +17 · 17/17 · VERDE
+12. workshop +25 · 26/26 · VERDE
+13. importexport +25 · 21/21 · GIALLO
+14. combattimento +33 · 33/33 · VERDE
 
 ## Storico
 
@@ -87,4 +89,5 @@ Aggiornato il **2026-11-13** sul commit `f77121d` di main dall'agente "Test e pu
 2026-11-11  totale  +173  test 208/225  cc5634e
 2026-11-12  totale  +208  test 226/235  afc1c73
 2026-11-13  totale  +206  test 238/247  f77121d
+2026-11-14  totale  +237  test 249/255  31bee76
 ```

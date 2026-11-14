@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-14 · test
+- **Fatto** · suite eseguita su main `31bee76`: 249/255 test superati, sezioni rosse: nessuna. Punteggio totale +237 (ieri +206). Aggiunti 6 test (cronaca ×2, tratti ×2, incantesimi ×2), tutti verdi; nessun test cambiato per farlo passare.
+- **Ancora rossi** · 6 test su bug aperti: B-031, B-032, B-033, B-034, B-042, B-043. Sezioni più basse: biblioteca (+11), caratteristiche (+12), cronaca (+12).
+
 ## 2026-11-13 · design
 - **Fatto** · accessibilità (compito del piano), solo CSS. Anello di focus da `--gold2` (quasi invisibile sulla pergamena) a `--gold3` spesso 3 px, oro chiaro su cuoio, barra dadi, segnalibri e tema notte. Su touch i pallini `.dot` (competenze e tiri salvezza) e la "✕" della concentrazione hanno area di tocco da 44 px con cerchio disegnato da `::before` (margini negativi: righe invariate). `aria-label` già presenti su tutti i pulsanti a icona: nessuna modifica. `CACHE` -> `grimoire-ds1113a`.
 - **File**: index.html (CSS riga ~57 e blocco `pointer:coarse`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-13-a11y-*.png`.

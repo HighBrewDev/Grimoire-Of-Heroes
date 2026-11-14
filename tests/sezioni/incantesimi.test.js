@@ -70,4 +70,16 @@ module.exports = {sezione:'incantesimi', test:[
     const t = await app.text('#page');
     assert.ok(/Save DC\s*13/.test(t) && /Spell attack\s*\+5/.test(t));
   }],
+  ['gli slot spesi restano dopo la ricarica', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    await app.click('slot', '1:0'); await app.click('slot', '1:1');
+    await app.reload(); await app.go('spells');
+    assert.strictEqual((await app.hero()).spells.slots['1'].used, 2);
+  }],
+  ['gli incantesimi preparati restano dopo la ricarica', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    await app.clickJS('prep', 'Sleep');
+    await app.reload(); await app.go('spells');
+    assert.ok((await app.hero()).spells.prep.includes('Sleep'));
+  }],
 ]};

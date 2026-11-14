@@ -66,4 +66,17 @@ module.exports = {sezione:'tratti', test:[
     await app.reload(); await app.go('traits');
     assert.ok((await app.text('#page')).includes('Grappler'));
   }],
+  ['talento personalizzato resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#feat_custom', 'Maestro del vento'); await app.click('addFeatCustom');
+    await app.reload(); await app.go('traits');
+    assert.ok((await app.text('#page')).includes('Maestro del vento'));
+  }],
+  ['privilegio personalizzato resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#cf_n', 'Colpo del corvo'); await app.click('addClassFeat');
+    await app.reload(); await app.go('traits');
+    assert.ok((await app.hero()).classFeats.includes('Colpo del corvo'));
+    assert.ok((await app.text('#page')).includes('Colpo del corvo'));
+  }],
 ]};

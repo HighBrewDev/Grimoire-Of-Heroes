@@ -62,4 +62,20 @@ module.exports = {sezione:'cronaca', test:[
     assert.ok(!(await app.page.inputValue('#n_story')).includes('Solo del primo eroe'));
     assert.strictEqual((await app.heroById(first)).notes.story, 'Solo del primo eroe');
   }],
+  ['gli XP aggiunti restano dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    await app.click('addXP', '500');
+    const xp = (await app.hero()).xp;
+    await app.reload(); await app.go('hero'); await app.go('chronicle');
+    assert.strictEqual((await app.hero()).xp, xp);
+    assert.ok(new RegExp('Current XP\\s*' + xp.toLocaleString('en-US')).test(await app.text('#page')));
+  }],
+  ['i quattro campi di note sono separati: scrivere in uno non cambia gli altri', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    const prima = (await app.hero()).notes;
+    await app.page.fill('#n_allies', 'Solo alleati');
+    const dopo = (await app.hero()).notes;
+    assert.strictEqual(dopo.allies, 'Solo alleati');
+    for (const k of ['look', 'story', 'extra']) assert.strictEqual(dopo[k], prima[k], k);
+  }],
 ]};
