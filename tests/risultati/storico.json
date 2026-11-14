@@ -391,14 +391,14 @@
    }
   },
   "2026-11-14": {
-   "commit": "31bee76",
-   "totale": 237,
-   "superati": 249,
+   "commit": "f45e295",
+   "totale": 253,
+   "superati": 253,
    "totali": 255,
    "sezioni": {
     "eroe": {
-     "punti": 17,
-     "sup": 20,
+     "punti": 21,
+     "sup": 21,
      "tot": 21
     },
     "caratteristiche": {
@@ -447,8 +447,8 @@
      "tot": 26
     },
     "levelup": {
-     "punti": 16,
-     "sup": 22,
+     "punti": 20,
+     "sup": 23,
      "tot": 24
     },
     "importexport": {
@@ -462,8 +462,8 @@
      "tot": 17
     },
     "robustezza": {
-     "punti": 16,
-     "sup": 19,
+     "punti": 24,
+     "sup": 21,
      "tot": 21
     }
    }

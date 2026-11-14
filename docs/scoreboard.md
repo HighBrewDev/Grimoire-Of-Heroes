@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-14** sul commit `f45e295` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,13 +14,13 @@ Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **249 / 255**
-- Punteggio totale: **+237**, tendenza ↑ (ieri 206)
+- Test superati: **253 / 255**
+- Punteggio totale: **+253**, tendenza ↑ (ieri 206)
 - Sezioni rosse: nessuna
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +17 | 14,7 | = | 20/21 | B-034 (bassa) | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +21 | 15,3 | ↑ | 21/21 | B-034 (bassa) | 🟡 GIALLO |
 | Caratteristiche (punteggi, modificatori, TS, abilità) | +12 | 10,3 | = | 15/16 | B-032 (bassa) | 🟡 GIALLO |
 | Combattimento (PF, CA, attacchi, riposi) | +33 | 21,3 | = | 33/33 | — | 🟢 VERDE |
 | Incontro (iniziativa, round) | +14 | 11,2 | = | 14/14 | — | 🟡 GIALLO |
@@ -30,10 +30,10 @@ Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e pu
 | Cronaca | +12 | 8,3 | ↑ | 12/12 | — | 🟢 VERDE |
 | Biblioteca (ricerca regole) | +11 | 9 | = | 11/11 | — | 🟢 VERDE |
 | Workshop homebrew | +25 | 23 | ↓ | 26/26 | B-043 (bassa), B-020 (bassa), B-011 (bassa) | 🟢 VERDE |
-| Level up e multiclasse | +16 | 12 | = | 22/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
-| Import/export e salvataggio | +25 | 14,5 | ↑ | 21/21 | B-042 (alta), B-016 (alta) | 🟡 GIALLO |
+| Level up e multiclasse | +20 | 12,7 | ↑ | 23/24 | B-031 (bassa), B-033 (bassa) | 🟡 GIALLO |
+| Import/export e salvataggio | +25 | 14,5 | ↑ | 21/21 | B-042 (alta) | 🟡 GIALLO |
 | Telefono (390x844) | +17 | 7,3 | = | 17/17 | — | 🟢 VERDE |
-| Robustezza (console, offline, input strani) | +16 | 8,3 | ↑ | 19/21 | — | 🟡 GIALLO |
+| Robustezza (console, offline, input strani) | +24 | 9,7 | ↑ | 21/21 | — | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
@@ -45,16 +45,12 @@ Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e pu
 - **incantesimi** +13 (13 × +1, 0 × −3): tutto verde oggi.
 - **zaino** +13 (13 × +1, 0 × −3): tutto verde oggi.
 - **incontro** +14 (14 × +1, 0 × −3): tutto verde oggi.
-- **robustezza** +16 (19 × +1, 2 × −3, bug chiusi +3)
-  - ✗ B-042 XSS: page e passive di un file 5etools importato nella Biblioteca non eseguono codice: onerror eseguito da campi non escapati: page, passive
-  - ✗ B-043 homebrew importato con la scuola come oggetto con `toString`: nessun errore di pagina e l'utente vede un messaggio o la finestra di verifica: errore di pagina: Cannot convert object to primitive value
-  - Bug chiuso B-029 con test che passa +3: Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
-- **levelup** +16 (22 × +1, 2 × −3)
-  - ✗ B-031 talento Grappler al livello 4: +1 a Forza o Destrezza: For 16, Des 14 (prima 16 e 14)
-  - ✗ B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1): classe doppia dopo aver scelto Rogue come classe principale: Rogue / Rogue
-- **eroe** +17 (20 × +1, 1 × −3)
-  - ✗ B-034 classe, specie e background che non sono nei menu (homebrew cancellato, import) restano mostrati nei menu: i menu mostrano Barbarian, Dragonborn, Acolyte, Barbarian per un eroe Runecarver / Blood Hunter, Popolo del Muschio, Pirata
 - **telefono** +17 (17 × +1, 0 × −3): tutto verde oggi.
+- **levelup** +20 (23 × +1, 1 × −3)
+  - ✗ B-031 talento Grappler al livello 4: +1 a Forza o Destrezza: For 16, Des 14 (prima 16 e 14)
+- **eroe** +21 (21 × +1, 0 × −3): tutto verde oggi.
+- **robustezza** +24 (21 × +1, 0 × −3, bug chiusi +3)
+  - Bug chiuso B-029 con test che passa +3: Solo tastiera: Tab esce dalla finestra Level up e il livello finisce su un altro eroe
 - **workshop** +25 (26 × +1, 0 × −3, bug nuovi -1)
   - Bug nuovo B-043 [bassa] -1: Import homebrew: un incantesimo con la scuola (`sc`) come oggetto con `toString` blocca l'import senza messaggio
 - **importexport** +25 (21 × +1, 0 × −3, bug nuovi -5, bug chiusi +9)
@@ -73,10 +69,10 @@ Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e pu
 5. incantesimi +13 · 13/13 · VERDE
 6. zaino +13 · 13/13 · VERDE
 7. incontro +14 · 14/14 · GIALLO
-8. robustezza +16 · 19/21 · GIALLO
-9. levelup +16 · 22/24 · GIALLO
-10. eroe +17 · 20/21 · GIALLO
-11. telefono +17 · 17/17 · VERDE
+8. telefono +17 · 17/17 · VERDE
+9. levelup +20 · 23/24 · GIALLO
+10. eroe +21 · 21/21 · GIALLO
+11. robustezza +24 · 21/21 · GIALLO
 12. workshop +25 · 26/26 · VERDE
 13. importexport +25 · 21/21 · GIALLO
 14. combattimento +33 · 33/33 · VERDE
@@ -89,5 +85,5 @@ Aggiornato il **2026-11-14** sul commit `31bee76` di main dall'agente "Test e pu
 2026-11-11  totale  +173  test 208/225  cc5634e
 2026-11-12  totale  +208  test 226/235  afc1c73
 2026-11-13  totale  +206  test 238/247  f77121d
-2026-11-14  totale  +237  test 249/255  31bee76
+2026-11-14  totale  +253  test 253/255  f45e295
 ```

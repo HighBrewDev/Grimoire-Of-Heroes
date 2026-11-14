@@ -5,28 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-043 [bassa] Import homebrew: un incantesimo con la scuola (`sc`) come oggetto con `toString` blocca l'import senza messaggio
-- Trovato da: power user · 2026-11-13
-- Sezione: robustezza
-- Dove: Workshop → Import file, 1440x900
-- Passi: 1. Workshop → Import file → `{"grimoireHomebrew":[{"id":"x","cat":"spells","o":{"n":"Scuola strana","lv":1,"sc":{"toString":1},"cls":["Wizard"],"x":"Un lampo."}}]}`.
-- Atteso: finestra di verifica con la voce segnalata (o scartata) e un messaggio.
-- Ottenuto: non si apre nulla e nessun messaggio; l'import sparisce nel nulla. Gli stessi oggetti in `lv`, `cls`, `x`, `ac`, `rar`, `pre` e `sc: {"a":1}` non danno errore: solo `sc` viene trattato come testo (conversione implicita) nella verifica.
-- Console: `PAGEERROR Cannot convert object to primitive value`
-- Test: `tests/sezioni/robustezza.test.js` · "B-043 …" (oggi fallisce).
-- Suggerimento: ridurre ogni campo a testo con `typeof === 'string'` prima di confrontarlo o concatenarlo.
-
-### B-042 [alta] XSS: `page` e `passive` di un file 5etools importato nella Biblioteca eseguono codice (resto di B-041)
-- Trovato da: distruttore · 2026-11-13
-- Sezione: robustezza
-- Dove: Biblioteca → Import → file `.json`, poi aprire la voce o scorrere l'elenco, 1440x900
-- Passi: 1. Biblioteca → Import → file `{"spell":[{"name":"Sonda","source":"X","page":"<img src=x onerror=…>","level":1,"school":"E","entries":["x"]}],"monster":[{"name":"Mostro","source":"X","size":["M"],"type":"beast","str":10,"dex":10,"con":10,"int":10,"wis":10,"cha":10,"ac":[10],"hp":{"average":10},"senses":["darkvision 60 ft."],"passive":"<img src=x onerror=…>"}]}`. 2. Aprire le categorie Spells e Monsters e la voce.
-- Atteso: il testo compare escapato (o `page` e `passive` sono ridotti a numeri).
-- Ottenuto: `onerror` viene eseguito. `extMeta` (index.html ~2092) scrive `o.page` senza `esc` (`' p.' + o.page`), `extBody` (~2120) scrive `o.passive` senza `esc` nella riga dei sensi. Colpisce ogni categoria con `source` e `page` (incantesimi, talenti, oggetti, mostri…). Il resto di B-041 (level, school, roll, str, slots, chiavi) regge; anche l'import eroe con ogni foglia e ogni chiave avvelenata non esegue nulla.
-- Console: nessun errore.
-- Test: `tests/sezioni/robustezza.test.js` · "B-042 …" (oggi fallisce).
-- Suggerimento: passare in `esc` ogni valore di `o.*` interpolato in `extMeta`/`extBody`, non solo quelli già trovati; è la terza volta che resta un campo (B-039, B-041, B-042).
-
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
 - Sezione: level up/multiclasse
@@ -37,26 +15,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `levelup` "B-031 …".
 
-
-### B-034 [bassa] Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte
-- Trovato da: distruttore · 2026-11-10
-- Sezione: eroe
-- Dove: I Eroe → menu Class, Species, Background e righe della multiclasse, 1440x900
-- Passi: 1. Workshop → Import file di una classe homebrew in Markdown ("# Class: Runecarver", d8, tiri salvezza Int e Cos). 2. Valeria Fighter 3 / Rogue 1: nella riga della multiclasse scegli Runecarver. 3. Workshop → cancella Runecarver (conferma). 4. Torna a Eroe. Oppure importa un eroe con classe "Artificer", specie "Popolo del Muschio", background "Pirata".
-- Atteso: il menu mostra ancora il valore dell'eroe (anche come voce "Runecarver (non più disponibile)"), come fa l'intestazione.
-- Ottenuto: intestazione "Fighter (Champion) 3 / Runecarver 1", ma il menu della riga mostra **Barbarian**; per l'eroe importato i menu mostrano Barbarian / Dragonborn / Acolyte mentre i dati dicono Artificer / Popolo del Muschio / Pirata. Il giocatore legge una classe sbagliata, e scegliere davvero Barbarian (la voce già mostrata) non fa partire il cambio. I dati non cambiano da soli e il Level up funziona ancora (Runecarver 1 → 2, +7 PF), nessun errore. `opt()` marca `selected` solo se il valore è nell'elenco (`names('classes')`, index.html ~1650 e ~1656).
-- Console: nessun errore.
-- Test: `eroe` "B-034 …".
-
-### B-033 [bassa] Multiclasse: il menu della classe principale offre una classe già presente nelle righe (resto di B-028)
-- Trovato da: distruttore · 2026-11-10
-- Sezione: level up/multiclasse
-- Dove: I Eroe → menu Class (classe principale), 1440x900
-- Passi: 1. Valeria Fighter 3 / Rogue 1 (livello 4). 2. Nel menu Class (la classe principale, non la riga) scegli Rogue. 3. Apri Level up. 4. Ricarica la pagina.
-- Atteso: il menu Class non offre Rogue (come fa ora la riga, B-028) oppure unisce i livelli dicendolo.
-- Ottenuto: intestazione "Rogue 3 / Rogue 1"; Level up offre due righe "Rogue 3 → 4" e "Rogue 1 → 2" (aumenti e privilegi contati da due classi separate, come in B-028). Alla ricarica `fixup` scarta la riga doppia: l'eroe diventa "Rogue 4" e i 3 livelli da Guerriero spariscono senza avviso. La correzione di B-028 ha filtrato solo il menu `data-mc`; `bindValue` per `class` (index.html ~4384) non guarda la multiclasse.
-- Console: nessun errore.
-- Test: `levelup` "B-033 …".
 
 ### B-032 [bassa] Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
 - Trovato da: distruttore · 2026-11-10
@@ -96,6 +54,49 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-043 [bassa] Import homebrew: un incantesimo con la scuola (`sc`) come oggetto con `toString` blocca l'import senza messaggio — RISOLTO 2026-11-14 (sviluppo)
+- Trovato da: power user · 2026-11-13
+- Sezione: robustezza
+- Dove: Workshop → Import file, 1440x900
+- Passi: 1. Workshop → Import file → `{"grimoireHomebrew":[{"id":"x","cat":"spells","o":{"n":"Scuola strana","lv":1,"sc":{"toString":1},"cls":["Wizard"],"x":"Un lampo."}}]}`.
+- Atteso: finestra di verifica con la voce segnalata (o scartata) e un messaggio.
+- Ottenuto: non si apre nulla e nessun messaggio; l'import sparisce nel nulla. Gli stessi oggetti in `lv`, `cls`, `x`, `ac`, `rar`, `pre` e `sc: {"a":1}` non danno errore: solo `sc` viene trattato come testo (conversione implicita) nella verifica.
+- Console: `PAGEERROR Cannot convert object to primitive value`
+- Test: `tests/sezioni/robustezza.test.js` · "B-043 …" (oggi fallisce).
+- Suggerimento: ridurre ogni campo a testo con `typeof === 'string'` prima di confrontarlo o concatenarlo.
+
+### B-042 [alta] XSS: `page` e `passive` di un file 5etools importato nella Biblioteca eseguono codice (resto di B-041) — RISOLTO 2026-11-14 (sviluppo)
+- Trovato da: distruttore · 2026-11-13
+- Sezione: robustezza
+- Dove: Biblioteca → Import → file `.json`, poi aprire la voce o scorrere l'elenco, 1440x900
+- Passi: 1. Biblioteca → Import → file `{"spell":[{"name":"Sonda","source":"X","page":"<img src=x onerror=…>","level":1,"school":"E","entries":["x"]}],"monster":[{"name":"Mostro","source":"X","size":["M"],"type":"beast","str":10,"dex":10,"con":10,"int":10,"wis":10,"cha":10,"ac":[10],"hp":{"average":10},"senses":["darkvision 60 ft."],"passive":"<img src=x onerror=…>"}]}`. 2. Aprire le categorie Spells e Monsters e la voce.
+- Atteso: il testo compare escapato (o `page` e `passive` sono ridotti a numeri).
+- Ottenuto: `onerror` viene eseguito. `extMeta` (index.html ~2092) scrive `o.page` senza `esc` (`' p.' + o.page`), `extBody` (~2120) scrive `o.passive` senza `esc` nella riga dei sensi. Colpisce ogni categoria con `source` e `page` (incantesimi, talenti, oggetti, mostri…). Il resto di B-041 (level, school, roll, str, slots, chiavi) regge; anche l'import eroe con ogni foglia e ogni chiave avvelenata non esegue nulla.
+- Console: nessun errore.
+- Test: `tests/sezioni/robustezza.test.js` · "B-042 …" (oggi fallisce).
+- Suggerimento: passare in `esc` ogni valore di `o.*` interpolato in `extMeta`/`extBody`, non solo quelli già trovati; è la terza volta che resta un campo (B-039, B-041, B-042).
+
+### B-034 [bassa] Classe, specie o background fuori dai menu (homebrew cancellato, eroe importato): i menu mostrano Barbarian, Dragonborn, Acolyte — RISOLTO 2026-11-14 (sviluppo)
+- Trovato da: distruttore · 2026-11-10
+- Sezione: eroe
+- Dove: I Eroe → menu Class, Species, Background e righe della multiclasse, 1440x900
+- Passi: 1. Workshop → Import file di una classe homebrew in Markdown ("# Class: Runecarver", d8, tiri salvezza Int e Cos). 2. Valeria Fighter 3 / Rogue 1: nella riga della multiclasse scegli Runecarver. 3. Workshop → cancella Runecarver (conferma). 4. Torna a Eroe. Oppure importa un eroe con classe "Artificer", specie "Popolo del Muschio", background "Pirata".
+- Atteso: il menu mostra ancora il valore dell'eroe (anche come voce "Runecarver (non più disponibile)"), come fa l'intestazione.
+- Ottenuto: intestazione "Fighter (Champion) 3 / Runecarver 1", ma il menu della riga mostra **Barbarian**; per l'eroe importato i menu mostrano Barbarian / Dragonborn / Acolyte mentre i dati dicono Artificer / Popolo del Muschio / Pirata. Il giocatore legge una classe sbagliata, e scegliere davvero Barbarian (la voce già mostrata) non fa partire il cambio. I dati non cambiano da soli e il Level up funziona ancora (Runecarver 1 → 2, +7 PF), nessun errore. `opt()` marca `selected` solo se il valore è nell'elenco (`names('classes')`, index.html ~1650 e ~1656).
+- Console: nessun errore.
+- Test: `eroe` "B-034 …".
+
+### B-033 [bassa] Multiclasse: il menu della classe principale offre una classe già presente nelle righe (resto di B-028) — RISOLTO 2026-11-14 (sviluppo)
+- Trovato da: distruttore · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: I Eroe → menu Class (classe principale), 1440x900
+- Passi: 1. Valeria Fighter 3 / Rogue 1 (livello 4). 2. Nel menu Class (la classe principale, non la riga) scegli Rogue. 3. Apri Level up. 4. Ricarica la pagina.
+- Atteso: il menu Class non offre Rogue (come fa ora la riga, B-028) oppure unisce i livelli dicendolo.
+- Ottenuto: intestazione "Rogue 3 / Rogue 1"; Level up offre due righe "Rogue 3 → 4" e "Rogue 1 → 2" (aumenti e privilegi contati da due classi separate, come in B-028). Alla ricarica `fixup` scarta la riga doppia: l'eroe diventa "Rogue 4" e i 3 livelli da Guerriero spariscono senza avviso. La correzione di B-028 ha filtrato solo il menu `data-mc`; `bindValue` per `class` (index.html ~4384) non guarda la multiclasse.
+- Console: nessun errore.
+- Test: `levelup` "B-033 …".
+
 
 ### B-016 [alta] Due schede: se una cancella l'eroe che l'altra sta scrivendo, il testo finisce su un altro eroe
 - Trovato da: distruttore · 2026-11-09

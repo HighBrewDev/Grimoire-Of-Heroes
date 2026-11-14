@@ -1017,8 +1017,8 @@ function r5(e, depth = 0){
         '<tbody>' + (e.rows || []).map(r => '<tr>' + (Array.isArray(r) ? r : r.row || []).map(c => `<td>${cell(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
     }
     case 'quote': return `<blockquote>${kids(e.entries)}${e.by ? `<p>— ${esc(e.by)}</p>` : ''}</blockquote>`;
-    case 'abilityDc': return `<p><b>${esc(e.name)} save DC</b> = 8 + your Proficiency Bonus + your ${(e.attributes || []).map(a => title(a)).join(' or ')} modifier</p>`;
-    case 'abilityAttackMod': return `<p><b>${esc(e.name)} attack modifier</b> = your Proficiency Bonus + your ${(e.attributes || []).map(a => title(a)).join(' or ')} modifier</p>`;
+    case 'abilityDc': return `<p><b>${esc(e.name)} save DC</b> = 8 + your Proficiency Bonus + your ${(e.attributes || []).map(a => esc(title(a))).join(' or ')} modifier</p>`;
+    case 'abilityAttackMod': return `<p><b>${esc(e.name)} attack modifier</b> = your Proficiency Bonus + your ${(e.attributes || []).map(a => esc(title(a))).join(' or ')} modifier</p>`;
     case 'refClassFeature': case 'refSubclassFeature': case 'refOptionalfeature':
       return `<p><i>${esc(String(e.classFeature || e.subclassFeature || e.optionalfeature || '').split('|')[0])}</i></p>`;
     case 'image': case 'gallery': case 'statblock': case 'hr': return '';
@@ -1600,6 +1600,8 @@ function flipStep(d){ const o = CHAPTERS.map(x => x.id), i = o.indexOf(G.chapter
 /* ================================================================== pages */
 const card = (h, body, extra = '') => `<section class="card" ${extra}><h3>${h}</h3>${body}</section>`;
 const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+/** Options for a select: keeps the hero's own value visible even when it is no longer in the list (deleted homebrew, import). */
+const optsKeep = (list, cur) => (cur && !list.includes(cur) ? [...list, cur] : list).map(s => opt(s, cur, list.includes(s) ? s : `${s} (no longer available)`)).join('');
 const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label ?? v)}</option>`;
 const names = cat => [...new Set(ALL.filter(e => e.cat === cat).map(e => e.n))].sort();
 const hpBar = c => `<div class="hpBar ${c.hp.cur <= c.hp.max / 2 ? 'low' : ''}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>`;
@@ -1706,15 +1708,15 @@ hero(c){
         <div><label class="f" for="f_portrait">Portrait</label><select id="f_portrait" data-bind="portrait">${PORTRAITS.map(e => opt(e, c.portrait)).join('')}</select></div>
         <div class="portraitPick"><span class="f">Picture</span><div class="row">${portrait(c, 'mid')}${act('portraitFile', undefined, c.img ? 'Change' : 'Upload image')}${c.img ? act('portraitClear', undefined, '✕', 'sb x', 'aria-label="Remove picture"') : ''}</div><input type="file" id="f_img" accept="image/*" class="sr" tabindex="-1"></div>
         <div><label class="f" for="f_align">Alignment</label><select id="f_align" data-bind="alignment">${ALIGN.map(a => opt(a, c.alignment)).join('')}</select></div>
-        <div><label class="f" for="f_species">Species</label><select id="f_species" data-bind="species">${names('species').map(s => opt(s, c.species)).join('')}</select></div>
-        <div><label class="f" for="f_bg">Background</label><select id="f_bg" data-bind="background">${names('backgrounds').map(s => opt(s, c.background)).join('')}</select></div>
-        <div><label class="f" for="f_class">Class</label><select id="f_class" data-bind="class">${names('classes').map(s => opt(s, c.class)).join('')}</select></div>
+        <div><label class="f" for="f_species">Species</label><select id="f_species" data-bind="species">${optsKeep(names('species'), c.species)}</select></div>
+        <div><label class="f" for="f_bg">Background</label><select id="f_bg" data-bind="background">${optsKeep(names('backgrounds'), c.background)}</select></div>
+        <div><label class="f" for="f_class">Class</label><select id="f_class" data-bind="class">${optsKeep(names('classes').filter(s => s === c.class || !multi(c).some(m => m.class === s)), c.class)}</select></div>
         <div><label class="f" for="f_sub">Subclass</label>${subSelect('id="f_sub" data-bind="subclass"', c.class, c.subclass)}</div>
         <div><label class="f" for="f_level">${multi(c).length ? 'Total level' : 'Level (1–20)'}</label><input type="number" id="f_level" data-bind="level" data-type="int" min="1" max="20" value="${c.level}"></div>
         <div><label class="f" for="f_xp">Experience</label><input type="number" id="f_xp" data-bind="xp" data-type="int" min="0" max="${LIM.xp}" value="${c.xp || 0}"></div>
       </div>
       <div class="mcBox">${multi(c).length ? `<h4>Multiclass <span class="muted">${esc(c.class)} ${classList(c)[0].level} is the first class</span></h4>
-        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${names('classes').filter(s => s === m.class || !classList(c).some(e => e.class === s)).map(s => opt(s, m.class)).join('')}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
+        ${multi(c).map((m, i) => `<div class="mcRow"><select data-mc="${i}:class" aria-label="Class">${optsKeep(names('classes').filter(s => s === m.class || !classList(c).some(e => e.class === s)), m.class)}</select>${subSelect(`data-mc="${i}:subclass" aria-label="${esc(m.class)} subclass"`, m.class, m.subclass)}<input type="number" data-mc="${i}:level" min="1" max="19" value="${m.level}" aria-label="Level in ${esc(m.class)}">${act('mcDel', i, '✕', 'sb x', 'aria-label="Remove this class"')}</div>`).join('')}` : ''}
         ${c.level < 20 ? `<div class="row">${act('mcAdd', undefined, '＋ Add a class (multiclass)', 'sb')}<span class="muted small">or take one from Level up, which checks the rules</span></div>` : ''}</div>
       <label class="row mt"><input type="checkbox" id="f_insp" data-bind="inspiration" ${c.inspiration ? 'checked' : ''}> <b>Heroic Inspiration</b> <span class="muted">reroll one D20; Humans regain it each Long Rest</span></label>
       <div class="rule"></div>
@@ -2089,7 +2091,7 @@ function ingest5(json, packName){
   return out;
 }
 function extMeta(e){
-  const o = e.o, src = o.source ? ` · ${esc(o.source)}${o.page ? ' p.' + o.page : ''}` : '';
+  const o = e.o, src = o.source ? ` · ${esc(o.source)}${o.page ? ' p.' + esc(o.page) : ''}` : '';
   if (e.cat === 'spells'){
     const time = (o.time || []).map(t => `${t.number || ''} ${t.unit || ''}`.trim()).join(' or ');
     return `${o.level ? `Level ${esc(o.level)} ${esc(SCHOOL[o.school] || o.school || '')}` : `${esc(SCHOOL[o.school] || o.school || '')} cantrip`}${time ? ' · ' + esc(time) : ''}${src}`;
@@ -2117,7 +2119,7 @@ function extBody(e){
     const blocks = [['Traits', o.trait], ['Actions', o.action], ['Bonus Actions', o.bonus], ['Reactions', o.reaction], ['Legendary Actions', o.legendary]];
     return `<div class="statblock">${kv('Armor Class', esc(ac))}${kv('Hit Points', esc(o.hp ? (o.hp.average ?? '') + (o.hp.formula ? ` (${o.hp.formula})` : '') : ''))}${kv('Speed', esc(spd))}
       <div class="abl">${['str','dex','con','int','wis','cha'].map(a => `<div><b>${a.toUpperCase()}</b><span class="num">${esc(o[a])} (${fmt(mod(o[a]))})</span></div>`).join('')}</div>
-      ${o.senses ? kv('Senses', esc([].concat(o.senses).join(', ')) + (o.passive ? `, passive Perception ${o.passive}` : '')) : ''}${o.languages ? kv('Languages', esc([].concat(o.languages).join(', '))) : ''}
+      ${o.senses ? kv('Senses', esc([].concat(o.senses).join(', ')) + (o.passive ? `, passive Perception ${esc(o.passive)}` : '')) : ''}${o.languages ? kv('Languages', esc([].concat(o.languages).join(', '))) : ''}
       ${o.cr ? kv('Challenge', esc(typeof o.cr === 'object' ? o.cr.cr : o.cr)) : ''}
       ${(o.spellcasting || []).length ? `<h4>Spellcasting</h4><div class="prose">${r5(o.spellcasting.map(s => ({...s, type:'spellcasting'})))}</div>` : ''}
       ${blocks.map(([h, arr]) => arr ? `<h4>${h}</h4><div class="prose">${r5(arr.map(a => ({...a, type:'entries'})), 1)}</div>` : '').join('')}</div>`;
@@ -2215,7 +2217,7 @@ const BREW = {
 };
 let BREW_ITEMS = [];
 const brewPack = () => ({id:BREW_ID, name:'Homebrew', kind:'brew', added:Date.now(), count:BREW_ITEMS.length, items:BREW_ITEMS});
-const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${o.lv} · ${o.sc}` : `Cantrip · ${o.sc}`) : cat === 'feats' ? o.ty : cat === 'subclasses' ? o.cls : cat === 'classes' ? `d${o.hd} · ${o.prim || ''}` : cat === 'items' ? o.rar : cat === 'monsters' ? 'CR ' + o.cr : '';
+const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${hbStr(o.lv)} · ${hbStr(o.sc)}` : `Cantrip · ${hbStr(o.sc)}`) : cat === 'feats' ? hbStr(o.ty) : cat === 'subclasses' ? hbStr(o.cls) : cat === 'classes' ? `d${hbStr(o.hd)} · ${hbStr(o.prim)}` : cat === 'items' ? hbStr(o.rar) : cat === 'monsters' ? 'CR ' + hbStr(o.cr) : '';
 const cleanBrew = list => (Array.isArray(list) ? list : []).filter(it => isObj(it) && typeof it.cat === 'string' && Object.hasOwn(BREW, it.cat) && isObj(it.o) && typeof it.o.n === 'string' && it.o.n.trim())
   .map(it => ({...it, o:{...it.o, n:it.o.n.trim().slice(0, 80)}}));
 const brewEntry = it => ({cat:it.cat, n:it.o.n, o:it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
@@ -2533,7 +2535,7 @@ const HB_RULES = {
     const lv = hbLevelNum(o.lv);
     if (!Number.isInteger(lv) || lv < 0 || lv > 9) E(`Level “${o.lv ?? ''}” is not 0 (cantrip) to 9.`); else o.lv = lv;
     const sc = hbPick(SCHOOLS, o.sc);
-    if (!hbStr(o.sc)) E('No school of magic.'); else if (!sc) E(`“${o.sc}” is not a school of magic.` + hbSuggest(o.sc, SCHOOLS)); else o.sc = sc;
+    if (!hbStr(o.sc)) E('No school of magic.'); else if (!sc) E(`“${hbStr(o.sc)}” is not a school of magic.` + hbSuggest(hbStr(o.sc), SCHOOLS)); else o.sc = sc;
     o.t = hbStr(o.t).replace(/^1 action$/i, 'Action').replace(/^1 bonus action$/i, 'Bonus Action').replace(/^1 reaction/i, 'Reaction');
     if (!o.t) W('No casting time.');
     else if (!/^(action|bonus action|reaction|\d+\s+(minutes?|hours?)|1 round)\b/i.test(o.t)) W(`Unusual casting time “${o.t}”: the rules use Action, Bonus Action, Reaction or a number of minutes or hours.`);

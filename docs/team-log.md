@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-14 · sviluppo (backend + frontend)
+- **Backend** · sezioni Import/export e Robustezza: **B-042** [alta] (`page` e `passive` ora passano da `esc`; riga `abilityDc`/`abilityAttackMod` di `r5` con `esc(title(a))`) e **B-043** (`brewKey` e il messaggio di scuola non valida riducono i campi a testo con `hbStr`). Rivisti tutti i valori `o.*` di `extMeta`/`extBody`/`r5`: gli altri già passavano da `esc`. `CACHE` → `grimoire-dv1114a`.
+- **Frontend** · **B-033** (menu classe principale senza classi già in multiclasse) e **B-034** (nuovo `optsKeep`: il valore dell'eroe resta nei menu specie, background, classe e righe multiclasse, con "(no longer available)").
+- **Test**: prima 249/255 (dal piano; la mia prima esecuzione è stata interrotta perché modificavo index.html), dopo **253/255**, nessuna regressione. Restano B-031 e B-032 (non toccati per tenere la sessione economica). Test non modificati.
+- **File**: index.html, sw.js, docs/bug-beta.md, docs/scoreboard.md, tests/risultati. Supabase non toccato.
+- **Non fatto**: prova a mano a larghezza telefono/desktop (coperta dalle sezioni `telefono` e `robustezza`, verdi, console senza errori). Sala non aggiornata (nessun accesso ad Artifact in questa sessione). Prossimo: B-032, B-031, poi B-020.
+
 ## 2026-11-14 · team leader
 - **Stato**: main 3061ea8, controllo a 1440x900 e 390x844 senza errori. Punteggio +237 ↑ (249/255), nessuna sezione rossa. Registro corretto: B-016 spostato in "Risolti" (PR #16, test verdi).
 - **Piano**: backend su B-042 [alta] e B-043, poi frontend su B-033/B-034/B-032/B-031; designer su stampa A4; tester sull'import. Nessuna PR aspetta Capo; keep-alive già unito (PR #23). Sala non aggiornata: lettura completa del file troppo costosa per questa sessione, la rinfresca il giro di test di domani.
