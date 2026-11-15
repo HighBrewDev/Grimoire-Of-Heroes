@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-15 · test
+- **Fatto** · suite eseguita su main (`6777c04`): **274/281 superati**, punteggio totale **+244** (ieri +253). 27 test nuovi (biblioteca, caratteristiche, cronaca, tratti: 5 ciascuno; robustezza: 2 per B-047). Sezioni rosse: nessuna. Peggiori: robustezza +10, zaino +12, telefono +13.
+- **Test rossi** (bug aperti): B-031, B-032, B-044, B-045, B-046, B-047, B-048.
+
 ## 2026-11-14 · design
 - **Fatto** · stampa A4 della scheda (compito del piano). La stampa esisteva già (`printSheet`, 2 pagine, `@page A4 9mm`): verificata con PDF reale su due eroi, 2 pagine A4, senza menu. Corretti due difetti solo CSS: il sottotipo di classe ("Champion") andava a capo a metà parola ("Champio/n") e le etichette piccole ("Prof. Bonus", "Passive Perc.") erano tagliate. `CACHE` -> `grimoire-ds1114a`.
 - **File**: index.html (CSS stampa riga ~439), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-14-stampa-a4-dopo-1.png` e `-2.png`.

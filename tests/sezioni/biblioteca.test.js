@@ -73,4 +73,37 @@ module.exports = {sezione:'biblioteca', test:[
     await app.page.fill('#lib_q', 'FIREBALL');
     assert.strictEqual((await listNames(app))[0], 'Fireball');
   }],
+  ['filtro livello 0 (trucchetti): Fire Bolt sì, Fireball no', async ({open}) => {
+    const app = await open(); await app.go('library');
+    await app.set('#lf_lv', '0');
+    const names = await listNames(app);
+    assert.ok(names.includes('Fire Bolt') && !names.includes('Fireball'), names.slice(0, 8).join(', '));
+  }],
+  ['filtro classe Cleric: Cure Wounds sì, Fireball no', async ({open}) => {
+    const app = await open(); await app.go('library');
+    await app.set('#lf_cls', 'Cleric');
+    const names = await listNames(app);
+    assert.ok(names.includes('Cure Wounds') && !names.includes('Fireball'));
+  }],
+  ['ricerca parziale "fire" trova Fireball e Fire Bolt', async ({open}) => {
+    const app = await open(); await app.go('library');
+    await app.page.fill('#lib_q', 'fire');
+    const names = await listNames(app);
+    assert.ok(names.includes('Fireball') && names.includes('Fire Bolt'), names.join(', '));
+  }],
+  ['aprire una seconda voce sostituisce il dettaglio della prima', async ({open}) => {
+    const app = await open(); await app.go('library');
+    await app.page.fill('#lib_q', 'fireball');
+    await app.page.locator('#libList [data-act="libPick"]').first().click();
+    assert.ok(/Fireball/.test(await app.text('#libDetail')));
+    await app.page.fill('#lib_q', 'counterspell');
+    await app.page.locator('#libList [data-act="libPick"]').first().click();
+    const d = await app.text('#libDetail');
+    assert.ok(/Counterspell/.test(d) && !/8d6/.test(d), d.slice(0, 120));
+  }],
+  ['la ricerca nella Biblioteca non produce errori di pagina con caratteri strani', async ({open}) => {
+    const app = await open(); await app.go('library');
+    for (const q of ['<script>', '"\'', '%00', '🐉', '\\']) await app.page.fill('#lib_q', q);
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
 ]};

@@ -112,4 +112,36 @@ module.exports = {sezione:'caratteristiche', test:[
     await app.reload(); await app.go('abilities');
     assert.deepStrictEqual(await abil(app, 'DEX'), {sc:'12', mo:'+1'});
   }],
+  ['il pulsante + su un punteggio a 30 non lo supera dopo la ricarica', async ({open}) => {
+    const app = await open({heroes:[fx.blank({abilities:{str:29,dex:10,con:10,int:10,wis:10,cha:10}})]}); await app.go('abilities');
+    for (let i = 0; i < 3; i++) await app.click('stepAb', 'str:1');
+    await app.reload(); await app.go('abilities');
+    assert.deepStrictEqual(await abil(app, 'STR'), {sc:'30', mo:'+10'});
+  }],
+  ['Intelligenza 10 → 12 alza il modificatore a +1', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    await app.click('stepAb', 'int:1'); await app.click('stepAb', 'int:1');
+    assert.deepStrictEqual(await abil(app, 'INT'), {sc:'12', mo:'+1'});
+  }],
+  ['Percezione passiva sale quando sale la Saggezza (Sag 12 → 14: 14)', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    await app.click('stepAb', 'wis:1'); await app.click('stepAb', 'wis:1');
+    await app.go('hero');
+    const v = await app.page.evaluate(() => [...document.querySelectorAll('.kv')].find(k => /Passive Perception/.test(k.textContent))?.lastElementChild?.textContent.trim());
+    assert.strictEqual(v, '14');
+  }],
+  ['tiro salvezza con competenza resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    await app.click('toggleSave', 'wis');
+    await app.reload(); await app.go('abilities');
+    assert.strictEqual((await app.hero()).saves.wis, 1);
+    assert.strictEqual(await rowBonus(app, 'toggleSave', 'wis'), '+3');
+  }],
+  ['la maestria resta dopo la ricarica (Furtività)', async ({open}) => {
+    const app = await open(); await app.go('abilities');
+    await app.click('cycleSkill', 'stealth'); await app.click('cycleSkill', 'stealth');
+    await app.reload(); await app.go('abilities');
+    assert.strictEqual((await app.hero()).skills.stealth, 2);
+    assert.strictEqual(await rowBonus(app, 'cycleSkill', 'stealth'), '+6');
+  }],
 ]};

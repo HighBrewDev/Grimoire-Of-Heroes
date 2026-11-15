@@ -78,4 +78,31 @@ module.exports = {sezione:'cronaca', test:[
     assert.strictEqual(dopo.allies, 'Solo alleati');
     for (const k of ['look', 'story', 'extra']) assert.strictEqual(dopo[k], prima[k], k);
   }],
+  ['i pulsanti XP: +100 e +250 sommano', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    const prima = (await app.hero()).xp;
+    await app.click('addXP', '100'); await app.click('addXP', '250');
+    assert.strictEqual((await app.hero()).xp, prima + 350);
+  }],
+  ['caratteri emoji e accenti nelle note sopravvivono alla ricarica', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    await app.page.fill('#n_allies', 'Città di Ålesund 🏰 — è già qui');
+    await app.reload(); await app.go('hero'); await app.go('chronicle');
+    assert.strictEqual(await app.page.inputValue('#n_allies'), 'Città di Ålesund 🏰 — è già qui');
+  }],
+  ['svuotare una nota la lascia vuota dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('chronicle');
+    await app.page.fill('#n_story', 'Testo'); await app.page.fill('#n_story', '');
+    await app.reload(); await app.go('hero'); await app.go('chronicle');
+    assert.strictEqual(await app.page.inputValue('#n_story'), '');
+  }],
+  ['XP a zero: la pagina mostra "Current XP" senza errori', async ({open}) => {
+    const app = await open({heroes:[fx.blank({xp:0})]}); await app.go('chronicle');
+    assert.ok(/Current XP\s*0/.test(await app.text('#page')));
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
+  ['la Cronaca si apre senza errori con un eroe di livello 1', async ({open}) => {
+    const app = await open({heroes:[fx.blank({level:1, xp:0})]}); await app.go('chronicle');
+    assert.ok(/Level 2 at\s*300/.test(await app.text('#page')));
+  }],
 ]};

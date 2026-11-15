@@ -79,4 +79,40 @@ module.exports = {sezione:'tratti', test:[
     assert.ok((await app.hero()).classFeats.includes('Colpo del corvo'));
     assert.ok((await app.text('#page')).includes('Colpo del corvo'));
   }],
+  ['il talento aggiunto compare nella pagina e dopo la ricarica (Grappler)', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.set('#feat_pick', 'Grappler'); await app.click('addFeat');
+    await app.reload(); await app.go('traits');
+    assert.ok((await app.hero()).feats.some(f => f.n === 'Grappler'));
+    assert.ok((await app.text('#page')).includes('Grappler'));
+  }],
+  ['talento personalizzato senza nome non viene aggiunto', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    const n = (await app.hero()).feats.length;
+    await app.page.fill('#feat_custom', '   '); await app.click('addFeatCustom');
+    assert.strictEqual((await app.hero()).feats.length, n);
+  }],
+  ['rimuovere un privilegio personalizzato lascia gli altri', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#cf_n', 'Segno effimero'); await app.click('addClassFeat');
+    const lista = (await app.hero()).classFeats;
+    const idx = lista.indexOf('Segno effimero');
+    assert.ok(idx >= 0);
+    await app.clickJS('delClassFeat', String(idx));
+    const dopo = (await app.hero()).classFeats;
+    assert.ok(!dopo.includes('Segno effimero') && dopo.includes('Improved Critical (19–20)'), dopo.join(', '));
+  }],
+  ['privilegio con nome molto lungo (5.000 caratteri) non rompe la pagina', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#cf_n', 'x'.repeat(5000)); await app.click('addClassFeat');
+    assert.deepStrictEqual(app.pageErrors, []);
+    assert.ok((await app.hero()).classFeats.length >= 1);
+  }],
+  ['i talenti sono per eroe: cambiare eroe non li mescola', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    const first = (await app.store()).activeId;
+    await app.set('#feat_pick', 'Grappler'); await app.click('addFeat');
+    const other = (await app.store()).chars.find(c => c.id !== first);
+    assert.ok(!other.feats.some(f => f.n === 'Grappler'));
+  }],
 ]};

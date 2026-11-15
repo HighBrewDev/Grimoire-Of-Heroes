@@ -211,4 +211,23 @@ module.exports = {sezione:'robustezza', test:[
     await app.page.fill('#lib_q', 'alert'); await app.page.waitForTimeout(300);
     assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
   }],
+  ['B-047 homebrew: incantesimo con `lv` e `cls` come oggetti con `toString`: nessun errore di pagina e un messaggio', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const buffer = Buffer.from(JSON.stringify({grimoireHomebrew:[{id:'x', cat:'spells', o:{n:'Z', lv:{toString:1}, cls:{toString:1}}}]}));
+    await app.page.setInputFiles('#brew_file', {name:'strano.json', mimeType:'application/json', buffer});
+    await app.page.waitForTimeout(1200);
+    const feedback = (await app.page.locator('#modalBk .b5List').count()) > 0 || (await app.toast()) !== '';
+    assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
+    assert.ok(feedback, "nessuna finestra di verifica né messaggio");
+  }],
+  ['B-047 homebrew: talento con tutti i campi come oggetti con `toString`: nessun errore di pagina e un messaggio', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const o = {toString:1};
+    const buffer = Buffer.from(JSON.stringify({grimoireHomebrew:[{id:'y', cat:'feats', o:{n:o, cat:o, pre:o, x:o}}]}));
+    await app.page.setInputFiles('#brew_file', {name:'strano.json', mimeType:'application/json', buffer});
+    await app.page.waitForTimeout(1200);
+    const feedback = (await app.page.locator('#modalBk .b5List').count()) > 0 || (await app.toast()) !== '';
+    assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
+    assert.ok(feedback, "nessuna finestra di verifica né messaggio");
+  }],
 ]};
