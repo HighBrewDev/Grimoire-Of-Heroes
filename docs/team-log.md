@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-15 · design
+- **Fatto** · indizio di scorrimento sui segnalibri a 390/768 px (backlog 9). Solo CSS: sotto 980 px `.chapters` ha una maschera che sfuma 44 px sul bordo dove ci sono altri capitoli, guidata da `animation-timeline:scroll(self inline)` (sfuma a destra all'inizio, a sinistra alla fine, entrambi in mezzo). Dove il browser non supporta la scroll timeline (`@supports`) non cambia nulla. Desktop (>980 px) invariato. Nessuna zona di Tratti/Zaino toccata.
+- **File**: index.html (CSS segnalibri, `@keyframes chapFade`, 2 `@property`), sw.js (`CACHE` = grimoire-ds1115b), docs/design/note-design.md, screenshot `docs/design/2026-11-15-segnalibri-prima|dopo-{390,768,1440}.png` (+ `-meta` a metà scorrimento).
+- **Verifica**: Chromium 390x844, 768x1024, 1440x900: console senza errori, scrollWidth pari alla finestra, `telefono` 18/18. Sala non aggiornata (nessuno stato di bug/compito cambiato).
+- **Prossima idea**: "Death Saves" ancora tagliato in stampa A4; poi lo stesso indizio per lo scaffale eroi a telefono.
+
 ## 2026-11-15 · sviluppo
 - **Sezioni**: Import/export e Robustezza (backend), Telefono e Caratteristiche (frontend). Test prima/dopo: **274/281 → 280/281**, nessuna regressione; resta rosso solo B-031.
 - **Backend**: `ingest5` riduce `source`, `cls`, `level`, `school`, `rarity`, `className`, `subclassShortName`, `page` a testo/numero (altrimenti li scarta) con try/catch per voce; `buildIndex` e `key5` usano `txt5`, così un pacchetto malformato (anche già salvato) non blocca più l'avvio (**B-044**, **B-046**); `extBody` accetta `ac`/`time`/`duration` non array e `entryCard` mostra un messaggio invece di lanciare (**B-045**); `brewImport` è avvolto in try/catch con messaggio (**B-047**). Solo client, nessuna modifica a schema, policy, funzioni o formato dei salvataggi.

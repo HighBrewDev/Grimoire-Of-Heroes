@@ -55,6 +55,10 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-15
+- **Fatto**: indizio di scorrimento dei segnalibri sotto 980 px: `mask-image` con `--chF`/`--chL` (44 px) animati da `animation-timeline:scroll(self inline)`, dentro `@supports`; `@property` e `@keyframes chapFade` a livello superiore (dentro `@media` `@property` non vale). Nessuna nuova licenza. Immagini: `2026-11-15-segnalibri-prima|dopo-*.png`.
+- Regola: per sfumare bordi scorrevoli preferire la maschera (il fondo scrivania non è piatto, quindi niente ombre colorate).
+
 ### 2026-11-14
 - **Fatto**: scheda stampabile A4 (`printSheet`, 2 pagine) controllata con PDF reale; sottotipo senza spezzare le parole (`.sHead .sBox:not(.sName) .sVal` 10,5 pt) ed etichette `.sBox.sm .sLab` a 5 pt. Nessuna nuova risorsa/licenza. Immagini: [pag. 1](2026-11-14-stampa-a4-dopo-1.png), [pag. 2](2026-11-14-stampa-a4-dopo-2.png).
 
