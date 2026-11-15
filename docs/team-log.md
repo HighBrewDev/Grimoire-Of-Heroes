@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-15 · team leader
+- **Stato**: main ff6a170, controllo a 1440x900 e 390x844 senza errori. Punteggio +244 ↓ (274/281), nessuna sezione rossa. Registro già coerente (B-044..B-048, B-031, B-032 davvero aperti).
+- **Piano**: backend su B-044 [alta] e poi B-046/B-045/B-047 (stessa radice: campi importati non ridotti al tipo); frontend su B-048, B-032, B-031; designer su indizio segnalibri; distruttore su Biblioteca/avvio, power user su Zaino/Tratti a telefono. Nessuna PR aspetta Capo. Sala non aggiornata: nessuno stato di bug o compito è cambiato dal giro di test di stamattina.
+
 ## 2026-11-15 · test
 - **Fatto** · suite eseguita su main (`6777c04`): **274/281 superati**, punteggio totale **+244** (ieri +253). 27 test nuovi (biblioteca, caratteristiche, cronaca, tratti: 5 ciascuno; robustezza: 2 per B-047). Sezioni rosse: nessuna. Peggiori: robustezza +10, zaino +12, telefono +13.
 - **Test rossi** (bug aperti): B-031, B-032, B-044, B-045, B-046, B-047, B-048.
