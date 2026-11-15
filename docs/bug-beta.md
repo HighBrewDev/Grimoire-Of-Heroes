@@ -5,61 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-048 [bassa] [UX] Telefono: i pulsanti dei dadi nei tratti sono 28×24 e 36×24 px, i chip delle regole 20 px di altezza
-- Trovato da: power user · 2026-11-14
-- Sezione: telefono
-- Dove: Tratti (e Zaino), 390x844
-- Passi: 1. Apri Valeria a 390x844. 2. Capitolo Tratti: guarda i pulsanti dei dadi accanto ai privilegi ("1d10", "d20"). 3. Con un eroe multiclasse (Fighter 5 / Rogue 3) sono 12 in fila, 4 px l'uno dall'altro. In Zaino i chip di nome delle regole (`detail`, `detailId`) sono alti 20–23 px, circa 100 per pagina.
-- Atteso: bersaglio di tocco ≥44 px come negli altri capitoli (il test `telefono` lo chiede per danni, riposi, + e −, slot, level up).
-- Ottenuto: 28×24 e 36×24 px per i dadi; 20 px di altezza per i chip. Sulla serata a telefono si sbaglia spesso pulsante tra due dadi vicini.
-- Console: nessun errore.
-- Test: `tests/sezioni/telefono.test.js` · "B-048 …" (oggi fallisce: `"1d10" 36×24, "d20" 28×24`).
-- Suggerimento: stesso `min-height:44px` che hanno gli altri pulsanti; per i chip almeno 32 px con più spazio intorno.
-
-### B-044 [alta] Biblioteca: un file 5etools con `source` (o `cls`) come oggetto con `toString` blocca l'avvio dell'app per sempre
-- Trovato da: distruttore · 2026-11-14
-- Sezione: import/export
-- Dove: Biblioteca → Import, 1440x900
-- Passi: 1. Biblioteca → Import → scegli un file `{"spell":[{"name":"Strano","source":{"toString":1},"level":1,"school":"E","entries":["x"]}]}`. 2. Ricarica la pagina (anche una seconda volta).
-- Atteso: voce scartata o convertita in testo, app avviata.
-- Ottenuto: l'import riesce (e va in IndexedDB), ma `buildIndex()` (riga ~910, `e.o.cls || e.o.source` concatenato) lancia a ogni avvio, `boot()` si ferma prima di `wire()`/`render()`: nessun segnalibro, nessuna scheda; gli eroi restano in localStorage (3/3) ma non si raggiungono né si esportano. Si recupera solo cancellando i dati del sito. Stessa famiglia di B-043 ma persistente. Nota: con `level`, `school`, `rarity`, `className` ecc. come oggetti con `toString` lancia invece `key5` già all'import e l'import sparisce senza messaggio (nessuna persistenza).
-- Console: `PAGEERROR Cannot convert object to primitive value` (buildIndex ← boot)
-- Test: `tests/sezioni/robustezza.test.js` · "B-044 …" (oggi fallisce).
-- Suggerimento: in `ingest5` ridurre `source`, `cls`, `level`, `school`, `rarity`, `className`… a testo (`typeof === 'string'`) prima di `key5` e dell'id; proteggere `buildIndex` con try/catch per voce così un pacchetto malformato non blocca l'avvio.
-
-### B-047 [bassa] Import homebrew: oggetti con `toString` in altri campi (incantesimi `cls`/`lv`, talenti) fanno sparire l'import senza messaggio (resto di B-043)
-- Trovato da: distruttore · 2026-11-14
-- Sezione: workshop
-- Dove: Workshop → Import file, 1440x900
-- Passi: 1. Importa `{"grimoireHomebrew":[{"id":"x","cat":"spells","o":{"n":"Z","lv":{"toString":1},"cls":{"toString":1}}}]}` (oppure `cat:"feats"` con tutti i campi `{"toString":1}`).
-- Atteso: finestra di verifica o messaggio.
-- Ottenuto: nessuna finestra, nessun messaggio; l'app resta viva e nulla viene salvato (provati 8 valori strani per ogni campo di ogni tipo: 4 casi su 64, nessuna esecuzione di codice, nessun blocco all'avvio).
-- Console: `PAGEERROR Cannot convert object to primitive value` (brewKey, `String`/`join`)
-- Test: nessuno ancora.
-- Suggerimento: ridurre a testo ogni campo in `cleanBrew`/`checkBrew` come per `sc`.
-
-### B-045 [bassa] Biblioteca: una voce 5etools con un campo del tipo sbagliato (`ac: 15`, `trait` non array, `will` non array…) non si apre e non dice nulla
-- Trovato da: distruttore · 2026-11-14
-- Sezione: biblioteca
-- Dove: Biblioteca → Mostri, 1440x900
-- Passi: 1. Importa `{"monster":[{"name":"Goblin Capo","source":"HB","size":["S"],"type":"humanoid","ac":15,"hp":{"average":20},"str":10,"dex":14,"con":10,"int":10,"wis":10,"cha":8}]}`. 2. Cerca "Goblin Capo" e cliccalo.
-- Atteso: scheda del mostro (CA 15) o un avviso.
-- Ottenuto: il riquadro resta "Choose an entry to read it here." senza messaggio. Stessa cosa con `a.from` non array, `trait`/`action`/`legendary` non array, `spellcasting` non array, `daily`/`will` non array, `entries` con `colLabels` non array, `hp` come testo. Dopo la ricarica l'app parte (non è persistente). Nessuna esecuzione di codice in 8 tipi di voce × ogni campo × 16 valori strani (B-042 regge).
-- Console: `PAGEERROR (o.ac || []).map is not a function`
-- Test: `tests/sezioni/robustezza.test.js` · "B-045 …" (oggi fallisce).
-- Suggerimento: avvolgere `entryCard` in try/catch con un messaggio "Questa voce non si può mostrare", o usare `[].concat(x)` / `Array.isArray` nei punti di `extBody` e `r5`.
-
-### B-046 [bassa] Biblioteca: una voce 5etools con `source` non testuale (numero, array) rompe la ricerca della sua categoria
-- Trovato da: distruttore · 2026-11-14
-- Sezione: biblioteca
-- Dove: Biblioteca → Talenti (o Specie, Background, Oggetti…), 1440x900
-- Passi: 1. Importa `{"feat":[{"name":"Dono Strano","source":5,"entries":["x"]}]}`. 2. Talenti → scrivi "alert" nella ricerca.
-- Atteso: ricerca normale.
-- Ottenuto: errore a ogni tasto, la lista non si aggiorna come dovrebbe (`key5` restituisce `o.source` com'è e `libFiltered` chiama `.toLowerCase()`).
-- Console: `PAGEERROR (e.k || "").toLowerCase is not a function`
-- Test: `tests/sezioni/robustezza.test.js` · "B-046 …" (oggi fallisce).
-- Suggerimento: come B-044, ridurre `source` a testo in `key5` (`String(...)` solo se `typeof` è string/number).
-
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
 - Sezione: level up/multiclasse
@@ -70,16 +15,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 - Console: nessun errore.
 - Test: `levelup` "B-031 …".
 
-
-### B-032 [bassa] Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
-- Trovato da: distruttore · 2026-11-10
-- Sezione: caratteristiche
-- Dove: II Caratteristiche → − / + della Costituzione, con III Combattimento → Damage o Level up nel mezzo, 1440x900
-- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1, PF 20/20: corretto, minimo 1 per livello). 3. Combattimento → Damage 5 (PF 15/20). 4. Torna a Caratteristiche e premi + 9 volte (Cos 10). Variante: Mago 10 (42 PF), Cos 1, Level up all'11 (+1 PF, corretto), poi Cos 10.
-- Atteso: 77/82 (danno 5 sui PF di partenza); nella variante 46 PF massimi (6 + 10 × 4).
-- Ottenuto: **115/120** (+38 PF massimi dal nulla); variante **66/66** (+20). Con riposo lungo o cura nel mezzo invece torna giusto (82/82). La memoria `hp.conAdj` di B-026 vale solo se i PF non sono cambiati (`a.m === max0 && a.c === cur0`): un danno o un livello la cancellano e la differenza tolta dal minimo (qui 38) viene restituita due volte. Serve una Cos 1–3 a livello alto, quindi gravità bassa.
-- Console: nessun errore.
-- Test: `caratteristiche` "B-032 …".
 
 ### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
 - Trovato da: distruttore · 2026-11-09
@@ -110,6 +45,71 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+### B-048 [bassa] [UX] Telefono: i pulsanti dei dadi nei tratti sono 28×24 e 36×24 px, i chip delle regole 20 px di altezza
+- Trovato da: power user · 2026-11-14
+- Sezione: telefono
+- Dove: Tratti (e Zaino), 390x844
+- Passi: 1. Apri Valeria a 390x844. 2. Capitolo Tratti: guarda i pulsanti dei dadi accanto ai privilegi ("1d10", "d20"). 3. Con un eroe multiclasse (Fighter 5 / Rogue 3) sono 12 in fila, 4 px l'uno dall'altro. In Zaino i chip di nome delle regole (`detail`, `detailId`) sono alti 20–23 px, circa 100 per pagina.
+- Atteso: bersaglio di tocco ≥44 px come negli altri capitoli (il test `telefono` lo chiede per danni, riposi, + e −, slot, level up).
+- Ottenuto: 28×24 e 36×24 px per i dadi; 20 px di altezza per i chip. Sulla serata a telefono si sbaglia spesso pulsante tra due dadi vicini.
+- Console: nessun errore.
+- Test: `tests/sezioni/telefono.test.js` · "B-048 …" (oggi fallisce: `"1d10" 36×24, "d20" 28×24`).
+- Suggerimento: stesso `min-height:44px` che hanno gli altri pulsanti; per i chip almeno 32 px con più spazio intorno.
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
+### B-044 [alta] Biblioteca: un file 5etools con `source` (o `cls`) come oggetto con `toString` blocca l'avvio dell'app per sempre
+- Trovato da: distruttore · 2026-11-14
+- Sezione: import/export
+- Dove: Biblioteca → Import, 1440x900
+- Passi: 1. Biblioteca → Import → scegli un file `{"spell":[{"name":"Strano","source":{"toString":1},"level":1,"school":"E","entries":["x"]}]}`. 2. Ricarica la pagina (anche una seconda volta).
+- Atteso: voce scartata o convertita in testo, app avviata.
+- Ottenuto: l'import riesce (e va in IndexedDB), ma `buildIndex()` (riga ~910, `e.o.cls || e.o.source` concatenato) lancia a ogni avvio, `boot()` si ferma prima di `wire()`/`render()`: nessun segnalibro, nessuna scheda; gli eroi restano in localStorage (3/3) ma non si raggiungono né si esportano. Si recupera solo cancellando i dati del sito. Stessa famiglia di B-043 ma persistente. Nota: con `level`, `school`, `rarity`, `className` ecc. come oggetti con `toString` lancia invece `key5` già all'import e l'import sparisce senza messaggio (nessuna persistenza).
+- Console: `PAGEERROR Cannot convert object to primitive value` (buildIndex ← boot)
+- Test: `tests/sezioni/robustezza.test.js` · "B-044 …" (oggi fallisce).
+- Suggerimento: in `ingest5` ridurre `source`, `cls`, `level`, `school`, `rarity`, `className`… a testo (`typeof === 'string'`) prima di `key5` e dell'id; proteggere `buildIndex` con try/catch per voce così un pacchetto malformato non blocca l'avvio.
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
+### B-047 [bassa] Import homebrew: oggetti con `toString` in altri campi (incantesimi `cls`/`lv`, talenti) fanno sparire l'import senza messaggio (resto di B-043)
+- Trovato da: distruttore · 2026-11-14
+- Sezione: workshop
+- Dove: Workshop → Import file, 1440x900
+- Passi: 1. Importa `{"grimoireHomebrew":[{"id":"x","cat":"spells","o":{"n":"Z","lv":{"toString":1},"cls":{"toString":1}}}]}` (oppure `cat:"feats"` con tutti i campi `{"toString":1}`).
+- Atteso: finestra di verifica o messaggio.
+- Ottenuto: nessuna finestra, nessun messaggio; l'app resta viva e nulla viene salvato (provati 8 valori strani per ogni campo di ogni tipo: 4 casi su 64, nessuna esecuzione di codice, nessun blocco all'avvio).
+- Console: `PAGEERROR Cannot convert object to primitive value` (brewKey, `String`/`join`)
+- Test: nessuno ancora.
+- Suggerimento: ridurre a testo ogni campo in `cleanBrew`/`checkBrew` come per `sc`.
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
+### B-045 [bassa] Biblioteca: una voce 5etools con un campo del tipo sbagliato (`ac: 15`, `trait` non array, `will` non array…) non si apre e non dice nulla
+- Trovato da: distruttore · 2026-11-14
+- Sezione: biblioteca
+- Dove: Biblioteca → Mostri, 1440x900
+- Passi: 1. Importa `{"monster":[{"name":"Goblin Capo","source":"HB","size":["S"],"type":"humanoid","ac":15,"hp":{"average":20},"str":10,"dex":14,"con":10,"int":10,"wis":10,"cha":8}]}`. 2. Cerca "Goblin Capo" e cliccalo.
+- Atteso: scheda del mostro (CA 15) o un avviso.
+- Ottenuto: il riquadro resta "Choose an entry to read it here." senza messaggio. Stessa cosa con `a.from` non array, `trait`/`action`/`legendary` non array, `spellcasting` non array, `daily`/`will` non array, `entries` con `colLabels` non array, `hp` come testo. Dopo la ricarica l'app parte (non è persistente). Nessuna esecuzione di codice in 8 tipi di voce × ogni campo × 16 valori strani (B-042 regge).
+- Console: `PAGEERROR (o.ac || []).map is not a function`
+- Test: `tests/sezioni/robustezza.test.js` · "B-045 …" (oggi fallisce).
+- Suggerimento: avvolgere `entryCard` in try/catch con un messaggio "Questa voce non si può mostrare", o usare `[].concat(x)` / `Array.isArray` nei punti di `extBody` e `r5`.
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
+### B-046 [bassa] Biblioteca: una voce 5etools con `source` non testuale (numero, array) rompe la ricerca della sua categoria
+- Trovato da: distruttore · 2026-11-14
+- Sezione: biblioteca
+- Dove: Biblioteca → Talenti (o Specie, Background, Oggetti…), 1440x900
+- Passi: 1. Importa `{"feat":[{"name":"Dono Strano","source":5,"entries":["x"]}]}`. 2. Talenti → scrivi "alert" nella ricerca.
+- Atteso: ricerca normale.
+- Ottenuto: errore a ogni tasto, la lista non si aggiorna come dovrebbe (`key5` restituisce `o.source` com'è e `libFiltered` chiama `.toLowerCase()`).
+- Console: `PAGEERROR (e.k || "").toLowerCase is not a function`
+- Test: `tests/sezioni/robustezza.test.js` · "B-046 …" (oggi fallisce).
+- Suggerimento: come B-044, ridurre `source` a testo in `key5` (`String(...)` solo se `typeof` è string/number).
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
+### B-032 [bassa] Cos al minimo, poi danno o Level up, poi Cos rialzata: PF massimi gonfiati (resto di B-026)
+- Trovato da: distruttore · 2026-11-10
+- Sezione: caratteristiche
+- Dove: II Caratteristiche → − / + della Costituzione, con III Combattimento → Damage o Level up nel mezzo, 1440x900
+- Passi: 1. Mago 20, Cos 10, PF 82/82. 2. Premi − sulla Costituzione 9 volte (Cos 1, PF 20/20: corretto, minimo 1 per livello). 3. Combattimento → Damage 5 (PF 15/20). 4. Torna a Caratteristiche e premi + 9 volte (Cos 10). Variante: Mago 10 (42 PF), Cos 1, Level up all'11 (+1 PF, corretto), poi Cos 10.
+- Atteso: 77/82 (danno 5 sui PF di partenza); nella variante 46 PF massimi (6 + 10 × 4).
+- Ottenuto: **115/120** (+38 PF massimi dal nulla); variante **66/66** (+20). Con riposo lungo o cura nel mezzo invece torna giusto (82/82). La memoria `hp.conAdj` di B-026 vale solo se i PF non sono cambiati (`a.m === max0 && a.c === cur0`): un danno o un livello la cancellano e la differenza tolta dal minimo (qui 38) viene restituita due volte. Serve una Cos 1–3 a livello alto, quindi gravità bassa.
+- Console: nessun errore.
+- Test: `caratteristiche` "B-032 …".
+- Chiuso: 2026-11-15 · sviluppo · commit del giorno (index.html, sw.js `grimoire-ds1115a`).
 ### B-043 [bassa] Import homebrew: un incantesimo con la scuola (`sc`) come oggetto con `toString` blocca l'import senza messaggio — RISOLTO 2026-11-14 (sviluppo)
 - Trovato da: power user · 2026-11-13
 - Sezione: robustezza

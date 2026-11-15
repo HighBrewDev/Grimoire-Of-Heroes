@@ -107,6 +107,7 @@ button{cursor:pointer}
 button.chip:hover{filter:brightness(1.12)}
 .dice{border:0;border-bottom:1px dashed var(--rubric);background:transparent;color:var(--rubric);font-weight:700;padding:0 1px;font-variant-numeric:tabular-nums}
 .dice:hover{background:rgba(142,34,25,.08)}
+@media (max-width:560px){.dice{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 8px;margin:2px 3px}button.chip,.xref{min-height:32px;margin:2px 3px}}
 .xref{border:0;background:transparent;padding:0;color:var(--lapis);font:inherit;text-decoration:underline dotted;text-underline-offset:2px}
 
 /* ---------- shelf ---------- */
@@ -907,7 +908,7 @@ function buildIndex(){
   const base = srdEntries().concat(EXT);
   const have = new Set(base.map(e => e.cat + '|' + norm(e.n)));
   ALL = base.concat(quickEntries(have));
-  ALL.forEach(e => { if (typeof e.n !== 'string') e.n = toTxt(e.n, 120); e.lc = norm(e.n); e.id = e.id || (e.src + ':' + e.cat + ':' + e.n + ':' + (e.o.cls || e.o.source || '')); });
+  ALL.forEach(e => { if (typeof e.n !== 'string') e.n = toTxt(e.n, 120); e.lc = norm(e.n); e.id = e.id || (e.src + ':' + e.cat + ':' + e.n + ':' + (txt5(e.o.cls) || txt5(e.o.source))); });
   ALL.sort((a, b) => String(a.n).localeCompare(String(b.n)));
 }
 const PRI = {SRD:0, Homebrew:1, Quick:2};
@@ -2054,8 +2055,9 @@ function entryActions(e){
   }
 }
 function entryCard(e){
+  let body, meta; try { body = entryBody(e); meta = entryMeta(e); } catch (err) { body = '<p class="muted">This entry has a shape the Library cannot display.</p>'; meta = ''; }
   return `<div class="head"><h2>${esc(e.n)}</h2>${srcTag(e)}<span class="spacer"></span>${entryActions(e)}${brewable(e) ? act('brewFrom', e.id, 'Copy to Homebrew', 'btn small ghost', 'title="Open it in the Homebrew editor as a starting point for your own version"') : ''}</div>
-    <div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`;
+    <div class="meta">${meta}</div><div class="rule"></div>${body}`;
 }
 function showEntry(e){
   if (!e) return;
@@ -2073,14 +2075,16 @@ const MAP5 = {spell:'spells', feat:'feats', race:'species', subrace:'species', b
   monster:'monsters', condition:'conditions', disease:'conditions', status:'conditions', class:'classes', subclass:'subclasses', classFeature:'features', subclassFeature:'features',
   optionalfeature:'other', action:'rules', variantrule:'rules', sense:'rules', skill:'rules', deity:'other', language:'other', reward:'other', trap:'other', hazard:'other', object:'other', vehicle:'other', boon:'other', charoption:'other', psionic:'other', recipe:'other', deck:'other', card:'other'};
 const RAR = {none:'Mundane', unknown:'Unknown'};
+const txt5 = v => typeof v === 'string' ? v : typeof v === 'number' && isFinite(v) ? String(v) : '';
+const F5 = ['source','cls','level','school','rarity','className','subclassShortName','page'];
 function key5(cat, o){
   switch (cat){
     case 'spells': return (o.level ? `Lv ${o.level}` : 'Cantrip') + ' · ' + (SCHOOL[o.school] || o.school || '');
-    case 'monsters': { const cr = typeof o.cr === 'object' ? o.cr?.cr : o.cr; return cr !== undefined ? 'CR ' + cr : (o.source || ''); }
-    case 'items': return title(RAR[o.rarity] || o.rarity || '');
+    case 'monsters': { const cr = typeof o.cr === 'object' ? o.cr?.cr : o.cr; return cr !== undefined ? 'CR ' + txt5(cr) : txt5(o.source); }
+    case 'items': return title(RAR[o.rarity] || txt5(o.rarity));
     case 'features': return `${o.subclassShortName || o.className || ''} ${o.level || ''}`.trim();
     case 'subclasses': return o.className || '';
-    default: return o.source || '';
+    default: return txt5(o.source);
   }
 }
 function ingest5(json, packName){
@@ -2088,14 +2092,17 @@ function ingest5(json, packName){
   for (const [k, arr] of Object.entries(json || {})){
     if (k.startsWith('_') || !Array.isArray(arr)) continue;
     const cat = MAP5[k] || 'other';
-    arr.forEach(o => { if (o && typeof o === 'object' && typeof o.name === 'string') out.push({cat, n:o.name, o:{...o, _kind:k}, src:packName, k:key5(cat, o)}); });
+    arr.forEach(o => { if (o && typeof o === 'object' && typeof o.name === 'string'){
+      const c = {...o, _kind:k}; F5.forEach(f => { if (f in c && typeof c[f] !== 'string' && typeof c[f] !== 'number') delete c[f]; });
+      try { out.push({cat, n:o.name, o:c, src:packName, k:key5(cat, c)}); } catch (e) {}
+    } });
   }
   return out;
 }
 function extMeta(e){
   const o = e.o, src = o.source ? ` · ${esc(o.source)}${o.page ? ' p.' + esc(o.page) : ''}` : '';
   if (e.cat === 'spells'){
-    const time = (o.time || []).map(t => `${t.number || ''} ${t.unit || ''}`.trim()).join(' or ');
+    const time = [].concat(o.time || []).map(t => `${t.number || ''} ${t.unit || ''}`.trim()).join(' or ');
     return `${o.level ? `Level ${esc(o.level)} ${esc(SCHOOL[o.school] || o.school || '')}` : `${esc(SCHOOL[o.school] || o.school || '')} cantrip`}${time ? ' · ' + esc(time) : ''}${src}`;
   }
   if (e.cat === 'monsters'){
@@ -2112,11 +2119,11 @@ function extBody(e){
   if (e.cat === 'spells'){
     const rng = o.range ? (o.range.distance ? `${o.range.distance.amount ?? ''} ${o.range.distance.type}`.trim() : o.range.type) : '';
     const comp = o.components ? [o.components.v && 'V', o.components.s && 'S', o.components.m && ('M' + (typeof o.components.m === 'string' ? ` (${o.components.m})` : o.components.m?.text ? ` (${o.components.m.text})` : ''))].filter(Boolean).join(', ') : '';
-    const dur = (o.duration || []).map(d => d.type === 'timed' ? `${d.concentration ? 'Concentration, up to ' : ''}${d.duration?.amount} ${d.duration?.type}` : title(d.type)).join(' or ');
+    const dur = [].concat(o.duration || []).map(d => d.type === 'timed' ? `${d.concentration ? 'Concentration, up to ' : ''}${d.duration?.amount} ${d.duration?.type}` : title(d.type)).join(' or ');
     head = `${rng ? kv('Range', esc(rng)) : ''}${comp ? kv('Components', esc(comp)) : ''}${dur ? kv('Duration', esc(dur)) : ''}`;
   }
   if (e.cat === 'monsters' && o.str !== undefined){
-    const ac = (o.ac || []).map(a => typeof a === 'object' ? a.ac + (a.from ? ` (${a.from.join(', ').replace(/\{@\w+ ([^|}]+)[^}]*\}/g, '$1')})` : '') : a).join(', ');
+    const ac = [].concat(o.ac ?? []).map(a => typeof a === 'object' ? a.ac + (a.from ? ` (${a.from.join(', ').replace(/\{@\w+ ([^|}]+)[^}]*\}/g, '$1')})` : '') : a).join(', ');
     const spd = o.speed ? Object.entries(o.speed).filter(([k]) => k !== 'canHover').map(([k, v]) => `${k === 'walk' ? '' : k + ' '}${typeof v === 'object' ? v.number : v} ft.`).join(', ') : '';
     const blocks = [['Traits', o.trait], ['Actions', o.action], ['Bonus Actions', o.bonus], ['Reactions', o.reaction], ['Legendary Actions', o.legendary]];
     return `<div class="statblock">${kv('Armor Class', esc(ac))}${kv('Hit Points', esc(o.hp ? (o.hp.average ?? '') + (o.hp.formula ? ` (${o.hp.formula})` : '') : ''))}${kv('Speed', esc(spd))}
@@ -2366,6 +2373,9 @@ function brewLivePreview(){
 }
 const brewTop = () => { const p = $('#page'); if (p && p.getBoundingClientRect().top < 0) p.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'}); };
 async function brewImport(file){
+  try { await brewImport0(file); } catch (e) { toast('That file could not be read as homebrew.'); }
+}
+async function brewImport0(file){
   const text = await file.text(), name = file.name.replace(/\.(json|md|markdown|txt)$/i, '');
   if (/\.(md|markdown|txt)$/i.test(file.name) || (!/^\s*[{\[]/.test(text) && /^#\s+\S/m.test(text))) return brewMdText(text, name);
   let j; try { j = JSON.parse(text); } catch (e) { toast('That file is not valid JSON.'); return; }
@@ -3497,12 +3507,12 @@ const ASI_LEVELS = {Fighter:[4,6,8,12,14,16,19], Rogue:[4,8,10,12,16,19]};
 /* 2024: when the Constitution modifier changes, max HP changes as if it had been that from level 1 (B-022) */
 /* Max HP never drops below 1 per level and damage taken stays the same; what a low Constitution could not take away
    (max kept at the floor, damage beyond 0 HP) is remembered in hp.conAdj, so − then + gives back the same HP (B-026).
-   The memory is dropped as soon as the HP change for any other reason. */
+   The max part survives damage (B-032); the cur part is dropped as soon as the current HP change for any other reason. */
 function conHp(c, oldCon){
   const lv = c.level || 1, n = (mod(c.abilities.con || 10) - mod(oldCon || 10)) * lv; if (!n) return 0;
-  const hp = c.hp, max0 = +hp.max || 0, cur0 = +hp.cur || 0, a = hp.conAdj, fresh = !!a && a.m === max0 && a.c === cur0;
+  const hp = c.hp, max0 = +hp.max || 0, cur0 = +hp.cur || 0, a = hp.conAdj, fresh = !!a && a.m === max0, freshC = fresh && a.c === cur0;
   const raw = max0 - (fresh ? +a.max || 0 : 0) + n, max = clamp(raw, lv, LIM.hp);
-  const dmg = max0 - cur0 + (fresh ? +a.cur || 0 : 0), dying = cur0 === 0 && !(fresh && a.cur);
+  const dmg = max0 - cur0 + (freshC ? +a.cur || 0 : 0), dying = cur0 === 0 && !(freshC && a.cur);
   const want = dying ? 0 : max - dmg, cur = clamp(want, 0, max);
   hp.max = max; hp.cur = cur;
   if (max !== raw || cur !== want) hp.conAdj = {max:max - raw, cur:cur - want, m:max, c:cur}; else delete hp.conAdj;

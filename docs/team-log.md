@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-15 · sviluppo
+- **Sezioni**: Import/export e Robustezza (backend), Telefono e Caratteristiche (frontend). Test prima/dopo: **274/281 → 280/281**, nessuna regressione; resta rosso solo B-031.
+- **Backend**: `ingest5` riduce `source`, `cls`, `level`, `school`, `rarity`, `className`, `subclassShortName`, `page` a testo/numero (altrimenti li scarta) con try/catch per voce; `buildIndex` e `key5` usano `txt5`, così un pacchetto malformato (anche già salvato) non blocca più l'avvio (**B-044**, **B-046**); `extBody` accetta `ac`/`time`/`duration` non array e `entryCard` mostra un messaggio invece di lanciare (**B-045**); `brewImport` è avvolto in try/catch con messaggio (**B-047**). Solo client, nessuna modifica a schema, policy, funzioni o formato dei salvataggi.
+- **Frontend**: pulsanti dadi a 44×44 px e chip/xref ≥32 px sotto i 560 px (**B-048**); `conHp`: la parte `max` di `hp.conAdj` resta valida dopo un danno, quindi Cos 1→10 dopo un danno torna a 82 PF (**B-032**).
+- **File**: index.html, sw.js (`CACHE` = grimoire-ds1115a), docs/bug-beta.md, docs/team-log.md.
+- **Resta**: B-031 (Grappler, serve scelta della caratteristica nella finestra Level up); variante di B-032 con Level up nel mezzo (il massimo cambia e la memoria si perde); B-020, B-011. Supabase non provato (nessun accesso di rete). Sala non aggiornata (ho tenuto il lavoro economico). Nessun test modificato.
+
 ## 2026-11-15 · team leader
 - **Stato**: main ff6a170, controllo a 1440x900 e 390x844 senza errori. Punteggio +244 ↓ (274/281), nessuna sezione rossa. Registro già coerente (B-044..B-048, B-031, B-032 davvero aperti).
 - **Piano**: backend su B-044 [alta] e poi B-046/B-045/B-047 (stessa radice: campi importati non ridotti al tipo); frontend su B-048, B-032, B-031; designer su indizio segnalibri; distruttore su Biblioteca/avvio, power user su Zaino/Tratti a telefono. Nessuna PR aspetta Capo. Sala non aggiornata: nessuno stato di bug o compito è cambiato dal giro di test di stamattina.
