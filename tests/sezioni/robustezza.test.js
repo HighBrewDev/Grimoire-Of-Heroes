@@ -236,4 +236,15 @@ module.exports = {sezione:'robustezza', test:[
     for (const ch of CHAPS) await app.go(ch);
     assert.deepStrictEqual([...app.consoleErrors, ...app.pageErrors], []);
   }],
+  ['B-053 salvataggio danneggiato (JSON troncato): all\u2019avvio compaiono gli eroi di esempio e la prima modifica cancella i dati senza avviso né copia', async ({open}) => {
+    const app = await open();
+    const orig = await app.page.evaluate(k => localStorage.getItem(k), KEY);
+    const bad = orig.slice(0, Math.floor(orig.length * 0.9));
+    await app.page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, bad]);
+    await app.reload();
+    const warned = /damaged|corrupt|could not be read|recover/i.test(await app.text('body') + await app.toast());
+    await app.go('hero'); await app.set('#f_name', 'Dopo il danno');
+    const kept = await app.page.evaluate(b => Object.keys(localStorage).some(k => (localStorage.getItem(k) || '').includes(b.slice(0, 300))), bad);
+    assert.ok(warned || kept, 'né avviso né copia del salvataggio danneggiato: la prima modifica lo sovrascrive');
+  }],
 ]};

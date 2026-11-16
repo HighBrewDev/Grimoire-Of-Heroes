@@ -168,4 +168,16 @@ module.exports = {sezione:'zaino', test:[
     assert.ok(/amount above zero/.test(await app.toast()), await app.toast());
     assert.ok(/≈ \d/.test(await app.text('#page')));
   }],
+  ['B-052 Denari: Spend con la moneta scelta come più grande e senza spiccioli dice "Not enough" anche se il saldo basta', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    const spend = async (purse, amt, kind) => {
+      for (const k of ['cp', 'sp', 'ep', 'gp', 'pp']) await app.page.fill('#coin_' + k, String(purse[k] || 0));
+      await app.set('#coinKind', kind); await app.page.fill('#coinAmt', String(amt)); await app.click('coinSpend');
+      return app.toast();
+    };
+    // 41 mo + 3 mr, paga 2,22 mo: servono 3 mo con 78 mr di resto
+    assert.ok(/^Spent/.test(await spend({gp:41, cp:3}, 2.22, 'gp')), '41 gp + 3 cp, 2,22 gp');
+    assert.ok(/^Spent/.test(await spend({pp:1}, 0.5, 'pp')), '1 pp, 0,5 pp');
+    assert.ok(/^Spent/.test(await spend({ep:13, cp:8}, 1.48, 'ep')), '13 ep + 8 cp, 74 cp in ep');
+  }],
 ]};
