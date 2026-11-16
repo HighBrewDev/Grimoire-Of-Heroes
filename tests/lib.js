@@ -103,12 +103,13 @@ async function open(browser, base, opts = {}){
   await context.route('**/*', route => {
     const u = new URL(route.request().url());
     if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') return route.abort();
-    if (u.pathname.endsWith('/config.js')) return route.fulfill({contentType:'application/javascript', body:'window.GRIMOIRE_CONFIG = {};'});
+    if (u.pathname.endsWith('/config.js')) return route.fulfill({contentType:'application/javascript', body:'window.GRIMOIRE_CONFIG = ' + JSON.stringify(opts.cloud ? opts.cloud.config() : {}) + ';'});
     return route.continue();
   });
+  if (opts.cloud) await opts.cloud.attach(context);     // dopo il filtro generale: le sue rotte hanno la precedenza
   await context.addInitScript(SEED_JS);
   const heroes = opts.samples ? null : (opts.heroes || fx.party());
-  await context.addInitScript(seedScript({heroes, activeId:opts.activeId, prefs:opts.prefs, extra:opts.extra}));
+  await context.addInitScript(seedScript({heroes, activeId:opts.activeId, prefs:opts.prefs, extra:{...(opts.cloud ? opts.cloud.seed() : {}), ...(opts.extra || {})}}));
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   const app = new App(context, page, base);

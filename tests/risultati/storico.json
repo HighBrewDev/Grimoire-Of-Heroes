@@ -547,10 +547,10 @@
    }
   },
   "2026-11-16": {
-   "commit": "2ceb3cf",
-   "totale": 285,
-   "superati": 288,
-   "totali": 289,
+   "commit": "922693f",
+   "totale": 309,
+   "superati": 315,
+   "totali": 315,
    "sezioni": {
     "eroe": {
      "punti": 21,
@@ -563,9 +563,9 @@
      "tot": 21
     },
     "combattimento": {
-     "punti": 33,
-     "sup": 33,
-     "tot": 33
+     "punti": 35,
+     "sup": 35,
+     "tot": 35
     },
     "incontro": {
      "punti": 14,
@@ -584,8 +584,8 @@
     },
     "zaino": {
      "punti": 16,
-     "sup": 16,
-     "tot": 16
+     "sup": 18,
+     "tot": 18
     },
     "cronaca": {
      "punti": 17,
@@ -598,14 +598,14 @@
      "tot": 16
     },
     "workshop": {
+     "punti": 30,
+     "sup": 32,
+     "tot": 32
+    },
+    "levelup": {
      "punti": 26,
      "sup": 26,
      "tot": 26
-    },
-    "levelup": {
-     "punti": 20,
-     "sup": 23,
-     "tot": 24
     },
     "importexport": {
      "punti": 21,
@@ -613,14 +613,19 @@
      "tot": 21
     },
     "telefono": {
-     "punti": 21,
-     "sup": 21,
-     "tot": 21
+     "punti": 23,
+     "sup": 23,
+     "tot": 23
     },
     "robustezza": {
-     "punti": 27,
+     "punti": 25,
      "sup": 27,
      "tot": 27
+    },
+    "sincronia": {
+     "punti": 12,
+     "sup": 12,
+     "tot": 12
     }
    }
   }
@@ -661,7 +666,10 @@
   "B-044": "2026-11-15",
   "B-047": "2026-11-15",
   "B-045": "2026-11-15",
-  "B-046": "2026-11-15"
+  "B-046": "2026-11-15",
+  "B-049": "2026-11-16",
+  "B-050": "2026-11-16",
+  "B-051": "2026-11-16"
  },
  "bugPremiati": {
   "B-012": "2026-11-09",

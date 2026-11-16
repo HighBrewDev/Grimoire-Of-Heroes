@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-16 · sviluppo · homebrew sull'account
+- **Fatto**: l'homebrew segue l'account su tutti i dispositivi, con lo schema degli eroi. Tabella `public.homebrew` (una riga per voce: `id`, `owner`, `data {cat, o, updatedAt}`, `deleted`, RLS solo proprietario, trigger che ignora scritture più vecchie di quella salvata). In `index.html`: `brewStamp` (tempo per voce e lapide a ogni salvataggio), `brewReconcile` (unione pura: mai persa una voce locale, vince la modifica più recente per voce, cancellazione contro modifica per orario, stessa voce su due dispositivi non si duplica) e `syncBrew`, chiamata da `sync()` dopo gli eroi.
+- **Tolleranza**: tabella assente (404 / PGRST205) = `S.brewOff`, nessun errore, tutto resta in IndexedDB; da non loggato nessuna richiesta. Altri errori di rete mostrano "Sync problem" come per gli eroi. Offline invariato: le modifiche aspettano e salgono alla prossima sincronizzazione.
+- **Account diverso sullo stesso dispositivo**: le voci del primo vengono messe da parte in `localStorage` (`grimoire-brew-backup-v1:<id>`) e non entrano nel secondo account.
+- **Test**: nuova sezione `sincronia` con finto Supabase (`tests/cloud.js`, `open({cloud})` in `tests/lib.js`): 12 test. Suite 315/315, nessun test modificato.
+- **Da fare per Capo**: eseguire `supabase/migrations/2026-11-16-homebrew.sql` nell'editor SQL (sicuro da rieseguire). Non verificato su Supabase vero.
+
 ## 2026-11-16 · sviluppo
 - **Backend** · **B-020**: misurato con profilo CPU, 20.000 incantesimi arrivano alla finestra di scelta in ~4,8 s (il bug riportava 109 s: la crescita quadratica non c'è più). Resta solo costo del DOM (focus, `norm`). Chiuso con un test nuovo a 20.000 voci (<15 s) in `workshop`; niente codice di import toccato. Non fatto: avviso "New version available" e prova di login/sync (nessuna rete verso Supabase).
 - **Frontend** · **B-031**: nuovo `featAsi(e)` legge dal testo del talento a quali caratteristiche dà +1 (Grappler: For o Des, tetto 20; Epic Boon: una a scelta, tetto 30); nella finestra Level up il menu "This feat also gives +1 to" si adatta al talento scelto (`luFeatAb`) e `applyLevelUp` applica la scelta senza superare il tetto. Solo client, nessun cambio al formato dei salvataggi.

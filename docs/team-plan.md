@@ -45,6 +45,11 @@ Ordine: **1. Import Markdown tollerante** (alta: gli altri utenti non seguiranno
 - **Import Markdown**: l'etichetta `# Class: Nome` diventa facoltativa; il tipo si deduce dai campi (Hit die, Casting time, Rarity, Prerequisite…) o dal titolo ("Armorer (Artificer Subclass)"); livelli come "Level 3: X", "3rd-level: X", "X (Level 3)", in grassetto o su riga semplice, con o senza "## Features"; tabelle a due colonne come campi; HTML ed entità (`&nbsp;`, `&rsquo;`, `<br>`, `<h1>`…) ripuliti; in Incolla si può scegliere il tipo; la finestra di controllo scrive cosa ha capito ("Read as a class from its Hit Die…") e cosa ha scartato. Test in `workshop` con Artificer/Armorer grezzo (`tests/md/`).
 - **Integrazione AI nell'import (rimandata)**: fattibile con una Supabase edge function che chiama l'API di Claude con la chiave solo lato server, consenso esplicito prima di inviare il testo, limiti d'uso per utente e anteprima obbligatoria. Costa a chi tiene la chiave (token per ogni import) e porta rischi di abuso e privacy; non conviene ora che il parser tollerante copre i casi visti. Da riconsiderare se i file reali continuano a non passare. Dati e Supabase: solo PR.
 
+## Richiesta di Capo del 16/11 · homebrew sincronizzato con l'account (fatta, serve l'SQL)
+- Codice fatto e testato (sezione `sincronia`, 12 test); CACHE `grimoire-dv1116c`. **Capo deve eseguire `supabase/migrations/2026-11-16-homebrew.sql` nell'editor SQL di Supabase** (stesso blocco in fondo a `schema.sql`). Finché non lo fa l'app resta locale, senza errori.
+- Dopo l'SQL: prova a mano con due dispositivi (crea una voce su uno, apri l'altro; cancella su uno). Il team leader la fa con un account di prova se Capo la autorizza.
+- Non fatto di proposito: limite `FREE_BREW` lato server (il paywall è spento), condivisione dell'homebrew nel gruppo, storico delle versioni.
+
 ## Regole per tutti
 - Solo SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
 - Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**.
