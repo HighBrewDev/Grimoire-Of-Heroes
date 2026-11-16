@@ -745,6 +745,113 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
   #app{padding-bottom:calc(175px + env(safe-area-inset-bottom, 0px))}
 }
 
+/* ---- NPC dossiers: a typewritten identity file on aged paper ---- */
+.npIntro{margin:0 0 10px}.npBar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.npBar input[type=search]{flex:1 1 180px;min-width:0}
+.npChips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.npChip{border:1px solid var(--gold3);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:14px;min-height:36px}
+.npChip[aria-pressed="true"]{background:var(--gold);color:#2a1c08;border-color:#6d5210}
+.npSec{margin:16px 0}.npSec>h3{font-size:18px;margin:0 0 8px}
+.npLine{display:grid;grid-template-columns:48px minmax(0,1fr);gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.npLine .th{width:48px;height:48px;border-radius:6px;border:1px solid var(--gold3);background:var(--parch2) center/cover;display:grid;place-items:center;font-size:24px;overflow:hidden}
+.npLine .th img{width:100%;height:100%;object-fit:cover}
+.npLine .t{min-width:0}.npLine .t b{overflow-wrap:anywhere}
+.npLine .acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.npTag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin:2px 4px 0 0;color:var(--ink2)}
+.npTag.on{background:var(--verdigris);color:#fff;border-color:var(--verdigris)}
+.npGrp{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.npEye{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--ink2);min-height:32px;white-space:nowrap}
+.npEye input{width:18px;height:18px}
+.npFacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 14px}
+.npFacts>div>.row{display:flex;gap:6px;align-items:center}.npFacts input[type=text],.npFacts select{flex:1;min-width:0}
+.npSecEd{border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0;background:var(--surfLo)}
+.npSecEd .hd{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.npSecEd .hd input[type=text]{flex:1 1 150px;min-width:0;font-weight:700}
+.npSecEd textarea{width:100%;min-height:90px;margin-top:6px}
+.npStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.npStats label{font-size:12px}.npStats input{width:100%}
+.npHint{font-size:14px;color:var(--ink2);margin:4px 0}
+.npEdWrap{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:1100px){.npEdWrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.npPrev{position:sticky;top:8px}}
+
+/* the sheet itself: always paper, whatever the page theme.
+   Sostituisce il blocco da ".npCard{" fino a "@media print{.npCard{box-shadow:none}}" incluso (stesse classi, nessun markup nuovo obbligatorio).
+   Markup opzionale: .npStamp (timbro, es. <div class="npStamp">Fugitive</div> dentro .npTop), .npBox.tl (cronologia: <ul> a timeline). */
+.npCard{--np-ink:#2a2015;--np-line:#3a2c1a;--np-red:#8e2219;--np-band:#4a3820;--np-type:'Special Elite','American Typewriter','Courier Prime','Courier New',Courier,'Nimbus Mono PS',monospace;
+  position:relative;color:var(--np-ink);font-family:var(--np-type);font-size:15px;line-height:1.4;container-type:inline-size;
+  background:radial-gradient(ellipse at 18% 8%,rgba(255,255,255,.4),transparent 55%),radial-gradient(ellipse at 92% 96%,rgba(120,80,30,.26),transparent 55%),var(--grain,none),linear-gradient(180deg,#efe1be,#e2cd9d);
+  border:1px solid #b79b63;border-radius:3px;padding:16px 12px 14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 0 0 5px rgba(255,248,226,.45),inset 0 0 0 6px rgba(58,44,26,.4),inset 0 0 44px rgba(120,80,30,.28);overflow:hidden}
+.npCard *{box-sizing:border-box}
+.npCard p{margin:0 0 .5em}.npCard p:last-child{margin-bottom:0}
+.npTop{display:grid;align-content:start;grid-template-columns:minmax(0,1fr) 112px;grid-template-areas:"head photo" "facts facts";gap:10px}
+.npHead{grid-area:head;min-width:0}
+.npKicker{font-weight:700;letter-spacing:.24em;font-size:11.5px;text-transform:uppercase;color:#6b5636}
+.npName{font-family:var(--np-type);font-weight:400;text-transform:uppercase;font-size:clamp(24px,8.2vw,46px);line-height:1.02;letter-spacing:.02em;margin:6px 0 0;overflow-wrap:anywhere;hyphens:auto;color:#1b140b;text-shadow:0 0 1px #1b140b,1px 1px 0 rgba(27,20,11,.3);
+  padding-bottom:6px;border-bottom:3px double rgba(58,44,26,.55)}
+.npPhoto{grid-area:photo;position:relative;margin:8px 6px 0 0;transform:rotate(2.4deg);align-self:start}
+.npPhoto .fr{background:#fbf6e6;padding:5px 5px 16px;border:1px solid rgba(58,44,26,.3);box-shadow:0 4px 10px rgba(0,0,0,.42);aspect-ratio:3/4;display:block}
+.npPhoto .fr img{width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.28) contrast(1.05) grayscale(.15)}
+.npPhoto .fr span{display:grid;place-items:center;width:100%;height:100%;background:repeating-linear-gradient(45deg,#d4c295,#d4c295 7px,#c9b688 7px,#c9b688 14px);font-size:44px;color:#5b462d}
+.npPhoto .clip{position:absolute;top:-16px;right:12px;width:22px;height:48px;border:3px solid #a3a9af;border-radius:12px;border-bottom-color:#7c8288;transform:rotate(8deg);box-shadow:1px 1px 2px rgba(0,0,0,.35);pointer-events:none;z-index:2}
+.npPhoto .clip::after{content:"";position:absolute;left:3px;top:10px;width:10px;height:32px;border:3px solid #a3a9af;border-top:0;border-radius:0 0 8px 8px}
+.npFactsWrap{grid-area:facts;align-items:start;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.npBox{position:relative;border:1.5px solid var(--np-line);padding:0 0 7px;min-width:0;background:rgba(255,250,235,.2);break-inside:avoid}
+.npBox>:not(h4){margin-left:9px;margin-right:9px}
+.npBox h4{font-family:var(--np-type);font-size:12.5px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px;padding:4px 9px;color:#fff1cf;background:var(--np-band);border-bottom:1.5px solid var(--np-line)}
+.npBox h4 small{letter-spacing:.06em;opacity:.8}
+.npBox>h4+*{margin-top:7px}
+.npBox ul{margin-top:0;margin-bottom:0;padding-left:18px;margin-right:9px}.npBox li{margin:3px 0;overflow-wrap:anywhere}
+.npBox dl{margin-bottom:0}
+.npBox dl>div{display:grid;grid-template-columns:minmax(78px,38%) minmax(0,1fr);gap:0 8px;margin:0 -9px;padding:3px 9px;border-bottom:1px dotted rgba(58,44,26,.35)}
+.npBox dl>div:last-child{border-bottom:0}
+.npBox dt{font-weight:400;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#6b5636;padding-top:2px}.npBox dd{margin:0;overflow-wrap:anywhere}
+.npTop .npBox{padding-bottom:3px}
+.npSecs{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px;align-items:start;grid-auto-flow:dense}
+.npFoot{margin-top:12px;text-align:right;font-style:italic;font-size:13px;color:#5b462d}
+/* cronologia (opzionale): <section class="npBox tl"><h4>…</h4><ul><li><b>data</b> luogo…</li></ul> */
+.npBox.tl ul{list-style:none;padding-left:20px;position:relative;margin-top:8px}
+.npBox.tl ul::before{content:"";position:absolute;left:5px;top:7px;bottom:7px;width:2px;background:#8a6c1f}
+.npBox.tl li{position:relative;margin:0 0 8px}
+.npBox.tl li::before{content:"";position:absolute;left:-20px;top:4px;width:11px;height:11px;border-radius:50%;background:#efe1be;border:2.5px solid var(--np-red)}
+/* timbro (opzionale) */
+.npStamp{position:absolute;top:12px;right:128px;transform:rotate(-7deg);font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;padding:2px 10px;border:3px double var(--np-red);color:var(--np-red);opacity:.8;mix-blend-mode:multiply;pointer-events:none;z-index:3}
+/* nascosto ai giocatori (solo vista master) */
+.npCard .hid{outline:1.5px dashed var(--np-red);outline-offset:1px;opacity:.72}
+.npCard .hid::after{content:" 🔒";font-size:11px}
+.npBox.hid::after{position:absolute;right:6px;top:4px;content:"🔒 hidden from players";font-size:11px;color:#ffd9d0;letter-spacing:.04em}
+.npPhoto.hid::after,.npName.hid::after{position:absolute;right:4px;top:2px;content:"🔒";font-size:13px}
+.npBox.hid,.npName.hid,.npPhoto.hid{position:relative}
+.npBox.hid>h4{background:#7b6a52}
+.npBox dl>div.hid::after{content:" 🔒"}
+/* solo master: segreti, voce, citazioni */
+.npBox.dmOnly{outline:0;opacity:1;border:2px dashed var(--np-red);background:linear-gradient(180deg,rgba(142,34,25,.1),rgba(142,34,25,.04))}
+.npBox.dmOnly>h4{background:var(--np-red);color:#ffeadb}
+.npBox.dmOnly>h4 small{color:#ffd9d0}
+.npBox.dmOnly::after{content:"" !important}
+.npBox.dmOnly>:not(h4){margin-top:7px}
+.npMini{display:flex;align-items:center;gap:8px}
+@container (min-width:640px){
+  .npTop{grid-template-columns:minmax(0,1fr) 210px;grid-template-areas:"head photo" "facts photo";grid-template-rows:auto 1fr;gap:12px 22px}
+  .npFactsWrap{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .npSecs{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.npBox.wide{grid-column:1/-1}
+  .npBox dl>div{grid-template-columns:minmax(90px,40%) minmax(0,1fr)}
+  .npStamp{right:250px;top:16px;font-size:20px}
+}
+@container (min-width:1000px){
+  .npSecs{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:720px){.npCard{padding:22px 24px 18px;font-size:16px}}
+@media print{
+  @page{size:A4;margin:12mm}
+  .npCard{box-shadow:none;border:1.5px solid #3a2c1a;background:#f6ecce !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;padding:8mm}
+  .npTop{grid-template-columns:minmax(0,1fr) 46mm;grid-template-areas:"head photo" "facts photo"}
+  .npFactsWrap{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .npSecs{grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm}
+  .npBox,.npBox.tl li{break-inside:avoid}
+  .npCard .hid{outline:0;opacity:1}
+  .npCard .hid::after,.npBox.hid::after,.npPhoto.hid::after,.npName.hid::after{display:none}
+  .npBox.dmOnly{display:none}
+  .npPhoto .fr{box-shadow:none}
+}
 </style>
 <script src="config.js"></script>
 </head>
@@ -774,6 +881,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
       <button type="button" class="btn ghost" data-act="wizard">＋ New hero</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="library">Library</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="workshop" title="Create, import and manage your own classes, spells, creatures…">Homebrew</button>
+      <button type="button" class="btn ghost" data-act="go" data-arg="npcs" title="NPC dossiers for the DM, with what your players may read">NPCs</button>
       <button type="button" class="iconBtn" id="soundBtn" data-act="sound" aria-pressed="false" aria-label="Page-turn sound" title="Page-turn sound">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
       </button>
@@ -1411,9 +1519,10 @@ const CHAPTERS = [
   {id:'chronicle', t:'Chronicle', s:'story · allies · notes', h:'Chronicle'},
   {id:'library', t:'Library', s:'the rules, offline', h:'Library of the Rules'},
   {id:'workshop', t:'Homebrew', s:'create · import · manage', h:'Homebrew'},
+  {id:'npcs', t:'NPCs', s:'dossiers · groups · reveal', h:'NPC Dossiers'},
 ];
-const BOOKISH = id => id === 'library' || id === 'workshop';
-const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+const BOOKISH = id => id === 'library' || id === 'workshop' || id === 'npcs';
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 
 function render(){ renderShelf(); renderTabs(); renderPage(); }
 const SHELF_MIN = 8;
@@ -1457,7 +1566,7 @@ function pageHTML(id){
   const body = (BOOKISH(id) || id === 'encounter' ? '' : roBanner(c)) + PAGES[id](c);
   return `<header class="pageHead">
       <div style="min-width:0"><h2>${BOOKISH(id) ? '' : portrait(c, 'mini')} ${BOOKISH(id) ? ch.h : esc(c.name) + ' · ' + ch.h}</h2>
-      <div class="sub">${id === 'workshop' ? 'Your own classes, subclasses, spells, feats, species, backgrounds, items and creatures' : id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
+      <div class="sub">${id === 'npcs' ? 'Identity files for the people of your campaign, and what your players may read of them' : id === 'workshop' ? 'Your own classes, subclasses, spells, feats, species, backgrounds, items and creatures' : id === 'library' ? 'System Reference Document 5.2.1' + (EXT.length ? ` + ${EXT.length} imported entries` : '') + ' · stored inside this file' : `Level ${c.level} ${esc(c.species)} ${esc(classLabel(c, true))} · ${esc(c.background)}${c.alignment ? ' · ' + esc(c.alignment) : ''}`}</div></div>
       <nav class="pageNav" aria-label="Turn page">
         <button type="button" class="btn small" data-act="prev" ${i <= 0 ? 'disabled' : ''} aria-label="Previous page">←</button>
         <button type="button" class="btn small" data-act="next" ${i >= CHAPTERS.length - 1 ? 'disabled' : ''} aria-label="Next page">→</button>
@@ -1971,6 +2080,7 @@ chronicle(c){
 },
 
 workshop(){ return workshopHTML(); },
+npcs(){ return npcsHTML(); },
 library(){
   const cats = CATS.filter(k => ALL.some(e => e.cat === k.id));
   const f = G.libF;
@@ -4349,6 +4459,7 @@ async function sync(){
       await push();
       await pull();
       await syncBrew();
+      await syncNpc();
       S.lastSync = Date.now(); setStatus('synced');
     } catch (e) {
       if (/signed out|invalid.*(token|grant)|refresh/i.test(e.message)){ setStatus('expired', e.message); }
@@ -4734,7 +4845,7 @@ function passwordModal(){
 const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack',
   'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
   ...Object.keys(ACT_CLOUD)]);
-const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew)/.test(name) && !$('#modalBk .acct'); };
+const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew|np[A-Z])/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
   return isMine(c) ? '' : `<div class="roNote">${portrait(c, 'mini')}<span><b>${esc(c.ownerName || 'A party member')}</b>'s hero: you can read it and roll its dice; only ${esc(c.ownerName || 'its owner')} can change it.</span>${act('duplicate', undefined, 'Make my own copy', 'sb')}</div>`;
 }
@@ -4898,13 +5009,403 @@ async function bakeTextures(){
     img.onerror = () => res(); img.src = m[1];
   })));
 }
+/* ================================================================== NPC dossiers (for the DM)
+   A DM keeps NPCs as typewritten identity files, groups them in folders (an NPC can sit in several) and decides what the
+   party may read: the NPC as a whole, the name, the picture, every fact, every section, the game stats. Secret notes
+   never leave the DM's own table. What the players read is a copy built here without the hidden parts (npPublic) and
+   stored in its own table (npc_public), so a bug in the page cannot show them a secret: it is not in their table.
+   Same sync idea as homebrew: one row per entry, latest edit wins, a delete leaves a tombstone. */
+const NP_KEY = 'grimoire-npc-v1', NP_TOMB = 'grimoire-npc-tomb-v1', NP_PUB = 'grimoire-npc-pub-v1', NP_SHARED = 'grimoire-npc-shared-v1', NP_OWNER = 'grimoire-npc-owner-v1';
+const NP_ATT = ['', 'Allied', 'Friendly', 'Neutral', 'Wary', 'Hostile'];
+// [key, label, kind, where it sits on the card: l (left table) or r (right table)]
+const NP_FACTS = [['species', 'Species', 't', 'l'], ['age', 'Age', 't', 'l'], ['born', 'Born', 't', 'l'], ['height', 'Height', 't', 'l'], ['weight', 'Weight', 't', 'l'],
+  ['marks', 'Distinguishing marks', 't', 'l'], ['languages', 'Languages', 't', 'l'],
+  ['role', 'Role', 't', 'r'], ['align', 'Alignment', 't', 'r'], ['attitude', 'Attitude to the party', 'a', 'r'], ['civil', 'Marital status', 't', 'r'], ['home', 'Residence', 't', 'r']];
+// every section is optional and can be reordered; these are only starting points
+const NP_SECS = {
+  profile:['Profile & role', 'Who they are, in a few lines.'], rep:['Reputation', 'What people say about them.'], char:['Character & habits', 'One trait per line.'],
+  priv:['Private life', 'Family, friends, vices.'], moves:['Known movements', 'Where they go and when.'], gear:['Abilities & gear', 'What they can do, what they carry.'],
+  notes:['Notes', 'Anything else.'],
+  skills:['Known abilities', 'What the party has seen them do.'], known:['What the party knows', 'Only what the characters have learned so far.'],
+  ties:['Ties to the party', 'Favours, debts, shared secrets, grudges.'], places:['Places we met', 'One place per line, with the session or date.'],
+  pcrel:['Relationship with each PC', 'One line per character: Name: how they feel about them.'], ibf:['Ideals · bonds · flaws', 'Three lines.'], hooks:['Quest hooks', 'What they want from the party.'],
+  rumors:['Rumors', 'True, false and half true.'], allies:['Allies & enemies', 'Who stands with them, who against.'], sched:['Daily routine', 'Hour by hour.'],
+  wares:['Services & prices', 'For merchants, healers, guides.'], look:['Appearance & clothing', 'What the party sees.'],
+  politics:['Politics & beliefs', 'Side, faith, causes.'], timeline:['Timeline of encounters', 'One line per meeting: date · place · what happened.'],
+};
+const NP_TPL = [
+  {id:'party', t:'Party contact', d:'Skills, what the party knows, ties, places met, timeline', secs:['skills', 'known', 'ties', 'pcrel', 'places', 'timeline', 'notes']},
+  {id:'dossier', t:'Full dossier', d:'Like a guard file: profile, reputation, habits, private life, movements, gear', secs:['profile', 'rep', 'char', 'priv', 'moves', 'gear', 'politics', 'notes']},
+  {id:'merchant', t:'Merchant or informant', d:'Services, rumors, routine, hooks', secs:['profile', 'wares', 'rumors', 'sched', 'hooks']},
+  {id:'villain', t:'Villain or rival', d:'Reputation, allies, hooks, timeline', secs:['profile', 'rep', 'allies', 'hooks', 'timeline']},
+  {id:'blank', t:'Blank card', d:'Just a name and a profile', secs:['profile']},
+];
+const NP_ABIL = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+let NPCS = [];                 // [{id, kind:'npc'|'group', o, updatedAt}]
+let NP_SH = {u:null, list:[]}; // what other people revealed to me: {u: my id, list:[{id, owner, party, kind, o, by}]}
+
+const npId = v => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v) ? v : null;
+const npStr = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
+const NP_IMG = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+/** The only door for data from outside this page (cloud rows, the other tables): types, lengths and the picture are checked. */
+function npClean(o, group){
+  o = isObj(o) ? o : {};
+  if (group) return {n:npStr(o.n, 80).trim() || 'Group', ids:Array.isArray(o.ids) ? [...new Set(o.ids.filter(x => typeof x === 'string' && x.length <= 64))].slice(0, 300) : [], shown:!!o.shown, party:npId(o.party)};
+  const out = {n:npStr(o.n, 80).trim() || 'Unnamed', alias:npStr(o.alias, 80), img:typeof o.img === 'string' && o.img.length <= 160000 && NP_IMG.test(o.img) ? o.img : '',
+    shown:!!o.shown, nameShown:!!o.nameShown, imgShown:!!o.imgShown, party:npId(o.party), facts:{}, secs:[], stats:null, links:[], secret:npStr(o.secret, 4000), voice:npStr(o.voice, 1500), quotes:npStr(o.quotes, 2000)};
+  if (Array.isArray(o.links)) out.links = o.links.slice(0, 60).filter(x => isObj(x) && typeof x.to === 'string' && x.to.length <= 64).map(x => ({to:x.to, rel:npStr(x.rel, 60).trim(), show:!!x.show}));
+  for (const [k] of NP_FACTS){ const f = isObj(o.facts) ? o.facts[k] : null; if (isObj(f) && typeof f.v === 'string' && f.v.trim()) out.facts[k] = {v:f.v.trim().slice(0, 200), show:!!f.show}; }
+  if (Array.isArray(o.secs)) out.secs = o.secs.slice(0, 40).filter(isObj).map(x => ({id:npStr(x.id, 40) || uid(), k:npStr(x.k, 20), t:npStr(x.t, 80).trim() || 'Section', body:npStr(x.body, 4000), show:!!x.show}));
+  if (isObj(o.stats)){
+    const s = o.stats, ab = Array.isArray(s.abil) ? s.abil : [];
+    out.stats = {on:!!s.on, show:!!s.show, ac:npStr(s.ac, 12), hp:npStr(s.hp, 20), speed:npStr(s.speed, 30), cr:npStr(s.cr, 8), abil:NP_ABIL.map((_, i) => clamp(parseInt(ab[i], 10) || 10, 1, 30)), text:npStr(s.text, 2000)};
+  }
+  return out;
+}
+function npItem(id, data){
+  if (typeof id !== 'string' || id.length < 4 || id.length > 64 || !isObj(data)) return null;
+  const group = data.kind === 'group';
+  return {id, kind:group ? 'group' : 'npc', o:npClean(data.o, group), updatedAt:+data.updatedAt || 0};
+}
+function npLoad(){
+  try { const l = JSON.parse(localStorage.getItem(NP_KEY) || '[]'); NPCS = Array.isArray(l) ? l.map(x => npItem(x?.id, x)).filter(Boolean) : []; } catch (e) { NPCS = []; }
+  try { const s = JSON.parse(localStorage.getItem(NP_SHARED) || 'null'); if (isObj(s) && Array.isArray(s.list)) NP_SH = {u:s.u, list:s.list.map(x => ({...x, o:npClean(x.o, x.kind === 'group')}))}; } catch (e) {}
+}
+function npPersist(){
+  try { localStorage.setItem(NP_KEY, JSON.stringify(NPCS.map(it => ({id:it.id, kind:it.kind, o:it.o, updatedAt:it.updatedAt})))); }
+  catch (e) { toast('This browser is full, so your NPCs could not be saved here. Remove a picture or an old NPC.'); }
+}
+const npTombGet = () => { try { const t = JSON.parse(localStorage.getItem(NP_TOMB) || '{}'); return isObj(t) ? t : {}; } catch (e) { return {}; } };
+const npTombSet = t => { try { Object.keys(t).length ? localStorage.setItem(NP_TOMB, JSON.stringify(t)) : localStorage.removeItem(NP_TOMB); } catch (e) {} };
+const npPubGet = () => { try { const t = JSON.parse(localStorage.getItem(NP_PUB + ':' + me()) || '{}'); return isObj(t) ? t : {}; } catch (e) { return {}; } };
+const npPubSet = t => { try { localStorage.setItem(NP_PUB + ':' + me(), JSON.stringify(t)); } catch (e) {} };
+const npShared = () => NP_SH.u && NP_SH.u === me() ? NP_SH.list : [];
+const npCanShare = () => !!(CLOUD && me() && S.parties?.length && !S.npcOff);
+const npNpcs = () => NPCS.filter(x => x.kind === 'npc'), npGroups = () => NPCS.filter(x => x.kind === 'group');
+const npGet = id => NPCS.find(x => x.id === id);
+function npTouch(it){ it.updatedAt = Math.max(Date.now(), (it.updatedAt || 0) + 1); }
+function npSyncSoon(){ if (CLOUD && me()) schedulePush(); }
+
+/** What the party may read of an entry, or null when nothing. Pure: this is the one place that decides what leaves the DM's table. */
+function npPublic(it, all = NPCS){
+  const o = it.o;
+  if (it.kind === 'group'){
+    if (!o.shown || !o.party) return null;
+    return {n:o.n, party:o.party, ids:o.ids.filter(id => all.some(x => x.id === id && x.kind === 'npc' && x.o.shown && x.o.party === o.party))};
+  }
+  if (!o.shown || !o.party) return null;
+  const out = {n:o.nameShown ? o.n : (o.alias || 'Unknown figure'), img:o.imgShown ? o.img : '', party:o.party, facts:{}, secs:[], stats:null};
+  for (const k in o.facts) if (o.facts[k].show) out.facts[k] = {v:o.facts[k].v, show:true};
+  out.secs = o.secs.filter(s => s.show && s.body.trim()).map(s => ({id:s.id, k:s.k, t:s.t, body:s.body, show:true}));
+  if (o.stats?.on && o.stats.show) out.stats = {...o.stats, show:true};
+  out.links = o.links.filter(l => l.show && all.some(x => x.id === l.to && x.kind === 'npc' && x.o.shown && x.o.party === o.party)).map(l => ({to:l.to, rel:l.rel, show:true}));   // only toward NPCs the party can see
+  return out;
+}
+
+// ---- merging with the cloud (same rules as homebrew: the later edit wins per entry, a delete beats an older edit) ----
+function npReconcile(local, rows, tomb){
+  const items = [], push = [], del = [], seen = new Set();
+  let changed = false;
+  for (const r of rows){
+    const rt = +r.data?.updatedAt || 0, l = local.find(x => x.id === r.id);
+    if (l) seen.add(l.id);
+    if (r.deleted){
+      if (l && l.updatedAt > rt){ items.push(l); push.push(l); } else if (l) changed = true;
+      continue;
+    }
+    const it = npItem(r.id, {...r.data, updatedAt:rt});
+    if (!it){ if (l){ items.push(l); push.push(l); } continue; }
+    if (!l){
+      if (tomb[r.id] != null && tomb[r.id] >= rt){ del.push({id:r.id, at:tomb[r.id]}); continue; }
+      items.push(it); changed = true; continue;
+    }
+    if (l.updatedAt > rt){ items.push(l); push.push(l); }
+    else if (l.updatedAt < rt){ items.push(it); changed = true; }
+    else items.push(l);
+  }
+  for (const l of local) if (!seen.has(l.id)){ items.push(l); push.push(l); }
+  return {items, push, del, changed};
+}
+const npRerender = () => { if (G.chapter === 'npcs'){ if (!G.turning && !$('#modalBk') && !isTyping()) renderPage(); else G.needRender = true; } };
+async function syncNpc(){
+  if (S.npcOff || !me()) return;
+  let rows;
+  try { rows = await db('/npcs?select=id,data,deleted,updated_at'); }
+  catch (e){ if (BREW_MISSING.test(e.message)){ S.npcOff = true; npRerender(); return; } throw e; }
+  let prev = null; try { prev = localStorage.getItem(NP_OWNER); } catch (e) {}
+  let moved = false;
+  if (prev && prev !== me()){                    // another account used this device: its NPCs stay aside, never mixed in
+    if (NPCS.length){ try { localStorage.setItem('grimoire-npc-backup-v1:' + prev, JSON.stringify(NPCS)); } catch (e) {} }
+    NPCS = []; npTombSet({}); moved = true;
+  }
+  const tomb = npTombGet(), r = npReconcile(NPCS, rows || [], tomb);
+  NPCS = r.items;
+  if (r.changed || moved){ npPersist(); npRerender(); }
+  try { localStorage.setItem(NP_OWNER, me()); } catch (e) {}
+  const mine = r.push.map(it => ({id:it.id, owner:me(), party_id:it.o.party || null, data:{kind:it.kind, o:it.o, updatedAt:it.updatedAt}, deleted:false}))
+    .concat(r.del.map(d => ({id:d.id, owner:me(), data:{updatedAt:d.at}, deleted:true})));
+  for (let i = 0; i < mine.length; i += 10) await db('/npcs?on_conflict=id', {method:'POST', body:mine.slice(i, i + 10), prefer:'resolution=merge-duplicates,return=minimal'});
+  // what the party may read: only the entries whose public copy changed since the last time
+  const sigs = npPubGet(), pub = [], now = Date.now(), next = {};
+  for (const it of NPCS){
+    const p = npPublic(it), sig = p ? JSON.stringify(p) : '', old = sigs[it.id];
+    next[it.id] = [sig, p ? p.party : old?.[1] || null];
+    if (sig !== (old?.[0] || '')){
+      if (p) pub.push({id:it.id, owner:me(), party_id:p.party, data:{kind:it.kind, o:p, updatedAt:now}, deleted:false});
+      else if (old?.[1]) pub.push({id:it.id, owner:me(), party_id:old[1], data:{updatedAt:now}, deleted:true});
+    }
+  }
+  for (const id of Object.keys(sigs)) if (!next[id]){                // deleted here: take it away from the players too
+    if (sigs[id][0] && sigs[id][1]) pub.push({id, owner:me(), party_id:sigs[id][1], data:{updatedAt:now}, deleted:true});
+  }
+  for (let i = 0; i < pub.length; i += 10) await db('/npc_public?on_conflict=id', {method:'POST', body:pub.slice(i, i + 10), prefer:'resolution=merge-duplicates,return=minimal'});
+  npPubSet(next);
+  if (Object.keys(tomb).length){ const t = npTombGet(); for (const id of Object.keys(tomb)) delete t[id]; npTombSet(t); }
+  await npPullShared();
+}
+async function npPullShared(){
+  let rows;
+  try { rows = await db('/npc_public?select=id,owner,party_id,data,deleted,updated_at'); }
+  catch (e){ if (BREW_MISSING.test(e.message)){ S.npcOff = true; return; } throw e; }
+  const who = id => S.members.find(m => m.id === id)?.name || 'Your DM';
+  const list = (rows || []).filter(r => r.owner !== me() && !r.deleted && isObj(r.data)).map(r => ({id:r.id, owner:r.owner, party:r.party_id, kind:r.data.kind === 'group' ? 'group' : 'npc', o:npClean(r.data.o, r.data.kind === 'group'), by:who(r.owner)}));
+  const same = JSON.stringify(list) === JSON.stringify(npShared());
+  NP_SH = {u:me(), list};
+  try { localStorage.setItem(NP_SHARED, JSON.stringify(NP_SH)); } catch (e) {}
+  if (!same) npRerender();
+}
+
+// ---- drawing a card ----
+const npBody = t => {
+  const L = String(t || '').split('\n').map(l => l.trim().replace(/^[-•*]\s+/, '')).filter(Boolean);
+  return L.length > 1 ? `<ul>${L.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : L.length ? `<p>${esc(L[0])}</p>` : '';
+};
+/** o: a full NPC (the DM) or the public copy (a player). dm marks what the party cannot see. */
+function npCardHTML(o, {dm = false, by = '', names = id => npGet(id)?.o.n} = {}){
+  const hid = on => dm && !on ? ' hid' : '';
+  const tbl = side => {
+    const rows = NP_FACTS.filter(f => f[3] === side && o.facts[f[0]]?.v).map(([k, label]) => `<div class="${hid(o.facts[k].show).trim()}"><dt>${esc(label)}:</dt><dd>${esc(o.facts[k].v)}</dd></div>`).join('');
+    return rows ? `<div class="npBox"><dl>${rows}</dl></div>` : '';
+  };
+  const photo = `<div class="npPhoto${hid(o.imgShown)}"><span class="clip" aria-hidden="true"></span><div class="fr">${o.img ? `<img src="${esc(o.img)}" alt="Portrait of ${esc(o.n)}">` : '<span aria-hidden="true">?</span>'}</div></div>`;
+  const secs = o.secs.filter(s => dm || (s.show && s.body.trim())).map(s => `<section class="npBox${hid(s.show)}"><h4>${esc(s.t)}</h4>${npBody(s.body) || '<p>—</p>'}</section>`).join('');
+  const sb = o.stats && o.stats.on ? `<section class="npBox wide${hid(o.stats.show)}"><h4>Game stats</h4>
+    <dl><div><dt>AC · HP · Speed:</dt><dd>${esc([o.stats.ac, o.stats.hp, o.stats.speed].map(x => x || '—').join(' · '))}${o.stats.cr ? ` · CR ${esc(o.stats.cr)}` : ''}</dd></div>
+    <div><dt>${NP_ABIL.map(a => a.toUpperCase()).join(' ')}:</dt><dd>${o.stats.abil.map(v => `${v} (${fmt(mod(v))})`).join(' · ')}</dd></div></dl>${o.stats.text ? npBody(o.stats.text) : ''}</section>` : '';
+  const lk = o.links.map(l => ({n:names(l.to), l})).filter(x => x.n);
+  const lkb = lk.length ? `<section class="npBox"><h4>Connections</h4><ul>${lk.map(x => `<li class="${hid(x.l.show).trim()}"><b>${esc(x.n)}</b>${x.l.rel ? ' · ' + esc(x.l.rel) : ''}</li>`).join('')}</ul></section>` : '';
+  const dmb = dm && (o.secret.trim() || o.voice.trim() || o.quotes.trim()) ? [['Secrets, layer by layer', o.secret, true], ['Voice & mannerisms', o.voice], ['Quotes', o.quotes]].filter(x => x[1].trim()).map(([t, b, n]) => `<section class="npBox hid dmOnly"><h4>${t} <small>(DM only)</small></h4>${n ? `<ol>${b.split('\n').map(l => l.trim()).filter(Boolean).map(l => `<li>${esc(l)}</li>`).join('')}</ol>` : npBody(b)}</section>`).join('') : '';
+  return `<article class="npCard" aria-label="Dossier of ${esc(o.n)}">
+    <div class="npTop"><div class="npHead"><div class="npKicker">Dossier — subject</div><h3 class="npName${hid(o.nameShown)}">${esc(o.n)}</h3></div>${photo}
+      <div class="npFactsWrap">${tbl('l')}${tbl('r')}</div></div>
+    ${secs || sb || lkb || dmb ? `<div class="npSecs">${secs}${lkb}${sb}${dmb}</div>` : ''}
+    ${by ? `<div class="npFoot">Dossier kept by ${esc(by)}.</div>` : ''}</article>`;
+}
+
+// ---- the page ----
+const NP_UI = {view:'list', edit:null, draft:null, filter:'', q:'', open:null};
+function npEye(label, checked, attrs){ return `<label class="npEye" title="Players can read this"><input type="checkbox" ${checked ? 'checked' : ''} ${attrs} aria-label="Players can read: ${esc(label)}"><span aria-hidden="true">👁</span> <span class="small">players</span></label>`; }
+function npcsHTML(){
+  if (NP_UI.view === 'edit' && NP_UI.draft) return npEditorHTML();
+  if (NP_UI.view === 'card') return npCardPageHTML();
+  return npListHTML();
+}
+function npShareNote(){
+  if (!CLOUD) return 'NPCs stay on this device. Sign-in and a party are needed to reveal them to your players.';
+  if (!me()) return `NPCs stay on this device until you sign in. ${act('account', undefined, 'Sign in', 'sb')}`;
+  if (S.npcOff) return 'Sharing is not set up on the server yet, so your NPCs stay on this device for now.';
+  if (!S.parties.length) return `You are not in a party yet: create one or join one to reveal NPCs to your players. ${act('account', undefined, 'Account & party', 'sb')}`;
+  return `Your players are in <b>${esc(S.parties[0].name)}</b>. Each NPC, folder, fact and section is hidden until you reveal it; secret notes never leave your account.`;
+}
+function npLineHTML(it){
+  const o = it.o, grps = npGroups().filter(g => g.o.ids.includes(it.id));
+  return `<div class="npLine"><span class="th">${o.img ? `<img src="${esc(o.img)}" alt="">` : '🕵️'}</span>
+    <div class="t"><button type="button" class="xref" data-act="npOpen" data-arg="${esc(it.id)}"><b>${esc(o.n)}</b></button>
+      <div class="muted small">${esc([o.facts.role?.v, o.facts.attitude?.v].filter(Boolean).join(' · ') || ' ')}</div>
+      <div>${o.shown ? '<span class="npTag on">Revealed to players</span>' : '<span class="npTag">Hidden</span>'}${grps.map(g => `<span class="npTag">📁 ${esc(g.o.n)}</span>`).join('')}</div></div>
+    <div class="acts">${act('npOpen', it.id, 'Open', 'sb')}${act('npEdit', it.id, 'Edit', 'sb')}${act('npToggle', it.id, o.shown ? 'Hide from players' : 'Reveal to players', 'sb')}${act('npDup', it.id, 'Duplicate', 'sb')}${act('npDel', it.id, 'Delete', 'sb x')}</div></div>`;
+}
+function npListHTML(){
+  const q = norm(NP_UI.q), f = NP_UI.filter, grp = npGet(f);
+  const list = npNpcs().filter(it => (!q || norm(it.o.n + ' ' + Object.values(it.o.facts).map(x => x.v).join(' ')).includes(q)) && (!f || (f === '_none' ? !npGroups().some(g => g.o.ids.includes(it.id)) : grp?.o.ids.includes(it.id))))
+    .sort((a, b) => a.o.n.localeCompare(b.o.n, undefined, {sensitivity:'base'}));
+  const groups = npGroups().sort((a, b) => a.o.n.localeCompare(b.o.n));
+  return `<p class="npIntro">Typewritten files on the people of your campaign. ${npShareNote()}</p>
+    <div class="npBar">${act('npNew', undefined, '＋ New NPC', 'btn')}${act('npGroupEdit', '', '＋ New group', 'btn ghost')}
+      <label class="sr" for="np_q">Search NPCs</label><input type="search" id="np_q" placeholder="Search NPCs" value="${esc(NP_UI.q)}" autocomplete="off"></div>
+    ${groups.length || npNpcs().length ? `<div class="npChips" role="group" aria-label="Filter by group">
+      <button type="button" class="npChip" data-act="npFilter" data-arg="" aria-pressed="${!f}">All (${npNpcs().length})</button>
+      ${groups.map(g => `<button type="button" class="npChip" data-act="npFilter" data-arg="${esc(g.id)}" aria-pressed="${f === g.id}">📁 ${esc(g.o.n)} (${g.o.ids.filter(id => npGet(id)).length})</button>`).join('')}
+      ${groups.length ? `<button type="button" class="npChip" data-act="npFilter" data-arg="_none" aria-pressed="${f === '_none'}">No group</button>` : ''}</div>` : ''}
+    ${groups.length ? `<section class="npSec" aria-labelledby="np_gh"><h3 id="np_gh">Groups</h3>${groups.map(g => `<div class="npGrp"><span><b>${esc(g.o.n)}</b> <span class="muted small">${g.o.ids.filter(id => npGet(id)).length} NPCs</span> ${g.o.shown ? '<span class="npTag on">Revealed</span>' : '<span class="npTag">Hidden</span>'}</span>
+      <span class="row">${act('npGroupToggle', g.id, g.o.shown ? 'Hide' : 'Reveal', 'sb')}${act('npGroupEdit', g.id, 'Edit', 'sb')}${act('npGroupDel', g.id, 'Delete', 'sb x')}</span></div>`).join('')}</section>` : ''}
+    <section class="npSec" aria-labelledby="np_lh"><h3 id="np_lh">${grp ? esc(grp.o.n) : 'Your NPCs'} <span class="muted">${list.length}</span></h3><div id="np_list">${npListRows(list)}</div></section>
+    ${npSharedHTML()}`;
+}
+const npListRows = list => list.length ? list.map(npLineHTML).join('') : `<div class="empty"><p><b>${npNpcs().length ? 'Nothing matches.' : 'No NPCs yet.'}</b></p>${npNpcs().length ? '' : '<p>Make the first one: pick a template, fill what you know, and reveal to your players only what they have learned.</p>'}</div>`;
+function npSharedHTML(){
+  const l = npShared(); if (!l.length) return '';
+  const npcs = l.filter(x => x.kind === 'npc'), groups = l.filter(x => x.kind === 'group'), used = new Set();
+  const line = x => `<div class="npLine"><span class="th">${x.o.img ? `<img src="${esc(x.o.img)}" alt="">` : '🕵️'}</span><div class="t"><button type="button" class="xref" data-act="npOpenShared" data-arg="${esc(x.id)}"><b>${esc(x.o.n)}</b></button><div class="muted small">${esc(x.o.facts.role?.v || ' ')}</div></div></div>`;
+  const blocks = groups.map(g => { const m = npcs.filter(n => g.o.ids.includes(n.id)); m.forEach(n => used.add(n.id)); return m.length ? `<details class="npGrp" open><summary><b>📁 ${esc(g.o.n)}</b> <span class="muted small">${m.length}</span></summary>${m.map(line).join('')}</details>` : ''; }).join('');
+  const rest = npcs.filter(n => !used.has(n.id));
+  return `<section class="npSec" aria-labelledby="np_sh"><h3 id="np_sh">Revealed to you <span class="muted">${npcs.length}</span></h3><p class="muted small">What your DM has let you read. Only what the characters know is here.</p>${blocks}${rest.map(line).join('')}</section>`;
+}
+function npCardPageHTML(){
+  const sh = npShared().find(x => x.id === NP_UI.open), it = sh ? null : npGet(NP_UI.open);
+  if (!sh && !it){ NP_UI.view = 'list'; return npListHTML(); }
+  return `<div class="npBar">${act('npBack', undefined, '← All NPCs', 'btn ghost')}${it ? act('npEdit', it.id, 'Edit', 'btn') + act('npToggle', it.id, it.o.shown ? 'Hide from players' : 'Reveal to players', 'btn ghost') : ''}</div>
+    ${it && !it.o.shown ? '<p class="muted small">Hidden from players. Dashed boxes and 🔒 mark what they cannot read even once you reveal this NPC.</p>' : it ? '<p class="muted small">Revealed to players. Dashed boxes and 🔒 mark what they still cannot read.</p>' : ''}
+    ${sh ? npCardHTML(sh.o, {by:sh.by, names:id => npShared().find(x => x.id === id && x.kind === 'npc')?.o.n}) : npCardHTML(it.o, {dm:true, by:S.profile?.display_name || ''})}`;
+}
+
+// ---- the editor ----
+function npNewDraft(tpl){
+  const t = NP_TPL.find(x => x.id === tpl) || NP_TPL[0];
+  return npClean({n:'', secs:t.secs.map(k => ({id:uid(), k, t:NP_SECS[k][0], body:'', show:false}))});
+}
+function npEditorHTML(){
+  const d = NP_UI.draft, canShare = npCanShare();
+  const factField = ([k, label, kind]) => {
+    const f = d.facts[k] || {v:'', show:false};
+    const input = kind === 't' ? `<input type="text" class="np_fv" data-k="${k}" value="${esc(f.v)}" maxlength="200" aria-label="${esc(label)}">`
+      : `<select class="np_fv" data-k="${k}" aria-label="${esc(label)}">${NP_ATT.map(x => opt(x, f.v, x || '—')).join('')}</select>`;
+    return `<div><span class="f">${esc(label)}</span><div class="row">${input}${npEye(label, f.show, `class="np_fs" data-k="${k}"`)}</div></div>`;
+  };
+  const used = new Set(d.secs.map(s => s.k));
+  const secEd = (s, i) => `<div class="npSecEd"><div class="hd"><input type="text" class="np_st" data-i="${i}" value="${esc(s.t)}" maxlength="80" aria-label="Section title">
+      ${npEye(s.t, s.show, `class="np_ss" data-i="${i}"`)}
+      ${act('npSecUp', i, '↑', 'sb', `aria-label="Move ${esc(s.t)} up" ${i ? '' : 'disabled'}`)}${act('npSecDown', i, '↓', 'sb', `aria-label="Move ${esc(s.t)} down" ${i < d.secs.length - 1 ? '' : 'disabled'}`)}${act('npSecDel', i, '✕', 'sb x', `aria-label="Remove ${esc(s.t)}"`)}</div>
+      <label class="sr" for="np_sb${i}">${esc(s.t)}</label><textarea id="np_sb${i}" class="np_sb" data-i="${i}" maxlength="4000" placeholder="${esc(NP_SECS[s.k]?.[1] || 'One line per bullet.')}">${esc(s.body)}</textarea></div>`;
+  const stt = d.stats || {on:false, show:false, ac:'', hp:'', speed:'', cr:'', abil:[10, 10, 10, 10, 10, 10], text:''};
+  return `<div class="npBar">${act('npBack', undefined, '← Back', 'btn ghost')}${act('npSave', undefined, 'Save NPC', 'btn')}</div>
+  <form id="npForm" class="npEdWrap" onsubmit="return false"><div>
+    ${card('Identity', `
+      <label class="f" for="np_n">Name</label><div class="row"><input type="text" id="np_n" value="${esc(d.n === 'Unnamed' ? '' : d.n)}" maxlength="80" style="flex:1;min-width:0" autocomplete="off">${npEye('name', d.nameShown, 'id="np_ns"')}</div>
+      <label class="f" for="np_al">Name shown while hidden</label><input type="text" id="np_al" value="${esc(d.alias)}" maxlength="80" placeholder="Hooded stranger" style="width:100%">
+      <div class="row mt"><span class="portraitPick">${d.img ? `<img class="portrait mid" src="${esc(d.img)}" alt="">` : '<span class="portraitEmoji mid" aria-hidden="true">🕵️</span>'}</span>
+        <label class="btn ghost" for="np_img">${d.img ? 'Change picture' : 'Upload picture'}</label><input type="file" id="np_img" accept="image/*" class="sr">${d.img ? act('npImgClear', undefined, 'Remove', 'sb x') : ''}${npEye('picture', d.imgShown, 'id="np_is"')}</div>
+      <label class="row mt"><input type="checkbox" id="np_shown" ${d.shown ? 'checked' : ''} ${canShare || d.shown ? '' : 'disabled'}> <b>Reveal this NPC to my players</b></label>
+      <p class="npHint">${canShare ? 'Off: nobody else sees it. On: the party reads the name, picture, facts and sections that have the 👁 ticked, and nothing else.' : esc(npShareNote().replace(/<[^>]+>/g, ''))}</p>`)}
+    ${card('Facts', `<p class="npHint">Leave empty what you do not need. Tick 👁 for each fact the players may read.</p><div class="npFacts">${NP_FACTS.map(factField).join('')}</div>`)}
+    ${card('Sections', `<p class="npHint">Optional and in the order you want. One line makes a paragraph, several lines make bullets.</p>${d.secs.map(secEd).join('') || '<p class="muted">No sections yet.</p>'}
+      <div class="row mt"><label class="sr" for="np_add">Add a section</label><select id="np_add">${Object.keys(NP_SECS).filter(k => !used.has(k)).map(k => `<option value="${k}">${esc(NP_SECS[k][0])}</option>`).join('')}<option value="">Custom section…</option></select>${act('npSecAdd', undefined, '＋ Add section', 'sb')}</div>`)}
+    ${card('Game stats (optional)', `<label class="row"><input type="checkbox" id="np_st_on" ${stt.on ? 'checked' : ''}> This NPC has a stat block</label>
+      <div class="npStats mt">${[['ac', 'AC'], ['hp', 'HP'], ['speed', 'Speed'], ['cr', 'CR']].map(([k, l]) => `<label>${l}<input type="text" id="np_st_${k}" value="${esc(stt[k])}" maxlength="30"></label>`).join('')}</div>
+      <div class="npStats mt">${NP_ABIL.map((a, i) => `<label>${a.toUpperCase()}<input type="number" class="np_ab" min="1" max="30" value="${stt.abil[i]}"></label>`).join('')}</div>
+      <label class="f" for="np_st_text">Attacks and traits</label><textarea id="np_st_text" style="width:100%;min-height:80px" maxlength="2000">${esc(stt.text)}</textarea>
+      <div class="mt">${npEye('game stats', stt.show, 'id="np_st_show"')}</div>`)}
+    ${card('Connections to other NPCs', `<p class="npHint">Family, rivals, employers… as many as you like. A player sees a connection only if you tick 👁 and that NPC is revealed too.</p>${d.links.map((l, i) => `<div class="row mt"><select class="np_lt" data-i="${i}" aria-label="Connected NPC">${npNpcs().filter(x => x.id !== (NP_UI.edit || '')).map(x => opt(x.id, l.to, x.o.n)).join('')}${npGet(l.to) ? '' : opt(l.to, l.to, '(deleted NPC)')}</select><input type="text" class="np_lr" data-i="${i}" value="${esc(l.rel)}" maxlength="60" placeholder="Brother, employer, rival…" aria-label="Relation" style="flex:1;min-width:0">${npEye('connection', l.show, `class="np_ls" data-i="${i}"`)}${act('npLinkDel', i, '✕', 'sb x', 'aria-label="Remove connection"')}</div>`).join('')}
+      <div class="row mt">${act('npLinkAdd', undefined, '＋ Add connection', 'sb', npNpcs().filter(x => x.id !== (NP_UI.edit || '')).length ? '' : 'disabled')}${npNpcs().filter(x => x.id !== (NP_UI.edit || '')).length ? '' : '<span class="muted small">Save at least one other NPC first.</span>'}</div>`)}
+    ${card('Secrets and table notes (only you)', `<p class="npHint">These three never leave your account: they are not part of what the players receive.</p>
+      <label class="f" for="np_secret">Secrets, layer by layer</label><p class="npHint">One layer per line, from what a clever guess finds to the deepest truth.</p><textarea id="np_secret" style="width:100%;min-height:110px" maxlength="4000" placeholder="Takes bribes from the guild&#10;The bribes pay for his sister's cure&#10;He is the one who burned the archive">${esc(d.secret)}</textarea>
+      <label class="f" for="np_voice">Voice & mannerisms</label><textarea id="np_voice" style="width:100%;min-height:70px" maxlength="1500" placeholder="Slow, gravelly; taps the table when lying">${esc(d.voice)}</textarea>
+      <label class="f" for="np_quotes">Quotes</label><textarea id="np_quotes" style="width:100%;min-height:70px" maxlength="2000" placeholder="One line each, to read aloud">${esc(d.quotes)}</textarea>`)}
+    <div class="row mt">${act('npSave', undefined, 'Save NPC', 'btn')}${act('npBack', undefined, 'Cancel', 'btn ghost')}</div>
+  </div><div class="npPrev"><h3 class="muted small">Preview (🔒 = hidden from players)</h3><div id="np_prev">${npCardHTML(d, {dm:true})}</div></div></form>`;
+}
+/** The form as an NPC; used by the live preview, the reorder buttons and Save. */
+function npRead(){
+  const d = NP_UI.draft; if (!d || !$('#npForm')) return d;
+  const o = {...d, n:$('#np_n').value.trim(), alias:$('#np_al').value.trim(), nameShown:$('#np_ns').checked, imgShown:$('#np_is').checked, shown:$('#np_shown').checked, secret:$('#np_secret').value, voice:$('#np_voice').value, quotes:$('#np_quotes').value, facts:{}};
+  $$('#npForm .np_fv').forEach(el => { const v = el.value.trim(), k = el.dataset.k; if (v) o.facts[k] = {v, show:!!$(`#npForm .np_fs[data-k="${k}"]`)?.checked}; });
+  o.secs = d.secs.map((s, i) => ({...s, t:$(`#npForm .np_st[data-i="${i}"]`).value.trim() || 'Section', body:$(`#np_sb${i}`).value, show:$(`#npForm .np_ss[data-i="${i}"]`).checked}));
+  o.links = d.links.map((l, i) => ({to:$(`#npForm .np_lt[data-i="${i}"]`).value, rel:$(`#npForm .np_lr[data-i="${i}"]`).value.trim(), show:$(`#npForm .np_ls[data-i="${i}"]`).checked}));
+  o.stats = {on:$('#np_st_on').checked, show:$('#np_st_show').checked, ac:$('#np_st_ac').value, hp:$('#np_st_hp').value, speed:$('#np_st_speed').value, cr:$('#np_st_cr').value, abil:$$('#npForm .np_ab').map(x => x.value), text:$('#np_st_text').value};
+  return NP_UI.draft = npClean(o);
+}
+function npPreview(){
+  const o = npRead(), box = $('#np_prev'); if (o && box) box.innerHTML = npCardHTML({...o, n:o.n === 'Unnamed' ? 'Unnamed' : o.n}, {dm:true});
+}
+function npShow(view, extra = {}){ Object.assign(NP_UI, {view}, extra); if (G.chapter !== 'npcs') turnTo('npcs'); else renderPage(); window.scrollTo({top:Math.max(0, ($('#book')?.getBoundingClientRect().top || 0) + scrollY - 8), behavior:'auto'}); }
+function npGroupModal(id){
+  const g = id ? npGet(id) : null, o = g ? g.o : {n:'', ids:[], shown:false};
+  modal(`<div class="head"><h2>${g ? 'Edit group' : 'New group'}</h2><span class="spacer"></span>${closeBtn()}</div>
+    <label class="f" for="np_gn">Group name</label><input type="text" id="np_gn" value="${esc(o.n)}" maxlength="80" placeholder="The Gilded Court" style="width:100%" autofocus>
+    <label class="row mt"><input type="checkbox" id="np_gs" ${o.shown ? 'checked' : ''} ${npCanShare() || o.shown ? '' : 'disabled'}> Players can see this group (it lists only the NPCs you have revealed)</label>
+    <p class="f mt">Members <span class="muted small">(an NPC can be in many groups)</span></p>
+    <div class="npMemb" style="max-height:40vh;overflow:auto">${npNpcs().sort((a, b) => a.o.n.localeCompare(b.o.n)).map(n => `<label class="row"><input type="checkbox" class="np_gm" value="${esc(n.id)}" ${o.ids.includes(n.id) ? 'checked' : ''}> ${esc(n.o.n)}</label>`).join('') || '<p class="muted">Make some NPCs first.</p>'}</div>
+    <div class="row mt">${act('npGroupSave', id || '', 'Save group', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}</div>`, {label:'Group'});
+}
+function npShareGuard(want){
+  if (want && !npCanShare()){ toast(CLOUD && me() && !S.npcOff ? 'Create or join a party first: that is who reads what you reveal.' : 'Sharing needs an account, a party and the NPC tables on the server.'); return false; }
+  return true;
+}
+function npDone(it){ npTouch(it); npPersist(); npSyncSoon(); }
+const ACT_NPC = {
+  npNew(){ modal(`<div class="head"><h2>New NPC</h2><span class="spacer"></span>${closeBtn()}</div><p class="muted">Pick the sections to start from. You can add, remove and reorder them later.</p>
+    ${NP_TPL.map(t => `<button type="button" class="btn ghost" style="display:block;width:100%;text-align:left;margin:6px 0" data-act="npCreate" data-arg="${t.id}"><b>${esc(t.t)}</b><br><span class="small">${esc(t.d)}</span></button>`).join('')}`, {label:'New NPC'}); },
+  npCreate(t){ closeModal(); NP_UI.edit = null; npShow('edit', {draft:npNewDraft(t)}); $('#np_n')?.focus({preventScroll:true}); },
+  npEdit(id){ const it = npGet(id); if (!it) return; NP_UI.edit = id; npShow('edit', {draft:npClean(JSON.parse(JSON.stringify(it.o)))}); },
+  npOpen(id){ npShow('card', {open:id}); },
+  npOpenShared(id){ npShow('card', {open:id}); },
+  npBack(){ NP_UI.draft = null; NP_UI.edit = null; npShow('list'); },
+  npFilter(g){ NP_UI.filter = g; renderPage(); },
+  npSave(){
+    const o = npRead(); if (!o) return;
+    if (!o.n || o.n === 'Unnamed'){ toast('Give the NPC a name.'); $('#np_n')?.focus(); return; }
+    if (o.shown && !npShareGuard(true)) o.shown = false;
+    if (o.shown) o.party = S.parties[0].id;
+    const it = NP_UI.edit && npGet(NP_UI.edit);
+    if (it){ it.o = o; npDone(it); } else { const n = {id:uid(), kind:'npc', o, updatedAt:0}; NPCS.push(n); npDone(n); NP_UI.edit = n.id; }
+    toast('NPC saved.'); NP_UI.draft = null; npShow('card', {open:NP_UI.edit});
+  },
+  npToggle(id){
+    const it = npGet(id); if (!it) return; const want = !it.o.shown;
+    if (!npShareGuard(want)) return;
+    it.o.shown = want; if (want) it.o.party = S.parties[0].id; npDone(it);
+    toast(want ? `${it.o.n} is now revealed to your players (only what is ticked).` : `${it.o.n} is hidden from your players.`); renderPage();
+  },
+  npDup(id){ const it = npGet(id); if (!it) return; const n = {id:uid(), kind:'npc', o:npClean(JSON.parse(JSON.stringify(it.o))), updatedAt:0}; n.o.n = (n.o.n + ' (copy)').slice(0, 80); n.o.shown = false; n.o.party = null; n.o.secs.forEach(s => s.id = uid()); NPCS.push(n); npDone(n); renderPage(); toast('Duplicated: the copy is hidden from players.'); },
+  npDel(id){ const it = npGet(id); if (!it) return; confirmBox(`Delete ${it.o.n}?`, 'Delete', () => {
+    NPCS = NPCS.filter(x => x.id !== id); npNpcs().forEach(n => { if (n.o.links.some(l => l.to === id)){ n.o.links = n.o.links.filter(l => l.to !== id); npTouch(n); } }); npGroups().forEach(g => { if (g.o.ids.includes(id)){ g.o.ids = g.o.ids.filter(x => x !== id); npTouch(g); } });
+    if (CLOUD){ const t = npTombGet(); t[id] = Date.now(); npTombSet(t); }
+    npPersist(); npSyncSoon(); if (NP_UI.view === 'card') NP_UI.view = 'list'; renderPage(); toast('NPC deleted.'); }); },
+  npImgClear(){ npRead(); NP_UI.draft.img = ''; NP_UI.draft.imgShown = false; renderPage(); },
+  npSecAdd(){ const d = npRead(), k = $('#np_add')?.value || ''; if (d.secs.length >= 40) return toast('That is plenty of sections.');
+    d.secs.push({id:uid(), k, t:k ? NP_SECS[k][0] : 'New section', body:'', show:false}); renderPage(); const n = $$('#npForm .np_st'); n[n.length - 1]?.focus(); n[n.length - 1]?.select(); },
+  npSecUp(i){ const d = npRead(); i = +i; if (i > 0){ [d.secs[i - 1], d.secs[i]] = [d.secs[i], d.secs[i - 1]]; renderPage(); $(`#npForm [data-act="npSecUp"][data-arg="${i - 1}"]`)?.focus(); } },
+  npSecDown(i){ const d = npRead(); i = +i; if (i < d.secs.length - 1){ [d.secs[i + 1], d.secs[i]] = [d.secs[i], d.secs[i + 1]]; renderPage(); $(`#npForm [data-act="npSecDown"][data-arg="${i + 1}"]`)?.focus(); } },
+  npSecDel(i){ const d = npRead(); d.secs.splice(+i, 1); renderPage(); },
+  npLinkAdd(){ const d = npRead(), t = npNpcs().find(x => x.id !== NP_UI.edit); if (t){ d.links.push({to:t.id, rel:'', show:false}); renderPage(); } },
+  npLinkDel(i){ const d = npRead(); d.links.splice(+i, 1); renderPage(); },
+  npGroupEdit(id){ npGroupModal(id); },
+  npGroupSave(id){
+    const name = $('#np_gn').value.trim(); if (!name){ toast('Give the group a name.'); return; }
+    let shown = $('#np_gs').checked; if (shown && !npShareGuard(true)) shown = false;
+    const ids = $$('.np_gm').filter(x => x.checked).map(x => x.value);
+    let g = id && npGet(id);
+    if (!g){ g = {id:uid(), kind:'group', o:npClean({n:name}, true), updatedAt:0}; NPCS.push(g); }
+    g.o = npClean({n:name, ids, shown, party:shown ? S.parties[0].id : g.o.party}, true); npDone(g);
+    closeModal(); renderPage(); },
+  npGroupToggle(id){ const g = npGet(id); if (!g) return; const want = !g.o.shown; if (!npShareGuard(want)) return; g.o.shown = want; if (want) g.o.party = S.parties[0].id; npDone(g); renderPage(); },
+  npGroupDel(id){ const g = npGet(id); if (!g) return; confirmBox(`Delete the group ${g.o.n}? The NPCs inside stay.`, 'Delete', () => {
+    NPCS = NPCS.filter(x => x.id !== id); if (NP_UI.filter === id) NP_UI.filter = '';
+    if (CLOUD){ const t = npTombGet(); t[id] = Date.now(); npTombSet(t); }
+    npPersist(); npSyncSoon(); renderPage(); }); },
+};
+function npWire(){
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.id === 'np_q'){ NP_UI.q = el.value; const l = $('#np_list'); if (l){ const q = norm(NP_UI.q); l.innerHTML = npListRows(npNpcs().filter(it => (!NP_UI.filter || npGet(NP_UI.filter)?.o.ids.includes(it.id) || NP_UI.filter === '_none') && (!q || norm(it.o.n + ' ' + Object.values(it.o.facts).map(x => x.v).join(' ')).includes(q))).sort((a, b) => a.o.n.localeCompare(b.o.n))); } return; }
+    if (el.closest?.('#npForm')) npPreview();
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.closest?.('#npForm') && el.id !== 'np_img') npPreview();
+    if (el.id === 'np_img' && el.files[0]){ npRead(); shrinkImage(el.files[0]).then(d => { NP_UI.draft.img = d; renderPage(); }).catch(() => toast('That image could not be read.')); el.value = ''; }
+  });
+}
+
+Object.assign(ACT, ACT_NPC);
 async function boot(){
   bakeTextures();
   await load();
+  npLoad();
   await loadPacks();
   buildIndex();
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
-  applyTheme(); wire(); render(); syncTray(); cloudBoot();
+  applyTheme(); wire(); npWire(); render(); syncTray(); cloudBoot();
   if (!G.showCover && G.coverOnStart === false){ $('#coverBk')?.remove(); welcome(); }
   else { fillCover(); $('#coverBk').hidden = false; }
 }
