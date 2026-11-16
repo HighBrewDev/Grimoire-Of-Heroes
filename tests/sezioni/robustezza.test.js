@@ -230,4 +230,10 @@ module.exports = {sezione:'robustezza', test:[
     assert.deepStrictEqual(app.pageErrors, [], 'errore di pagina: ' + app.pageErrors.join(' | '));
     assert.ok(feedback, "nessuna finestra di verifica né messaggio");
   }],
+  ['nome dell\'eroe di 300 caratteri: nessun errore in nessun capitolo', async ({open}) => {
+    const h = fx.hero(fx.VALERIA); h.name = 'N'.repeat(300);
+    const app = await open({heroes:[h]});
+    for (const ch of CHAPS) await app.go(ch);
+    assert.deepStrictEqual([...app.consoleErrors, ...app.pageErrors], []);
+  }],
 ]};

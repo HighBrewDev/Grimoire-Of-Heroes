@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-15** sul commit `6777c04` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-16** sul commit `2ceb3cf` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,72 +14,61 @@ Aggiornato il **2026-11-15** sul commit `6777c04` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **274 / 281**
-- Punteggio totale: **+244**, tendenza ↓ (ieri 253)
+- Test superati: **288 / 289**
+- Punteggio totale: **+285**, tendenza ↑ (ieri 244)
 - Sezioni rosse: nessuna
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +21 | 16,1 | = | 21/21 | — | 🟡 GIALLO |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +17 | 11,3 | ↑ | 20/21 | B-032 (bassa) | 🟡 GIALLO |
-| Combattimento (PF, CA, attacchi, riposi) | +32 | 22,9 | ↓ | 33/33 | B-045 (bassa) | 🟢 VERDE |
-| Incontro (iniziativa, round) | +14 | 11,6 | = | 14/14 | — | 🟢 VERDE |
-| Tratti e talenti | +18 | 10,6 | ↑ | 18/18 | — | 🟢 VERDE |
-| Incantesimi (slot, preparati, multiclasse) | +13 | 11,6 | = | 13/13 | — | 🟢 VERDE |
-| Zaino e monete | +12 | 12 | ↓ | 13/13 | B-046 (bassa) | 🟢 VERDE |
-| Cronaca | +17 | 9,6 | ↑ | 17/17 | — | 🟢 VERDE |
-| Biblioteca (ricerca regole) | +16 | 10 | ↑ | 16/16 | — | 🟢 VERDE |
-| Workshop homebrew | +25 | 23,3 | = | 26/26 | B-047 (bassa), B-020 (bassa), B-011 (bassa) | 🟢 VERDE |
-| Level up e multiclasse | +20 | 13,7 | = | 23/24 | B-031 (bassa) | 🟡 GIALLO |
-| Import/export e salvataggio | +16 | 14,7 | ↓ | 21/21 | B-044 (alta) | 🟡 GIALLO |
-| Telefono (390x844) | +13 | 8,1 | ↓ | 17/18 | B-048 (UX) | 🟡 GIALLO |
-| Robustezza (console, offline, input strani) | +10 | 9,7 | ↓ | 22/26 | — | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +21 | 17,3 | = | 21/21 | — | 🟢 VERDE |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +21 | 13,1 | ↑ | 21/21 | — | 🟡 GIALLO |
+| Combattimento (PF, CA, attacchi, riposi) | +33 | 26,6 | ↑ | 33/33 | — | 🟢 VERDE |
+| Incontro (iniziativa, round) | +14 | 12 | = | 14/14 | — | 🟢 VERDE |
+| Tratti e talenti | +18 | 12 | = | 18/18 | — | 🟢 VERDE |
+| Incantesimi (slot, preparati, multiclasse) | +14 | 12 | ↑ | 14/14 | — | 🟢 VERDE |
+| Zaino e monete | +16 | 12,7 | ↑ | 16/16 | — | 🟢 VERDE |
+| Cronaca | +17 | 11 | = | 17/17 | — | 🟢 VERDE |
+| Biblioteca (ricerca regole) | +16 | 11,1 | = | 16/16 | — | 🟢 VERDE |
+| Workshop homebrew | +26 | 25 | ↑ | 26/26 | B-020 (bassa), B-011 (bassa) | 🟢 VERDE |
+| Level up e multiclasse | +20 | 15,6 | = | 23/24 | B-031 (bassa) | 🟡 GIALLO |
+| Import/export e salvataggio | +21 | 15,6 | ↑ | 21/21 | — | 🟢 VERDE |
+| Telefono (390x844) | +21 | 14,1 | ↑ | 21/21 | — | 🟡 GIALLO |
+| Robustezza (console, offline, input strani) | +27 | 12,4 | ↑ | 27/27 | — | 🟡 GIALLO |
 
 ## Dettaglio delle sezioni
 
-- **robustezza** +10 (22 × +1, 4 × −3)
-  - ✗ B-044 un pacchetto 5etools con `source` come oggetto con `toString` non blocca l'avvio dell'app alla ricarica: dopo la ricarica non c'è nessun capitolo (0 segnalibri): l'app non si avvia più. Errori: Cannot convert object to primitive value / Cannot convert object to primitive value
-  - ✗ B-045 una voce 5etools con `ac` numerico (non array) si apre nella Biblioteca senza errori: errore di pagina: (o.ac // []).map is not a function
-  - ✗ B-046 una voce 5etools con `source` non testuale non rompe la ricerca della Biblioteca: errore di pagina: (e.k // "").toLowerCase is not a function
-  - ✗ B-047 homebrew: incantesimo con `lv` e `cls` come oggetti con `toString`: nessun errore di pagina e un messaggio: errore di pagina: Cannot convert object to primitive value
-- **zaino** +12 (13 × +1, 0 × −3, bug nuovi -1)
-  - Bug nuovo B-046 [bassa] -1: Biblioteca: una voce 5etools con `source` non testuale (numero, array) rompe la ricerca della sua categoria
-- **telefono** +13 (17 × +1, 1 × −3, bug nuovi -1)
-  - ✗ B-048 tocco ≥44 px: pulsanti Roll dei tratti di classe: sotto 44 px: "1d10" 36×24, "1d10" 36×24, "d20" 28×24
-  - Bug nuovo B-048 [bassa, UX] -1: Telefono: i pulsanti dei dadi nei tratti sono 28×24 e 36×24 px, i chip delle regole 20 px di altezza
-- **incantesimi** +13 (13 × +1, 0 × −3): tutto verde oggi.
 - **incontro** +14 (14 × +1, 0 × −3): tutto verde oggi.
+- **incantesimi** +14 (14 × +1, 0 × −3): tutto verde oggi.
+- **zaino** +16 (16 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +16 (16 × +1, 0 × −3): tutto verde oggi.
-- **importexport** +16 (21 × +1, 0 × −3, bug nuovi -5)
-  - Bug nuovo B-044 [alta] -5: Biblioteca: un file 5etools con `source` (o `cls`) come oggetto con `toString` blocca l'avvio dell'app per sempre
-- **caratteristiche** +17 (20 × +1, 1 × −3)
-  - ✗ B-032 Cos abbassata fino al minimo, poi un danno, poi rialzata: i PF massimi tornano 82, non di più (Mago 20): Cos 10 → 1, danno 5, Cos 10: PF 115/120 invece di 77/82
 - **cronaca** +17 (17 × +1, 0 × −3): tutto verde oggi.
 - **tratti** +18 (18 × +1, 0 × −3): tutto verde oggi.
 - **levelup** +20 (23 × +1, 1 × −3)
   - ✗ B-031 talento Grappler al livello 4: +1 a Forza o Destrezza: For 16, Des 14 (prima 16 e 14)
 - **eroe** +21 (21 × +1, 0 × −3): tutto verde oggi.
-- **workshop** +25 (26 × +1, 0 × −3, bug nuovi -1)
-  - Bug nuovo B-047 [bassa] -1: Import homebrew: oggetti con `toString` in altri campi (incantesimi `cls`/`lv`, talenti) fanno sparire l'import senza messaggio (resto di B-043)
-- **combattimento** +32 (33 × +1, 0 × −3, bug nuovi -1)
-  - Bug nuovo B-045 [bassa] -1: Biblioteca: una voce 5etools con un campo del tipo sbagliato (`ac: 15`, `trait` non array, `will` non array…) non si apre e non dice nulla
+- **caratteristiche** +21 (21 × +1, 0 × −3): tutto verde oggi.
+- **importexport** +21 (21 × +1, 0 × −3): tutto verde oggi.
+- **telefono** +21 (21 × +1, 0 × −3): tutto verde oggi.
+- **workshop** +26 (26 × +1, 0 × −3): tutto verde oggi.
+- **robustezza** +27 (27 × +1, 0 × −3): tutto verde oggi.
+- **combattimento** +33 (33 × +1, 0 × −3): tutto verde oggi.
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. robustezza +10 · 22/26 · GIALLO
-2. zaino +12 · 13/13 · VERDE
-3. telefono +13 · 17/18 · GIALLO
-4. incantesimi +13 · 13/13 · VERDE
-5. incontro +14 · 14/14 · VERDE
-6. biblioteca +16 · 16/16 · VERDE
-7. importexport +16 · 21/21 · GIALLO
-8. caratteristiche +17 · 20/21 · GIALLO
-9. cronaca +17 · 17/17 · VERDE
-10. tratti +18 · 18/18 · VERDE
-11. levelup +20 · 23/24 · GIALLO
-12. eroe +21 · 21/21 · GIALLO
-13. workshop +25 · 26/26 · VERDE
-14. combattimento +32 · 33/33 · VERDE
+1. incontro +14 · 14/14 · VERDE
+2. incantesimi +14 · 14/14 · VERDE
+3. zaino +16 · 16/16 · VERDE
+4. biblioteca +16 · 16/16 · VERDE
+5. cronaca +17 · 17/17 · VERDE
+6. tratti +18 · 18/18 · VERDE
+7. levelup +20 · 23/24 · GIALLO
+8. eroe +21 · 21/21 · VERDE
+9. caratteristiche +21 · 21/21 · GIALLO
+10. importexport +21 · 21/21 · VERDE
+11. telefono +21 · 21/21 · GIALLO
+12. workshop +26 · 26/26 · VERDE
+13. robustezza +27 · 27/27 · GIALLO
+14. combattimento +33 · 33/33 · VERDE
 
 ## Storico
 
@@ -91,4 +80,5 @@ Aggiornato il **2026-11-15** sul commit `6777c04` di main dall'agente "Test e pu
 2026-11-13  totale  +206  test 238/247  f77121d
 2026-11-14  totale  +253  test 253/255  f45e295
 2026-11-15  totale  +244  test 274/281  6777c04
+2026-11-16  totale  +285  test 288/289  2ceb3cf
 ```

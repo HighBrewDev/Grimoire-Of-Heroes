@@ -545,6 +545,84 @@
      "tot": 26
     }
    }
+  },
+  "2026-11-16": {
+   "commit": "2ceb3cf",
+   "totale": 285,
+   "superati": 288,
+   "totali": 289,
+   "sezioni": {
+    "eroe": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "caratteristiche": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "combattimento": {
+     "punti": 33,
+     "sup": 33,
+     "tot": 33
+    },
+    "incontro": {
+     "punti": 14,
+     "sup": 14,
+     "tot": 14
+    },
+    "tratti": {
+     "punti": 18,
+     "sup": 18,
+     "tot": 18
+    },
+    "incantesimi": {
+     "punti": 14,
+     "sup": 14,
+     "tot": 14
+    },
+    "zaino": {
+     "punti": 16,
+     "sup": 16,
+     "tot": 16
+    },
+    "cronaca": {
+     "punti": 17,
+     "sup": 17,
+     "tot": 17
+    },
+    "biblioteca": {
+     "punti": 16,
+     "sup": 16,
+     "tot": 16
+    },
+    "workshop": {
+     "punti": 26,
+     "sup": 26,
+     "tot": 26
+    },
+    "levelup": {
+     "punti": 20,
+     "sup": 23,
+     "tot": 24
+    },
+    "importexport": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "telefono": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "robustezza": {
+     "punti": 27,
+     "sup": 27,
+     "tot": 27
+    }
+   }
   }
  },
  "bugContati": {

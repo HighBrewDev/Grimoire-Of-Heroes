@@ -78,4 +78,17 @@ module.exports = {sezione:'telefono', test:[
     const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(w <= 390, `scrollWidth ${w}px`);
   }],
+  ['390 px: un oggetto con nome lunghissimo non allarga lo Zaino', async ({open}) => {
+    const app = await open(PHONE); await app.go('pack');
+    await app.click('addTab', 'custom'); await app.page.fill('#it_n', 'Z'.repeat(90));
+    await app.click('addCustom');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
+  tapTest('tocco ≥44 px: quantità dell\'oggetto nello Zaino', app => app.go('pack'), '#invList [data-act="qty"]'),
+  ['390 px: Incantesimi del Mago senza scroll orizzontale', async ({open}) => {
+    const app = await open({...PHONE, activeId:'teldrin'}); await app.go('spells');
+    const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `scrollWidth ${w}px`);
+  }],
 ]};

@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-16 · test
+- **Fatto** · suite eseguita su main (`2ceb3cf`): **288/289 superati**, punteggio totale **+285** (ieri +244). 8 test nuovi (zaino ×3, telefono ×3, robustezza ×1, incantesimi ×1), tutti verdi; nessun test cambiato per farlo passare. Sezioni rosse: nessuna. Peggiori: incontro +14, incantesimi +14, zaino +16.
+- **Test rosso** (bug aperto): B-031 (Grappler, Level up).
+
 ## 2026-11-15 · design
 - **Fatto** · indizio di scorrimento sui segnalibri a 390/768 px (backlog 9). Solo CSS: sotto 980 px `.chapters` ha una maschera che sfuma 44 px sul bordo dove ci sono altri capitoli, guidata da `animation-timeline:scroll(self inline)` (sfuma a destra all'inizio, a sinistra alla fine, entrambi in mezzo). Dove il browser non supporta la scroll timeline (`@supports`) non cambia nulla. Desktop (>980 px) invariato. Nessuna zona di Tratti/Zaino toccata.
 - **File**: index.html (CSS segnalibri, `@keyframes chapFade`, 2 `@property`), sw.js (`CACHE` = grimoire-ds1115b), docs/design/note-design.md, screenshot `docs/design/2026-11-15-segnalibri-prima|dopo-{390,768,1440}.png` (+ `-meta` a metà scorrimento).

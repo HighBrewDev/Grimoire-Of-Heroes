@@ -107,4 +107,29 @@ module.exports = {sezione:'zaino', test:[
     await app.go('pack');
     assert.ok(!/e\+\d/.test(await app.text('#page')), 'monete in notazione esponenziale');
   }],
+  ['oggetto personalizzato con HTML nel nome: mostrato come testo, nessun elemento iniettato', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    await app.click('addTab', 'custom');
+    await app.page.fill('#it_n', '<img src=x onerror=window.__x=1><b>Gemma</b>');
+    await app.click('addCustom');
+    assert.strictEqual(await app.page.locator('#invList img').count(), 0);
+    assert.ok((await app.text('#invList')).includes('<img src=x'), 'il nome deve comparire come testo');
+    assert.strictEqual(await app.page.evaluate(() => window.__x), undefined);
+    assert.deepStrictEqual(app.pageErrors, []);
+  }],
+  ['oggetto personalizzato senza nome non viene creato', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    const prima = (await app.hero()).inventory.length;
+    await app.click('addTab', 'custom'); await app.page.fill('#it_n', '   ');
+    await app.click('addCustom');
+    assert.strictEqual((await app.hero()).inventory.length, prima);
+  }],
+  ['oggetto personalizzato: resta dopo la ricarica', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    await app.click('addTab', 'custom'); await app.page.fill('#it_n', 'Chiave di ferro');
+    await app.click('addCustom');
+    await app.reload(); await app.go('hero'); await app.go('pack');
+    assert.ok((await app.hero()).inventory.some(i => i.n === 'Chiave di ferro'));
+    assert.ok((await app.text('#invList')).includes('Chiave di ferro'));
+  }],
 ]};

@@ -82,4 +82,9 @@ module.exports = {sezione:'incantesimi', test:[
     await app.reload(); await app.go('spells');
     assert.ok((await app.hero()).spells.prep.includes('Sleep'));
   }],
+  ['preparare due volte lo stesso incantesimo lo toglie', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    await app.clickJS('prep', 'Sleep'); await app.clickJS('prep', 'Sleep');
+    assert.ok(!(await app.hero()).spells.prep.includes('Sleep'));
+  }],
 ]};
