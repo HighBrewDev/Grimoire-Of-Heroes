@@ -772,43 +772,86 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .npEdWrap{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 @media (min-width:1100px){.npEdWrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.npPrev{position:sticky;top:8px}}
 
-/* the sheet itself: always paper, whatever the page theme */
-.npCard{--np-ink:#2a2015;--np-line:#3a2c1a;--np-red:#8e2219;position:relative;color:var(--np-ink);font-family:'Courier New',Courier,'Nimbus Mono PS',monospace;font-size:15px;line-height:1.4;
-  background:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.35),transparent 55%),radial-gradient(ellipse at 90% 95%,rgba(120,80,30,.22),transparent 55%),linear-gradient(180deg,#eee0bd,#e3d0a2);
-  border:1px solid #b79b63;border-radius:4px;padding:14px 12px 12px;box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 0 40px rgba(120,80,30,.25);overflow:hidden}
+/* the sheet itself: always paper, whatever the page theme.
+   Sostituisce il blocco da ".npCard{" fino a "@media print{.npCard{box-shadow:none}}" incluso (stesse classi, nessun markup nuovo obbligatorio).
+   Markup opzionale: .npStamp (timbro, es. <div class="npStamp">Fugitive</div> dentro .npTop), .npBox.tl (cronologia: <ul> a timeline). */
+.npCard{--np-ink:#2a2015;--np-line:#3a2c1a;--np-red:#8e2219;--np-band:#4a3820;--np-type:'Special Elite','American Typewriter','Courier Prime','Courier New',Courier,'Nimbus Mono PS',monospace;
+  position:relative;color:var(--np-ink);font-family:var(--np-type);font-size:15px;line-height:1.4;container-type:inline-size;
+  background:radial-gradient(ellipse at 18% 8%,rgba(255,255,255,.4),transparent 55%),radial-gradient(ellipse at 92% 96%,rgba(120,80,30,.26),transparent 55%),var(--grain,none),linear-gradient(180deg,#efe1be,#e2cd9d);
+  border:1px solid #b79b63;border-radius:3px;padding:16px 12px 14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 0 0 5px rgba(255,248,226,.45),inset 0 0 0 6px rgba(58,44,26,.4),inset 0 0 44px rgba(120,80,30,.28);overflow:hidden}
 .npCard *{box-sizing:border-box}
-.npTop{display:grid;grid-template-columns:minmax(0,1fr) 112px;grid-template-areas:"head photo" "facts facts";gap:10px}
-.npHead{grid-area:head;min-width:0}.npKicker{font-weight:700;letter-spacing:.12em;font-size:13px;text-transform:uppercase}
-.npName{font-family:'Courier New',Courier,monospace;font-weight:900;text-transform:uppercase;font-size:clamp(24px,8.2vw,44px);line-height:1;letter-spacing:-.01em;margin:6px 0 0;overflow-wrap:anywhere;hyphens:auto;color:#1b140b;text-shadow:0 0 1px #1b140b,1px 1px 0 rgba(27,20,11,.35)}
-.npPhoto{grid-area:photo;position:relative;margin:4px 6px 0 0;transform:rotate(2.4deg);align-self:start}
-.npPhoto .fr{background:#f7f0dc;padding:5px 5px 14px;box-shadow:0 3px 9px rgba(0,0,0,.45);aspect-ratio:3/4;display:block}
-.npPhoto .fr img{width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.18) contrast(1.04)}
-.npPhoto .fr span{display:grid;place-items:center;width:100%;height:100%;background:#c9b88e;font-size:44px;color:#5b462d}
-.npPhoto .clip{position:absolute;top:-14px;right:10px;width:22px;height:46px;border:3px solid #9aa0a6;border-radius:12px;border-bottom-color:#7c8288;transform:rotate(8deg);box-shadow:1px 1px 2px rgba(0,0,0,.35);pointer-events:none}
-.npPhoto .clip::after{content:"";position:absolute;left:3px;top:10px;width:10px;height:30px;border:3px solid #9aa0a6;border-top:0;border-radius:0 0 8px 8px}
-.npFactsWrap{grid-area:facts;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
-.npBox{border:1.5px solid var(--np-line);padding:7px 9px 8px;min-width:0;background:rgba(255,250,235,.12)}
-.npBox h4{font-family:'Courier New',Courier,monospace;font-size:15px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid rgba(58,44,26,.45);color:#1b140b}
-.npBox p{margin:0}.npBox ul{margin:0;padding-left:18px}.npBox li{margin:2px 0;overflow-wrap:anywhere}
-.npBox dl{margin:0}.npBox dl>div{display:grid;grid-template-columns:minmax(78px,38%) minmax(0,1fr);gap:0 8px;margin:2px 0}
-.npBox dt{font-weight:900}.npBox dd{margin:0;overflow-wrap:anywhere}
-.npSecs{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:10px;align-items:start}
-.npFoot{margin-top:10px;text-align:right;font-style:italic;font-size:13px}
-.npCard .hid{outline:1.5px dashed var(--np-red);outline-offset:1px;opacity:.7}
+.npCard p{margin:0 0 .5em}.npCard p:last-child{margin-bottom:0}
+.npTop{display:grid;align-content:start;grid-template-columns:minmax(0,1fr) 112px;grid-template-areas:"head photo" "facts facts";gap:10px}
+.npHead{grid-area:head;min-width:0}
+.npKicker{font-weight:700;letter-spacing:.24em;font-size:11.5px;text-transform:uppercase;color:#6b5636}
+.npName{font-family:var(--np-type);font-weight:400;text-transform:uppercase;font-size:clamp(24px,8.2vw,46px);line-height:1.02;letter-spacing:.02em;margin:6px 0 0;overflow-wrap:anywhere;hyphens:auto;color:#1b140b;text-shadow:0 0 1px #1b140b,1px 1px 0 rgba(27,20,11,.3);
+  padding-bottom:6px;border-bottom:3px double rgba(58,44,26,.55)}
+.npPhoto{grid-area:photo;position:relative;margin:8px 6px 0 0;transform:rotate(2.4deg);align-self:start}
+.npPhoto .fr{background:#fbf6e6;padding:5px 5px 16px;border:1px solid rgba(58,44,26,.3);box-shadow:0 4px 10px rgba(0,0,0,.42);aspect-ratio:3/4;display:block}
+.npPhoto .fr img{width:100%;height:100%;object-fit:cover;display:block;filter:sepia(.28) contrast(1.05) grayscale(.15)}
+.npPhoto .fr span{display:grid;place-items:center;width:100%;height:100%;background:repeating-linear-gradient(45deg,#d4c295,#d4c295 7px,#c9b688 7px,#c9b688 14px);font-size:44px;color:#5b462d}
+.npPhoto .clip{position:absolute;top:-16px;right:12px;width:22px;height:48px;border:3px solid #a3a9af;border-radius:12px;border-bottom-color:#7c8288;transform:rotate(8deg);box-shadow:1px 1px 2px rgba(0,0,0,.35);pointer-events:none;z-index:2}
+.npPhoto .clip::after{content:"";position:absolute;left:3px;top:10px;width:10px;height:32px;border:3px solid #a3a9af;border-top:0;border-radius:0 0 8px 8px}
+.npFactsWrap{grid-area:facts;align-items:start;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.npBox{position:relative;border:1.5px solid var(--np-line);padding:0 0 7px;min-width:0;background:rgba(255,250,235,.2);break-inside:avoid}
+.npBox>:not(h4){margin-left:9px;margin-right:9px}
+.npBox h4{font-family:var(--np-type);font-size:12.5px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px;padding:4px 9px;color:#fff1cf;background:var(--np-band);border-bottom:1.5px solid var(--np-line)}
+.npBox h4 small{letter-spacing:.06em;opacity:.8}
+.npBox>h4+*{margin-top:7px}
+.npBox ul{margin-top:0;margin-bottom:0;padding-left:18px;margin-right:9px}.npBox li{margin:3px 0;overflow-wrap:anywhere}
+.npBox dl{margin-bottom:0}
+.npBox dl>div{display:grid;grid-template-columns:minmax(78px,38%) minmax(0,1fr);gap:0 8px;margin:0 -9px;padding:3px 9px;border-bottom:1px dotted rgba(58,44,26,.35)}
+.npBox dl>div:last-child{border-bottom:0}
+.npBox dt{font-weight:400;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#6b5636;padding-top:2px}.npBox dd{margin:0;overflow-wrap:anywhere}
+.npTop .npBox{padding-bottom:3px}
+.npSecs{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px;align-items:start;grid-auto-flow:dense}
+.npFoot{margin-top:12px;text-align:right;font-style:italic;font-size:13px;color:#5b462d}
+/* cronologia (opzionale): <section class="npBox tl"><h4>…</h4><ul><li><b>data</b> luogo…</li></ul> */
+.npBox.tl ul{list-style:none;padding-left:20px;position:relative;margin-top:8px}
+.npBox.tl ul::before{content:"";position:absolute;left:5px;top:7px;bottom:7px;width:2px;background:#8a6c1f}
+.npBox.tl li{position:relative;margin:0 0 8px}
+.npBox.tl li::before{content:"";position:absolute;left:-20px;top:4px;width:11px;height:11px;border-radius:50%;background:#efe1be;border:2.5px solid var(--np-red)}
+/* timbro (opzionale) */
+.npStamp{position:absolute;top:12px;right:128px;transform:rotate(-7deg);font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;padding:2px 10px;border:3px double var(--np-red);color:var(--np-red);opacity:.8;mix-blend-mode:multiply;pointer-events:none;z-index:3}
+/* nascosto ai giocatori (solo vista master) */
+.npCard .hid{outline:1.5px dashed var(--np-red);outline-offset:1px;opacity:.72}
 .npCard .hid::after{content:" 🔒";font-size:11px}
-.npBox.hid::after,.npPhoto.hid::after,.npName.hid::after{position:absolute;right:6px;top:3px;content:"🔒 hidden from players";font-size:11px;color:var(--np-red)}
+.npBox.hid::after{position:absolute;right:6px;top:4px;content:"🔒 hidden from players";font-size:11px;color:#ffd9d0;letter-spacing:.04em}
+.npPhoto.hid::after,.npName.hid::after{position:absolute;right:4px;top:2px;content:"🔒";font-size:13px}
 .npBox.hid,.npName.hid,.npPhoto.hid{position:relative}
+.npBox.hid>h4{background:#7b6a52}
 .npBox dl>div.hid::after{content:" 🔒"}
+/* solo master: segreti, voce, citazioni */
+.npBox.dmOnly{outline:0;opacity:1;border:2px dashed var(--np-red);background:linear-gradient(180deg,rgba(142,34,25,.1),rgba(142,34,25,.04))}
+.npBox.dmOnly>h4{background:var(--np-red);color:#ffeadb}
+.npBox.dmOnly>h4 small{color:#ffd9d0}
+.npBox.dmOnly::after{content:"" !important}
+.npBox.dmOnly>:not(h4){margin-top:7px}
 .npMini{display:flex;align-items:center;gap:8px}
-@media (min-width:720px){
-  .npCard{padding:20px 22px 16px;font-size:16px}
-  .npTop{grid-template-columns:minmax(0,1fr) 210px;grid-template-areas:"head photo" "facts photo";gap:12px 20px}
+@container (min-width:640px){
+  .npTop{grid-template-columns:minmax(0,1fr) 210px;grid-template-areas:"head photo" "facts photo";grid-template-rows:auto 1fr;gap:12px 22px}
   .npFactsWrap{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .npSecs{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.npBox.wide{grid-column:1/-1}
+  .npSecs{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.npBox.wide{grid-column:1/-1}
   .npBox dl>div{grid-template-columns:minmax(90px,40%) minmax(0,1fr)}
+  .npStamp{right:250px;top:16px;font-size:20px}
 }
-@media (max-width:560px){.npStats{grid-template-columns:repeat(3,minmax(0,1fr))}.npLine .acts .sb{min-height:40px}}
-@media print{.npCard{box-shadow:none}}
+@container (min-width:1000px){
+  .npSecs{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:720px){.npCard{padding:22px 24px 18px;font-size:16px}}
+@media print{
+  @page{size:A4;margin:12mm}
+  .npCard{box-shadow:none;border:1.5px solid #3a2c1a;background:#f6ecce !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10.5pt;padding:8mm}
+  .npTop{grid-template-columns:minmax(0,1fr) 46mm;grid-template-areas:"head photo" "facts photo"}
+  .npFactsWrap{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .npSecs{grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm}
+  .npBox,.npBox.tl li{break-inside:avoid}
+  .npCard .hid{outline:0;opacity:1}
+  .npCard .hid::after,.npBox.hid::after,.npPhoto.hid::after,.npName.hid::after{display:none}
+  .npBox.dmOnly{display:none}
+  .npPhoto .fr{box-shadow:none}
+}
 </style>
 <script src="config.js"></script>
 </head>
