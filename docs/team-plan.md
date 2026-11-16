@@ -38,6 +38,13 @@ Zone di index.html oggi: **Backend** (per primo) possiede `brewImport`, `ingest5
 9. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali con brevi spiegazioni, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI (oggi 10 su 14: probabile da mercoledì 18).
 10. Bozza di post in docs/promo/ (solo bozza, nessuna pubblicazione) ora che non ci sono bug alti.
 
+## Richieste di Capo del 16/11 (provate l'app il 15/11) · priorità decise dal team leader
+Ordine: **1. Import Markdown tollerante** (alta: gli altri utenti non seguiranno le regole del formato, quindi è il blocco all'adozione), **2. Danni e cure con −/+** (alta ma piccola: si usa a ogni turno di gioco), **3. Calcolatrice dei denari** (media). Fatte tutte e tre il 16/11 in una sola PR (non cambiano schema né formato dei salvataggi; la PR è comunque richiesta perché la sessione lavora su un ramo, non su main).
+- **Danni e cure**: campo numerico invariato (inseribile), più −5, −, +, +5 da 44 px; l'ultima quantità resta dopo Damage/Heal/Temp. Test in `combattimento` e `telefono`.
+- **Denari**: nello Zaino, "Add or spend": importo (anche 2,5), moneta, Add / Spend. Spend paga con la moneta scelta, poi con le più piccole solo se bastano a chiudere, altrimenti con una più grande e riceve il resto in mo/ma/mr; se non c'è abbastanza non cambia nulla e lo dice. Test in `zaino` e `telefono`.
+- **Import Markdown**: l'etichetta `# Class: Nome` diventa facoltativa; il tipo si deduce dai campi (Hit die, Casting time, Rarity, Prerequisite…) o dal titolo ("Armorer (Artificer Subclass)"); livelli come "Level 3: X", "3rd-level: X", "X (Level 3)", in grassetto o su riga semplice, con o senza "## Features"; tabelle a due colonne come campi; HTML ed entità (`&nbsp;`, `&rsquo;`, `<br>`, `<h1>`…) ripuliti; in Incolla si può scegliere il tipo; la finestra di controllo scrive cosa ha capito ("Read as a class from its Hit Die…") e cosa ha scartato. Test in `workshop` con Artificer/Armorer grezzo (`tests/md/`).
+- **Integrazione AI nell'import (rimandata)**: fattibile con una Supabase edge function che chiama l'API di Claude con la chiave solo lato server, consenso esplicito prima di inviare il testo, limiti d'uso per utente e anteprima obbligatoria. Costa a chi tiene la chiave (token per ogni import) e porta rischi di abuso e privacy; non conviene ora che il parser tollerante copre i casi visti. Da riconsiderare se i file reali continuano a non passare. Dati e Supabase: solo PR.
+
 ## Regole per tutti
 - Solo SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
 - Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**.

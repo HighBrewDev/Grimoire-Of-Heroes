@@ -91,4 +91,6 @@ module.exports = {sezione:'telefono', test:[
     const w = await app.page.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(w <= 390, `scrollWidth ${w}px`);
   }],
+  tapTest('Danni e cure: −5, −, +, +5 e il campo sono ≥44 px', app => app.go('combat'), '#page .hpStep, #page #hpAmt'),
+  tapTest('Denari: campo, moneta, Add e Spend sono ≥44 px', app => app.go('pack'), '#page #coinAmt, #page #coinKind, #page [data-act="coinAdd"], #page [data-act="coinSpend"]'),
 ]};

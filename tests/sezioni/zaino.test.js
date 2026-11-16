@@ -132,4 +132,40 @@ module.exports = {sezione:'zaino', test:[
     assert.ok((await app.hero()).inventory.some(i => i.n === 'Chiave di ferro'));
     assert.ok((await app.text('#invList')).includes('Chiave di ferro'));
   }],
+  ['Denari: Spend paga con la moneta scelta, poi le più piccole, poi una più grande con il resto', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    const spend = async (purse, amt, kind) => {
+      for (const k of ['cp', 'sp', 'ep', 'gp', 'pp']) await app.page.fill('#coin_' + k, String(purse[k] || 0));
+      await app.set('#coinKind', kind); await app.page.fill('#coinAmt', String(amt)); await app.click('coinSpend');
+      const c = (await app.hero()).currency; return [c.cp, c.sp, c.ep, c.gp, c.pp];
+    };
+    // [cp, sp, ep, gp, pp]
+    assert.deepStrictEqual(await spend({gp:5}, 3, 'gp'), [0, 0, 0, 2, 0]);
+    assert.deepStrictEqual(await spend({pp:2}, 3, 'gp'), [0, 0, 0, 7, 1], 'solo platino: ne cede uno e riceve 7 mo di resto');
+    assert.deepStrictEqual(await spend({sp:40}, 3, 'gp'), [0, 10, 0, 0, 0], 'solo argento: 30 ma');
+    assert.deepStrictEqual(await spend({pp:1, gp:1, sp:2}, 3, 'gp'), [0, 2, 0, 8, 0], 'oro e argento non bastano: platino con il resto, l\u2019argento resta');
+    await spend({cp:7, sp:4, gp:1, pp:1}, 4.5, 'gp');
+    const c = (await app.hero()).currency;
+    assert.strictEqual(c.cp + c.sp * 10 + c.ep * 50 + c.gp * 100 + c.pp * 1000, 7 + 40 + 100 + 1000 - 450, 'il totale cala esattamente di 4,5 mo');
+    assert.ok(/Not enough money/.test(await spend({cp:5, gp:1}, 5, 'gp').then(() => app.toast())));
+    assert.deepStrictEqual([(await app.hero()).currency.cp, (await app.hero()).currency.gp], [5, 1], 'se non basta, nulla cambia');
+  }],
+  ['Denari: Add e Spend dalla borsa, con messaggio e senza toccare il saldo se non basta', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    await app.page.fill('#coin_cp', '0'); await app.page.fill('#coin_sp', '0'); await app.page.fill('#coin_gp', '0'); await app.page.fill('#coin_pp', '2');
+    await app.set('#coinKind', 'gp'); await app.page.fill('#coinAmt', '3'); await app.click('coinSpend');
+    let c = (await app.hero()).currency;
+    assert.deepStrictEqual([c.pp, c.gp, c.sp, c.cp], [1, 7, 0, 0]);
+    assert.ok(/Spent 3 GP: paid 1 PP, change 7 GP/.test(await app.toast()), await app.toast());
+    await app.set('#coinKind', 'sp'); await app.page.fill('#coinAmt', '25'); await app.click('coinAdd');
+    c = (await app.hero()).currency; assert.strictEqual(c.sp, 25);
+    await app.set('#coinKind', 'pp'); await app.page.fill('#coinAmt', '50'); await app.click('coinSpend');
+    assert.ok(/Not enough money/.test(await app.toast()), await app.toast());
+    assert.deepStrictEqual((await app.hero()).currency.pp, 1);
+    await app.set('#coinKind', 'gp'); await app.page.fill('#coinAmt', '0.5'); await app.click('coinSpend');
+    assert.ok((await app.hero()).currency.gp !== undefined);
+    await app.page.fill('#coinAmt', 'abc'); await app.click('coinAdd');
+    assert.ok(/amount above zero/.test(await app.toast()), await app.toast());
+    assert.ok(/≈ \d/.test(await app.text('#page')));
+  }],
 ]};

@@ -352,3 +352,6 @@
 ## In attesa di Capo
 - Nessuna PR aperta: la PR [#3](https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/3) (B-012) è stata unita da sviluppo il 2026-11-09 dopo i test, come da regola del team.
 - Bozze promo: nessuna.
+
+## 2026-11-16 · sviluppo · richieste di Capo (danni, denari, import Markdown)
+- Priorità: import Markdown, danni/cure, denari (motivi in docs/team-plan.md). Fatte tutte e tre; B-049, B-050, B-051 in "Risolti". CACHE `grimoire-dv1116b`. Test nuovi: 5 `workshop`, 2 `combattimento`, 2 `zaino`, 2 `telefono`. Nessun cambio di schema o formato dei salvataggi. Sala aggiornata: no (Artifact non disponibile in questa sessione).

@@ -353,4 +353,116 @@ Infliggi 1d10 danni da fuoco.
     const ms = Date.now() - t0;
     assert.ok(ms < 8000, `finestra dopo ${ms} ms`);
   }],
+  ['Markdown tollerante: Artificer e Armorer in forma grezza (senza etichette, livelli diversi, HTML) danno la stessa cosa della forma stretta', async ({open}) => {
+    const fs = require('fs'), dir = require('path').join(__dirname, '..', 'md');
+    const strict = fs.readFileSync(dir + '/artificer-armorer.md', 'utf8'), raw = fs.readFileSync(dir + '/artificer-armorer-raw.md', 'utf8');
+    assert.ok(/&rsquo;|&nbsp;/.test(raw) && !/^# Class:/m.test(raw), 'la forma grezza deve essere davvero grezza');
+    const exp = async text => {
+      const app = await open(); await app.go('workshop');
+      const rows = await review(app, md('a.md', text));
+      assert.deepStrictEqual(rows.map(r => r.n), ['artificer', 'armorer']);
+      rows.forEach(r => assert.deepStrictEqual(r.err, [], r.n + ': ' + r.err.join(' / ')));
+      await app.click('brew5Add');
+      await app.page.waitForFunction(() => document.querySelectorAll('[data-act="brewEdit"]').length === 2);
+      const [dl] = await Promise.all([app.page.waitForEvent('download'), app.click('brewExportMd')]);
+      return {rows, md:fs.readFileSync(await dl.path(), 'utf8').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim()};
+    };
+    const a = await exp(strict), b = await exp(raw);
+    assert.strictEqual(b.md, a.md, 'stessa voce esportata');
+    assert.ok(/Level 1: Spellcasting/.test(b.md) && /Level 20: Soul of Artifice/.test(b.md) && /Class: Artificer/.test(b.md));
+    assert.ok(has(b.rows[0].warn, /Read as a class/), b.rows[0].warn.join(' / '));
+    assert.ok(has(b.rows[1].warn, /Read as a subclass/), b.rows[1].warn.join(' / '));
+    assert.ok(!a.rows.some(r => has(r.warn, /Read as/)), 'la forma stretta non ha suggerimenti');
+  }],
+  ['Markdown tollerante: pagina web incollata con HTML ed entità, senza etichetta', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const [r] = await review(app, md('web.md', `<h1>Ember Lash</h1>
+<p><em>Level 1 Evocation (Sorcerer, Wizard)</em></p>
+<p><strong>Casting Time:</strong> Action<br><strong>Range:</strong> 30&nbsp;feet<br><strong>Components:</strong> V, S<br><strong>Duration:</strong> Instantaneous</p>
+<p>A whip of embers lashes one creature. It takes 2d8 Fire damage &amp; catches fire.</p>`));
+    assert.strictEqual(r.n, 'ember lash'); assert.deepStrictEqual(r.err, [], r.err.join(' / '));
+    assert.ok(has(r.warn, /Read as a spell/), r.warn.join(' / '));
+    assert.ok(/Cleaned \d+ HTML/.test(await app.text('.hbNotes')), 'avviso sulla pulizia HTML');
+    await app.click('brew5Add');
+    await app.page.waitForFunction(() => /Evocation/.test(document.getElementById('hb_list')?.textContent || ''));
+    await app.go('library'); await app.page.fill('#lib_q', 'ember lash');
+    assert.ok((await app.text('#libList')).includes('Ember Lash'));
+  }],
+  ['Markdown tollerante: campi in grassetto senza trattino, tabelle a due colonne e livelli scritti in modi diversi', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const rows = await review(app, md('misto.md', `## Gloomwarden
+
+| Hit die | d10 |
+| Primary ability | Wisdom |
+| Saving throws | Wisdom, Constitution |
+
+**Level 1: Watchful Dark.** You see in dim light as if it were bright.
+
+3rd-level: Shroud Step
+You step through shadow.
+
+Level 5 – Hollow Strike
+Your attacks deal extra damage.
+
+## Quiet Resolve (Level 7)
+
+You can't be frightened.
+`));
+    const g = row(rows, 'gloomwarden'); assert.deepStrictEqual(g.err, [], g.err.join(' / '));
+    assert.ok(!has(g.warn, /No level features/), g.warn.join(' / '));
+    await app.click('brew5Add');
+    const [dl] = await Promise.all([app.page.waitForEvent('download'), app.click('brewExportMd')]);
+    const text = require('fs').readFileSync(await dl.path(), 'utf8');
+    for (const m of [/Hit die: d10/, /### Level 1: Watchful Dark/, /### Level 3: Shroud Step/, /### Level 5: Hollow Strike/, /### Level 7: Quiet Resolve/, /Primary ability: Wisdom/]) assert.ok(m.test(text), String(m) + '\n' + text.slice(0, 600));
+  }],
+  ['Markdown tollerante: più voci senza etichetta nello stesso incolla, ognuna riconosciuta', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const rows = await review(app, md('tre.md', `# Ashen Resolve
+- Prerequisite: Level 4+
+- Repeatable: no
+
+You gain Resistance to Fire damage.
+
+# Ember Lash
+- Casting time: Action
+- Range: 30 feet
+- Components: V, S
+- Duration: Instantaneous
+- Level: 1
+- School: Evocation
+- Classes: Wizard
+
+A whip of embers.
+
+# Cinder Hound
+- Armor class: 13
+- Hit points: 22 (4d8 + 4)
+- Speed: 40 ft.
+- Challenge: 1
+
+## Actions
+
+**Bite.** Melee Weapon Attack: +4 to hit, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage.
+`));
+    assert.deepStrictEqual(rows.map(r => r.n).sort(), ['ashen resolve', 'cinder hound', 'ember lash']);
+    assert.ok(has(row(rows, 'ashen resolve').warn, /Read as a feat/) && has(row(rows, 'ember lash').warn, /Read as a spell/) && has(row(rows, 'cinder hound').warn, /Read as a creature/));
+  }],
+  ['Markdown tollerante: nel Incolla si può scegliere il tipo e una voce irriconoscibile viene spiegata, non scartata in silenzio', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    await app.click('brewMdPaste');
+    await app.set('#hb_kind', 'feats');
+    await app.page.fill('#hb_md', 'Ashen Resolve\n\nYou gain a benefit when you take Fire damage.');
+    await app.click('brewMdCheck');
+    await app.page.waitForSelector('#modalBk .b5List');
+    assert.strictEqual(await app.page.locator('.b5Row').count(), 1);
+    assert.ok(/Ashen Resolve/i.test(await app.text('.b5List')) && /Feat/.test(await app.text('.b5List')));
+    await app.click('close');
+    await app.click('brewMdPaste');
+    await app.page.fill('#hb_md', '# Mistero\n\nQualcosa senza campi riconoscibili.');
+    await app.click('brewMdCheck');
+    assert.ok(/No entries in Pasted text/.test(await app.toast()), await app.toast());
+    const rows = await review(app, md('due.md', '# Mistero\n\nTesto senza campi.\n\n# Spell: Dardo\n- Level: Cantrip\n- School: Evocation\n- Casting time: Action\n- Range: 60 feet\n- Components: V, S\n- Duration: Instantaneous\n- Classes: Wizard\n\nUn dardo.\n'));
+    assert.strictEqual(rows.length, 1);
+    assert.ok(/could not be recognised|doesn’t say what it is/.test(await app.text('.hbNotes')), await app.text('.hbNotes'));
+  }],
 ]};

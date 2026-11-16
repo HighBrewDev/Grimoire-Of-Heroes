@@ -97,6 +97,12 @@ button{cursor:pointer}
 .iconBtn{border:1px solid var(--gold3);background:rgba(243,217,123,.08);color:var(--onLeather);border-radius:9px;width:38px;height:36px;display:grid;place-items:center}
 .iconBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
 .iconBtn[aria-pressed="true"]{background:var(--gold);color:#2a1c08}
+.hpAmtRow,.coinCalc{flex-wrap:wrap;gap:6px;align-items:center}
+.hpAmtRow input{width:76px;flex:0 0 76px;text-align:center;min-height:44px}
+.hpStep{min-width:44px;min-height:44px;font-weight:700}
+.coinCalc input,.coinCalc select{min-height:44px}
+.coinCalc input{width:110px}
+.coinCalc .sb{min-height:44px;min-width:44px}
 .sb{border:1px solid var(--gold3);background:var(--paper);border-radius:7px;padding:3px 9px;font-size:14px;line-height:1.3;color:var(--ink)}
 .sb:hover{background:var(--paperHi)}
 .sb.on{background:var(--chip);color:var(--chipInk);border-color:var(--chip)}
@@ -1786,7 +1792,8 @@ combat(c){
   return `<div class="grid3">
     ${card('Hit points', `${hpBar(c)}
       <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${c.hp.max}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= c.hp.max / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
-      <div class="row mt"><label class="sr" for="hpAmt">Amount</label><input type="number" id="hpAmt" value="5" min="0">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
+      <div class="row mt hpAmtRow"><label class="sr" for="hpAmt">Amount</label>${act('hpStep', '-5', '−5', 'sb hpStep', 'aria-label="Lower the amount by 5"')}${act('hpStep', '-1', '−', 'sb hpStep', 'aria-label="Lower the amount by 1"')}<input type="number" id="hpAmt" inputmode="numeric" value="${clamp(+G.hpAmt || 0, 0, LIM.hp) || (G.hpAmt === 0 ? 0 : 5)}" min="0" max="${LIM.hp}">${act('hpStep', '1', '+', 'sb hpStep', 'aria-label="Raise the amount by 1"')}${act('hpStep', '5', '+5', 'sb hpStep', 'aria-label="Raise the amount by 5"')}</div>
+      <div class="row mt">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
       <div class="rule"></div>
       <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" max="${LIM.hp}" value="${c.hp.max}"></div>
       ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
@@ -1927,7 +1934,12 @@ pack(c){
         <div id="gearResults"></div>`}`)}
       ${card(`Coin purse <span class="muted num">≈ ${total.toFixed(1)} gp</span>`, `
         <div class="fields">${['cp','sp','ep','gp','pp'].map(k => `<div><label class="f" for="coin_${k}">${k.toUpperCase()}</label><input type="number" id="coin_${k}" data-bind="currency.${k}" data-type="int" min="0" max="${LIM.coin}" value="${coins[k] || 0}"></div>`).join('')}</div>
-        <p class="muted">1 pp = 10 gp · 1 gp = 2 ep = 10 sp = 100 cp. Edits save as you type.</p>`)}
+        <p class="muted">1 pp = 10 gp · 1 gp = 2 ep = 10 sp = 100 cp. Edits save as you type.</p>
+        <div class="rule"></div><h4>Add or spend</h4>
+        <div class="row coinCalc"><label class="sr" for="coinAmt">Amount</label><input type="text" id="coinAmt" inputmode="decimal" value="${esc(G.coinAmt ?? '')}" placeholder="e.g. 3">
+          <label class="sr" for="coinKind">Coin</label><select id="coinKind">${['pp','gp','ep','sp','cp'].map(k => opt(k, G.coinKind || 'gp', k.toUpperCase())).join('')}</select>
+          ${act('coinAdd', undefined, '＋ Add', 'sb')}${act('coinSpend', undefined, '− Spend', 'sb')}</div>
+        <p class="muted" id="coinMsg" role="status">Spending uses the coins you pick first, then smaller ones, then a bigger coin with change back.</p>`)}
       <details class="fold"><summary>Weapons table (${(SRD.equipment || []).filter(e => e.dmg).length})</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Weapon</th><th>Damage</th><th>Mastery</th><th>Properties</th></tr></thead><tbody>${(SRD.equipment || []).filter(e => e.dmg).map(w => `<tr><td>${xref(w.n)}</td><td>${esc(w.dmg + ' ' + w.dt)}</td><td>${w.m ? xref(w.m) : ''}</td><td class="wrap">${esc((w.props || []).join(', '))}</td></tr>`).join('')}</tbody></table></div></details>
       <details class="fold"><summary>Armor table (${ARMORS.length})</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Armor</th><th>AC</th><th>Str</th><th>Stealth</th></tr></thead><tbody>${ARMORS.map(a => `<tr><td>${xref(a.n)}</td><td>${esc(a.ac)}</td><td>${a.strmin || '—'}</td><td>${a.stealth ? 'Disadvantage' : '—'}</td></tr>`).join('')}</tbody></table></div></details>
     </div>
@@ -2823,9 +2835,149 @@ function hbFeatureEntries(lines, W){
 const HB_MON_SEC = {traits:'tr', trait:'tr', tratti:'tr', actions:'act', action:'act', azioni:'act', 'bonus actions':'bon', 'azioni bonus':'bon', reactions:'re', reazioni:'re',
   'legendary actions':'leg', 'azioni leggendarie':'leg'};
 const HB_HIGHER = /higher|upcast|livell[io] superior|slot di livello superiore/i;
+/* ---- Forgiving Markdown: clean pasted text, work out what each entry is, and put it in the shape parseBrewMd reads ---- */
+const HB_ENT = {amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', ensp:' ', emsp:' ', thinsp:' ', ndash:'–', mdash:'—', lsquo:'‘', rsquo:'’', ldquo:'“', rdquo:'”', hellip:'…', bull:'•', middot:'·', deg:'°', times:'×', minus:'−', plusmn:'±', frac12:'½', frac14:'¼', frac34:'¾', rarr:'→', larr:'←', shy:'', copy:'©', reg:'®', trade:'™'};
+function hbCleanText(raw, notes){
+  let t = String(raw || '').replace(/^﻿/, '').replace(/\r\n?/g, '\n').replace(/[​-‍⁠­]/g, '').replace(/ /g, ' ').replace(/\t/g, '  ');
+  let n = 0; const bump = s => { n++; return s; };
+  if (/<[a-z/][^>]*>/i.test(t)){
+    t = t.replace(/<br\s*\/?>/gi, () => bump('\n')).replace(/<\/p>|<\/div>/gi, () => bump('\n\n')).replace(/<li[^>]*>/gi, () => bump('\n- '))
+      .replace(/<h([1-6])[^>]*>/gi, (m, d) => bump('\n' + '#'.repeat(+d) + ' ')).replace(/<\/h[1-6]>/gi, () => bump('\n'))
+      .replace(/<\/?(?:b|strong)\b[^>]*>/gi, () => bump('**')).replace(/<\/?(?:i|em)\b[^>]*>/gi, () => bump('*'))
+      .replace(/<tr[^>]*>/gi, () => bump('\n|')).replace(/<\/t[dh]>/gi, () => bump(' |')).replace(/<t[dh][^>]*>/gi, () => bump(' '))
+      .replace(/<\/?[a-z][^>]*>/gi, () => bump(''));
+  }
+  t = t.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (m, e) => {
+    let r;
+    if (e[0] === '#'){ const cp = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); r = cp > 31 && cp < 0x110000 ? String.fromCodePoint(cp) : ''; }
+    else r = Object.hasOwn(HB_ENT, e.toLowerCase()) ? HB_ENT[e.toLowerCase()] : null;
+    return r == null ? m : bump(r);
+  });
+  t = t.split('\n').filter(l => !/^\s*(```|~~~)/.test(l)).join('\n');
+  if (n) notes.push(`Cleaned ${n} HTML ${n === 1 ? 'tag or entity' : 'tags and entities'} (like &nbsp; or <br>) into plain text.`);
+  return t;
+}
+const HB_CAT_LABEL = {spells:'Spell', feats:'Feat', species:'Species', backgrounds:'Background', classes:'Class', subclasses:'Subclass', items:'Item', monsters:'Creature'};
+const HB_WORD_KIND = {class:'classes', subclass:'subclasses', archetype:'subclasses', spell:'spells', cantrip:'spells', feat:'feats', species:'species', race:'species', background:'backgrounds', item:'items', 'magic item':'items', creature:'monsters', monster:'monsters', npc:'monsters'};
+/** "Armorer (Artificer subclass)", "The Artificer Class", "Spell – Ember Lash" → {n, cat?, cls?}. */
+function hbTitle(h){
+  const n = hbUnmark(String(h).replace(/\s+#+$/, '')).replace(/[.:]$/, '').trim();
+  let m = n.match(/^(.+?)\s*[(\[]\s*([^)\]]*?)\s*\b(subclass|archetype)\b\s*(?:of\s+([^)\]]+))?[)\]]$/i);
+  if (m) return {n:m[1].trim(), cat:'subclasses', cls:(m[2] || m[4] || '').replace(/^(?:a|an|the)\s+|\s+(?:class|of)$/gi, '').trim()};
+  m = n.match(/^(.+?)\s*[(\[]\s*(class|spell|cantrip|feat|species|race|background|item|magic item|creature|monster|npc)\s*[)\]]$/i);
+  if (m) return {n:m[1].trim(), cat:HB_WORD_KIND[m[2].toLowerCase()]};
+  m = n.match(/^(?:the\s+)?(.+?)\s+(class|subclass|archetype|spell|feat|species|race|background|creature|monster)$/i);
+  if (m && m[1].split(/\s+/).length <= 5) return {n:m[1].trim(), cat:HB_WORD_KIND[m[2].toLowerCase()]};
+  m = n.match(/^(class|subclass|archetype|spell|feat|species|race|background|creature|monster)\s+(?:of\s+|-\s*)?(.+)$/i);
+  if (m && !/^(of|the|and)\b/i.test(m[2])) return {n:m[2].trim(), cat:HB_WORD_KIND[m[1].toLowerCase()]};
+  return {n};
+}
+/** "Level 3: Name", "3rd-level: Name", "Name (Level 3)", "Lv 5 – Name" → {l, n}. */
+function hbLevelHead(s){
+  const t = hbUnmark(String(s).trim()).replace(/[*_]+$/, '').trim(); let m;
+  m = t.match(/^(?:level|lvl|lv\.?|livello|liv\.?)\s*(\d{1,2})\b\s*[:.\-–—·)]*\s*(.*)$/i) || t.match(/^(\d{1,2})(?:st|nd|rd|th|°)?[- ]level\s*[:.\-–—·)]*\s*(.*)$/i) || t.match(/^(\d{1,2})(?:st|nd|rd|th|°)\s*[:.\-–—·)]\s*(.+)$/i);
+  if (m && +m[1] >= 1 && +m[1] <= 20){ const n = hbUnmark(m[2].trim()).replace(/[.:]$/, ''); return {l:+m[1], n:n || `Level ${m[1]} feature`}; }
+  m = t.match(/^(.+?)\s*[(\[]\s*(?:level|lvl|lv\.?|livello)\s*(\d{1,2})\s*[)\]]$/i);
+  if (m && +m[2] >= 1 && +m[2] <= 20) return {l:+m[2], n:hbUnmark(m[1]).replace(/[.:]$/, '')};
+  return null;
+}
+const HB_STRUCT = /^(features?|class features?|subclass features?|traits?|species traits?|actions?|bonus actions?|reactions?|legendary actions?|description|effect|benefits?|(?:using a )?higher[- ]level spell slot|at higher levels|equipment|starting equipment|proficiencies|multiclassing|privilegi.*|tratti|azioni.*|reazioni|descrizione)$/i;
+const HB_NOTITLE = /^(?:pack|homebrew|notes?|changelog|index|contents|table of contents|indice)\b/i;
+const hbHeadingOf = l => { const m = l.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/); return m ? {d:m[1].length, t:m[2].trim()} : null; };
+function hbInfer(title, lines, featCount){
+  if (title.cat) return {cat:title.cat, why:'its title'};
+  const keys = new Set(), head = lines.slice(0, 40);
+  for (const l of head){ if (hbHeadingOf(l)) break; const m = l.trim().match(HB_FIELD_RE) || l.trim().match(/^\|\s*([^|]{1,40}?)\s*\|\s*(.*?)\s*\|?\s*$/); if (m) keys.add(hbKey(m[1].replace(/\s*\(.*\)$/, '').replace(/\*+/g, ''))); }
+  const has = (...k) => k.some(x => keys.has(x)), text = head.join('\n');
+  if (has('hit die', 'hit dice', 'dado vita', 'dadi vita', 'primary ability', 'caratteristica primaria')) return {cat:'classes', why:'its Hit Die / Primary ability'};
+  if (has('armor class', 'ac', 'ca', 'classe armatura') && has('hit points', 'hp', 'pf', 'punti ferita')) return {cat:'monsters', why:'its Armor Class and Hit Points'};
+  if ((text.match(/\b(STR|DEX|CON|INT|WIS|CHA)\b\s*:?\s*\d/gi) || []).length >= 3) return {cat:'monsters', why:'its ability scores'};
+  if (has('casting time', 'tempo di lancio', 'components', 'componenti') || /^\s*[*_]{1,2}(?:level\s*\d|\d(?:st|nd|rd|th)-level|\w+ cantrip)/im.test(text)) return {cat:'spells', why:'its casting time / components'};
+  if (has('rarity', 'rarità', 'rarita') || /^\s*[*_]{1,2}[^,\n]+,\s*(?:common|uncommon|rare|very rare|legendary|artifact)\b/im.test(text)) return {cat:'items', why:'its rarity'};
+  if (has('origin feat', 'talento di origine') || (has('ability scores', 'punteggi di caratteristica') && has('skill proficiencies', 'skills', 'equipment', 'tool proficiencies'))) return {cat:'backgrounds', why:'its origin feat / skills'};
+  if (has('prerequisite', 'prerequisites', 'prerequisito', 'prerequisiti', 'repeatable', 'ripetibile') || /\b(?:general|origin|fighting style|epic boon) feat\b/i.test(text)) return {cat:'feats', why:'its prerequisite / category'};
+  if (has('creature type', 'tipo di creatura') || (has('size', 'taglia') && has('speed', 'velocità', 'velocita'))) return {cat:'species', why:'its size / speed'};
+  if (featCount){
+    if (has('class', 'classe', 'parent class') || /\b(sub-?class|archetype)\b/i.test(text)) return {cat:'subclasses', why:'its level features and parent class'};
+    return {cat:featCount >= 8 ? 'classes' : 'subclasses', why:`its ${featCount} level features`};
+  }
+  return null;
+}
+/** Step 1 of the import: any reasonable Markdown or pasted web text in, the strict “# Kind: Name” layout out. */
+function hbLenient(raw, def){
+  const notes = [], hints = {}, lines = hbCleanText(raw, notes).split('\n').map(l => l.replace(/\s+$/, ''));
+  const hd = lines.map(hbHeadingOf), isStruct = h => !!h && (!!hbLevelHead(h.t) || HB_STRUCT.test(hbUnmark(h.t).replace(/[.:]$/, '')));
+  const kinded = h => !!h && !!hbKindOf(hbUnmark(h.t)), titled = h => !!h && !isStruct(h) && (kinded(h) || !HB_NOTITLE.test(hbUnmark(h.t)));
+  const levels = body => body.filter(l => { const h = hbHeadingOf(l); return h && hbLevelHead(h.t); }).length;
+  const minD = Math.min(...hd.filter(titled).map(h => h.d), 4);
+  let at = [], Lv = minD, found = false;
+  for (Lv = minD; Lv <= 3 && !found; Lv++){
+    at = []; hd.forEach((h, i) => { if (titled(h) && h.d === Lv) at.push(i); });
+    found = at.some(i => kinded(hd[i])) || at.some((i, k) => { const b = lines.slice(i + 1, at[k + 1] ?? lines.length); return def || hbInfer(hbTitle(hd[i].t), b, levels(b)); });
+  }
+  Lv--;
+  const blocks = [];
+  if (!found && minD > 3){   // no heading at all: the first short line is the name
+    const k = lines.findIndex(l => l.trim());
+    if (k < 0) return {text:'', notes, hints};
+    const first = lines[k].trim(), nameLike = first.length <= 60 && !HB_FIELD_RE.test(first) && !hbHeadingOf(first) && !hbLevelHead(first);
+    blocks.push({title:hbTitle(nameLike ? first.replace(/^[*_#\s]+|[*_\s]+$/g, '') : ''), kinded:false, body:lines.slice(nameLike ? k + 1 : 0), line:k + 1, shift:0});
+  } else {
+    if (!found){ Lv = minD; at = []; hd.forEach((h, i) => { if (titled(h) && h.d === Lv) at.push(i); }); }
+    at.forEach((i, k) => blocks.push({title:hbTitle(hd[i].t), kinded:kinded(hd[i]), labelled:hd[i].t, body:lines.slice(i + 1, at[k + 1] ?? lines.length), line:i + 1, shift:Lv - 1}));
+  }
+  const out = [];
+  for (const b of blocks){
+    let cat, why = '', name = b.title.n;
+    if (b.kinded){ const k = hbKindOf(hbUnmark(b.labelled)); cat = k.cat; name = k.n; }
+    const body = b.body.map(l => { const h = hbHeadingOf(l); return h && b.shift ? '#'.repeat(Math.max(2, h.d - b.shift)) + ' ' + h.t : l; });
+    // level features: headings, bold run-ins, or short plain "Level 3: Name" lines
+    const pre = [], secs = [], feats = []; let cur = pre, inFeat = false;
+    for (const l of body){
+      const h = hbHeadingOf(l), t = l.trim();
+      if (h){
+        const lv = hbLevelHead(h.t);
+        if (lv){ const f = {l:lv.l, n:lv.n, lines:[]}; feats.push(f); cur = f.lines; inFeat = true; continue; }
+        if (/^(features?|class features?|subclass features?|privilegi.*)$/i.test(hbUnmark(h.t).replace(/[.:]$/, ''))){ cur = pre; inFeat = false; continue; }
+        if (h.d <= 2){ const s = {t:h.t, lines:[]}; secs.push(s); cur = s.lines; inFeat = false; continue; }
+        cur.push(l); continue;
+      }
+      const run = t.match(/^\*\*(.{3,70}?)\*\*\s*(.*)$/), lvr = run && hbLevelHead(run[1]);
+      if (lvr){ const f = {l:lvr.l, n:lvr.n, lines:run[2] ? [run[2]] : []}; feats.push(f); cur = f.lines; inFeat = true; continue; }
+      const plain = t.length <= 70 && !/[.!?]$/.test(t) && !/^[-*+|>]/.test(t) && /^(?:level|lvl|lv\.?|livello|liv\.?)\s*\d|^\d{1,2}(?:st|nd|rd|th)[- ]level/i.test(t) && hbLevelHead(t);
+      if (plain){ const f = {l:plain.l, n:plain.n, lines:[]}; feats.push(f); cur = f.lines; inFeat = true; continue; }
+      cur.push(l);
+    }
+    if (!cat){
+      const inf = def ? {cat:def, why:'your choice'} : hbInfer(b.title, pre.concat(...secs.map(s => s.lines)), feats.length);
+      if (!inf){ if (feats.length || secs.length || pre.some(l => l.trim())) notes.push(`“${name || 'An entry'}” (line ${b.line}) could not be recognised. In Paste Markdown choose what it is, or write “# Spell: ${name || 'Name'}”.`); continue; }
+      cat = inf.cat; why = inf.why;
+    }
+    if (!name){ name = 'Untitled'; notes.push(`An entry (line ${b.line}) has no name: it was called “Untitled”.`); }
+    const at0 = out.length;
+    out.push(`# ${HB_CAT_LABEL[cat]}: ${name}`, '');
+    if (cat === 'subclasses' && b.title.cls && !pre.some(l => /^\s*[-*+]?\s*\**\s*(class|classe)\s*\**\s*:/i.test(l))) out.push(`- Class: ${b.title.cls}`);
+    const fieldKeys = Object.assign({}, HB_F_ALL, HB_F[cat]);
+    pre.forEach(l => {   // two-column tables "| Hit die | d8 |" become "- Hit die: d8"
+      const m = l.trim().match(/^\|\s*([^|]{1,40}?)\s*\|\s*([^|]*?)\s*\|?\s*$/);
+      if (m && Object.hasOwn(fieldKeys, hbKey(m[1].replace(/\*+/g, ''))) && m[2].trim()) out.push(`- ${m[1].replace(/\*+/g, '').trim()}: ${m[2].replace(/\*+/g, '').trim()}`);
+      else if (!(m && /^:?-{2,}/.test(m[1]))) out.push(l);
+    });
+    secs.forEach(s => { out.push('', `## ${s.t}`, ...s.lines); });
+    if (feats.length){ out.push('', '## Features'); feats.forEach(f => out.push('', `### Level ${f.l}: ${f.n}`, '', ...f.lines)); }
+    out.push('');
+    const hint = [], lbl = HB_CAT_LABEL[cat];
+    if (!b.kinded && why) hint.push(`Read as a ${lbl === 'Creature' ? 'creature' : lbl.toLowerCase()} from ${why}. If that is wrong, choose the kind in Paste Markdown or write “# Kind: ${name}” (for example “# Spell: ${name}”).`);
+    if ((cat === 'classes' || cat === 'subclasses') && !feats.length) hint.push('No level features found: write each one as “### Level 3: Name” or “Name (Level 3)”.');
+    if (feats.some((f, i) => feats.findIndex(g => g.l === f.l && g.n === f.n) !== i)) hint.push('Two features have the same level and name: check for a copy-paste repeat.');
+    if (hint.length) hints[at0 + 1] = hint;
+  }
+  return {text:out.join('\n'), notes, hints};
+}
 /** Parse a whole Markdown file. Returns {items:[{cat, o, src, pw}], notes}: pw are the parser's own warnings for that entry, notes those for the file. */
-function parseBrewMd(text){
-  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), items = [], notes = [];
+function parseBrewMd(text, def){
+  const len = hbLenient(text, def), hints = len.hints;
+  const lines = len.text.split('\n'), items = [], notes = len.notes.slice();
   let i = 0;
   if (lines[0]?.trim() === '---'){ const end = lines.indexOf('---', 1); if (end > 0) i = end + 1; }
   let cur = null;
@@ -2854,7 +3006,7 @@ function parseBrewMd(text){
     if (t) cur.head = false;
     cur.body.push(l);
   }
-  return {items:items.map(hbMdBuild), notes};
+  return {items:items.map(hbMdBuild).map(it => { const n = +String(it.src).replace(/\D/g, ''); if (hints[n]) it.pw.unshift(...hints[n]); return it; }), notes};
 }
 function hbMdBuild(e){
   const f = k => (e.fields[k] || []).join(', ').trim(), o = {n:f('n') || e.n}, pw = e.pw, body = e.body.slice();
@@ -2943,6 +3095,8 @@ const HB_MD_TEMPLATE = `# Grimoire homebrew template
 Each entry starts with "# Kind: Name". Kinds: Spell, Feat, Species, Background, Class, Subclass, Item, Creature
 (Italian works too: Incantesimo, Talento, Specie, Background, Classe, Sottoclasse, Oggetto, Creatura).
 Then one "- Field: value" per line, then the text. Delete the examples you don't need.
+The label is optional: a plain title is read from its fields (Hit die, Casting time…), and class features can be written
+"Level 3: Name", "3rd-level: Name" or "Name (Level 3)". Pasted web text with HTML and &nbsp; is cleaned up. The check window tells you what it guessed.
 
 # Spell: Ember Lash
 
@@ -3328,9 +3482,9 @@ function brewReview(list, name, {skip = 0, notes = []} = {}){
   $('#b5_none').onclick = () => { $$('.b5').forEach(x => { x.checked = false; }); count(); };
   $('.b5List').onchange = count; count();
 }
-function brewMdText(text, name){
-  const r = parseBrewMd(text);
-  if (!r.items.length){ toast(`No entries in ${name}: each one starts with a heading like “# Spell: Ember Lash”. Download the Markdown template from Homebrew to see the format.`); return; }
+function brewMdText(text, name, def){
+  const r = parseBrewMd(text, def || '');
+  if (!r.items.length){ toast(`No entries in ${name}: give each one a title, ideally “# Spell: Ember Lash”. In Paste Markdown you can say what the entries are; the Markdown template shows the full format.`); return; }
   brewReview(r.items, name, {notes:r.notes});
 }
 function brewDownload(txt, fname, type){
@@ -3349,11 +3503,12 @@ Object.assign(ACT_BREW, {
   brewExportMd(){ brewDownload(brewToMd(BREW_ITEMS), 'grimoire-homebrew.md', 'text/markdown'); toast(`${BREW_ITEMS.length} entries written as Markdown.`); },
   brewMdPaste(){
     modal(`<div class="head"><h2>Paste Markdown</h2><span class="spacer"></span>${closeBtn()}</div>
-      <p class="muted">Paste one or more entries, each starting with a heading like “# Spell: Ember Lash”. Nothing is added until you check it and tick what to keep.</p>
+      <p class="muted">Paste one or more entries, copied from a book, a web page or a document: titles, “Level 3: Name” features, bold text, tables and HTML are all understood, and Grimoire guesses what each entry is. Nothing is added until you check it and tick what to keep.</p>
+      <label class="row small" for="hb_kind">If an entry has no label, read it as <select id="hb_kind"><option value="">whatever it looks like</option>${Object.keys(HB_CAT_LABEL).map(k => `<option value="${k}">${HB_CAT_LABEL[k]}</option>`).join('')}</select></label>
       <label class="sr" for="hb_md">Markdown</label><textarea id="hb_md" style="width:100%;min-height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px" placeholder="# Feat: Ashen Resolve&#10;- Category: General&#10;- Prerequisite: Level 4+&#10;&#10;You gain the following benefits…" autofocus></textarea>
       <div class="row mt">${act('brewMdCheck', undefined, 'Check', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}</div>`, {label:'Paste Markdown'});
   },
-  brewMdCheck(){ const t = $('#hb_md')?.value || ''; if (!t.trim()){ toast('Paste some Markdown first.'); return; } brewMdText(t, 'Pasted text'); },
+  brewMdCheck(){ const t = $('#hb_md')?.value || ''; if (!t.trim()){ toast('Paste some Markdown first.'); return; } brewMdText(t, 'Pasted text', $('#hb_kind')?.value || ''); },
   brewFrom(id){
     const e = byId(id), d = brewDraftFrom(e);
     if (!d){ toast('Homebrew has no form for this kind of entry.'); return; }
@@ -3391,6 +3546,37 @@ function renderOmni(){
 function mut(fn, full = true){ const c = active(); fn(c); save(); full ? render() : renderPage(); }
 const num = id => parseInt($('#' + id)?.value, 10) || 0;
 /* HP amounts are never negative (B-006): "-50" damage or healing does nothing. */
+/* Purse arithmetic: values in copper. ep = 50 cp, gp = 100, pp = 1000. */
+const COIN_V = {cp:1, sp:10, ep:50, gp:100, pp:1000}, COIN_ORDER = ['pp','gp','ep','sp','cp'];
+const coinTotal = cur => COIN_ORDER.reduce((t, k) => t + (cur[k] || 0) * COIN_V[k], 0);
+/** Pay `cost` copper, starting with `pref` coins, then smaller ones, then one larger coin at a time with change in gp/sp/cp. Returns {purse, paid, change} or null when there is not enough. */
+function coinSpend(cur, cost, pref = 'gp'){
+  cost = Math.round(cost); if (!(cost > 0) || coinTotal(cur) < cost) return null;
+  const run = partialLower => {
+    const p = {cp:0, sp:0, ep:0, gp:0, pp:0}; COIN_ORDER.forEach(k => { p[k] = cur[k] || 0; });
+    const paid = {}, change = {}; let need = cost;
+    const take = (k, n) => { n = Math.min(n, p[k]); if (n > 0){ p[k] -= n; paid[k] = (paid[k] || 0) + n; need -= n * COIN_V[k]; } };
+    take(pref, Math.floor(need / COIN_V[pref]));
+    const lower = COIN_ORDER.filter(k => COIN_V[k] < COIN_V[pref]);
+    if (need > 0){   // smaller coins: only when they can settle the rest, otherwise keep them and take change from a bigger coin
+      const q = {...p}; let r = need; lower.forEach(k => { r -= Math.min(q[k], Math.floor(r / COIN_V[k])) * COIN_V[k]; });
+      if (r === 0 || partialLower) lower.forEach(k => take(k, Math.floor(need / COIN_V[k])));
+    }
+    if (need > 0){   // bigger coins one at a time, smallest first; then any smaller ones left
+      const up = COIN_ORDER.filter(k => COIN_V[k] > COIN_V[pref]).reverse().concat(lower.slice().reverse());
+      for (const k of up){ while (need > 0 && p[k] > 0) take(k, 1); if (need <= 0) break; }
+    }
+    if (need > 0) return null;
+    let back = -need;
+    for (const k of ['gp','sp','cp']){ const n = Math.floor(back / COIN_V[k]); if (n){ p[k] += n; change[k] = n; back -= n * COIN_V[k]; } }
+    return {purse:p, paid, change};
+  };
+  return run(false) || run(true);
+}
+const coinAmountLabel = (cp, k) => (cp % COIN_V[k] === 0 ? cp / COIN_V[k] + ' ' + k.toUpperCase() : cp + ' CP');
+const coinWords = o => COIN_ORDER.filter(k => o[k]).map(k => `${o[k]} ${k.toUpperCase()}`).join(', ');
+/** Read "3", "2.5" or "2,5" as copper-exact units of coin k; null when not a positive amount. */
+function coinAmount(txt, k){ const n = parseFloat(String(txt).replace(',', '.')); const cp = Math.round(n * COIN_V[k]); return Number.isFinite(n) && n > 0 && Math.abs(cp - n * COIN_V[k]) < 1e-6 && cp <= LIM.coin * 1000 ? cp : null; }
 const hpNum = id => clamp(num(id), 0, LIM.hp);
 function weaponAttack(c, w){
   const props = (w.props || []).map(norm);
@@ -3766,6 +3952,17 @@ const ACT = {
   rollSpellAtk(){ const c = active(); testRoll('Spell attack', mod(c.abilities[spellAb(c)]) + profFor(c.level)); },
   toggleSave(ab){ mut(c => c.saves[ab] = c.saves[ab] ? 0 : 1, false); },
   cycleSkill(id){ mut(c => c.skills[id] = ((c.skills[id] || 0) + 1) % 3, false); },
+  coinAdd(){ const k = $('#coinKind').value, cp = coinAmount($('#coinAmt').value, COIN_V[k] ? k : 'gp'); G.coinKind = k; G.coinAmt = $('#coinAmt').value;
+    if (cp == null){ toast('Type an amount above zero (whole copper pieces).'); return; }
+    mut(c => { const n = Math.round(cp / COIN_V[k]); const t = Math.round(cp); c.currency = objOr(c.currency, {cp:0,sp:0,ep:0,gp:0,pp:0}); if (cp % COIN_V[k] === 0) c.currency[k] = Math.min(LIM.coin, (c.currency[k] || 0) + n); else c.currency.cp = Math.min(LIM.coin, (c.currency.cp || 0) + t); });
+    G.coinAmt = ''; toast(`Added ${coinAmountLabel(cp, k)}.`); },
+  coinSpend(){ const k = $('#coinKind').value, cp = coinAmount($('#coinAmt').value, k); G.coinKind = k;
+    if (cp == null){ toast('Type an amount above zero (whole copper pieces).'); return; }
+    const cur = active().currency || {}, r = coinSpend(cur, cp, k);
+    if (!r){ toast(`Not enough money: you have ${(coinTotal(cur) / 100).toFixed(2).replace(/\.?0+$/, '')} gp, ${coinAmountLabel(cp, k)} needed.`, 'err'); return; }
+    mut(c => { Object.assign(c.currency, r.purse); }); G.coinAmt = '';
+    toast(`Spent ${coinAmountLabel(cp, k)}: paid ${coinWords(r.paid)}${Object.keys(r.change).length ? `, change ${coinWords(r.change)}` : ''}.`); },
+  hpStep(arg){ const el = $('#hpAmt'); if (!el) return; const v = clamp(hpNum('hpAmt') + (parseInt(arg, 10) || 0), 0, LIM.hp); el.value = v; G.hpAmt = v; },
   damage(){ mut(c => applyDamage(c, hpNum('hpAmt'))); },
   heal(){ mut(c => { c.hp.cur = Math.min(c.hp.max, c.hp.cur + hpNum('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
   tempHP(){ mut(c => c.hp.temp = Math.max(c.hp.temp || 0, hpNum('hpAmt'))); },
@@ -4568,6 +4765,8 @@ function wire(){
     const el = e.target;
     if (el.dataset.bind && !isMine(active())) return;
     if (el.dataset.bind && (el.tagName === 'TEXTAREA' || /^currency\./.test(el.dataset.bind))){ bindValue(el); return; }
+    if (el.id === 'hpAmt') G.hpAmt = hpNum('hpAmt');
+    if (el.id === 'coinAmt') G.coinAmt = el.value;
     if (el.id === 'spell_q') spellSearch(el.value);
     if (el.id === 'gear_q'){ G.gearQ = el.value; gearSearch(); }
     if (el.id === 'inv_q'){ G.invQ = el.value; const pos = el.selectionStart; renderPage(); const n = $('#inv_q'); n.focus(); n.setSelectionRange(pos, pos); }
