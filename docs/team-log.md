@@ -1,5 +1,12 @@
 # Diario del team
 
+## 2026-11-16 · sviluppo
+- **Backend** · **B-020**: misurato con profilo CPU, 20.000 incantesimi arrivano alla finestra di scelta in ~4,8 s (il bug riportava 109 s: la crescita quadratica non c'è più). Resta solo costo del DOM (focus, `norm`). Chiuso con un test nuovo a 20.000 voci (<15 s) in `workshop`; niente codice di import toccato. Non fatto: avviso "New version available" e prova di login/sync (nessuna rete verso Supabase).
+- **Frontend** · **B-031**: nuovo `featAsi(e)` legge dal testo del talento a quali caratteristiche dà +1 (Grappler: For o Des, tetto 20; Epic Boon: una a scelta, tetto 30); nella finestra Level up il menu "This feat also gives +1 to" si adatta al talento scelto (`luFeatAb`) e `applyLevelUp` applica la scelta senza superare il tetto. Solo client, nessun cambio al formato dei salvataggi.
+- **Test**: prima 288/289, dopo **292/292** (3 nuovi: Grappler ×2, import 20.000), nessuna regressione, nessun test modificato. `tests/risultati` ripristinato.
+- **File**: index.html, sw.js (`CACHE` = grimoire-dv1116a), tests/sezioni/levelup.test.js, tests/sezioni/workshop.test.js, docs/bug-beta.md, docs/team-log.md.
+- **Resta**: B-011, variante di B-032 con Level up nel mezzo, avviso nuova versione, prova Supabase. Sala non aggiornata (nessun accesso ad Artifact per costo). Prova a mano a 390 px non rifatta: la finestra riusa i `select` esistenti, sezione `telefono` verde.
+
 ## 2026-11-16 · team leader
 - **Stato**: main 31b3a89, controllo a 1440x900 e 390x844 senza errori. Punteggio +285 ↑ (288/289), nessuna sezione rossa, 10 sezioni verdi su 14. Registro già coerente (B-031, B-020, B-011 davvero aperti).
 - **Piano**: backend su B-020, frontend su B-031, designer su "Death Saves" in stampa, distruttore su Level up/Import, power user su Combattimento/Incontro a telefono. Tour guidato in attesa che tutte le sezioni siano verdi. Nessuna PR aspetta Capo. Sala non aggiornata: nessuno stato di bug o compito è cambiato dal giro di test di stamattina.

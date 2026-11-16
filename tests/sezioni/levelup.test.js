@@ -158,6 +158,23 @@ module.exports = {sezione:'levelup', test:[
     const h = await app.hero();
     assert.strictEqual(h.abilities.str + h.abilities.dex, 31, `For ${h.abilities.str}, Des ${h.abilities.dex} (prima 16 e 14)`);
   }],
+  ['B-031 Grappler: la finestra offre solo Forza e Destrezza e applica la scelta (Destrezza)', async ({open}) => {
+    const app = await open(); await openLU(app);
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.set('#lu_feat', 'Grappler');
+    const en = await app.page.$$eval('#lu_boonab option:not([disabled])', o => o.map(x => x.value));
+    assert.deepStrictEqual(en, ['str', 'dex'], 'scelte offerte: ' + en.join(','));
+    await app.set('#lu_boonab', 'dex'); await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.abilities.str, 16); assert.strictEqual(h.abilities.dex, 15);
+  }],
+  ['B-031 Grappler non porta una caratteristica oltre 20', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {level:3, xp:900, abilities:{...fx.VALERIA.abilities, str:20}})]}); await openLU(app);
+    await app.page.locator('input[name="lu_asi"][value="feat"]').check();
+    await app.set('#lu_feat', 'Grappler'); await app.set('#lu_boonab', 'str'); await app.click('luApply');
+    const h = await app.hero();
+    assert.strictEqual(h.abilities.str, 20, 'For ' + h.abilities.str);
+  }],
   ['B-033 multiclasse: il menu della classe principale non offre una classe già presente nelle righe (Fighter 3 / Rogue 1)', async ({open}) => {
     const app = await open({heroes:[fx.hero(fx.VALERIA, {level:4, xp:2700, multi:[{class:'Rogue', subclass:'', level:1}], hp:{cur:39,max:39,temp:0}})]});
     const opts = await app.page.$$eval('#f_class option', o => o.map(x => x.value));

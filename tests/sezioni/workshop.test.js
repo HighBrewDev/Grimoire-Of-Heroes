@@ -334,6 +334,15 @@ Infliggi 1d10 danni da fuoco.
     assert.ok(has(r.err, /“Flying” is not a skill of the rules/), r.err.join(' / '));
     assert.strictEqual(r.ok, false);
   }],
+  ['B-020 import 5etools con 20.000 incantesimi: la finestra di scelta arriva in meno di 15 s', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const sp = n => ({name:n, source:'X', level:1, school:'V', time:[{number:1, unit:'action'}], range:{type:'point', distance:{type:'feet', amount:60}}, components:{v:true}, duration:[{type:'instant'}], entries:['Deal {@damage 2d6} damage.']});
+    const t0 = Date.now();
+    await app.page.setInputFiles('#brew_file', file('tanti.json', {spell:Array.from({length:20000}, (_, i) => sp('Spell ' + i))}));
+    await app.page.waitForSelector('#modalBk .b5List', {timeout:15000}).catch(() => {});
+    const ms = Date.now() - t0;
+    assert.ok(ms < 15000, `finestra dopo ${ms} ms`);
+  }],
   ['B-020 import 5etools con 10.000 incantesimi: la finestra di scelta arriva in meno di 8 s', async ({open}) => {
     const app = await open(); await app.go('workshop');
     const sp = n => ({name:n, source:'X', level:1, school:'V', time:[{number:1, unit:'action'}], range:{type:'point', distance:{type:'feet', amount:60}}, components:{v:true}, duration:[{type:'instant'}], entries:['Deal {@damage 2d6} damage.']});

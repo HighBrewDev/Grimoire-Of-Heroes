@@ -5,26 +5,7 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
-- Trovato da: tester extra · 2026-11-10
-- Sezione: level up/multiclasse
-- Dove: Level up, livello 4 (o 8, 12, 16), scelta "Feat", 1440x900
-- Passi: 1. Valeria (Guerriero 3, For 16, Des 14). 2. Level up → Feat → Grappler → Become level 4.
-- Atteso: regole 2024: Grappler dà +1 a Forza o Destrezza (massimo 20), come dice il suo testo nell'app ("Ability Score Increase").
-- Ottenuto: il talento viene aggiunto ma For e Des restano 16 e 14. Stessa causa dell'Epic Boon in B-027: il ramo `feat` di `applyLevelUp` fa solo `c.feats.push`. Serve anche una scelta della caratteristica nella finestra.
-- Console: nessun errore.
-- Test: `levelup` "B-031 …".
 
-
-### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
-- Trovato da: distruttore · 2026-11-09
-- Sezione: workshop
-- Dove: X Workshop → Import file, 1440x900
-- Passi: 1. File `{"spell":[…]}` con N incantesimi validi e diversi. 2. Import file.
-- Atteso: tempo che cresce in proporzione alle voci (o un limite con messaggio).
-- Ottenuto: 1.000 voci 0,38 s, 2.000 0,9 s, 4.000 2,5 s, 20.000 **109 s** prima della finestra di scelta (pagina ferma). I file veri di 5etools (fino a ~1.800 voci) restano sotto il secondo, quindi gravità bassa. Il resto dell'import ha retto: liste non array, `null`, nomi numerici/oggetto/HTML, tag `{@` non chiusi, 3.000 tag annidati, `entries` annidate 5.000 volte, `_copy` circolari, chiavi `__proto__`: nessun errore.
-- Console: nessun errore.
-- Test: `workshop` "B-020 …".
 
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
@@ -44,6 +25,28 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
+- Trovato da: tester extra · 2026-11-10
+- Sezione: level up/multiclasse
+- Dove: Level up, livello 4 (o 8, 12, 16), scelta "Feat", 1440x900
+- Passi: 1. Valeria (Guerriero 3, For 16, Des 14). 2. Level up → Feat → Grappler → Become level 4.
+- Atteso: regole 2024: Grappler dà +1 a Forza o Destrezza (massimo 20), come dice il suo testo nell'app ("Ability Score Increase").
+- Ottenuto: il talento viene aggiunto ma For e Des restano 16 e 14. Stessa causa dell'Epic Boon in B-027: il ramo `feat` di `applyLevelUp` fa solo `c.feats.push`. Serve anche una scelta della caratteristica nella finestra.
+- Console: nessun errore.
+- Test: `levelup` "B-031 …".
+- Chiuso: 2026-11-16 · sviluppo · `featAsi` legge dal testo del talento a quali caratteristiche dà +1 (Grappler: For o Des; Durable: Cos; Epic Boon: una a scelta fino a 30); la finestra Level up mostra la scelta e `applyLevelUp` la applica con il tetto giusto (index.html, sw.js `grimoire-dv1116a`). Test `levelup` ×3.
+
+### B-020 [bassa] Import 5etools enorme: tempo quadratico, 20.000 voci bloccano la pagina per quasi 2 minuti
+- Trovato da: distruttore · 2026-11-09
+- Sezione: workshop
+- Dove: X Workshop → Import file, 1440x900
+- Passi: 1. File `{"spell":[…]}` con N incantesimi validi e diversi. 2. Import file.
+- Atteso: tempo che cresce in proporzione alle voci (o un limite con messaggio).
+- Ottenuto: 1.000 voci 0,38 s, 2.000 0,9 s, 4.000 2,5 s, 20.000 **109 s** prima della finestra di scelta (pagina ferma). I file veri di 5etools (fino a ~1.800 voci) restano sotto il secondo, quindi gravità bassa. Il resto dell'import ha retto: liste non array, `null`, nomi numerici/oggetto/HTML, tag `{@` non chiusi, 3.000 tag annidati, `entries` annidate 5.000 volte, `_copy` circolari, chiavi `__proto__`: nessun errore.
+- Console: nessun errore.
+- Test: `workshop` "B-020 …".
+- Chiuso: 2026-11-16 · sviluppo · misurato: 20.000 voci arrivano alla finestra di scelta in ~4,8 s (non più 109 s: i correttivi di import dei giorni scorsi e un solo passaggio). Aggiunto test a 20.000 voci (<15 s) in `workshop`; resta il costo del DOM della finestra (focus ~1,6 s, `norm` ~1 s), non quadratico.
 
 ### B-048 [bassa] [UX] Telefono: i pulsanti dei dadi nei tratti sono 28×24 e 36×24 px, i chip delle regole 20 px di altezza
 - Trovato da: power user · 2026-11-14
