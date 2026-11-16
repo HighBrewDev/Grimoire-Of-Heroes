@@ -3,8 +3,9 @@
 const URL_BASE = 'http://localhost:54321';
 class Cloud {
   // hub: tabelle condivise tra più utenti (NPC e gruppo), con le stesse regole di visibilità del server
-  constructor({user = 'u1', homebrew = 'ok', rows = [], signedOut = false, hub = null, npc = 'ok'} = {}){
+  constructor({user = 'u1', homebrew = 'ok', rows = [], signedOut = false, hub = null, npc = 'ok', tickets = null, admin = false, ticketMode = 'ok'} = {}){
     this.hub = hub; this.npcMode = npc;
+    this.tickets = tickets || new Map(); this.admin = admin; this.ticketMode = ticketMode;      // tickets: tabella condivisa tra utenti; admin: vede e risponde a tutti
     this.user = user; this.signedOut = signedOut; this.mode = homebrew;     // 'ok' | 'missing' (tabella non creata) | 'down' (errore del server)
     this.table = new Map(rows.map(r => [r.id, {deleted:false, ...r}]));
     this.log = [];
@@ -49,6 +50,29 @@ class Cloud {
       if (this.hub && p.startsWith('/rest/v1/party_members')) return json(this.hub.members.includes(this.user) ? this.hub.members.map(u => ({party_id:this.hub.party, user_id:u, parties:{id:this.hub.party, name:'The Millford Company', code:'ABC123', created_by:this.hub.members[0], active:true}})) : []);
       if (this.hub && p.startsWith('/rest/v1/profiles')) return json(this.hub.members.map(u => ({id:u, display_name:this.hub.names[u] || u})));
       if (p.startsWith('/rest/v1/profiles')) return json(req.method() === 'GET' ? [{id:this.user, display_name:'Tester'}] : [{id:this.user, display_name:'Tester'}]);
+      if (p.startsWith('/rest/v1/rpc/is_admin')) return json(this.admin);
+      if (p.startsWith('/rest/v1/tickets')){
+        this.log.push(req.method() + ' tickets');
+        if (this.ticketMode === 'missing') return json({code:'PGRST205', message:"Could not find the table 'public.tickets' in the schema cache"}, 404);
+        const id = (u.searchParams.get('id') || '').replace(/^eq\./, '');
+        if (req.method() === 'GET'){
+          let rows = [...this.tickets.values()].filter(r => this.admin || r.owner === this.user);
+          if (id) rows = rows.filter(r => r.id === id);
+          return json(rows.map(r => ({...r, has_shot:!!r.screenshot})));
+        }
+        if (req.method() === 'POST'){
+          for (const r of JSON.parse(req.postData() || '[]')){
+            if (this.tickets.has(r.id)) continue;                                                  // ignore-duplicates
+            this.tickets.set(r.id, {...r, owner:this.user, author_name:'Tester', status:'open', reply:'', created_at:new Date().toISOString()});
+          }
+          return route.fulfill({status:201, body:''});
+        }
+        if (!this.admin) return json({message:'row-level security'}, 403);
+        const t = this.tickets.get(id);
+        if (req.method() === 'PATCH' && t){ const b = JSON.parse(req.postData() || '{}'); t.status = b.status; t.reply = b.reply; }
+        if (req.method() === 'DELETE') this.tickets.delete(id);
+        return route.fulfill({status:204, body:''});
+      }
       if (p.startsWith('/rest/v1/rpc/')) return json({paywall:false, plus:true, founder_left:0});
       if (p.startsWith('/rest/v1/')) return json([]);
       return json({}, 404);
