@@ -312,6 +312,17 @@ details.fold > .in{padding:0 12px 10px}
 .drop{border:2px dashed var(--gold3);border-radius:12px;padding:18px;text-align:center;background:var(--surf)}
 .drop.over{background:rgba(201,162,39,.25)}
 
+/* tickets */
+.tkCard{border:1px solid var(--gold3);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--surf)}
+.tkMeta{font-size:12.5px;color:var(--ink2);overflow-wrap:anywhere}
+.tkBody,.tkReply{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:4px}
+.tkReply{border-left:3px solid var(--gold);padding-left:8px}
+.tkPrev img,.tkShotImg{max-width:100%;max-height:200px;border-radius:8px;display:block;margin:6px 0}
+.tkShotImg{max-height:340px}
+.tkSt.done{background:rgba(60,140,70,.25)}.tkSt.working{background:rgba(201,162,39,.3)}
+.tkSev.critical,.tkSev.high{background:rgba(180,50,40,.25)}
+@media (max-width:560px){.modal .fields{grid-template-columns:minmax(0,1fr)}}
+
 /* modal */
 .modalBk{position:fixed;inset:0;background:rgba(10,5,2,.66);z-index:80;display:grid;place-items:center;padding:16px}
 .modal{max-width:720px;width:100%;max-height:88vh;overflow:auto;color:var(--ink);
@@ -882,6 +893,9 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
       <button type="button" class="btn ghost" data-act="go" data-arg="library">Library</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="workshop" title="Create, import and manage your own classes, spells, creatures…">Homebrew</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="npcs" title="NPC dossiers for the DM, with what your players may read">NPCs</button>
+      <button type="button" class="iconBtn" id="bugBtn" data-act="ticket" aria-label="Report a bug or idea" title="Report a bug or idea">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7.5a3 3 0 016 0M8 9h8v5a4 4 0 01-8 0zM4 10l4 1.5M20 10l-4 1.5M4 18l4-2M20 18l-4-2M12 9v10"/></svg>
+      </button>
       <button type="button" class="iconBtn" id="soundBtn" data-act="sound" aria-pressed="false" aria-label="Page-turn sound" title="Page-turn sound">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
       </button>
@@ -4460,6 +4474,7 @@ async function sync(){
       await pull();
       await syncBrew();
       await syncNpc();
+      await flushTickets().catch(() => {});
       S.lastSync = Date.now(); setStatus('synced');
     } catch (e) {
       if (/signed out|invalid.*(token|grant)|refresh/i.test(e.message)){ setStatus('expired', e.message); }
@@ -4780,7 +4795,7 @@ function accountModal(view){
       <div class="row"><label class="sr" for="pt_name">Party name</label><input type="text" id="pt_name" placeholder="The Millford Company">${act('createParty', undefined, 'Create party', 'sb')}</div>
       <div class="row mt"><label class="sr" for="pt_code">Invite code</label><input type="text" id="pt_code" placeholder="Code (e.g. 7F3A1C)" style="text-transform:uppercase;width:150px">${act('joinParty', undefined, 'Join', 'sb')}</div>`}
     <div class="rule"></div>
-    <div class="row">${act('syncNow', undefined, 'Sync now', 'btn small')}${act('signOut', undefined, 'Sign out', 'btn small ghost')}<span class="spacer"></span>${act('deleteAccount', undefined, 'Delete account', 'sb x')}</div>
+    <div class="row">${act('syncNow', undefined, 'Sync now', 'btn small')}${act('ticket', undefined, 'Report a bug or idea', 'btn small ghost')}${act('signOut', undefined, 'Sign out', 'btn small ghost')}<span class="spacer"></span>${act('deleteAccount', undefined, 'Delete account', 'sb x')}</div>
     ${LEGAL ? `<p class="muted small"><a href="${LEGAL}" target="_blank" rel="noopener">Terms and privacy</a></p>` : ''}`, {label:'Account'});
 }
 async function busyBtn(el, fn){
@@ -4841,11 +4856,185 @@ function passwordModal(){
     <div class="row mt">${act('setPassword', undefined, 'Save password', 'btn')}<span id="acMsg" class="muted"></span></div>`, {label:'New password'});
 }
 
+/* ================================================================== tickets: bugs, ideas and wrong data
+   A report is written on the device first (a queue in localStorage) and sent when there is a connection and an account,
+   so it is never lost offline. The server (supabase/migrations/2026-11-18-tickets.sql) decides who wrote it, keeps the
+   status and reply for admins only, and an admin is whoever is listed in the admins table: the page only asks. */
+const TK_KEY = 'grimoire-ticketq-v1';
+const TK_KINDS = {bug:'Bug', idea:'Idea', data:'Wrong data'};
+const TK_SEV = {low:'Low', medium:'Medium', high:'High', critical:'Critical'};
+const TK_ST = {open:'Open', working:'In progress', done:'Solved'};
+const TK = {q:[], mine:null, all:null, shot:null, ctx:null, busy:false, off:false, adminFor:null, admin:false, filter:'active'};
+try { const q = JSON.parse(localStorage.getItem(TK_KEY) || '[]'); if (Array.isArray(q)) TK.q = q.filter(t => t && t.id && t.title).slice(0, 50); } catch (e) {}
+const tkSave = () => { try { localStorage.setItem(TK_KEY, JSON.stringify(TK.q)); } catch (e) {} };
+function tkDevice(){
+  const u = navigator.userAgent || '';
+  const os = /Android/.test(u) ? 'Android' : /iPhone|iPad|iPod/.test(u) ? 'iOS' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'macOS' : /Linux/.test(u) ? 'Linux' : 'unknown system';
+  const br = /Edg\//.test(u) ? 'Edge' : /Firefox\//.test(u) ? 'Firefox' : /Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : 'unknown browser';
+  let app = ''; try { if (matchMedia('(display-mode: standalone)').matches) app = ' · installed app'; } catch (e) {}
+  return `${os} · ${br} · ${innerWidth}×${innerHeight} @${devicePixelRatio || 1}x${app}`.slice(0, 200);
+}
+async function tkVersion(){
+  try { const ks = (await caches.keys()).filter(k => /^grimoire-/.test(k)).sort(); if (ks.length) return ks[ks.length - 1].replace(/^grimoire-/, '').slice(0, 40); } catch (e) {}
+  return 'web';
+}
+function tkShrink(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1100 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let q = .72, d = c.toDataURL('image/jpeg', q);
+      while (d.length > 400000 && q > .3){ q -= .1; d = c.toDataURL('image/jpeg', q); }
+      d.length > 400000 ? rej(new Error('That picture is too large.')) : res(d);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('That file is not a picture.')); };
+    im.src = url;
+  });
+}
+async function tkIsAdmin(){
+  if (!CLOUD || !me()) return false;
+  if (TK.adminFor === me()) return TK.admin;
+  try { TK.admin = (await db('/rpc/is_admin', {method:'POST', body:{}})) === true; TK.adminFor = me(); } catch (e) { TK.admin = false; }
+  return TK.admin;
+}
+async function flushTickets(){
+  if (!CLOUD || !me() || TK.busy || TK.off || !navigator.onLine) return;
+  const todo = TK.q.filter(t => !t.user || t.user === me());
+  if (!todo.length) return;
+  TK.busy = true;
+  try {
+    for (const t of todo){
+      try {
+        await db('/tickets?on_conflict=id', {method:'POST', prefer:'resolution=ignore-duplicates,return=minimal',
+          body:[{id:t.id, kind:t.kind, severity:t.severity, title:t.title, body:t.body, page:t.page, app_version:t.app_version, device:t.device, screenshot:t.screenshot || null}]});
+        TK.q = TK.q.filter(x => x.id !== t.id); tkSave();
+      } catch (e) {
+        if (e instanceof TypeError) break;                                   // no network: try again later
+        if (BREW_MISSING.test(e.message)){ TK.off = true; break; }          // the server is not ready yet
+        if (/tickets_rate_limit/.test(e.message)){ t.err = 'Too many reports in the last hour: this one will be sent later.'; break; }
+        t.err = e.message.slice(0, 160);
+      }
+    }
+    tkSave();
+  } finally { TK.busy = false; }
+}
+const tkWhen = t => t ? new Date(t).toLocaleDateString(undefined, {day:'numeric', month:'short'}) : '';
+function tkMineHtml(){
+  const waiting = TK.q.filter(t => !t.user || t.user === me() || !me());
+  const wait = waiting.map(t => `<div class="tkCard"><div class="tkMeta"><span class="chip">${esc(TK_KINDS[t.kind] || 'Bug')}</span> <span class="chip">Waiting to be sent</span></div>
+    <b>${esc(t.title)}</b>${t.err ? `<div class="tkMeta warn">${esc(t.err)}</div>` : ''}</div>`).join('');
+  const rows = (TK.mine || []).map(t => `<div class="tkCard"><div class="tkMeta"><span class="chip">${esc(TK_KINDS[t.kind] || 'Bug')}</span> <span class="chip tkSt ${esc(t.status)}">${esc(TK_ST[t.status] || t.status)}</span> ${esc(tkWhen(t.created_at))}</div>
+    <b>${esc(t.title)}</b>${t.reply ? `<div class="tkReply"><b>Reply</b><br>${esc(t.reply)}</div>` : ''}</div>`).join('');
+  if (!wait && !rows) return '<p class="muted">No reports yet.</p>';
+  return wait + rows;
+}
+async function tkLoadMine(){
+  const box = () => $('#tkMine');
+  if (box()) box().innerHTML = tkMineHtml();
+  if (!CLOUD || !me() || !navigator.onLine || TK.off) return;
+  try {
+    TK.mine = await db(`/tickets?select=id,kind,severity,title,status,reply,replied_at,created_at&owner=eq.${me()}&order=created_at.desc&limit=30`);
+    if (box()) box().innerHTML = tkMineHtml();
+  } catch (e) { if (BREW_MISSING.test(e.message)) TK.off = true; }
+}
+async function ticketModal(){
+  TK.shot = null;
+  TK.ctx = {page:G.chapter || '', ver:'', device:tkDevice()};
+  const cloudNote = !CLOUD ? 'This copy of the tome has no cloud, so reports stay on this device.' : !me() ? 'You are not signed in: the report is kept here and sent as soon as you sign in.' : '';
+  modal(`<div class="head"><h2>Report a bug or idea</h2><span class="spacer"></span>${closeBtn()}</div>
+    <p class="muted">Tell us what went wrong, what you would like, or which data is wrong. ${esc(cloudNote)}</p>
+    <div class="fields"><div><label class="f" for="tk_kind">What is it?</label><select id="tk_kind">${Object.entries(TK_KINDS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+      <div><label class="f" for="tk_sev">How bad is it?</label><select id="tk_sev"><option value="low">Low: small annoyance</option><option value="medium" selected>Medium</option><option value="high">High: a feature is broken</option><option value="critical">Critical: I lose data</option></select></div></div>
+    <label class="f" for="tk_title">Title</label><input type="text" id="tk_title" maxlength="120" placeholder="Short summary" style="width:100%" autofocus>
+    <label class="f" for="tk_body">What happened? What did you expect?</label><textarea id="tk_body" maxlength="4000" placeholder="Steps, what you saw, what you expected"></textarea>
+    <label class="f" for="tk_file">Screenshot (optional)</label><input type="file" id="tk_file" accept="image/*">
+    <div id="tkPrev" class="tkPrev"></div>
+    <p class="muted small" id="tkCtx"></p>
+    <div class="row mt">${act('tkSend', undefined, 'Send report', 'btn')}<span id="tkMsg" class="muted" role="status"></span></div>
+    <div id="tkAdminBox"></div>
+    <h4>Your reports</h4><div id="tkMine"></div>`, {label:'Report a bug or idea'});
+  $('#tk_file').onchange = async e => {
+    const f = e.target.files && e.target.files[0]; TK.shot = null; $('#tkPrev').innerHTML = ''; if (!f) return;
+    try { TK.shot = await tkShrink(f); $('#tkPrev').innerHTML = `<img src="${TK.shot}" alt="Screenshot to send">${act('tkNoShot', undefined, 'Remove picture', 'sb')}`; }
+    catch (err) { $('#tkMsg').textContent = err.message; e.target.value = ''; }
+  };
+  TK.ctx.ver = await tkVersion();
+  const c = $('#tkCtx'); if (c) c.textContent = `Sent with it: the chapter you were on (${TK.ctx.page || 'none'}), the app version (${TK.ctx.ver}) and your device (${TK.ctx.device}). No email, no hero data.`;
+  tkLoadMine();
+  if (await tkIsAdmin()){ const b = $('#tkAdminBox'); if (b) b.innerHTML = `<div class="rule"></div><div class="row">${act('tkAdmin', undefined, 'Admin: all reports', 'btn small')}</div>`; }
+}
+async function tkAdminModal(){
+  modal(`<div class="head"><h2>All reports</h2><span class="spacer"></span>${closeBtn()}</div>
+    <div class="row"><label class="sr" for="tk_filter">Show</label><select id="tk_filter"><option value="active">Open and in progress</option><option value="open">Open</option><option value="working">In progress</option><option value="done">Solved</option><option value="all">All</option></select></div>
+    <div id="tkAll"><p class="muted">Loading…</p></div>`, {label:'All reports'});
+  $('#tk_filter').value = TK.filter;
+  $('#tk_filter').onchange = e => { TK.filter = e.target.value; tkAdminDraw(); };
+  try {
+    TK.all = await db('/tickets?select=id,owner,author_name,kind,severity,title,body,page,app_version,device,has_shot,status,reply,replied_at,created_at&order=created_at.desc&limit=200');
+    tkAdminDraw();
+  } catch (e) { const b = $('#tkAll'); if (b) b.textContent = e.message; }
+}
+function tkAdminDraw(){
+  const box = $('#tkAll'); if (!box) return;
+  const f = TK.filter, rows = (TK.all || []).filter(t => f === 'all' ? true : f === 'active' ? t.status !== 'done' : t.status === f);
+  box.innerHTML = rows.length ? rows.map(t => `<div class="tkCard" data-tk="${esc(t.id)}">
+    <div class="tkMeta"><span class="chip">${esc(TK_KINDS[t.kind] || t.kind)}</span> <span class="chip tkSev ${esc(t.severity)}">${esc(TK_SEV[t.severity] || t.severity)}</span> <span class="chip tkSt ${esc(t.status)}">${esc(TK_ST[t.status] || t.status)}</span> ${esc(tkWhen(t.created_at))} · ${esc(t.author_name || 'someone')}</div>
+    <div class="tkMeta">${esc(t.page || '—')} · ${esc(t.app_version || '—')} · ${esc(t.device || '—')}</div>
+    <b>${esc(t.title)}</b>${t.body ? `<div class="tkBody">${esc(t.body)}</div>` : ''}
+    ${t.has_shot ? `<div class="row mt">${act('tkShot', t.id, 'Show screenshot', 'sb')}</div><div class="tkShotBox"></div>` : ''}
+    <div class="fields"><div><label class="f" for="tk_st_${esc(t.id)}">Status</label><select id="tk_st_${esc(t.id)}" class="tk_st">${Object.entries(TK_ST).map(([k, v]) => `<option value="${k}"${k === t.status ? ' selected' : ''}>${v}</option>`).join('')}</select></div></div>
+    <label class="f" for="tk_rp_${esc(t.id)}">Reply</label><textarea id="tk_rp_${esc(t.id)}" class="tk_rp" maxlength="2000">${esc(t.reply)}</textarea>
+    <div class="row mt">${act('tkAdminSave', t.id, 'Save', 'btn small')}${act('tkAdminDel', t.id, 'Delete', 'sb x')}<span class="tkRowMsg muted"></span></div></div>`).join('') : '<p class="muted">Nothing here.</p>';
+}
+const tkCard = id => $$('#tkAll .tkCard').find(c => c.dataset.tk === id);
+const ACT_TICKETS = {
+  ticket(){ ticketModal(); },
+  tkNoShot(){ TK.shot = null; $('#tkPrev').innerHTML = ''; const f = $('#tk_file'); if (f) f.value = ''; },
+  async tkSend(_, el){
+    const title = $('#tk_title').value.trim(), msg = $('#tkMsg');
+    if (!title){ msg.textContent = 'Add a short title.'; $('#tk_title').focus(); return; }
+    const ctx = TK.ctx || {};
+    TK.q.push({id:uid(), user:me() || null, kind:$('#tk_kind').value, severity:$('#tk_sev').value, title:title.slice(0, 120), body:$('#tk_body').value.trim().slice(0, 4000),
+      page:String(ctx.page || '').slice(0, 60), app_version:String(ctx.ver || '').slice(0, 40), device:String(ctx.device || '').slice(0, 200), screenshot:TK.shot || undefined, at:Date.now()});
+    TK.q = TK.q.slice(-50); tkSave();
+    $('#tk_title').value = ''; $('#tk_body').value = ''; ACT.tkNoShot(); el.disabled = true;
+    msg.textContent = 'Saved on this device.';
+    await flushTickets();
+    if (el.isConnected) el.disabled = false;
+    const left = TK.q.length;
+    if ($('#tkMsg')) $('#tkMsg').textContent = left ? (CLOUD && me() ? 'Saved: it will be sent when the connection is back.' : 'Saved: it will be sent after you sign in.') : 'Sent. Thank you!';
+    tkLoadMine();
+  },
+  tkAdmin(){ tkAdminModal(); },
+  async tkShot(id, el){
+    const c = tkCard(id); if (!c) return;
+    try { const [r] = await db(`/tickets?id=eq.${encodeURIComponent(id)}&select=screenshot`);
+      c.querySelector('.tkShotBox').innerHTML = r && r.screenshot ? `<img class="tkShotImg" src="${esc(r.screenshot)}" alt="Screenshot of the report">` : '<p class="muted">No screenshot.</p>'; el.remove(); }
+    catch (e) { toast(e.message); }
+  },
+  async tkAdminSave(id, el){
+    const c = tkCard(id); if (!c) return; const m = c.querySelector('.tkRowMsg'); el.disabled = true;
+    try {
+      const status = c.querySelector('.tk_st').value, reply = c.querySelector('.tk_rp').value.trim().slice(0, 2000);
+      await db(`/tickets?id=eq.${encodeURIComponent(id)}`, {method:'PATCH', body:{status, reply}, prefer:'return=minimal'});
+      const t = (TK.all || []).find(x => x.id === id); if (t){ t.status = status; t.reply = reply; }
+      m.textContent = 'Saved.';
+    } catch (e) { m.textContent = e.message; }
+    finally { el.disabled = false; }
+  },
+  tkAdminDel(id){ confirmBox('Delete this report for good?', 'Delete', async () => {
+    try { await db(`/tickets?id=eq.${encodeURIComponent(id)}`, {method:'DELETE', prefer:'return=minimal'}); TK.all = (TK.all || []).filter(t => t.id !== id); tkAdminModal(); }
+    catch (e) { toast(e.message); } }); },
+};
+Object.assign(ACT, ACT_TICKETS);
+
 /* ---- read-only heroes: party members' sheets can be read and rolled, never changed ---- */
 const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack',
   'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
   ...Object.keys(ACT_CLOUD)]);
-const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew|np[A-Z])/.test(name) && !$('#modalBk .acct'); };
+const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew|np[A-Z]|tk[A-Z]|ticket$)/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
   return isMine(c) ? '' : `<div class="roNote">${portrait(c, 'mini')}<span><b>${esc(c.ownerName || 'A party member')}</b>'s hero: you can read it and roll its dice; only ${esc(c.ownerName || 'its owner')} can change it.</span>${act('duplicate', undefined, 'Make my own copy', 'sb')}</div>`;
 }
