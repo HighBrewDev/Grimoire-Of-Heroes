@@ -2173,7 +2173,7 @@ let PACKS = [];
 async function loadPacks(){
   try { PACKS = await IDB.all(); } catch (e) { PACKS = []; }
   EXT.length = 0;
-  BREW_ITEMS = cleanBrew(PACKS.find(p => p.id === BREW_ID)?.items);
+  BREW_ITEMS = cleanBrew(PACKS.find(p => p.id === BREW_ID)?.items); brewMarkClean();
   PACKS = PACKS.filter(p => p.id !== BREW_ID);
   PACKS.forEach(p => ingest5(p.data, p.name).forEach(x => EXT.push(x)));
   BREW_ITEMS.forEach(it => EXT.push(brewEntry(it)));
@@ -2253,7 +2253,84 @@ const cleanBrew = list => (Array.isArray(list) ? list : []).filter(it => isObj(i
   .map(it => ({...it, o:{...it.o, n:it.o.n.trim().slice(0, 80)}}));
 const brewEntry = it => ({cat:it.cat, n:it.o.n, o:it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
 const brewClass = n => BREW_ITEMS.find(it => it.cat === 'classes' && it.o.n === n)?.o;
-async function saveBrew(){ try { await IDB.put(brewPack()); } catch (e) { toast('This browser blocked storage, so your homebrew lasts only until you close the page.'); } }
+async function saveBrew(){
+  brewStamp();
+  try { await IDB.put(brewPack()); } catch (e) { toast('This browser blocked storage, so your homebrew lasts only until you close the page.'); }
+  if (CLOUD && me()) schedulePush();
+}
+/* ---- homebrew follows the account ----
+   Every entry has an id and an updatedAt (device clock). brewStamp, called by every save, gives the time to the entries
+   that changed and writes a tombstone for the ones that are gone. The cloud keeps one row per entry (table homebrew).
+   A sync (brewReconcile) never drops an entry that exists only here, lets the later edit win per entry, and a delete
+   wins over an older edit. The tombstones live on the device until the cloud has them. */
+const brewSigOf = it => JSON.stringify([it.cat, it.o]);
+let BREW_SIG = new Map();
+function brewMarkClean(){ BREW_SIG = new Map(BREW_ITEMS.map(it => [it.id, brewSigOf(it)])); }
+const BREW_TOMB = 'grimoire-brew-tomb-v1', BREW_OWNER = 'grimoire-brew-owner-v1';
+function brewTombLoad(){ try { const t = JSON.parse(localStorage.getItem(BREW_TOMB) || '{}'); return isObj(t) ? t : {}; } catch (e) { return {}; } }
+function brewTombSave(t){ try { Object.keys(t).length ? localStorage.setItem(BREW_TOMB, JSON.stringify(t)) : localStorage.removeItem(BREW_TOMB); } catch (e) {} }
+function brewStamp(){
+  const now = Date.now(), seen = new Set(), tomb = brewTombLoad();
+  let gone = false;
+  for (const it of BREW_ITEMS){ seen.add(it.id); const sig = brewSigOf(it); if (BREW_SIG.get(it.id) !== sig){ it.updatedAt = now; BREW_SIG.set(it.id, sig); } }
+  for (const id of [...BREW_SIG.keys()]) if (!seen.has(id)){ BREW_SIG.delete(id); if (CLOUD){ tomb[id] = now; gone = true; } }
+  if (gone) brewTombSave(tomb);
+}
+// local: the entries here; rows: the cloud rows {id, data:{cat, o, updatedAt}, deleted}; tomb: {id: deletedAt}.
+// Returns the merged list, the entries to send, the deletes to send and whether this device's list changed.
+function brewReconcile(local, rows, tomb){
+  const cloud = new Map(rows.map(r => [r.id, r])), taken = new Set(), items = [], push = [], del = [];
+  const key = it => it.cat + '\u0000' + norm(it.o.n), when = it => +it.updatedAt || 0;
+  let changed = false;
+  for (const r of rows){
+    const rt = +r.data?.updatedAt || 0, l = local.find(x => x.id === r.id);
+    if (l) taken.add(l);
+    if (r.deleted){
+      if (l && when(l) > rt){ items.push(l); push.push(l); }     // edited here after it was deleted elsewhere: it lives on
+      else if (l) changed = true;
+      continue;
+    }
+    const [it] = cleanBrew([{id:r.id, cat:r.data?.cat, o:r.data?.o, updatedAt:rt}]);
+    if (!it){ if (l){ items.push(l); push.push(l); } continue; }  // a row this version cannot read: keep ours, leave theirs
+    if (!l){
+      if (tomb[r.id] != null && tomb[r.id] >= rt){ del.push({id:r.id, at:tomb[r.id]}); continue; }   // deleted here, the cloud still has it
+      const twin = local.find(x => !taken.has(x) && !cloud.has(x.id) && key(x) === key(it));        // the same entry made on two devices
+      if (twin){ taken.add(twin); if (when(twin) > rt){ items.push({...twin, id:r.id}); push.push({...twin, id:r.id}); } else items.push(it); changed = true; continue; }
+      items.push(it); changed = true; continue;
+    }
+    if (when(l) > rt){ items.push(l); push.push(l); }
+    else if (when(l) < rt){ items.push(it); changed = true; }
+    else items.push(l);
+  }
+  for (const l of local) if (!taken.has(l)){ items.push(l); if (!cloud.has(l.id)) push.push(l); }
+  return {items, push, del, changed};
+}
+const BREW_MISSING = /schema cache|does not exist|could not find|HTTP 404|PGRST20\d/i;
+async function syncBrew(){
+  if (S.brewOff || !me()) return;
+  let rows;
+  try { rows = await db('/homebrew?select=id,data,deleted,updated_at'); }
+  catch (e){ if (BREW_MISSING.test(e.message)){ S.brewOff = true; return; } throw e; }   // table not created yet: homebrew stays on this device
+  let prev = null; try { prev = localStorage.getItem(BREW_OWNER); } catch (e) {}
+  let moved = false;
+  if (prev && prev !== me()){                       // another account used this device: keep its entries aside, never mix them in
+    if (BREW_ITEMS.length){ try { localStorage.setItem('grimoire-brew-backup-v1:' + prev, JSON.stringify(BREW_ITEMS)); } catch (e) {} }
+    BREW_ITEMS = []; brewMarkClean(); brewTombSave({}); moved = true;
+  }
+  const tomb = brewTombLoad(), r = brewReconcile(BREW_ITEMS, rows || [], tomb);
+  BREW_ITEMS = r.items; brewMarkClean();
+  if (r.changed || moved){
+    try { await IDB.put(brewPack()); } catch (e) {}
+    reloadBrew();
+    if (!G.turning && !$('#modalBk') && !isTyping()) render(); else G.needRender = true;
+  }
+  try { localStorage.setItem(BREW_OWNER, me()); } catch (e) {}
+  const out = r.push.map(it => ({id:it.id, owner:me(), data:{cat:it.cat, o:it.o, updatedAt:+it.updatedAt || 0}, deleted:false}))
+    .concat(r.del.map(d => ({id:d.id, owner:me(), data:{updatedAt:d.at}, deleted:true})));
+  for (let i = 0; i < out.length; i += 50) await db('/homebrew?on_conflict=id', {method:'POST', body:out.slice(i, i + 50), prefer:'resolution=merge-duplicates,return=minimal'});
+  if (Object.keys(tomb).length){ const now = brewTombLoad(); for (const id of Object.keys(tomb)) delete now[id]; brewTombSave(now); }
+}
+
 function reloadBrew(){ for (let i = EXT.length - 1; i >= 0; i--) if (EXT[i].src === 'Homebrew') EXT.splice(i, 1); BREW_ITEMS.forEach(it => EXT.push(brewEntry(it))); buildIndex(); }
 
 const brewLines = s => String(s || '').split('\n').map(l => l.trim()).filter(Boolean);
@@ -2329,7 +2406,7 @@ const HB_GUIDE = {
 };
 function brewHomeHTML(){
   const n = BREW_ITEMS.length, f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '';
-  return `<div class="hbIntro"><p>Make your own content and it joins every menu of the tome: hero pages, level up, the spellbook, the pack and encounters. It stays on this device; export it to back it up or share it with your table.</p>
+  return `<div class="hbIntro"><p>Make your own content and it joins every menu of the tome: hero pages, level up, the spellbook, the pack and encounters. ${CLOUD && me() && !S.brewOff ? 'It follows your account on every device you sign in with' : 'It stays on this device'}; export it to back it up or share it with your table.</p>
     <div class="row">${act('brewGo', 'create', '＋ Create new', 'btn')}<label class="btn ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr">${n ? act('brewExport', undefined, `Export all (${n})`, 'btn ghost') : ''}</div>${brewFreeNote()}</div>
   <section class="hbSec" id="hb_create" aria-labelledby="hb_create_h"><h3 id="hb_create_h">Create something new</h3>
     <div class="hbTiles">${Object.entries(BREW).map(([k, b]) => `<button type="button" class="hbTile" data-act="brewNewKind" data-arg="${k}"><span class="ico" aria-hidden="true">${BREW_ICON[k]}</span><b>${esc(b.t)}</b><span class="d">${esc(BREW_DESC[k])}</span>${brewCount(k) ? `<span class="n">${brewCount(k)} made</span>` : ''}</button>`).join('')}</div></section>
@@ -4270,6 +4347,7 @@ async function sync(){
     try {
       await push();
       await pull();
+      await syncBrew();
       S.lastSync = Date.now(); setStatus('synced');
     } catch (e) {
       if (/signed out|invalid.*(token|grant)|refresh/i.test(e.message)){ setStatus('expired', e.message); }
@@ -4410,7 +4488,7 @@ function loadTomb(){ try { S.tomb = JSON.parse(localStorage.getItem(tombKey()) |
 
 /* ---- signing in & out ---- */
 async function afterSignIn(name, before){
-  loadTomb(); loadBill();
+  S.brewOff = false; loadTomb(); loadBill();
   const mine = await db('/profiles?select=id,display_name&id=eq.' + me());
   S.profile = mine?.[0] || null;
   if (!S.profile || (name && name !== S.profile.display_name)){
