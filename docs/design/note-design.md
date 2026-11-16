@@ -55,6 +55,10 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-16
+- **Fatto**: controllo della stampa A4 con PDF reale (`page.pdf`, `window.print` neutralizzato, clic su `[data-act="print"]`). "Death Saves" ora entra; tagliato era "Passive Perc." nei `.sBox.sm`. Etichette `sm` a 4,8 pt, `letter-spacing:0`, ultimo riquadro `flex:.85`. Nessuna nuova licenza. Immagini: [prima](2026-11-16-stampa-prima.png), [dopo](2026-11-16-stampa-dopo.png).
+- **Imparato**: la logica dell'app è in una IIFE, quindi `G`/`sheetHTML` non sono raggiungibili da `page.evaluate`: usare i pulsanti reali.
+
 ### 2026-11-15
 - **Fatto**: indizio di scorrimento dei segnalibri sotto 980 px: `mask-image` con `--chF`/`--chL` (44 px) animati da `animation-timeline:scroll(self inline)`, dentro `@supports`; `@property` e `@keyframes chapFade` a livello superiore (dentro `@media` `@property` non vale). Nessuna nuova licenza. Immagini: `2026-11-15-segnalibri-prima|dopo-*.png`.
 - Regola: per sfumare bordi scorrevoli preferire la maschera (il fondo scrivania non è piatto, quindi niente ombre colorate).

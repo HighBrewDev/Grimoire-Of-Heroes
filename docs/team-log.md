@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-16 · design
+- **Fatto** · stampa A4 (backlog 8): con un PDF reale di tre eroi "Death Saves" risulta intero (già sistemato dalle regole del 14/11); era invece tagliata l'etichetta "Passive Perc." (il punto finale) nella riga dei riquadri piccoli. Solo CSS di stampa: `.sBox.sm .sLab` 4,8 pt senza spaziatura tra lettere, ultimo riquadro piccolo un po' più largo. `CACHE` → `grimoire-ds1116a`.
+- **File**: index.html (CSS `#printSheet`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-16-stampa-prima|dopo.png`.
+- **Verifica**: PDF A4 di Valeria, Eldrin e Kessa senza elementi con testo tagliato; `telefono` 23/23; lo schermo non cambia (regole solo in stampa). Non rifatti gli screenshot a 3 larghezze: nessuna regola dello schermo toccata. Sala non aggiornata (nessuno stato cambiato).
+- **Prossima idea**: indizio di scorrimento sullo scaffale eroi a telefono (backlog 7).
+
 ## 2026-11-16 · sviluppo · homebrew sull'account
 - **Fatto**: l'homebrew segue l'account su tutti i dispositivi, con lo schema degli eroi. Tabella `public.homebrew` (una riga per voce: `id`, `owner`, `data {cat, o, updatedAt}`, `deleted`, RLS solo proprietario, trigger che ignora scritture più vecchie di quella salvata). In `index.html`: `brewStamp` (tempo per voce e lapide a ogni salvataggio), `brewReconcile` (unione pura: mai persa una voce locale, vince la modifica più recente per voce, cancellazione contro modifica per orario, stessa voce su due dispositivi non si duplica) e `syncBrew`, chiamata da `sync()` dopo gli eroi.
 - **Tolleranza**: tabella assente (404 / PGRST205) = `S.brewOff`, nessun errore, tutto resta in IndexedDB; da non loggato nessuna richiesta. Altri errori di rete mostrano "Sync problem" come per gli eroi. Offline invariato: le modifiche aspettano e salgono alla prossima sincronizzazione.
