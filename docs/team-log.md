@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-16 · team leader
+- **Stato**: main 31b3a89, controllo a 1440x900 e 390x844 senza errori. Punteggio +285 ↑ (288/289), nessuna sezione rossa, 10 sezioni verdi su 14. Registro già coerente (B-031, B-020, B-011 davvero aperti).
+- **Piano**: backend su B-020, frontend su B-031, designer su "Death Saves" in stampa, distruttore su Level up/Import, power user su Combattimento/Incontro a telefono. Tour guidato in attesa che tutte le sezioni siano verdi. Nessuna PR aspetta Capo. Sala non aggiornata: nessuno stato di bug o compito è cambiato dal giro di test di stamattina.
+
 ## 2026-11-16 · test
 - **Fatto** · suite eseguita su main (`2ceb3cf`): **288/289 superati**, punteggio totale **+285** (ieri +244). 8 test nuovi (zaino ×3, telefono ×3, robustezza ×1, incantesimi ×1), tutti verdi; nessun test cambiato per farlo passare. Sezioni rosse: nessuna. Peggiori: incontro +14, incantesimi +14, zaino +16.
 - **Test rosso** (bug aperto): B-031 (Grappler, Level up).
