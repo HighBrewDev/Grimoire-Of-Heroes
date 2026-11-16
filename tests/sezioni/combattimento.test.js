@@ -222,4 +222,29 @@ module.exports = {sezione:'combattimento', test:[
     const h = await app.hero();
     assert.deepStrictEqual([h.hp.cur, h.hp.max, h.hp.temp], [32, 32, 7]);
   }],
+  ['Danni e cure: − e + cambiano la quantità, il campo resta scrivibile e la quantità resta dopo l\u2019azione', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '5');
+    await app.click('hpStep', '1'); await app.click('hpStep', '1'); await app.click('hpStep', '5');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '12');
+    await app.click('hpStep', '-1'); await app.click('hpStep', '-5');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '6');
+    await app.page.fill('#hpAmt', '3'); await app.click('hpStep', '-5');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '0', 'non scende sotto zero');
+    await app.page.fill('#hpAmt', '9'); const h0 = await app.hero();
+    await app.click('damage');
+    assert.strictEqual((await app.hero()).hp.cur, Math.max(0, h0.hp.cur - 9 + 0), 'PF dopo 9 danni');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '9', 'la quantità resta dopo il danno');
+    await app.click('hpStep', '1'); await app.click('heal');
+    assert.ok((await app.hero()).hp.cur > 0);
+  }],
+  ['Danni: ± fino al massimo consentito e danno effettivo di 10 con −/+', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    const before = (await app.hero()).hp.cur;
+    await app.page.fill('#hpAmt', '8'); await app.click('hpStep', '1'); await app.click('hpStep', '1');
+    await app.click('damage');
+    assert.strictEqual((await app.hero()).hp.cur, Math.max(0, before - 10));
+    await app.page.fill('#hpAmt', '9998'); await app.click('hpStep', '5');
+    assert.strictEqual(await app.page.inputValue('#hpAmt'), '9999');
+  }],
 ]};

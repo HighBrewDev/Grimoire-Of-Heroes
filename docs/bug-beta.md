@@ -26,6 +26,25 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Risolti
 
+### B-049 [media] [UX] Import Markdown troppo rigido: richiede `# Class: Nome`, `## Features`, livelli esatti e niente entità HTML
+- Trovato da: Capo · 2026-11-16 (provando l'app)
+- Sezione: workshop
+- Dove: Workshop → Import file / Paste Markdown
+- Atteso: un testo copiato da un libro o da una pagina web (titolo semplice, "Level 3: Nome", tabelle, `&nbsp;`) si importa o dice chiaramente cosa non ha capito.
+- Ottenuto: senza l'etichetta "Kind:" la voce veniva saltata; livelli in forme diverse e HTML davano avvisi o testo sporco.
+- Test: `workshop` "Markdown tollerante …" ×5 (Artificer/Armorer grezzo in `tests/md/`).
+- Chiuso: 2026-11-16 · sviluppo · `hbLenient` prepara il testo (pulizia HTML/entità, tipo dedotto, livelli e tabelle normalizzati) prima di `parseBrewMd`; la finestra di controllo mostra "Read as a …" e le note; Paste Markdown ha la scelta del tipo (index.html, sw.js `grimoire-dv1116b`).
+
+### B-050 [media] [UX] Danni e cure: nessun controllo −/+ e la quantità tornava a 5 dopo ogni azione
+- Trovato da: Capo · 2026-11-16
+- Sezione: combattimento / telefono
+- Chiuso: 2026-11-16 · sviluppo · −5, −, +, +5 da 44 px accanto al campo (che resta scrivibile); la quantità resta (`hpStep`, `G.hpAmt`). Test `combattimento` ×2, `telefono` ×1.
+
+### B-051 [media] [UX] Nessun calcolo dei denari: cambiare monete a mano
+- Trovato da: Capo · 2026-11-16
+- Sezione: zaino / telefono
+- Chiuso: 2026-11-16 · sviluppo · "Add or spend" nello Zaino con conversioni automatiche e resto (`coinSpend`, `coinAdd`). Test `zaino` ×2, `telefono` ×1.
+
 ### B-031 [bassa] Level up: un talento generale con aumento di caratteristica (Grappler) non dà il +1
 - Trovato da: tester extra · 2026-11-10
 - Sezione: level up/multiclasse
