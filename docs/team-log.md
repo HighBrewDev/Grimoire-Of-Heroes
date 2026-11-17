@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-17 · design
+- **Fatto** · indizio di scorrimento sullo scaffale eroi a telefono/tablet (backlog 8). Solo CSS: sotto 980 px `.shelf` usa la stessa maschera dei segnalibri (`chapFade`, 44 px) e sfuma dove ci sono altri eroi; senza overflow (scaffale `many` a 390 px, desktop) non cambia nulla. `CACHE` → `grimoire-ds1119b`.
+- **File**: index.html (CSS scaffale), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-17-scaffale-prima|dopo-{390,768,1440}.png`.
+- **Verifica**: Chromium 390/768/1440: scrollWidth pari alla finestra, nessun errore di pagina, `telefono` 23/23. Nessuno bug [UX] chiuso. Zaino e codice dello sviluppo non toccati. Sala non aggiornata (nessuno stato cambiato).
+- **Prossima idea**: revisione di contrasto e tocchi di npc e ticket a 390 px (backlog 9).
+
 ## 2026-11-17 · team leader
 - **Stato**: main 7fa1276, controllo a 1440x900 e 390x844 senza errori. Punteggio +335 ↑ (345/347), nessuna sezione rossa, 9 verdi su 17. Registro coerente (B-052, B-053, B-011 davvero aperti).
 - **Piano**: backend su B-053, frontend su B-052, designer su scaffale eroi a telefono, distruttore su Zaino/Robustezza, power user su npc/ticket a telefono. Tour guidato ancora in attesa. Sala non aggiornata: nessuno stato è cambiato dal giro di test di stamattina.
