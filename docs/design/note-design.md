@@ -55,6 +55,9 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-17
+- **Fatto**: indizio di scorrimento dello scaffale eroi sotto 980 px, stessa maschera/animazione dei segnalibri (`--chF`/`--chL`, `chapFade`), con base `--chL:0px` perché senza overflow la timeline è inattiva e non deve sfumare. Nessuna nuova licenza. Immagini: `2026-11-17-scaffale-prima|dopo-*.png`.
+
 ### 2026-11-16
 - **Fatto**: controllo della stampa A4 con PDF reale (`page.pdf`, `window.print` neutralizzato, clic su `[data-act="print"]`). "Death Saves" ora entra; tagliato era "Passive Perc." nei `.sBox.sm`. Etichette `sm` a 4,8 pt, `letter-spacing:0`, ultimo riquadro `flex:.85`. Nessuna nuova licenza. Immagini: [prima](2026-11-16-stampa-prima.png), [dopo](2026-11-16-stampa-dopo.png).
 - **Imparato**: la logica dell'app è in una IIFE, quindi `G`/`sheetHTML` non sono raggiungibili da `page.evaluate`: usare i pulsanti reali.
