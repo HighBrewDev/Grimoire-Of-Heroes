@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-17 · sviluppo
+- **Backend (B-053, sezione Robustezza/Import-export)**: `load()` ora riconosce JSON illeggibile o con forma sbagliata, ne copia il testo in `grimoire-heroes-backup-v1:<chiave>:<ora>` e mostra un avviso con download della copia; formato e schema invariati. **Frontend (B-052, Zaino)**: `coinSpend` riprova con una moneta in più della specie scelta, con resto.
+- Test prima 345/347, dopo 347/347 (nessuna regressione). File: index.html, sw.js (CACHE ds1118b), docs. Pubblicato come PR verso main (tocca la lettura dei dati utente), non provato a mano su schermo. Resta: B-011, backlog 2-3, 6-7.
+
 ## 2026-11-17 · team leader
 - **Stato**: main 7fa1276, controllo a 1440x900 e 390x844 senza errori. Punteggio +335 ↑ (345/347), nessuna sezione rossa, 9 verdi su 17. Registro coerente (B-052, B-053, B-011 davvero aperti).
 - **Piano**: backend su B-053, frontend su B-052, designer su scaffale eroi a telefono, distruttore su Zaino/Robustezza, power user su npc/ticket a telefono. Tour guidato ancora in attesa. Sala non aggiornata: nessuno stato è cambiato dal giro di test di stamattina.

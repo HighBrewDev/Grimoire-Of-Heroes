@@ -5,28 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-053 [media] Salvataggio locale danneggiato: all'avvio compaiono gli eroi di esempio e la prima modifica cancella i dati veri senza avviso né copia
-- Trovato da: distruttore · 2026-11-16
-- Sezione: robustezza
-- Dove: avvio e I Eroe, 1440x900 (vale per qualunque modifica)
-- Passi: 1. Con 3 eroi salvati, rendi illeggibile `grimoire-heroes-v1` in localStorage (JSON troncato al 90%, `[]`, `{"chars":null}`). 2. Ricarica. 3. Cambia il Nome di un eroe di esempio.
-- Atteso: avviso "salvataggio illeggibile" e copia del testo originale (chiave di backup o file da scaricare) prima di sovrascriverlo, come già fanno `grimoire-brew-backup-v1` e `grimoire-npc-backup-v1` per l'homebrew e gli NPC.
-- Ottenuto: nessun avviso; compaiono Valeria, Eldrin e gli altri esempi. Alla prima modifica `save()` sostituisce la chiave e il testo originale non è più in nessuna chiave: se era solo parzialmente rovinato, gli eroi veri si perdono per sempre. `load()` (index.html ~1267) ingoia l'errore di `JSON.parse` e passa a `sampleChars()`.
-- Console: nessun errore.
-- Test: `robustezza` "B-053 …".
-
-### B-052 [media] Denari: "Spend" dice "Not enough money" anche se il saldo basta, quando non c'è una moneta più grande o abbastanza spiccioli
-- Trovato da: distruttore · 2026-11-16
-- Sezione: zaino
-- Dove: Zaino → Add or spend, 1440x900 (sulla funzione `coinSpend`, nata oggi)
-- Passi: 1. Borsa 41 mo e 3 mr. 2. Importo 2,22, moneta GP, Spend. Altri casi: 1 mp (platino) spendendo 0,5 PP; 13 me + 8 mr spendendo 1,48 EP; 15 mp + 5 ma spendendo 26,51 PP.
-- Atteso: pagare con una moneta in più della scelta e ricevere il resto (3 mo, resto 78 mr; 1 mp, resto 5 mo), come fa già quando esiste una moneta più grande.
-- Ottenuto: toast "Not enough money" e saldo invariato. `run()` in `coinSpend` (index.html ~3755) cerca monete più grandi e poi più piccole, ma non riprova con **una moneta in più della stessa specie scelta**. Provate 200.000 borse casuali con `coinSpend` estratta: 6.082 rifiuti sbagliati (4.762 con PP, 792 GP, 528 EP); somme e valori negativi invece sempre corretti nei casi accettati.
-- Console: nessun errore.
-- Test: `zaino` "B-052 …".
-
-
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -45,6 +23,12 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-053 [media] Salvataggio locale danneggiato cancellato senza avviso né copia
+- Risolto 2026-11-17 · sviluppo (backend) · PR verso main. `load()` copia il testo illeggibile o di forma sbagliata in `grimoire-heroes-backup-v1:<chiave>:<ora>`, mostra un avviso con link per scaricarlo. Formato dei salvataggi invariato. Test: `robustezza` "B-053 …".
+
+### B-052 [media] Denari: "Spend" rifiuta pagamenti validi
+- Risolto 2026-11-17 · sviluppo (frontend) · PR verso main. `coinSpend` riprova con una moneta in più della specie scelta e dà il resto. Test: `zaino` "B-052 …".
 
 ### B-049 [media] [UX] Import Markdown troppo rigido: richiede `# Class: Nome`, `## Features`, livelli esatti e niente entità HTML
 - Trovato da: Capo · 2026-11-16 (provando l'app)
