@@ -182,6 +182,82 @@ module.exports = {sezione:'npc', test:[
     assert.strictEqual(app.pageErrors.length, 0);
     assert.ok((await app.text('#page')).includes('Locale'));
   }],
+  ["NPC note: i giocatori scrivono la nota del party, il DM la vede e la modifica; quella privata resta del giocatore", async ({open}) => {
+    const {h, dm, pl} = await pair(open);
+    await mkNpc(dm, {name:REALNAME, alias:ALIAS, secret:SECRET, voice:VOCE, quotes:CIT, shown:true, secs:{0:{body:'Profilo pubblico', show:true}}});
+    const id = (await stored(dm))[0].id;
+    assert.ok(await until(() => table(h.pub).some(r => !r.deleted)));
+    await pl.go('npcs'); await resync(pl);
+    assert.ok(await until(async () => (await pl.text('#page')).includes(ALIAS)));
+    await pl.click('npOpenShared', id);
+    assert.ok(await until(async () => await pl.page.locator('#np_note_party').count() === 1), 'il giocatore deve avere lo spazio note');
+    await pl.page.fill('#np_note_party', 'Deve 50 monete al fabbro');
+    await pl.page.fill('#np_note_own', 'Secondo me mente: SOSPETTO-PRIVATO');
+    assert.ok(await until(() => table(h.notes).length === 2), 'le note devono arrivare al server');
+    // il DM apre la sua scheda: vede la nota del party (e la può cambiare), non la privata del giocatore
+    await resync(dm);
+    assert.ok(await until(async () => (await dm.page.inputValue('#np_note_party')) === 'Deve 50 monete al fabbro'), 'il DM deve vedere la nota del party');
+    assert.strictEqual(await dm.page.inputValue('#np_note_own'), '', 'la nota privata del giocatore non è del DM');
+    assert.ok(!(await dm.text('#page')).includes('SOSPETTO-PRIVATO'));
+    await dm.page.fill('#np_note_party', 'Deve 50 monete al fabbro\nIl DM aggiunge: ha una sorella');
+    assert.ok(await until(() => table(h.notes).some(r => r.scope === 'party' && r.body.includes('sorella') && r.version === 2)), 'la modifica del DM deve salvarsi');
+    await resync(pl);
+    assert.ok(await until(async () => (await pl.page.inputValue('#np_note_party')).includes('sorella')), 'il giocatore vede la modifica del DM');
+    assert.strictEqual(await pl.page.inputValue('#np_note_own'), 'Secondo me mente: SOSPETTO-PRIVATO');
+    // segreti mai nelle note, e il DM non ha scritto i suoi segreti lì
+    const all = JSON.stringify(table(h.notes));
+    for (const x of [SECRET, VOCE, CIT]) assert.ok(!all.includes(x));
+  }],
+  ["NPC note: due giocatori che scrivono insieme non perdono nulla (merge per righe)", async ({open}) => {
+    const {h, dm, pl} = await pair(open);
+    await mkNpc(dm, {name:'Mercante', nameShown:true, shown:true});
+    const id = (await stored(dm))[0].id;
+    await pl.go('npcs'); await resync(pl);
+    await until(async () => (await pl.text('#page')).includes('Mercante'));
+    await pl.click('npOpenShared', id);
+    await pl.page.fill('#np_note_party', 'riga base');
+    assert.ok(await until(() => table(h.notes).some(r => r.body === 'riga base')));
+    await resync(dm); assert.ok(await until(async () => (await dm.page.inputValue('#np_note_party')) === 'riga base'));
+    // il DM scrive offline, il giocatore intanto salva la sua modifica
+    await dm.page.context().setOffline(true);
+    await dm.page.fill('#np_note_party', 'riga base\nriga del DM');
+    await pl.page.fill('#np_note_party', 'riga base\nriga del giocatore');
+    assert.ok(await until(() => table(h.notes).some(r => r.body.includes('giocatore'))));
+    await dm.page.context().setOffline(false); await resync(dm);
+    assert.ok(await until(() => table(h.notes).some(r => r.body.includes('riga del DM') && r.body.includes('riga del giocatore'))), 'il server deve avere entrambe le righe: ' + JSON.stringify(table(h.notes)));
+    assert.ok(await until(async () => (await dm.page.inputValue('#np_note_party')).includes('riga del giocatore')));
+    await resync(pl);
+    assert.ok(await until(async () => (await pl.page.inputValue('#np_note_party')).includes('riga del DM')));
+  }],
+  ["NPC note: un NPC nascosto non ha note per nessuno, e se torna rivelato le ritrova", async ({open}) => {
+    const {h, dm, pl} = await pair(open);
+    await mkNpc(dm, {name:'Ombra', nameShown:true, shown:true});
+    const id = (await stored(dm))[0].id;
+    await pl.go('npcs'); await resync(pl);
+    await until(async () => (await pl.text('#page')).includes('Ombra'));
+    await pl.click('npOpenShared', id);
+    await pl.page.fill('#np_note_party', 'nota viva');
+    assert.ok(await until(() => table(h.notes).length === 1));
+    await dm.click('npToggle', id);          // nascosto di nuovo
+    assert.ok(await until(() => table(h.pub).every(r => r.deleted)));
+    await resync(pl); await new Promise(r => setTimeout(r, 400));
+    assert.ok(!(await pl.text('#page')).includes('nota viva'), 'senza NPC rivelato niente note');
+    assert.strictEqual(await dm.page.locator('#np_note_party').count(), 0, 'il DM non vede note su un NPC nascosto');
+    await dm.click('npToggle', id);
+    assert.ok(await until(() => table(h.pub).some(r => !r.deleted)));
+    await resync(pl);
+    assert.ok(await until(async () => (await pl.text('#page')).includes('Ombra')));
+    await pl.click('npOpenShared', id); await resync(pl);
+    assert.ok(await until(async () => (await pl.page.inputValue('#np_note_party')) === 'nota viva'), 'la nota ritorna con l\'NPC');
+  }],
+  ["NPC note: tabella note non ancora creata: l'NPC funziona, le note lo dicono, nessun errore", async ({open}) => {
+    const h = hub(), dm = await open({cloud:new Cloud({user:'u1', hub:h, notes:'missing'})});
+    await mkNpc(dm, {name:'Senza note', nameShown:true, shown:true});
+    assert.ok(await until(() => table(h.pub).some(r => !r.deleted)), 'la copia pubblica parte comunque');
+    await dm.page.evaluate(() => window.dispatchEvent(new Event('online')));
+    assert.ok(await until(async () => /not set up/i.test(await dm.text('#page'))), 'deve dire che le note non sono attive');
+    assert.strictEqual(dm.pageErrors.length, 0);
+  }],
   ["NPC: telefono 390 px, elenco, editor e scheda senza scorrimento orizzontale", async ({open}) => {
     const app = await open({viewport:{width:390, height:800}, mobile:true});
     const wide = () => app.page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
