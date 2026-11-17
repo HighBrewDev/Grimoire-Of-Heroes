@@ -247,4 +247,11 @@ module.exports = {sezione:'robustezza', test:[
     const kept = await app.page.evaluate(b => Object.keys(localStorage).some(k => (localStorage.getItem(k) || '').includes(b.slice(0, 300))), bad);
     assert.ok(warned || kept, 'né avviso né copia del salvataggio danneggiato: la prima modifica lo sovrascrive');
   }],
+  ['B-054 eroe senza id nel salvataggio (modificato a mano o vecchio): si vede ma le modifiche non vengono salvate', async ({open}) => {
+    const app = await open({heroes:[{name:'Senza id', class:'Fighter', level:1}]});
+    await app.go('hero'); await app.set('#f_name', 'Con modifica');
+    await app.reload();
+    const saved = await app.page.evaluate(k => localStorage.getItem(k), KEY);
+    assert.ok(saved.includes('Con modifica'), 'la modifica del nome non è nel salvataggio dopo la ricarica');
+  }],
 ]};
