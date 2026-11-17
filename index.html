@@ -817,6 +817,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .npBox dt{font-weight:400;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#6b5636;padding-top:2px}.npBox dd{margin:0;overflow-wrap:anywhere}
 .npTop .npBox{padding-bottom:3px}
 .npSecs{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px;align-items:start;grid-auto-flow:dense}
+.npNotes{margin-top:18px}.npNote{margin:10px 0}.npNote textarea{width:100%;box-sizing:border-box;min-height:96px}
 .npFoot{margin-top:12px;text-align:right;font-style:italic;font-size:13px;color:#5b462d}
 /* cronologia (opzionale): <section class="npBox tl"><h4>…</h4><ul><li><b>data</b> luogo…</li></ul> */
 .npBox.tl ul{list-style:none;padding-left:20px;position:relative;margin-top:8px}
@@ -5315,7 +5316,8 @@ function npReconcile(local, rows, tomb){
   for (const l of local) if (!seen.has(l.id)){ items.push(l); push.push(l); }
   return {items, push, del, changed};
 }
-const npRerender = () => { if (G.chapter === 'npcs'){ if (!G.turning && !$('#modalBk') && !isTyping()) renderPage(); else G.needRender = true; } };
+const npIdleNote = () => { const a = document.activeElement; return !!a?.classList?.contains('np_note') && !NOTES[npNoteId(a.dataset.npc, a.dataset.note)]?.dirty; };   // a note box with nothing unsent does not block a redraw
+const npRerender = () => { if (G.chapter === 'npcs'){ if (!G.turning && !$('#modalBk') && (!isTyping() || npIdleNote())) renderPage(); else G.needRender = true; } };
 async function syncNpc(){
   if (S.npcOff || !me()) return;
   let rows;
@@ -5351,6 +5353,7 @@ async function syncNpc(){
   npPubSet(next);
   if (Object.keys(tomb).length){ const t = npTombGet(); for (const id of Object.keys(tomb)) delete t[id]; npTombSet(t); }
   await npPullShared();
+  await npNotesSync();
 }
 async function npPullShared(){
   let rows;
@@ -5362,6 +5365,95 @@ async function npPullShared(){
   NP_SH = {u:me(), list};
   try { localStorage.setItem(NP_SHARED, JSON.stringify(NP_SH)); } catch (e) {}
   if (!same) npRerender();
+}
+
+// ---- players' notes (npc_notes) ----
+// Per revealed NPC: one note for the whole party (everyone, the DM too, reads and edits it) and one private note per player.
+// Each row has a version the server bumps; an update says "only if it is still version N". When someone else got there first
+// the two texts are merged line by line (nothing typed is ever thrown away) and the update is retried.
+const NP_NOTES = 'grimoire-npc-notes-v1';
+let NOTES = {};                // {noteId: {id, npc, party, scope, body, base, ver, dirty, by, err}}
+const npNoteId = (npc, scope) => scope === 'party' ? 'party:' + npc : 'own:' + me() + ':' + npc;
+function npNotesLoad(){
+  try { const s = JSON.parse(localStorage.getItem(NP_NOTES) || 'null'); NOTES = isObj(s) && s.u === me() && isObj(s.n) ? s.n : {}; } catch (e) { NOTES = {}; }
+}
+function npNotesSave(){ try { localStorage.setItem(NP_NOTES, JSON.stringify({u:me(), n:NOTES})); } catch (e) {} }
+/** Three-way merge by lines: mine and theirs both changed `base`. Theirs stays; my new lines are added; nothing of mine is lost. */
+function npMerge(base, mine, theirs){
+  if (mine === theirs || mine === base) return theirs;
+  if (theirs === base) return mine;
+  const t = theirs.split('\n'), b = new Set(base.split('\n')), seen = new Set(t);
+  const add = mine.split('\n').filter(l => l.trim() && !b.has(l) && !seen.has(l));
+  return (add.length ? [...t, ...add].join('\n') : theirs).slice(0, 4000);
+}
+const npNoteRowOk = r => isObj(r) && typeof r.id === 'string' && typeof r.npc_id === 'string' && (r.scope === 'party' || r.scope === 'own') && typeof r.body === 'string';
+const npNoteSel = '?select=id,npc_id,party_id,scope,author,body,version';
+const npNoteBy = id => id === me() ? 'you' : S.members.find(m => m.id === id)?.name || 'a player';
+function npNoteTake(r, n){          // a server row arrives: a clean note is replaced, an edited one is merged
+  const by = npNoteBy(r.author);
+  if (!n) return NOTES[r.id] = {id:r.id, npc:r.npc_id, party:r.party_id, scope:r.scope, body:r.body, base:r.body, ver:+r.version || 1, dirty:false, by};
+  if (n.dirty){ n.body = npMerge(n.base, n.body, r.body); n.merged = n.body !== r.body; }
+  else { n.body = r.body; n.merged = false; }
+  n.base = r.body; n.ver = +r.version || 1; n.by = by; n.party = r.party_id;
+  return n;
+}
+async function npNotesSync(){
+  if (S.noteOff || !me()) return;
+  if (npNotesSync.u !== me()){ npNotesSync.u = me(); npNotesLoad(); }
+  let rows;
+  try { rows = await db('/npc_notes' + npNoteSel); }
+  catch (e){ if (BREW_MISSING.test(e.message)){ S.noteOff = true; npRerender(); return; } throw e; }
+  const seen = new Set();
+  for (const r of (rows || []).filter(npNoteRowOk)){ seen.add(r.id); npNoteTake(r, NOTES[r.id]); }
+  for (const id of Object.keys(NOTES)) if (!seen.has(id) && !NOTES[id].dirty) delete NOTES[id];   // hidden again or deleted: gone from view
+  for (const n of Object.values(NOTES)){
+    if (!n.dirty) continue;
+    for (let k = 0; k < 3 && n.dirty; k++){
+      let out = null;
+      try {
+        if (!n.ver) out = await db('/npc_notes' + npNoteSel, {method:'POST', body:[{id:n.id, npc_id:n.npc, party_id:n.party, scope:n.scope, body:n.body}], prefer:'return=representation'});
+        else out = await db(`/npc_notes?id=eq.${encodeURIComponent(n.id)}&version=eq.${n.ver}` + npNoteSel.replace('?', '&'), {method:'PATCH', body:{body:n.body}, prefer:'return=representation'});
+      } catch (e){
+        if (/row-level security|violates/i.test(e.message)){ n.err = 'This NPC is no longer revealed, so the note cannot be saved.'; n.dirty = false; break; }
+        if (!/duplicate|already exists|conflict/i.test(e.message)) throw e;
+      }
+      const row = Array.isArray(out) ? out.find(npNoteRowOk) : null;
+      if (row && row.body === n.body){ n.dirty = false; n.err = ''; npNoteTake(row, n); n.merged = !!n.merged; break; }
+      // someone else wrote first: take their version, merge mine into it and try again on top of it
+      const cur = (await db('/npc_notes' + npNoteSel + '&id=eq.' + encodeURIComponent(n.id)))?.find(npNoteRowOk);
+      if (!cur){ n.err = 'This NPC is no longer revealed, so the note cannot be saved.'; n.dirty = false; break; }
+      npNoteTake(cur, n);
+    }
+  }
+  npNotesSave(); npNotesPaint(); npRerender();
+}
+/** A note changed on the server while its box is open and has nothing unsent: update it in place, without moving the cursor away. */
+function npNotesPaint(){
+  for (const el of $$('.np_note')){
+    const n = NOTES[npNoteId(el.dataset.npc, el.dataset.note)];
+    if (n && !n.dirty && el.value !== n.body) el.value = n.body;
+    const st = $('#np_note_st_' + el.dataset.note); if (st && n) st.textContent = npNoteStatus(n);
+  }
+}
+const npNoteStatus = n => n.err ? n.err : n.dirty ? 'Saving…' : n.merged ? 'Merged with a newer edit from ' + n.by + '.' : n.ver ? (n.scope === 'party' && n.by ? 'Last edit by ' + n.by + '.' : 'Saved.') : '';
+function npNoteSet(npc, party, scope, body){
+  const id = npNoteId(npc, scope), n = NOTES[id] || (NOTES[id] = {id, npc, party, scope, body:'', base:'', ver:0, dirty:false, by:'you'});
+  n.body = body.slice(0, 4000); n.dirty = true; n.err = ''; n.merged = false; n.party = party;
+  npNotesSave(); npSyncSoon();
+}
+function npNotesHTML(npc, party){
+  if (!CLOUD || !me() || S.npcOff || !party) return '';
+  if (npNotesSync.u !== me()){ npNotesSync.u = me(); npNotesLoad(); }
+  if (S.noteOff) return `<section class="npSec npNotes"><h3>Players' notes</h3><p class="muted small">Notes are not set up on the server yet.</p></section>`;
+  const box = (scope, title, hint) => {
+    const n = NOTES[npNoteId(npc, scope)];
+    const st = n ? npNoteStatus(n) : '';
+    return `<div class="npNote"><label for="np_note_${scope}"><b>${title}</b> <span class="muted small">${hint}</span></label>
+      <textarea id="np_note_${scope}" class="np_note" data-note="${scope}" data-npc="${esc(npc)}" data-party="${esc(party)}" maxlength="4000" rows="5" placeholder="${scope === 'party' ? 'What the party has learned, promises made, who owes whom…' : 'Your own thoughts. Nobody else can read this.'}">${esc(n ? n.body : '')}</textarea>
+      <div class="muted small" id="np_note_st_${scope}" role="status">${esc(st)}</div></div>`;
+  };
+  return `<section class="npSec npNotes" aria-labelledby="np_nh"><h3 id="np_nh">Players' notes</h3>
+    ${box('party', 'Party notes', 'Everyone in the party and the DM can read and edit this.')}${box('own', 'My private notes', 'Only you can read this.')}</section>`;
 }
 
 // ---- drawing a card ----
@@ -5445,7 +5537,8 @@ function npCardPageHTML(){
   if (!sh && !it){ NP_UI.view = 'list'; return npListHTML(); }
   return `<div class="npBar">${act('npBack', undefined, '← All NPCs', 'btn ghost')}${it ? act('npEdit', it.id, 'Edit', 'btn') + act('npToggle', it.id, it.o.shown ? 'Hide from players' : 'Reveal to players', 'btn ghost') : ''}</div>
     ${it && !it.o.shown ? '<p class="muted small">Hidden from players. Dashed boxes and 🔒 mark what they cannot read even once you reveal this NPC.</p>' : it ? '<p class="muted small">Revealed to players. Dashed boxes and 🔒 mark what they still cannot read.</p>' : ''}
-    ${sh ? npCardHTML(sh.o, {by:sh.by, names:id => npShared().find(x => x.id === id && x.kind === 'npc')?.o.n}) : npCardHTML(it.o, {dm:true, by:S.profile?.display_name || ''})}`;
+    ${sh ? npCardHTML(sh.o, {by:sh.by, names:id => npShared().find(x => x.id === id && x.kind === 'npc')?.o.n}) : npCardHTML(it.o, {dm:true, by:S.profile?.display_name || ''})}
+    ${sh ? npNotesHTML(sh.id, sh.party) : it.o.shown ? npNotesHTML(it.id, it.o.party) : ''}`;
 }
 
 // ---- the editor ----
@@ -5578,6 +5671,7 @@ function npWire(){
     const el = e.target;
     if (el.id === 'np_q'){ NP_UI.q = el.value; const l = $('#np_list'); if (l){ const q = norm(NP_UI.q); l.innerHTML = npListRows(npNpcs().filter(it => (!NP_UI.filter || npGet(NP_UI.filter)?.o.ids.includes(it.id) || NP_UI.filter === '_none') && (!q || norm(it.o.n + ' ' + Object.values(it.o.facts).map(x => x.v).join(' ')).includes(q))).sort((a, b) => a.o.n.localeCompare(b.o.n))); } return; }
     if (el.closest?.('#npForm')) npPreview();
+    if (el.classList?.contains('np_note')){ npNoteSet(el.dataset.npc, el.dataset.party, el.dataset.note, el.value); const st = $('#np_note_st_' + el.dataset.note); if (st) st.textContent = 'Saving…'; }
   });
   document.addEventListener('change', e => {
     const el = e.target;
