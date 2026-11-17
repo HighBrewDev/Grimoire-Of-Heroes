@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-17 · test
+- **Fatto** · suite eseguita su main (`6258d74`): **345/347 superati**, punteggio totale **+335** (ieri +309). 6 test nuovi (incontro ×3, incantesimi ×3), tutti verdi; nessun test cambiato per farlo passare. Sezioni rosse: nessuna. Peggiori: ticket +11, sincronia +12, zaino +13.
+- **Test rossi** (bug aperti): B-052 (denari, zaino) e B-053 (salvataggio danneggiato, robustezza).
+
 ## 2026-11-16 · design
 - **Fatto** · stampa A4 (backlog 8): con un PDF reale di tre eroi "Death Saves" risulta intero (già sistemato dalle regole del 14/11); era invece tagliata l'etichetta "Passive Perc." (il punto finale) nella riga dei riquadri piccoli. Solo CSS di stampa: `.sBox.sm .sLab` 4,8 pt senza spaziatura tra lettere, ultimo riquadro piccolo un po' più largo. `CACHE` → `grimoire-ds1116a`.
 - **File**: index.html (CSS `#printSheet`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-16-stampa-prima|dopo.png`.

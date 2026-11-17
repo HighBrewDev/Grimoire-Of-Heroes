@@ -111,4 +111,27 @@ module.exports = {sezione:'incontro', test:[
     assert.deepStrictEqual(await names(app), ['Goblin']);
     assert.ok((await app.text('.encList')).includes('Goblin'));
   }],
+  ['i PF di un combattente non scendono sotto 0 e non superano il massimo', async ({open}) => {
+    const app = await open(); await app.go('encounter');
+    await custom(app, 'Ratto', 10, 7);
+    const id = (await enc(app)).list[0].id;
+    await app.page.fill('#amt_' + id, '500'); await app.click('encDmg', id);
+    assert.strictEqual((await enc(app)).list[0].hp, 0);
+    await app.page.fill('#amt_' + id, '500'); await app.click('encHeal', id);
+    assert.strictEqual((await enc(app)).list[0].hp, 7);
+  }],
+  ['due combattenti con la stessa iniziativa restano entrambi e l\'ordine è stabile', async ({open}) => {
+    const app = await open(); await app.go('encounter');
+    await custom(app, 'Uno', 12); await custom(app, 'Due', 12); await custom(app, 'Tre', 3);
+    const n = await names(app);
+    assert.strictEqual(n.length, 3); assert.strictEqual(n[2], 'Tre');
+    await app.reload(); await app.go('encounter');
+    assert.deepStrictEqual(await names(app), n);
+  }],
+  ['Turno successivo su un combattimento vuoto non dà errori e non cambia il round', async ({open}) => {
+    const app = await open(); await app.go('encounter');
+    await app.click('encNext');
+    const e = await enc(app);
+    assert.ok(!e || (e.list.length === 0 && e.round === 1), 'stato inatteso ' + JSON.stringify(e));
+  }],
 ]};

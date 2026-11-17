@@ -87,4 +87,21 @@ module.exports = {sezione:'incantesimi', test:[
     await app.clickJS('prep', 'Sleep'); await app.clickJS('prep', 'Sleep');
     assert.ok(!(await app.hero()).spells.prep.includes('Sleep'));
   }],
+  ['ripristinare gli slot non tocca gli incantesimi preparati', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    await app.clickJS('prep', 'Sleep'); await app.click('slot', '1:0');
+    await app.click('resetSlots');
+    const h = await app.hero();
+    assert.ok(h.spells.prep.includes('Sleep')); assert.deepStrictEqual(h.spells.slots, {});
+  }],
+  ['gli slot di livello 1 del Mago livello 4 non superano il massimo (4) anche cliccando più volte', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    for (let i = 0; i < 6; i++) await app.page.locator('[data-act="slot"][data-arg^="1:"]').nth(i % 4).click().catch(() => {});
+    const u = (await app.hero()).spells.slots['1']?.used || 0;
+    assert.ok(u >= 0 && u <= 4, 'slot usati ' + u);
+  }],
+  ['un Barbaro non ha slot né CD degli incantesimi', async ({open}) => {
+    const app = await open({heroes:[fx.blank({class:'Barbarian', level:5})]}); await app.go('spells');
+    assert.strictEqual(await app.page.locator('[data-act="slot"]').count(), 0);
+  }],
 ]};
