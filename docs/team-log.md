@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-17 · team leader
+- **Stato**: main 7fa1276, controllo a 1440x900 e 390x844 senza errori. Punteggio +335 ↑ (345/347), nessuna sezione rossa, 9 verdi su 17. Registro coerente (B-052, B-053, B-011 davvero aperti).
+- **Piano**: backend su B-053, frontend su B-052, designer su scaffale eroi a telefono, distruttore su Zaino/Robustezza, power user su npc/ticket a telefono. Tour guidato ancora in attesa. Sala non aggiornata: nessuno stato è cambiato dal giro di test di stamattina.
+
 ## 2026-11-17 · test
 - **Fatto** · suite eseguita su main (`6258d74`): **345/347 superati**, punteggio totale **+335** (ieri +309). 6 test nuovi (incontro ×3, incantesimi ×3), tutti verdi; nessun test cambiato per farlo passare. Sezioni rosse: nessuna. Peggiori: ticket +11, sincronia +12, zaino +13.
 - **Test rossi** (bug aperti): B-052 (denari, zaino) e B-053 (salvataggio danneggiato, robustezza).

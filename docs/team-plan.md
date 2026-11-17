@@ -1,61 +1,51 @@
-# Piano del team · lunedì 16 novembre 2026
+# Piano del team · martedì 17 novembre 2026
 
 ## Regole di squadra
 Chi chiude o cambia qualcosa aggiorna da sé le proprie voci, senza aspettare il giro del punteggio. A fine lavoro: (1) in docs/bug-beta.md sposta in 'Bug risolti' i bug che hai chiuso (ID, data, chi, commit) o correggi stato e gravità di quelli che hai toccato; (2) se hai cambiato lo stato di bug, compiti, PR o decisioni, ritocca le voci corrispondenti della Sala del Team: leggi la pagina pubblicata con Artifact (action read, url https://claude.ai/artifact/S9vKKKbzFy2Jb9UNboQ8jv), modifica SOLO le voci toccate dell'oggetto DATA (bugs, solved, running, decisions, la riga del tuo ruolo in team) nel file docs/sala/sala-team.html di main copiato fuori dal repo, controlla che il JavaScript resti valido e ripubblica con Artifact sullo stesso url, senza icona nuova e senza commit del file. Fallo solo se qualcosa è davvero cambiato, in una modifica sola, e nel diario scrivi 'Sala aggiornata' o il motivo se non ci sei riuscito. Vale per sviluppo, designer, tester e leader.
 
 ## Stato dell'app
-- Live = main (`CACHE` `grimoire-ds1115b`, commit 31b3a89). Controllo con Chromium a 1440x900 e 390x844 in locale: carica, scrollWidth uguale alla finestra, console senza errori. Niente di rotto da ieri.
-- Punteggio totale **+285, tendenza ↑** (ieri +244). Test **288/289**; nessuna sezione rossa, nessuna regressione. Dieci sezioni VERDI, quattro GIALLE (Caratteristiche, Level up, Telefono, Robustezza: gialle solo perché non hanno ancora 3 giorni di verde).
-- Aperti: B-031 [bassa, Grappler senza +1], B-020 [bassa, import enorme lento], B-011 [bassa, da decidere]. B-044..B-048 e B-032 chiusi ieri e confermati dai test.
-- Poco lavoro sui bug: la settimana serve a far crescere l'app e a cercare bug nuovi nelle zone meno provate.
+- Main `7fa1276` (live = main). Controllo con Chromium a 1440x900 e 390x844 in locale: carica, scrollWidth uguale alla finestra, nessun errore di pagina (solo un avviso MIME del mio server di prova, non dell'app). Niente di rotto da ieri.
+- Punteggio totale **+335, tendenza ↑** (ieri +309). Test **345/347**; nessuna sezione rossa, nessuna regressione. 9 sezioni VERDI, 8 GIALLE (Caratteristiche, Zaino, Level up, Telefono, Robustezza, npc, sincronia, ticket; le ultime tre sono nuove e non hanno ancora 3 giorni di verde).
+- Aperti: B-052 [media, denari: "Spend" rifiuta pagamenti validi], B-053 [media, salvataggio locale illeggibile cancellato senza copia], B-011 [bassa, da decidere]. Nessuna PR aperta (ultima unita: #27).
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
 |---|---|---|---|---|
-| Level up e multiclasse | 🟡 GIALLO | MEDIO | frontend | B-031 (unico test rosso) |
-| Robustezza | 🟡 GIALLO | MEDIO | backend | verde da 1 giorno; B-020 |
-| Telefono | 🟡 GIALLO | MEDIO | designer | verde da 1 giorno; scaffale eroi |
-| Caratteristiche | 🟡 GIALLO | MEDIO | frontend | verde, serve 3 giorni |
-| Eroe, Combattimento, Incontro, Tratti, Incantesimi, Zaino, Cronaca, Biblioteca, Workshop, Import/export | 🟢 VERDE | BASSO | tester | solo controlli leggeri, niente test nuovi |
+| Zaino e monete | 🟡 GIALLO | MEDIO | frontend | B-052, test rosso |
+| Robustezza | 🟡 GIALLO | MEDIO | backend | B-053, test rosso |
+| Import/export e salvataggio | 🟢 VERDE | BASSO | backend | B-053 la tocca (`load`/`save`) |
+| Caratteristiche, Level up, Telefono | 🟡 GIALLO | MEDIO | frontend/designer | verdi, servono 3 giorni |
+| npc, sincronia, ticket | 🟡 GIALLO | MEDIO | backend | sezioni nuove, 1 giorno di verde |
+| Eroe, Combattimento, Incontro, Tratti, Incantesimi, Cronaca, Biblioteca, Workshop | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
 
 ## Oggi
-Zone di index.html oggi: **Backend** (per primo) possiede `brewImport`, `ingest5`, `buildIndex`, `sw.js` e il registro di versione. **Frontend** (dopo) possiede `applyLevelUp` (ramo `feat`) e la finestra Level up. **Designer** solo CSS e `docs/design/`, fuori dalla finestra Level up. Nessuno esce dalla propria zona.
+Zone di index.html oggi: **Backend** (per primo) possiede `load()`, `save()`, `sampleChars` e la chiave `grimoire-heroes-v1`, più `sw.js`. **Frontend** (dopo) possiede solo `coinSpend` e il blocco Denari dello Zaino. **Designer** solo CSS e `docs/design/`, fuori dallo Zaino. Nessuno esce dalla propria zona.
 
-- **Sviluppo 10:23, una sessione, prima BACKEND** · **B-020**: `brewImport` con `Map` per i duplicati e un'unica passata, così 20.000 voci stanno sotto i 5 s (oggi 109 s); se non basta, limite con messaggio. *Fatto* = test B-020 in `workshop` verde (misura di tempo), `importexport`/`biblioteca` senza regressioni, bug in "Risolti", `CACHE` alzata. Poi, se resta tempo, avviso "New version available" quando sw.js trova un index.html nuovo (solo client).
-- **Sviluppo, poi FRONTEND** · **B-031**: nel ramo `feat` di `applyLevelUp` i talenti con aumento di caratteristica (Grappler, ecc., SRD 5.2.1) chiedono nella finestra Level up quale caratteristica alzare (+1, massimo 20) e la applicano. *Fatto* = test B-031 verde, `levelup`/`caratteristiche`/`telefono` senza regressioni, finestra usabile a 390 px, log.
-- **Designer 14:13 · "Death Saves" tagliato in stampa A4** (backlog 8), poi indizio di scorrimento sullo scaffale eroi a telefono. Solo CSS, fuori dalla finestra Level up. *Fatto* = screenshot in docs/design/, `telefono` senza nuove rotture.
-- **Distruttore 21:07 · Level up e Import/export**: Level up a ripetizione (livelli 1→20, multiclasse, talenti con scelta) dopo il fix di B-031, import di eroi con campi strani. *Fatto* = diario, bug nuovi con passi e test.
-- **Power user 21:37 · Combattimento e Incontro a 390 px**: una serata di gioco, Cleric 5 con riposi, incantesimi concentrazione, incontro con 6 creature. *Fatto* = diario con numeri, bug solo se riproducibili.
-- **Test e punteggio (domani 8:47)**: test per ciò che si chiude oggi; niente test nuovi nelle sezioni VERDI.
+- **Sviluppo 10:23, una sessione, prima BACKEND · B-053 (robustezza)**: in `load()`, se il JSON è illeggibile o con forma sbagliata, copiare il testo originale in una chiave di backup (come `grimoire-brew-backup-v1`), mostrare un avviso chiaro con modo di scaricarlo, e non sovrascrivere la chiave finché l'utente non sceglie. Il formato dei salvataggi non cambia. *Fatto* = test B-053 verde, `importexport`/`robustezza`/`eroe` senza regressioni, bug in "Risolti", `CACHE` alzata.
+- **Sviluppo, poi FRONTEND · B-052 (zaino)**: `coinSpend` deve riprovare con una moneta in più della specie scelta e dare il resto (casi: 41 mo + 3 mr, 2,22 mo; 1 mp, 0,5 PP; 13 me + 8 mr, 1,48 me). Somme e valori negativi restano corretti. *Fatto* = test B-052 verde, `zaino`/`telefono` senza regressioni, bug in "Risolti".
+- **Designer 14:13**: indicatore di scorrimento sullo scaffale eroi a telefono (backlog 7), solo CSS, fuori dallo Zaino. *Fatto* = screenshot in docs/design/ a 390, 768 e 1440, `telefono` senza nuove rotture.
+- **Distruttore 21:07 · Zaino e Robustezza**: dopo i fix, denari con importi strani (virgola, 0, enormi, troppi decimali) e salvataggi danneggiati in modi nuovi (chiavi diverse, quota piena). *Fatto* = diario, bug nuovi con passi e test.
+- **Power user 21:37 · npc e ticket a 390 px**: una sessione da DM, dossier, gruppi, rivelazione ai giocatori, segnalazione di un bug. *Fatto* = diario con numeri, bug solo se riproducibili.
+- **Test e punteggio (domani 8:47)**: confermare B-052/B-053; niente test nuovi nelle sezioni VERDI.
 
 ## Backlog (ordinato)
 **Backend**
-1. B-020 (oggi). 2. Avviso "New version available" da sw.js. 3. Prova di login e sync reali (sola lettura, serve rete verso Supabase). 4. B-011: l'import deve rispettare `FREE_BREW`? (oggi app gratuita, non applicabile).
+1. B-053 (oggi). 2. Avviso "New version available" da sw.js. 3. Prova di login e sync reali (serve rete verso Supabase e il via di Capo). 4. B-011: l'import deve rispettare `FREE_BREW`? (oggi paywall spento).
 **Frontend**
-5. B-031 (oggi). 6. Variante di B-032: Level up nel mezzo dopo un danno fa perdere `hp.conAdj`.
+5. B-052 (oggi). 6. Variante di B-032: Level up nel mezzo dopo un danno fa perdere `hp.conAdj`. 7. Rifinitura dei flussi nuovi (npc, ticket) dopo le prove del power user.
 **Design**
-7. Scaffale eroi a telefono con indizio di scorrimento. 8. "Death Saves" tagliato in stampa A4.
-9. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali con brevi spiegazioni, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI (oggi 10 su 14: probabile da mercoledì 18).
-10. Bozza di post in docs/promo/ (solo bozza, nessuna pubblicazione) ora che non ci sono bug alti.
-
-## Richieste di Capo del 16/11 (provate l'app il 15/11) · priorità decise dal team leader
-Ordine: **1. Import Markdown tollerante** (alta: gli altri utenti non seguiranno le regole del formato, quindi è il blocco all'adozione), **2. Danni e cure con −/+** (alta ma piccola: si usa a ogni turno di gioco), **3. Calcolatrice dei denari** (media). Fatte tutte e tre il 16/11 in una sola PR (non cambiano schema né formato dei salvataggi; la PR è comunque richiesta perché la sessione lavora su un ramo, non su main).
-- **Danni e cure**: campo numerico invariato (inseribile), più −5, −, +, +5 da 44 px; l'ultima quantità resta dopo Damage/Heal/Temp. Test in `combattimento` e `telefono`.
-- **Denari**: nello Zaino, "Add or spend": importo (anche 2,5), moneta, Add / Spend. Spend paga con la moneta scelta, poi con le più piccole solo se bastano a chiudere, altrimenti con una più grande e riceve il resto in mo/ma/mr; se non c'è abbastanza non cambia nulla e lo dice. Test in `zaino` e `telefono`.
-- **Import Markdown**: l'etichetta `# Class: Nome` diventa facoltativa; il tipo si deduce dai campi (Hit die, Casting time, Rarity, Prerequisite…) o dal titolo ("Armorer (Artificer Subclass)"); livelli come "Level 3: X", "3rd-level: X", "X (Level 3)", in grassetto o su riga semplice, con o senza "## Features"; tabelle a due colonne come campi; HTML ed entità (`&nbsp;`, `&rsquo;`, `<br>`, `<h1>`…) ripuliti; in Incolla si può scegliere il tipo; la finestra di controllo scrive cosa ha capito ("Read as a class from its Hit Die…") e cosa ha scartato. Test in `workshop` con Artificer/Armorer grezzo (`tests/md/`).
-- **Integrazione AI nell'import (rimandata)**: fattibile con una Supabase edge function che chiama l'API di Claude con la chiave solo lato server, consenso esplicito prima di inviare il testo, limiti d'uso per utente e anteprima obbligatoria. Costa a chi tiene la chiave (token per ogni import) e porta rischi di abuso e privacy; non conviene ora che il parser tollerante copre i casi visti. Da riconsiderare se i file reali continuano a non passare. Dati e Supabase: solo PR.
-
-## Richiesta di Capo del 16/11 · homebrew sincronizzato con l'account (fatta, serve l'SQL)
-- Codice fatto e testato (sezione `sincronia`, 12 test); CACHE `grimoire-dv1116c`. **Capo deve eseguire `supabase/migrations/2026-11-16-homebrew.sql` nell'editor SQL di Supabase** (stesso blocco in fondo a `schema.sql`). Finché non lo fa l'app resta locale, senza errori.
-- Dopo l'SQL: prova a mano con due dispositivi (crea una voce su uno, apri l'altro; cancella su uno). Il team leader la fa con un account di prova se Capo la autorizza.
-- Non fatto di proposito: limite `FREE_BREW` lato server (il paywall è spento), condivisione dell'homebrew nel gruppo, storico delle versioni.
+8. Scaffale eroi a telefono con indizio di scorrimento (oggi). 9. Revisione di contrasto e dimensione dei tocchi di npc e ticket a 390 px.
+10. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali con brevi spiegazioni, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI (oggi 9 su 17).
+11. Bozza di post in docs/promo/ (solo bozza, nessuna pubblicazione).
+12. Integrazione AI nell'import (rimandata): da riconsiderare solo se i file reali continuano a non passare; dati e Supabase solo come PR.
 
 ## Regole per tutti
 - Solo SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
-- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**.
+- Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**. B-053 non cambia formato né schema, ma se il backend lo ritiene dato utente apre una PR.
 - Mai cambiare un test per farlo passare se l'app è sbagliata. Ogni correzione: test della sezione + suite completa, `tests/risultati` ripristinato.
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- Nessuna PR aperta (ultima unita: #23). Keep-alive Supabase: workflow già su main; da controllare quando puoi: GitHub → Actions → "supabase-keepalive" → Run workflow, deve rispondere 2xx (da qui non raggiungo Supabase).
+- Nessuna PR aperta. Homebrew sull'account: serve eseguire `supabase/migrations/2026-11-16-homebrew.sql` nell'editor SQL di Supabase (finché non lo fa l'app resta locale, senza errori).
+- Keep-alive Supabase: workflow su main; da provare quando puoi: GitHub → Actions → "supabase-keepalive" → Run workflow, deve rispondere 2xx.
 - Decisione facoltativa: aprire nella rete dell'ambiente l'host Supabase per provare login e sync.
