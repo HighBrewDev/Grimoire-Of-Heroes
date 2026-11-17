@@ -1275,7 +1275,10 @@ function savePrefs(){
 async function load(){
   let data = null;
   let raw = null;
-  try { raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) {}
+  let bad = false;
+  try { raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) { bad = true; }
+  if (raw && !bad && !(isObj(data) && Array.isArray(data.chars))) bad = true;   // B-053: unreadable or wrong shape
+  if (bad){ G.damaged = raw; data = null; try { const bk = 'grimoire-heroes-backup-v1:' + heroKey() + ':' + Date.now(); localStorage.setItem(bk, raw); } catch (e) {} }
   if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
@@ -3781,7 +3784,14 @@ function coinSpend(cur, cost, pref = 'gp'){
     for (const k of ['gp','sp','cp']){ const n = Math.floor(back / COIN_V[k]); if (n){ p[k] += n; change[k] = n; back -= n * COIN_V[k]; } }
     return {purse:p, paid, change};
   };
-  return run(false) || run(true);
+  const extra = () => {   // B-052: one more coin of the chosen kind, with change
+    const n = Math.ceil(cost / COIN_V[pref]); if ((cur[pref] || 0) < n) return null;
+    const p = {cp:0, sp:0, ep:0, gp:0, pp:0}; COIN_ORDER.forEach(k => { p[k] = cur[k] || 0; }); p[pref] -= n;
+    const change = {}; let back = n * COIN_V[pref] - cost;
+    for (const k of ['gp','sp','cp']){ const m = Math.floor(back / COIN_V[k]); if (m){ p[k] += m; change[k] = m; back -= m * COIN_V[k]; } }
+    return {purse:p, paid:{[pref]:n}, change};
+  };
+  return run(false) || run(true) || extra();
 }
 const coinAmountLabel = (cp, k) => (cp % COIN_V[k] === 0 ? cp / COIN_V[k] + ' ' + k.toUpperCase() : cp + ' CP');
 const coinWords = o => COIN_ORDER.filter(k => o[k]).map(k => `${o[k]} ${k.toUpperCase()}`).join(', ');
@@ -5688,6 +5698,14 @@ function npWire(){
 }
 
 Object.assign(ACT, ACT_NPC);
+/* B-053: the saved heroes could not be read. A copy of the original text is kept in a backup key and offered as a download. */
+function damagedWarn(){
+  if (!G.damaged) return;
+  const w = document.createElement('div'); w.id = 'damagedWarn'; w.className = 'toast fumble'; w.setAttribute('role', 'alert');
+  w.style.cssText = 'top:auto;bottom:max(12px, env(safe-area-inset-bottom, 0px));z-index:96;width:min(640px, 92vw)';
+  w.innerHTML = '<b>Your saved heroes could not be read (damaged data).</b> A copy of the original is kept on this device. Example heroes are shown instead; <a download="grimoire-damaged-save.txt" href="data:text/plain;charset=utf-8,' + encodeURIComponent(G.damaged) + '">download the copy</a> to try to recover it. <button class="btn small" type="button" id="damagedOk">OK</button>';
+  document.body.appendChild(w); $('#damagedOk').onclick = () => w.remove();
+}
 async function boot(){
   bakeTextures();
   await load();
@@ -5695,7 +5713,7 @@ async function boot(){
   await loadPacks();
   buildIndex();
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
-  applyTheme(); wire(); npWire(); render(); syncTray(); cloudBoot();
+  applyTheme(); wire(); npWire(); render(); syncTray(); cloudBoot(); damagedWarn();
   if (!G.showCover && G.coverOnStart === false){ $('#coverBk')?.remove(); welcome(); }
   else { fillCover(); $('#coverBk').hidden = false; }
 }

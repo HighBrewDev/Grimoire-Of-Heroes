@@ -1,5 +1,8 @@
 # Diario del team
 
+## 2026-11-17 · sviluppo
+- **Backend (B-053, sezione Robustezza/Import-export)**: `load()` ora riconosce JSON illeggibile o con forma sbagliata, ne copia il testo in `grimoire-heroes-backup-v1:<chiave>:<ora>` e mostra un avviso con download della copia; formato e schema invariati. **Frontend (B-052, Zaino)**: `coinSpend` riprova con una moneta in più della specie scelta, con resto.
+- Test prima 345/347, dopo 347/347 (nessuna regressione). File: index.html, sw.js (CACHE ds1118b), docs. Pubblicato come PR verso main (tocca la lettura dei dati utente), non provato a mano su schermo. Resta: B-011, backlog 2-3, 6-7.
 ## 2026-11-17 · design
 - **Fatto** · indizio di scorrimento sullo scaffale eroi a telefono/tablet (backlog 8). Solo CSS: sotto 980 px `.shelf` usa la stessa maschera dei segnalibri (`chapFade`, 44 px) e sfuma dove ci sono altri eroi; senza overflow (scaffale `many` a 390 px, desktop) non cambia nulla. `CACHE` → `grimoire-ds1119b`.
 - **File**: index.html (CSS scaffale), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-17-scaffale-prima|dopo-{390,768,1440}.png`.
