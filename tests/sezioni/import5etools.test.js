@@ -104,6 +104,19 @@ module.exports = {sezione:'import5etools', test:[
       await app.page.waitForFunction(r => new RegExp(r).test(document.getElementById('toast')?.textContent || ''), re.source);
     }
   }],
+  ["rimando Import in alto: scrolla alla sezione import; avviso 'check what you import' visibile", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    // tante homebrew: la sezione import finisce lontano
+    await fetch5(app, 'items-base.json'); await app.page.locator('[data-act="brew5Add"]').click(); await added(app);
+    await app.page.waitForTimeout(300);
+    await app.page.evaluate(() => window.scrollTo(0, 0));
+    const before = await app.page.evaluate(() => document.getElementById('hb_import').getBoundingClientRect().top);
+    await app.page.locator('#page [data-act="brewGo"][data-arg="import"]').click();
+    await app.page.waitForFunction(() => { const t = document.getElementById('hb_import').getBoundingClientRect().top; return t >= -5 && t < innerHeight / 2; });
+    assert.ok(await app.page.locator('.hb5Warn').isVisible());
+    assert.ok(/Check what you import/.test(await app.page.locator('.hb5Warn').innerText()));
+    assert.ok(before > 0);
+  }],
   ["link che non e un file dati, e incolla JSON", async ({open}) => {
     const app = await open(); await wire(app); await app.go('workshop');
     await app.page.fill('#hb5_url', 'https://example.com/foo.json'); await app.page.locator('[data-act="brew5Fetch"]').click();

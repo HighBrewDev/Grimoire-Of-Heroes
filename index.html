@@ -716,6 +716,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .hbOk{margin:0;color:#2f5d34}
 .hb5{margin-top:14px;padding:14px;border:1px solid var(--gold3);border-radius:12px;background:var(--surf)}
 .hb5 h4{margin:0 0 6px}
+.hb5Warn{margin:12px 0 0;padding:10px 12px;border:2px solid #b8741a;border-radius:10px;background:rgba(184,116,26,.14);color:var(--ink);font-size:14.5px;line-height:1.4}
 .hb5Row{gap:8px;margin-top:8px;flex-wrap:wrap}
 .hb5Row input[type=text],.hb5Row select{flex:1 1 220px;min-width:0;min-height:44px}
 .hb5Row .hb5Src{flex:0 1 150px}
@@ -2768,7 +2769,7 @@ const HB_GUIDE = {
 function brewHomeHTML(){
   const n = BREW_ITEMS.length, f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '';
   return `<div class="hbIntro"><p>Make your own content and it joins every menu of the tome: hero pages, level up, the spellbook, the pack and encounters. ${CLOUD && me() && !S.brewOff ? 'It follows your account on every device you sign in with' : 'It stays on this device'}; export it to back it up or share it with your table.</p>
-    <div class="row">${act('brewGo', 'create', '＋ Create new', 'btn')}<label class="btn ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr">${n ? act('brewExport', undefined, `Export all (${n})`, 'btn ghost') : ''}</div>${brewFreeNote()}</div>
+    <div class="row">${act('brewGo', 'create', '＋ Create new', 'btn')}${act('brewGo', 'import', '⇩ Import…', 'btn ghost', 'aria-label="Go to Import: files, Markdown and 5etools"')}<label class="btn ghost" for="brew_file">Import file</label><input type="file" id="brew_file" accept=".json,application/json" class="sr">${n ? act('brewExport', undefined, `Export all (${n})`, 'btn ghost') : ''}</div>${brewFreeNote()}</div>
   <section class="hbSec" id="hb_create" aria-labelledby="hb_create_h"><h3 id="hb_create_h">Create something new</h3>
     <div class="hbTiles">${Object.entries(BREW).map(([k, b]) => `<button type="button" class="hbTile" data-act="brewNewKind" data-arg="${k}"><span class="ico" aria-hidden="true">${BREW_ICON[k]}</span><b>${esc(b.t)}</b><span class="d">${esc(BREW_DESC[k])}</span>${brewCount(k) ? `<span class="n">${brewCount(k)} made</span>` : ''}</button>`).join('')}</div></section>
   <section class="hbSec" aria-labelledby="hb_mine_h"><h3 id="hb_mine_h">Your homebrew <span class="muted">${n}</span></h3>
@@ -2776,7 +2777,7 @@ function brewHomeHTML(){
       <div class="libTabs" role="group" aria-label="Show only">${act('brewFilter', '', `All <span class="muted">${n}</span>`, 'sb' + (f ? '' : ' on'), `aria-pressed="${!f}"`)}${Object.keys(BREW).filter(brewCount).map(k => act('brewFilter', k, `${esc(BREW[k].t)} <span class="muted">${brewCount(k)}</span>`, 'sb' + (f === k ? ' on' : ''), `aria-pressed="${f === k}"`)).join('')}</div></div>
       <div class="hbList" id="hb_list" aria-live="polite">${brewListHTML()}</div>`
     : '<div class="empty"><p><b>Nothing here yet.</b></p><p>Pick a kind above to create your first piece of homebrew, or import a file below.</p></div>'}</section>
-  <section class="hbSec" aria-labelledby="hb_imp_h"><h3 id="hb_imp_h">Import</h3>
+  <section class="hbSec" id="hb_import" aria-labelledby="hb_imp_h"><h3 id="hb_imp_h" tabindex="-1">Import</h3>
     <div class="drop" id="brewDrop"><p><b>Drop a .md or .json file here</b></p>
       <p class="muted small">Homebrew written in Markdown, a Grimoire homebrew export, or a 5etools-style file with spells, creatures, items, feats, species, backgrounds, classes or subclasses. Every entry is checked against the rules (names, levels, schools, skills, feats, proficiencies, ability scores, sizes, challenge, hit points, bonuses…); you see the errors and warnings and choose what to keep.</p>
       <div class="row" style="justify-content:center;gap:8px"><label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,.md,.markdown,.txt,application/json,text/markdown,text/plain" class="sr">${act('brewMdPaste', undefined, 'Paste Markdown', 'btn small ghost')}${act('brewMdTemplate', undefined, 'Markdown template', 'btn small ghost')}${n ? act('brewExportMd', undefined, 'Export as Markdown', 'btn small ghost') : ''}</div></div>
@@ -2786,7 +2787,7 @@ function brewHomeHTML(){
       <div class="row hb5Row"><label class="sr" for="hb5_url">5etools link or file</label><input type="text" id="hb5_url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://5e.tools/data/spells/spells-efa.json">
         <label class="sr" for="hb5_src">Only this source (optional)</label><input type="text" id="hb5_src" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Source, e.g. EFA" class="hb5Src"></div>
       <div class="row hb5Row">${act('brew5Fetch', undefined, 'Fetch and check', 'btn small')}${act('brew5Paste', undefined, 'Paste JSON instead', 'btn small ghost')}</div>
-      <p class="muted small">5etools carries book content that belongs to its publishers: use it for your own table.</p></div>
+      <p class="hb5Warn" role="note"><b>⚠ Check what you import.</b> 5etools data is converted automatically, so some entries may come out incomplete or not quite right (effects, scaling, special rules). Read the warnings in the preview and look over each entry after importing. Book content belongs to its publishers: use it for your own table.</p></div>
     <details class="hbGuide"><summary>How to write homebrew in Markdown</summary>
       <p>Each entry starts with a heading that says what it is, then one field per line, then the text. Italian names work too.</p>
       <pre># Spell: Ember Lash
@@ -2866,7 +2867,9 @@ const ACT_BREW = {
   brewCat(k){ G.brewCat = k; G.brewEdit = null; G.brewDraft = null; G.brewView = 'edit'; renderPage(); },
   brewNewKind(k){ if (!Object.hasOwn(BREW, k)) return; G.brewCat = k; G.brewEdit = null; G.brewDraft = null; G.brewView = 'edit'; renderPage(); brewTop(); $('#bw_n')?.focus({preventScroll:true}); },
   brewHome(){ G.brewView = 'home'; G.brewEdit = null; G.brewDraft = null; renderPage(); brewTop(); },
-  brewGo(){ const t = $('#hb_create'); t?.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'}); t?.querySelector('.hbTile')?.focus({preventScroll:true}); },
+  brewGo(w){
+    const imp = w === 'import', t = $(imp ? '#hb_import' : '#hb_create'); t?.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'});
+    (imp ? $('#hb_imp_h') : t?.querySelector('.hbTile'))?.focus({preventScroll:true}); },
   brewFilter(k){ G.brewFilter = k; renderPage(); },
   brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; closeModal(); G.brewCat = it.cat; G.brewEdit = id; G.brewDraft = null; G.brewView = 'edit';
     if (G.chapter !== 'workshop') turnTo('workshop'); else { renderPage(); brewTop(); } $('#bw_n')?.focus({preventScroll:true}); },
@@ -4138,7 +4141,7 @@ function hb5Prefer24(list){
   return {out, dropped:list.length - out.length};
 }
 async function hb5Review(json, name, srcWanted, from, entry, notes0 = []){
-  let base = null, notes = [...notes0];
+  let base = null, notes = [...notes0, 'Converted automatically from 5etools data: it can be incomplete or slightly off, so read the warnings and check each entry after importing.'];
   if (!json.baseitem && Array.isArray(json.item) && json.item.some(i => isObj(i) && i.baseItem && !i.dmg1) && from){
     try { base = (await hb5Load('items-base.json')).json.baseitem; } catch (e) { notes.push('Magic weapons borrow their dice from the base items file, which could not be loaded now: they come in without damage until you import “Weapons (base items)” first.'); }
   }
