@@ -712,6 +712,11 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .hbChecks h4{margin:0 0 4px}
 .hbChecks .hbMsgs{margin-left:0}
 .hbOk{margin:0;color:#2f5d34}
+.hb5{margin-top:14px;padding:14px;border:1px solid var(--gold3);border-radius:12px;background:var(--surf)}
+.hb5 h4{margin:0 0 6px}
+.hb5Row{gap:8px;margin-top:8px;flex-wrap:wrap}
+.hb5Row input[type=text],.hb5Row select{flex:1 1 220px;min-width:0;min-height:44px}
+.hb5Row .hb5Src{flex:0 1 150px}
 .hbGuide{margin-top:10px}
 .hbGuide pre{white-space:pre-wrap;font-size:13px;background:var(--surf);border:1px solid var(--gold3);border-radius:8px;padding:8px 10px;overflow:auto}
 .hbGuide li{margin:3px 0}
@@ -2773,6 +2778,13 @@ function brewHomeHTML(){
     <div class="drop" id="brewDrop"><p><b>Drop a .md or .json file here</b></p>
       <p class="muted small">Homebrew written in Markdown, a Grimoire homebrew export, or a 5etools-style file with spells, creatures, items, feats, species, backgrounds, classes or subclasses. Every entry is checked against the rules (names, levels, schools, skills, feats, proficiencies, ability scores, sizes, challenge, hit points, bonuses…); you see the errors and warnings and choose what to keep.</p>
       <div class="row" style="justify-content:center;gap:8px"><label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,.md,.markdown,.txt,application/json,text/markdown,text/plain" class="sr">${act('brewMdPaste', undefined, 'Paste Markdown', 'btn small ghost')}${act('brewMdTemplate', undefined, 'Markdown template', 'btn small ghost')}${n ? act('brewExportMd', undefined, 'Export as Markdown', 'btn small ghost') : ''}</div></div>
+    <div class="hb5" id="hb5"><h4>From 5etools</h4>
+      <p class="muted small">Pick a list or paste a 5e.tools data link (or just a file name like <code>spells/spells-efa.json</code>). Your browser fetches it straight from the source, then you get the same check and tick-list as any import. No AI, nothing leaves your device.</p>
+      <div class="row hb5Row"><label class="sr" for="hb5_pre">Ready-made lists</label><select id="hb5_pre"><option value="">Choose a list…</option>${HB5_PRESETS.map(([f, t]) => `<option value="${esc(f)}">${esc(t)}</option>`).join('')}</select></div>
+      <div class="row hb5Row"><label class="sr" for="hb5_url">5etools link or file</label><input type="text" id="hb5_url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://5e.tools/data/spells/spells-efa.json">
+        <label class="sr" for="hb5_src">Only this source (optional)</label><input type="text" id="hb5_src" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Source, e.g. EFA" class="hb5Src"></div>
+      <div class="row hb5Row">${act('brew5Fetch', undefined, 'Fetch and check', 'btn small')}${act('brew5Paste', undefined, 'Paste JSON instead', 'btn small ghost')}</div>
+      <p class="muted small">5etools carries book content that belongs to its publishers: use it for your own table.</p></div>
     <details class="hbGuide"><summary>How to write homebrew in Markdown</summary>
       <p>Each entry starts with a heading that says what it is, then one field per line, then the text. Italian names work too.</p>
       <pre># Spell: Ember Lash
@@ -3841,10 +3853,63 @@ function pre5(list){
 const flags5 = x => [].concat(x || []).flatMap(o => isObj(o) ? Object.keys(o).filter(k => o[k] === true) : []);
 const acts5 = arr => [].concat(arr || []).filter(isObj).map(a => ({n:plain5(a.name || ''), x:flat5(a.entries ?? a.entry ?? '')})).filter(a => a.n || a.x);
 // one converter per 5etools list; each returns the object a Workshop form would save
+/* ---- spells: the structured "What it does" picker, read from 5etools' own tags (deterministic, no guessing beyond them) ---- */
+function fx5(o, pw){
+  const blob = JSON.stringify(o.entries || []), hi = JSON.stringify(o.entriesHigherLevel || []), f = {};
+  const dm = blob.match(/\{@damage ([^}|]+)\}/), dd = dm ? dm[1].replace(/\s+/g, '') : '';
+  const sv = [].concat(o.savingThrow || [])[0], dts = [].concat(o.damageInflict || []).map(t => hbPick(DMG_TYPES, t)).filter(Boolean);
+  if ([].concat(o.spellAttack || []).length) f.mode = 'attack'; else if (sv && /^\d+d\d+$/i.test(dd)){ f.mode = 'save'; f.ab = String(sv).slice(0, 3).toLowerCase(); }
+  if (/^\d+d\d+$/i.test(dd) && dts.length){ f.dd = dd; f.dt = dts[0]; if (dts.length > 1) pw.push(`Several damage types (${dts.join(', ')}): the effect picker holds ${dts[0]}, the text keeps them all.`); }
+  else if (dm && dd) pw.push(`Damage “${dm[1]}” is not plain dice, so it stays in the text only.`);
+  if (f.mode === 'save' && f.dd && /half as much damage|half damage/i.test(blob)) f.half = true;
+  const sh = blob.match(/(\d+)-foot(?:-radius)?[- ]?(?:\{@variantrule )?(Cone|Cube|Cylinder|Emanation|Line|Sphere)/i); if (sh){ f.shape = tc5(sh[2].toLowerCase()); f.size = +sh[1]; }
+  const hl = blob.match(/regains? (?:a number of )?\{@variantrule Hit Points[^}]*\} equal to \{@(?:dice|damage) (\d+d\d+)\}/i); if (hl){ f.heal = hl[1]; if (/plus your spellcasting ability modifier/i.test(blob)) f.hm = true; }
+  const up = hi.match(/\{@scale(?:damage|dice) [^|}]*\|[^|}]*\|(\d+d\d+)\}/i); if (up && (f.dd || f.heal) && !(+o.level === 0)) f.up = up[1];
+  if (+o.level === 0 && o.scalingLevelDice && f.dd) f.cant = true;
+  return Object.keys(f).length ? f : null;
+}
+/* ---- weapons and base items: 5etools codes → the Weapon form's pickers ---- */
+const DMG5 = {P:'Piercing', S:'Slashing', B:'Bludgeoning', N:'Necrotic', R:'Radiant', F:'Fire', C:'Cold', A:'Acid', L:'Lightning', T:'Thunder', O:'Force', Y:'Psychic', I:'Poison'};
+const PROP5 = {A:'Ammunition', F:'Finesse', H:'Heavy', L:'Light', LD:'Loading', R:'Reach', T:'Thrown', '2H':'Two-Handed', V:'Versatile'};
+const PROPX5 = {S:'Special', RLD:'Reload', BF:'Burst fire', AF:'Ammunition (firearm)', OTH:'Other'};
+const ONE5 = new Set(['XPHB', 'XDMG', 'XMM', 'EFA']);   // 2024-rules books (their entries carry no edition field)
+let BASE5 = new Map();   // base items by "name|source", so a magic weapon can borrow its dice from "Longsword|XPHB"
+const base5 = ref => { if (!ref) return null; const [n, src = 'PHB'] = String(ref).split('|'); return BASE5.get(norm(n) + '|' + src.toLowerCase()) || BASE5.get(norm(n)) || null; };
+const setBase5 = list => { BASE5 = new Map(); (Array.isArray(list) ? list : []).filter(b => isObj(b) && b.name).forEach(b => { const k = norm(b.name); BASE5.set(k + '|' + String(b.source || 'PHB').toLowerCase(), b); if (!BASE5.has(k) || b.edition === 'one') BASE5.set(k, b); }); };
+const money5 = v => { v = +v; return !(v > 0) ? '' : v >= 100 ? `${+(v / 100).toFixed(2)} gp` : v >= 10 ? `${+(v / 10).toFixed(1)} sp` : `${v} cp`; };
+// fields that change how an item plays but the Workshop has no place for: said out loud in the preview instead of lost silently
+const NOMAP5 = {charges:'charges', recharge:'recharge', attachedSpells:'spells it casts', bonusWeaponDamage:'separate damage bonus', bonusWeaponAttack:'separate attack bonus', bonusSavingThrow:'saving throw bonus', bonusSpellAttack:'spell attack bonus', bonusSpellSaveDc:'spell save DC bonus',
+  critThreshold:'critical range', grantsProficiency:'granted proficiency', resist:'damage resistance', immune:'damage immunity', ability:'ability score change', speed:'speed change', modifySpeed:'speed change', curse:'curse', sentient:'sentient item', ammoType:'ammunition type', strength:'strength requirement', stealth:'stealth penalty', containerCapacity:'container capacity'};
+function unmapped5(o, pw){
+  const hit = Object.keys(NOMAP5).filter(k => o[k] != null && o[k] !== false && !(k === 'strength' && !o[k]) && !(k === 'stealth' && !o[k]) && !(k === 'ammoType'));
+  if (hit.length) pw.push(`Not carried over (the text keeps it): ${[...new Set(hit.map(k => NOMAP5[k]))].join(', ')}.`);
+}
+function weapon5(w, bi, pw){
+  const cat = String(w.weaponCategory || '').toLowerCase(), melee = String(w.type).split('|')[0] === 'M';
+  if (!/^(simple|martial)$/.test(cat)) pw.push('The file gives no Simple or Martial type, so Martial is assumed.');
+  const codes = [].concat(w.property || []).map(p => String(p).split('|')[0]), props = [...new Set(codes.map(c => PROP5[c]).filter(Boolean))], odd = codes.filter(c => !PROP5[c]);
+  if (odd.length) pw.push(`Properties with no tick box were left out: ${odd.map(c => PROPX5[c] || c).join(', ')}.`);
+  const mn = String([].concat(w.mastery || [])[0] || '').split('|')[0], mast = hbPick(WEAPON_MASTERY, mn) || '';
+  if (mn && !mast) pw.push(`Mastery “${mn}” is not one of the 2024 ones, so it was left empty.`);
+  if (!mn && w.edition !== 'one' && !bi) pw.push('No weapon mastery in the file (older edition entries have none).');
+  const rg = String(w.range || '').match(/^(\d+)\s*\/\s*(\d+)$/), vers = codes.includes('V');
+  if (w.dmg2 && !vers) pw.push(`Second damage “${w.dmg2}” has no Versatile property, so it was left out.`);
+  if (!/^\d+d\d+$/i.test(String(w.dmg1).replace(/\s+/g, ''))) pw.push(`Damage “${w.dmg1}” is a flat number: the form only holds dice like 1d6, so it needs fixing in the file.`);
+  const mb = parseInt(w.bonusWeapon, 10) || 0, rar = String(w.rarity || 'none');
+  const out = {n:w.name, wc:`${cat === 'simple' ? 'Simple' : 'Martial'} ${melee ? 'Melee' : 'Ranged'}`, dd:String(w.dmg1).replace(/\s+/g, ''), dt:DMG5[w.dmgType], props, vd:vers && w.dmg2 ? String(w.dmg2) : '', mast,
+    rn:rg ? +rg[1] : '', rl:rg ? +rg[2] : '', mb, rar:rar === 'none' || rar === 'None' ? (mb ? 'Uncommon' : 'Mundane') : tc5(rar), att:!!w.reqAttune, wt:+w.weight || '', val:money5(w.value),
+    sp:'', x:(typeof w.reqAttune === 'string' ? `*Requires attunement ${plain5(w.reqAttune)}.*\n` : '') + text5(w.entries)};
+  if (!out.x) out.x = `${out.wc} weapon: ${out.dd} ${out.dt}${props.length ? '. Properties: ' + props.join(', ') : ''}${rg ? ` (range ${rg[1]}/${rg[2]})` : ''}${mast ? '. Mastery: ' + mast : ''}.`;
+  if (!HB_RARITY_LIST.includes(out.rar) && out.rar !== 'Mundane'){ pw.push(`Rarity “${out.rar}” is not a known one, so ${mb ? ['Uncommon', 'Rare', 'Very Rare'][mb - 1] : 'Rare'} was picked: change it if the book says otherwise.`); out.rar = mb ? ['Uncommon', 'Rare', 'Very Rare'][mb - 1] : 'Rare'; }
+  if (rar === 'none' && mb) pw.push('The file has no rarity for this magic weapon, so Uncommon was picked: change it if the book says otherwise.');
+  unmapped5(w, pw);
+  const r = {_cat:'weapons', ...out}; if (pw.length) r._pw = pw; return r;
+}
 const FROM5 = {
-  spell:{cat:'spells', to:o => ({n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
+  spell:{cat:'spells', to:o => { const pw = [], sp = {n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
     conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set((o.classes?.fromClassList || []).map(c => c.name))],
-    x:text5(o.entries), h:flat5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))})},
+    x:text5(o.entries), h:flat5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))};
+    const fx = fx5(o, pw); if (fx) sp.fx = fx; if (pw.length) sp._pw = pw; return sp; }},
   feat:{cat:'feats', to:o => ({n:o.name, ty:FEAT5[String(o.category || 'G').split(':')[0]] || 'General', pre:pre5(o.prerequisite), rep:!!o.repeatable, x:text5(o.entries)})},
   race:{cat:'species', to:o => {
     const sz = [].concat(o.size || ['M']).map(s => SIZE5[s] || s), named = [].concat(o.entries || []).filter(e => isObj(e) && e.name);
@@ -3861,9 +3926,18 @@ const FROM5 = {
   }},
   item:{cat:'items', to:o => {
     o = o.inherits ? {...o.inherits, ...o, name:o.name} : o;
-    const ty = String(o.type || '').split('|')[0], rar = tc5(o.rarity || 'common');
-    return {n:o.name, cat:o.wondrous ? 'Wondrous Item' : ITEM5[ty] || (o.weapon || o.weaponCategory ? 'Weapon' : o.armor ? 'Armor' : 'Wondrous Item'), rar:rar === 'None' ? 'Common' : rar,
+    const pw = [], bi = base5(o.baseItem), w = bi && !o.dmg1 ? {...bi, ...o} : o;   // a magic weapon lists only what it changes from its base weapon
+    const wty = String(w.type || '').split('|')[0];
+    if (w.dmg1 && DMG5[w.dmgType] && (wty === 'M' || wty === 'R')) return weapon5(w, bi, pw);
+    const ty = String(o.type || '').split('|')[0], rar = tc5(o.rarity || 'common'), out = {n:o.name, cat:o.wondrous ? 'Wondrous Item' : ITEM5[ty] || (o.weapon || o.weaponCategory ? 'Weapon' : o.armor ? 'Armor' : 'Wondrous Item'), rar:rar === 'None' ? 'Common' : rar,
       att:!!o.reqAttune, x:(typeof o.reqAttune === 'string' ? `*Requires attunement ${plain5(o.reqAttune)}.*\n` : '') + text5(o.entries)};
+    const bn = String(o.baseItem || '').split('|')[0];
+    if (bn) out.base = bn;
+    const bac = parseInt(o.bonusAc, 10), bw = parseInt(o.bonusWeapon, 10); if (bac) out.acm = bac; if (bw) out.wb = bw;
+    if (o.baseItem && !bi && (out.cat === 'Weapon')) pw.push(`Base weapon “${bn}” was not in the file, so its damage dice are not filled in. Import the base items file too (Weapons and armor) and run this again.`);
+    unmapped5(o, pw);
+    if (pw.length) out._pw = pw;
+    return out;
   }},
   monster:{cat:'monsters', to:o => {
     const ty = isObj(o.type) ? `${isObj(o.type.type) ? (o.type.type.choose || []).join(' or ') : o.type.type || ''}${o.type.tags ? ` (${o.type.tags.map(t => isObj(t) ? t.tag : t).join(', ')})` : ''}` : o.type || '';
@@ -3901,10 +3975,12 @@ const FROM5 = {
   }},
 };
 FROM5.magicvariant = FROM5.item;
+FROM5.baseitem = {cat:'weapons', to:o => { if (!(o.dmg1 && DMG5[o.dmgType])) throw 0; return weapon5(o, null, []); }};   // armor and gear have no Workshop form: they count as left out
 /** Read a whole 5etools file. Returns {items:[{cat, o, src}], skip}: skip counts entries of kinds the Workshop has no form for. */
-function from5(json){
+function from5(json, base){
   const items = []; let skip = 0;
   if (!isObj(json)) return {items, skip};
+  setBase5(base || json.baseitem);
   for (const [k, arr] of Object.entries(json)){
     if (k.startsWith('_') || !Array.isArray(arr)) continue;
     const conv = Object.hasOwn(FROM5, k) ? FROM5[k] : null;
@@ -3914,7 +3990,7 @@ function from5(json){
       // a "_copy" entry only lists its changes from another one in the same file
       const base = raw._copy && arr.find(b => isObj(b) && b !== raw && b.name === raw._copy.name && (!raw._copy.source || b.source === raw._copy.source));
       const o = base ? {...base, ...raw} : raw;
-      try { const out = conv.to(o, json); if (out?.n?.trim()) items.push({cat:conv.cat, o:out, src:String(raw.source || '')}); else skip++; }
+      try { const out = conv.to(o, json); if (out?.n?.trim()){ const {_cat, _pw, ...rest} = out; items.push({cat:_cat || conv.cat, o:rest, src:String(raw.source || ''), ed:raw.edition || (ONE5.has(raw.source) ? 'one' : 'classic'), ...(_pw ? {pw:_pw} : {})}); } else skip++; }
       catch (e) { skip++; }
     }
   }
@@ -3997,6 +4073,86 @@ Object.assign(ACT_BREW, {
     G.brewCat = d.cat; G.brewEdit = null; G.brewDraft = d; G.brewView = 'edit'; closeModal();
     if (G.chapter === 'workshop'){ renderPage(); brewTop(); } else turnTo('workshop');
     toast(`${d.o.n} is in the ${BREW[d.cat].t.toLowerCase()} form: change what you like, then press Add.`);
+  },
+});
+
+
+/* ---- fetch straight from 5etools (or its GitHub mirror) and review ---- */
+const HB5_MIRROR = 'https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/';
+const HB5_PRESETS = [['spells/spells-xphb.json', 'Spells · Player’s Handbook 2024'], ['spells/spells-efa.json', 'Spells · Eberron: Forge of the Artificer'], ['items-base.json', 'Weapons (base items)'], ['items.json', 'Magic items and magic weapons'],
+  ['feats.json', 'Feats'], ['backgrounds.json', 'Backgrounds'], ['races.json', 'Species'], ['bestiary/bestiary-xmm.json', 'Creatures · Monster Manual 2025']];
+/** What the person typed → the data path inside 5etools ("spells/spells-efa.json"), or an error to show. */
+function hb5Path(v){
+  v = String(v || '').trim(); if (!v) return {err:'Pick a list or paste a link first.'};
+  let path = v;
+  if (/^https?:\/\//i.test(v) || /^(www\.)?5e\.tools\//i.test(v)){
+    let u; try { u = new URL(/^https?:/i.test(v) ? v : 'https://' + v); } catch (e) { return {err:'That is not a valid link.'}; }
+    path = u.pathname; if (/(^|\.)5e\.tools$/i.test(u.hostname) && !/\/data\//.test(path)) return {err:'That is a page of the site, not a data file. Data links look like 5e.tools/data/spells/spells-efa.json.', page:true};
+    if (!/\/data\//.test(path) && !/githubusercontent\.com$/i.test(u.hostname)) return {err:'Only 5etools data links work here (…/data/…json). For anything else use Choose file or Paste JSON.', direct:v};
+  }
+  path = path.replace(/^.*\/data\//, '').replace(/^\/+/, '').replace(/^data\//, '');
+  if (!/\.json$/i.test(path)) return {err:'It has to end in .json, like spells/spells-efa.json.'};
+  if (/\.\.|[?#\s]/.test(path)) return {err:'That path does not look right.'};
+  return {path};
+}
+async function hb5Get(url, ms = 30000){
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  try { const r = await fetch(url, {signal:ac.signal, cache:'no-cache'}); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(t); }
+}
+/** 5e.tools first; if the browser or the site refuses (CORS, offline…), the same file from the open 5etools mirror on GitHub. */
+async function hb5Load(path){
+  const tries = [['5e.tools', 'https://5e.tools/data/' + path], ['the 5etools mirror on GitHub', HB5_MIRROR + path]];
+  let last;
+  for (const [from, url] of tries){ try { return {json:await hb5Get(url), from}; } catch (e) { last = e; } }
+  throw last;
+}
+// 2024 rules win when the same name exists in both editions; an entry twice in the same edition is kept for the checker to flag
+function hb5Prefer24(list){
+  const has24 = new Set(list.filter(it => it.ed === 'one').map(it => it.cat + '|' + norm(it.o.n)));
+  const out = list.filter(it => !(it.ed !== 'one' && has24.has(it.cat + '|' + norm(it.o.n))));
+  return {out, dropped:list.length - out.length};
+}
+async function hb5Review(json, name, srcWanted, from){
+  let base = null, notes = [];
+  if (!json.baseitem && Array.isArray(json.item) && json.item.some(i => isObj(i) && i.baseItem && !i.dmg1) && from){
+    try { base = (await hb5Load('items-base.json')).json.baseitem; } catch (e) { notes.push('Magic weapons borrow their dice from the base items file, which could not be loaded now: they come in without damage until you import “Weapons (base items)” first.'); }
+  }
+  if (Array.isArray(json.spell) && json.spell.some(sp => isObj(sp) && !sp.classes)){
+    // 5etools keeps "which class gets which spell" in one separate file
+    try { const lk = (await hb5Load('spells/sources.json')).json;
+      json = {...json, spell:json.spell.map(sp => { if (!isObj(sp) || sp.classes) return sp; const cl = (lk?.[sp.source]?.[sp.name]?.class || []).filter(c => !c.definedInSource); return cl.length ? {...sp, classes:{fromClassList:cl}} : sp; })}; }
+    catch (e) { notes.push('The class lists of the spells could not be loaded now, so the spells come in without a class: tick the classes in each one afterwards.'); }
+  }
+  const r = from5(json, base);
+  let list = r.items, skip = r.skip;
+  const d = hb5Prefer24(list); list = d.out; if (d.dropped) notes.push(`${d.dropped} older-edition ${d.dropped === 1 ? 'entry was' : 'entries were'} left out because the 2024 version of the same name is in the file.`);
+  if (srcWanted){ const w = srcWanted.toLowerCase(), before = list.length; list = list.filter(it => it.src.toLowerCase() === w); if (!list.length){ toast(`Nothing from source “${srcWanted}” in that file.`); return; } notes.push(`Only source ${srcWanted.toUpperCase()}: ${before - list.length} other entries hidden.`); }
+  if (!list.length){ toast(`Nothing Homebrew can use in that file${skip ? ` (${skip} entries of kinds it has no form for)` : ''}.`); return; }
+  brewReview(list, name + (from ? ` (from ${from})` : ''), {skip, notes});
+}
+Object.assign(ACT_BREW, {
+  brew5Pre(){ const v = $('#hb5_pre')?.value; if (v){ $('#hb5_url').value = v; } },
+  async brew5Fetch(){
+    const url = $('#hb5_url')?.value, h = hb5Path(url), src = ($('#hb5_src')?.value || '').trim();
+    if (h.err){ toast(h.err); return; }
+    toast('Fetching…');
+    let got;
+    try { got = await hb5Load(h.path); }
+    catch (e) { toast('Could not fetch that file. Check the link, or open it in a new tab, copy everything and use Paste JSON.'); return; }
+    if (!isObj(got.json)){ toast('That file is not 5etools data.'); return; }
+    await hb5Review(got.json, h.path.split('/').pop().replace(/\.json$/i, ''), src, got.from);
+  },
+  brew5Paste(){
+    modal(`<div class="head"><h2>Paste 5etools JSON</h2><span class="spacer"></span>${closeBtn()}</div>
+      <p class="muted">Open the data file in 5e.tools (or any 5etools-style source), select all, copy and paste it here. You see what each entry becomes, and what could not be carried over, before anything is added.</p>
+      <label class="sr" for="hb5_json">JSON</label><textarea id="hb5_json" style="width:100%;min-height:240px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px" placeholder='{"spell":[{"name":"Ember Lash", …}]}' autofocus></textarea>
+      <div class="row mt">${act('brew5PasteGo', undefined, 'Check', 'btn')}${act('close', undefined, 'Cancel', 'btn ghost')}</div>`, {label:'Paste 5etools JSON'});
+  },
+  async brew5PasteGo(){
+    const t = $('#hb5_json')?.value || ''; if (!t.trim()){ toast('Paste the JSON first.'); return; }
+    let j; try { j = JSON.parse(t); } catch (e) { toast('That is not valid JSON.'); return; }
+    if (!isObj(j)){ toast('Expected a 5etools file like {"spell":[…]}.'); return; }
+    await hb5Review(j, 'Pasted JSON', '', '');
   },
 });
 
@@ -5440,6 +5596,7 @@ function wire(){
     if (el.classList.contains('dbtn') && el.dataset.act === 'die' && !reduceMotion()) el.animate([{transform:'rotate(0) scale(1)'}, {transform:'rotate(-200deg) scale(1.12)', offset:.6}, {transform:'rotate(-360deg) scale(1)'}], {duration:520, easing:'cubic-bezier(.3,.8,.3,1)'});
   });
   document.addEventListener('change', e => {
+    if (e.target.id === 'hb5_pre'){ ACT_BREW.brew5Pre(); return; }
     if (e.target.id === 'shelf_sort'){ G.shelfSort = e.target.value; savePrefs(); renderShelf(); return; }
     const el = e.target;
     if (el.tagName === 'SELECT' && el.value === '__custom'){   // subclass picker: swap in a text field for one the library doesn't have
