@@ -58,6 +58,11 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 ### 2026-11-17
 - **Fatto**: indizio di scorrimento dello scaffale eroi sotto 980 px, stessa maschera/animazione dei segnalibri (`--chF`/`--chL`, `chapFade`), con base `--chL:0px` perché senza overflow la timeline è inattiva e non deve sfumare. Nessuna nuova licenza. Immagini: `2026-11-17-scaffale-prima|dopo-*.png`.
 
+### 2026-11-18
+- **Fatto**: NPC e ticket a 390 px, solo CSS (blocco dopo `.npMini`). Tocchi da 44 px con `@media (pointer:coarse)` per campi `#npForm`, `.npEye`, `.npChip`, `#tk_*`, `.omni input`, `.cloudBtn`; campo file con `::file-selector-button` in stile pulsante oro. Sotto 560 px l'etichetta delle sezioni nascoste è "🔒 hidden" (prima copriva il titolo). Nastro `.npBox.hid>h4` #6a5a43 (5,1:1 con il testo chiaro). Nessuna nuova licenza. Immagini: `2026-11-18-npc-*|ticket-*-prima|dopo-*.png`.
+- **Imparato**: negli script di misura NON fare screenshot `fullPage` prima di misurare: Chromium ripristina le metriche e `pointer:coarse` smette di valere (i tocchi risultano 34 px invece di 44). Misurare prima, fotografare dopo; aspettare ~1 s dopo l'apertura di una finestra (animazione di scala).
+- **Prossime idee**: link legali del piè di pagina e pulsanti dei dadi del vassoio (32 px).
+
 ### 2026-11-16
 - **Fatto**: controllo della stampa A4 con PDF reale (`page.pdf`, `window.print` neutralizzato, clic su `[data-act="print"]`). "Death Saves" ora entra; tagliato era "Passive Perc." nei `.sBox.sm`. Etichette `sm` a 4,8 pt, `letter-spacing:0`, ultimo riquadro `flex:.85`. Nessuna nuova licenza. Immagini: [prima](2026-11-16-stampa-prima.png), [dopo](2026-11-16-stampa-dopo.png).
 - **Imparato**: la logica dell'app è in una IIFE, quindi `G`/`sheetHTML` non sono raggiungibili da `page.evaluate`: usare i pulsanti reali.

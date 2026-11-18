@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-18 · design
+- **Fatto** · contrasto e tocchi di NPC e ticket a 390 px (compito del piano, solo CSS). Misurati con Chromium touch: erano sotto i 44 px i campi dei moduli NPC e ticket (33-37 px), le caselle "visibile ai giocatori" (32), i filtri dei gruppi (36), "Open" nell'elenco (32), il campo file della segnalazione (24) e, nell'intestazione, ricerca e "Sign in" (36-37). Nel dossier l'etichetta "🔒 hidden from players" copriva i titoli delle sezioni ("PROFILE & ROLE"): sotto 560 px diventa "🔒 hidden". Nastro delle sezioni nascoste #7b6a52 → #6a5a43 (contrasto del testo da 4,0 a 5,1). Le sei caselle delle statistiche vanno su 3 colonne a telefono. `CACHE` → `grimoire-ds1120c`.
+- **File**: index.html (CSS NPC, dopo `.npMini`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-18-npc-*|ticket-*-prima|dopo-*.png`.
+- **Verifica**: aree sotto 44 px a 390 px: zero tra i controlli di NPC e ticket (restano solo i link del piè di pagina, fuori compito); scrollWidth pari alla finestra a 390/768/1440; nessun errore nuovo; `telefono`, `npc`, `ticket` 54/54. Barra PF e zone dello sviluppo non toccate. Nessuno bug [UX] chiuso. Sala non aggiornata (nessuno stato cambiato).
+- **Prossima idea**: link legali del piè di pagina (15 px di altezza) e pulsanti dei dadi del vassoio (32 px) a telefono.
+
 ## 2026-11-18 · sviluppo
 - **Backend (B-054, robustezza)**: `load()` dà un `id` nuovo a ogni eroe senza `id` e risalva; modifiche poi persistenti, formato invariato. Bug spostato in "Risolti". Dati utente: PR verso main.
 - **Frontend (richiesta di Capo, barra PF)**: nuovo campo facoltativo `hp.maxOv` ("Max HP override", vuoto = spento, tolto dal salvataggio se vuoto; eroi vecchi invariati). Helper `hpMax(c)` usato da cura, riposo lungo, Dado Vita, incontro, danno massivo. Barra con PF temporanei in azzurro; override minore = coda viola a righe, cura bloccata all'override; maggiore = parte extra dorata (solo bordo se la vita è sotto il vecchio massimo).

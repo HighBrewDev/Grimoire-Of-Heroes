@@ -854,6 +854,23 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .npBox.dmOnly::after{content:"" !important}
 .npBox.dmOnly>:not(h4){margin-top:7px}
 .npMini{display:flex;align-items:center;gap:8px}
+/* telefono: NPC e segnalazioni (18/11, designer): tocchi da 44 px, etichetta "nascosto" che non copre il titolo, contrasto del nastro */
+.npBox.hid>h4{background:#6a5a43}
+@media (max-width:560px){
+  .npBox.hid::after{content:"🔒 hidden"}
+  .npStats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (pointer:coarse){
+  .npChip{min-height:44px;padding:6px 14px}
+  .npEye{min-height:44px;gap:8px;padding:0 4px}.npEye input{width:22px;height:22px}
+  #npForm input[type=text],#npForm input[type=number],#npForm input[type=search],#npForm select,.npBar input[type=search],.npStats input,#tk_kind,#tk_sev,#tk_title{min-height:44px}
+  #npForm button.btn,#npForm button.sb,.npLine .acts .sb{min-height:44px}
+  #tk_file{min-height:44px;width:100%;padding:6px 0}
+  #tk_file::file-selector-button{min-height:44px;margin-right:10px;padding:0 14px;border:1px solid #6d5210;border-radius:9px;background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,#9a7a15);color:#2a1c08;font:inherit;font-weight:700;font-size:15px}
+  .cloudBtn{min-height:44px;min-width:44px}
+  .omni input{min-height:44px}
+  .npLine .t .xref{min-height:44px;display:inline-flex;align-items:center}
+}
 @container (min-width:640px){
   .npTop{grid-template-columns:minmax(0,1fr) 210px;grid-template-areas:"head photo" "facts photo";grid-template-rows:auto 1fr;gap:12px 22px}
   .npFactsWrap{grid-template-columns:repeat(2,minmax(0,1fr))}
