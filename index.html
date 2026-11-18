@@ -274,6 +274,7 @@ details.fold > .in{padding:0 12px 10px}
 .prose th,.prose td{border-bottom:1px solid var(--line);padding:3px 8px;text-align:left;vertical-align:top}
 .prose th{font-family:var(--f-display);font-size:12.5px;letter-spacing:.04em}
 .tblWrap{overflow-x:auto;max-width:100%}
+.grants{margin:2px 0 6px;display:flex;flex-wrap:wrap;gap:4px}.chip.gr{font-size:12px;padding:1px 8px}
 .ctable{border-collapse:collapse;font-size:14px;width:100%}
 .ctable th,.ctable td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;white-space:nowrap}
 .ctable td.wrap{white-space:normal;min-width:180px}
@@ -2321,11 +2322,11 @@ function entryBody(e){
       const t = o.tbl ? `<details class="fold"><summary>Class table</summary><div class="in tblWrap"><table class="ctable"><thead><tr><th>Lv</th><th>PB</th><th>Features</th></tr></thead><tbody>${o.tbl.map(r => `<tr><td>${r.l}</td><td>+${r.pb}</td><td class="wrap">${esc(r.f.join(', '))}</td></tr>`).join('')}</tbody></table></div></details>` : '';
       return `${o.x ? `<p>${esc(o.x)}</p>` : ''}${kv('Saving Throws', esc((o.saves || []).join(', ')))}${kv('Proficiencies', esc((o.prof || []).join(', ')))}${(o.choice || []).map(x => `<p class="muted">${esc(x)}</p>`).join('')}
         ${o.sp ? `<details class="fold"><summary>Spellcasting (${esc(o.sp.ab)})</summary><div class="in">${o.sp.info.map(i => `<h4>${esc(i.n)}</h4>${md(i.x)}`).join('')}</div></details>` : ''}${t}
-        ${(o.f || []).map(f => `<details class="fold"><summary>Lv ${f.l} · ${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`).join('')}
+        ${e.src === 'Homebrew' ? classExtraHtml(o) : ''}${(o.f || []).map(f => `<details class="fold"><summary>Lv ${f.l} · ${esc(f.n)}</summary><div class="in">${grantChips(f.g)}${md(f.x)}</div></details>`).join('')}
         ${(o.subs || []).map(s => `<details class="fold"><summary>Subclass · ${esc(s.n)}</summary><div class="in"><p><i>${esc(s.sum || '')}</i></p>${md(s.x)}${(s.f || []).map(f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${md(f.x)}`).join('')}</div></details>`).join('')}
         ${(o.subsQuick || []).length ? `<p class="muted">Subclasses: ${o.subsQuick.map(s => QUICK.subclasses.some(q => q.n === s) ? xref(s) : esc(s)).join(' · ')}</p>` : ''}`;
     }
-    case 'subclasses': return `${o.sum && e.src === 'Homebrew' ? `<p><i>${esc(o.sum)}</i></p>` : ''}${md(o.x)}${(o.f || []).map(f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${md(f.x)}`).join('')}`;
+    case 'subclasses': return `${o.sum && e.src === 'Homebrew' ? `<p><i>${esc(o.sum)}</i></p>` : ''}${md(o.x)}${(o.f || []).map(featHtml).join('')}`;
     case 'equipment': return `${o.sum ? kv('Damage', esc(o.sum)) : ''}${o.ac ? kv('Armor Class', esc(o.ac)) : ''}${o.strmin ? kv('Strength', o.strmin) : ''}${o.stealth ? kv('Stealth', 'Disadvantage') : ''}${o.props ? kv('Properties', o.props.map(p => xref(p)).join(', ')) : ''}${o.m ? kv('Mastery', xref(o.m)) : ''}${md(o.x)}`;
     case 'monsters': return statblock(o);
     default: return `${tip}${md(o.x)}`;
@@ -2885,8 +2886,12 @@ const ACT_BREW = {
     if (!o.n){ toast('Give it a name first.'); $('#bw_n')?.focus(); return; }
     const chk = checkBrew(cat, o, {});
     if (chk.err.length){ brewLivePreview(); toast(`Can’t save yet: ${chk.err[0]}${chk.err.length > 1 ? ` And ${chk.err.length - 1} more problem${chk.err.length > 2 ? 's' : ''}, listed under Checks.` : ''}`); return; }
-    Object.assign(o, chk.o);
     const editing = G.brewEdit && BREW_ITEMS.find(x => x.id === G.brewEdit);
+    if (editing && (cat === 'classes' || cat === 'subclasses') && isObj(editing.o)){   // what the form has no box for (grants, level table…) stays on a feature that keeps its level and name
+      (o.f || []).forEach(f => { const was = (editing.o.f || []).find(x => x.l === f.l && x.n === f.n && x.g); if (was) f.g = structuredClone(was.g); });
+      if (cat === 'classes') ['ct', 'adv', 'eq'].forEach(k => { if (editing.o[k] != null) o[k] = structuredClone(editing.o[k]); });
+    }
+    const chk2 = checkBrew(cat, o, {}); Object.assign(o, chk2.o);
     if (!editing && !plusOK() && BREW_ITEMS.length >= FREE_BREW) return plusModal('brew');
     if (BREW_ITEMS.some(x => x.cat === cat && norm(x.o.n) === norm(o.n) && x !== editing)){ toast(`You already have a ${BREW[cat].t.toLowerCase()} called ${o.n}.`); return; }
     if (editing) editing.o = o; else BREW_ITEMS.push({id:uid(), cat, o});
@@ -2981,8 +2986,72 @@ function hbFeatures(arr, E, W){
     const l = typeof f.l === 'number' ? f.l : parseInt(f.l, 10), n = hbStr(f.n), x = hbStr(f.x).replace(/\s*\n+\s*/g, ' ');
     if (!Number.isInteger(l) || l < 1 || l > 20) E(`Feature “${n || '?'}” has level “${f.l ?? ''}”: features go from level 1 to 20.`);
     if (!n) W(`A level ${f.l} feature has no name.`); else if (!x) W(`Feature “${n}” has no text.`);
-    return {l:Number.isInteger(l) ? clamp(l, 1, 20) : 1, n, x};
+    const g = hbGrants(f.g);
+    return {l:Number.isInteger(l) ? clamp(l, 1, 20) : 1, n, x, ...(g ? {g} : {})};
   }).sort((a, b) => a.l - b.l);
+}
+/* What a feature gives, as structured data next to its text: activation, resistances, immunities, speeds, languages, feats, proficiencies, spells, uses, forced save. Anything unknown is dropped. */
+const HB_ACT = ['action', 'bonus', 'reaction'], HB_REST = ['short', 'long', 'short or long'], HB_SPD = ['walk', 'fly', 'swim', 'climb', 'burrow'];
+function hbGrants(g){
+  if (!isObj(g)) return null;
+  const arr = (v, max = 12) => (Array.isArray(v) ? v : []).filter(x => typeof x === 'string').map(x => x.trim().slice(0, 60)).filter(Boolean).slice(0, max), out = {};
+  const a = arr(g.act, 3).filter(x => HB_ACT.includes(x)); if (a.length) out.act = a;
+  for (const k of ['res', 'imm']){ const v = arr(g[k]).filter(x => DMGT5.includes(x.toLowerCase())).map(tc5); if (v.length) out[k] = v; }
+  for (const k of ['cimm', 'lang', 'feat', 'prof', 'sp']){ const v = arr(g[k]); if (v.length) out[k] = v; }
+  if (isObj(g.spd)){ const sp = Object.fromEntries(Object.entries(g.spd).filter(([k, v]) => HB_SPD.includes(k) && Number.isFinite(+v) && +v > 0 && +v <= 300).map(([k, v]) => [k, Math.round(+v)])); if (Object.keys(sp).length) out.spd = sp; }
+  if (g.asi === true) out.asi = true;
+  if (HB_REST.includes(g.rest)) out.rest = g.rest;
+  if (Number.isInteger(g.n) && g.n >= 1 && g.n <= 20 || ['PB', 'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].includes(g.n)) out.n = g.n;
+  if (isObj(g.sv) && Object.hasOwn(ABN5, g.sv.ab)){ out.sv = {ab:g.sv.ab}; if (g.sv.dc === 'spell' || (Number.isInteger(g.sv.dc) && g.sv.dc >= 1 && g.sv.dc <= 40)) out.sv.dc = g.sv.dc; }
+  const d = arr(g.dice, 6).filter(x => /^\d+d\d+$/.test(x)); if (d.length) out.dice = d;
+  return Object.keys(out).length ? out : null;
+}
+/** The chips under a feature: what the tome could read out of its text. */
+function grantChips(g){
+  if (!isObj(g)) return '';
+  const c = [], chip = (t, k = '') => c.push(`<span class="chip light gr ${k}">${esc(t)}</span>`);
+  (g.act || []).forEach(a => chip({action:'Action', bonus:'Bonus Action', reaction:'Reaction'}[a], 'act'));
+  if (g.rest) chip(`${g.n ? (g.n === 1 ? '1 use' : g.n === 'PB' ? 'Proficiency Bonus uses' : g.n + ' modifier uses') + ' · ' : ''}back on ${g.rest} rest`, 'use');
+  else if (g.n) chip(g.n === 1 ? '1 use' : g.n + ' uses', 'use');
+  (g.res || []).forEach(x => chip('Resistance: ' + x, 'res')); (g.imm || []).forEach(x => chip('Immunity: ' + x, 'res')); (g.cimm || []).forEach(x => chip('Immune: ' + x, 'res'));
+  Object.entries(g.spd || {}).forEach(([k, v]) => chip(`${k === 'walk' ? 'Speed' : tc5(k) + ' speed'} ${v} ft.`, 'spd'));
+  (g.lang || []).forEach(x => chip('Language: ' + x)); (g.prof || []).forEach(x => chip('Proficiency: ' + x));
+  (g.feat || []).forEach(x => chip('Feat: ' + x, 'feat')); if (g.asi) chip('Ability Score Improvement', 'feat');
+  (g.sp || []).forEach(x => chip('Spell: ' + x, 'sp'));
+  if (g.sv) chip(`${ABN5[g.sv.ab]} save${g.sv.dc ? ' vs ' + (g.sv.dc === 'spell' ? 'spell DC' : 'DC ' + g.sv.dc) : ''}`, 'sv');
+  (g.dice || []).forEach(x => chip('Dice: ' + x));
+  return c.length ? `<p class="grants">${c.join(' ')}</p>` : '';
+}
+const featHtml = f => `<h4>Lv ${f.l} · ${esc(f.n)}</h4>${grantChips(f.g)}${md(f.x)}`;
+const classExtraHtml = o => {
+  const ct = hbTable(o.ct), parts = [];
+  if (ct){
+    const grp = []; ct.cols.forEach(c => { const l = grp[grp.length - 1]; (l && l.g === c.g) ? l.n++ : grp.push({g:c.g, n:1}); });
+    const feats = lv => (o.f || []).filter(f => f.l === lv).map(f => f.n).join(', ') || '—';
+    parts.push(`<details class="fold"><summary>Class table (by level)</summary><div class="in tblWrap"><table class="ctable"><thead>${grp.some(x => x.g) ? `<tr><th colspan="3"></th>${grp.map(x => `<th colspan="${x.n}">${esc(x.g)}</th>`).join('')}</tr>` : ''}<tr><th>Lv</th><th>PB</th><th>Features</th>${ct.cols.map(c => `<th>${esc(c.n)}</th>`).join('')}</tr></thead><tbody>${ct.rows.map((r, i) => `<tr><td>${i + 1}</td><td>+${Math.ceil((i + 1) / 4) + 1}</td><td class="wrap">${esc(feats(i + 1))}</td>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`);
+  }
+  const ad = o.adv; if (isObj(ad)){
+    const bits = [...(ad.opt || []).map(x => `<b>${esc(x.n)}</b>: ${Object.entries(x.by).map(([l, n]) => `${n} known at level ${l}`).join(', ')}`), ...(ad.feat || []).map(x => `<b>${esc(x.n)}</b> feat at level ${Object.keys(x.by).join(', ')}`)];
+    if (bits.length) parts.push(`<p class="muted small">${bits.join(' · ')}</p>`);
+  }
+  if (o.eq) parts.push(`<p class="muted small"><b>Starting equipment.</b> ${esc(o.eq)}</p>`);
+  return parts.join('');
+};
+/** The class table kept as the shape above, nothing else. */
+function hbTable(t){
+  if (!isObj(t) || !Array.isArray(t.cols) || !Array.isArray(t.rows) || t.rows.length !== 20 || t.cols.length > 16) return null;
+  const cols = t.cols.filter(isObj).map(c => ({n:hbStr(c.n).slice(0, 30), g:hbStr(c.g).slice(0, 40)}));
+  if (cols.length !== t.cols.length) return null;
+  return {cols, rows:t.rows.map(r => Array.isArray(r) ? cols.map((_, i) => hbStr(r[i]).slice(0, 12)) : cols.map(() => ''))};
+}
+function hbClassExtra(o){
+  const ct = hbTable(o.ct); if (ct) o.ct = ct; else delete o.ct;
+  if (isObj(o.adv)){
+    const clean = l => (Array.isArray(l) ? l : []).filter(isObj).map(x => ({n:hbStr(x.n).slice(0, 40), by:isObj(x.by) ? Object.fromEntries(Object.entries(x.by).filter(([k, v]) => /^\d{1,2}$/.test(k) && +k >= 1 && +k <= 20 && Number.isInteger(v) && v >= 1 && v <= 20)) : {}})).filter(x => x.n && Object.keys(x.by).length);
+    const a = {}; const f = clean(o.adv.feat), op = clean(o.adv.opt); if (f.length) a.feat = f; if (op.length) a.opt = op;
+    if (Object.keys(a).length) o.adv = a; else delete o.adv;
+  } else delete o.adv;
+  if (o.eq) o.eq = hbStr(o.eq).slice(0, 600); else delete o.eq;
 }
 function hbSkillList(v, E, W, label = 'skill'){
   const out = [];
@@ -3145,7 +3214,7 @@ const HB_RULES = {
     o.spellAb = sa || '';
     if (o.caster && !o.spellAb) E('A spellcasting class needs a spellcasting ability.');
     if (!o.caster && o.spellAb) W('A spellcasting ability is set but the class casts no spells.');
-    o.mcProf = hbStr(o.mcProf); o.x = hbStr(o.x);
+    o.mcProf = hbStr(o.mcProf); o.x = hbStr(o.x); hbClassExtra(o);
     o.f = hbFeatures(o.f, E, W);
     if (!o.f.length) W('No features.');
     else { if (!o.f.some(f => f.l === 1)) W('No feature at level 1.'); if (!o.f.some(f => /subclass|sottoclasse/i.test(f.n + ' ' + f.x))) W('No feature says when the subclass is chosen (2024 classes choose it at level 3).'); }
@@ -3796,7 +3865,8 @@ function lines5(e, out = []){
     case 'abilityDc': out.push(`**${plain5(e.name)} save DC** = 8 + your Proficiency Bonus + your ${(e.attributes || []).map(a => ABN5[a] || a).join(' or ')} modifier`); return out;
     case 'abilityAttackMod': out.push(`**${plain5(e.name)} attack modifier** = your Proficiency Bonus + your ${(e.attributes || []).map(a => ABN5[a] || a).join(' or ')} modifier`); return out;
     case 'spellcasting': out.push(nm + flat5(spellList5(e))); return out;
-    case 'image': case 'gallery': case 'hr': case 'statblock': case 'refClassFeature': case 'refSubclassFeature': case 'refOptionalfeature': return out;
+    case 'refOptionalfeature': { const nm2 = String(e.optionalfeature || '').split('|')[0]; if (nm2) out.push('- ' + tc5(nm2)); return out; }
+    case 'image': case 'gallery': case 'hr': case 'statblock': case 'refClassFeature': case 'refSubclassFeature': return out;
   }
   const sub = lines5(e.entries ?? e.entry ?? [], []);
   if (nm){ if (sub.length && !/^(- |\*\*)| \| /.test(sub[0])) sub[0] = nm + sub[0]; else sub.unshift(nm.trim()); }
@@ -3910,6 +3980,86 @@ function weapon5(w, bi, pw){
   unmapped5(w, pw);
   const r = {_cat:'weapons', ...out}; if (pw.length) r._pw = pw; return r;
 }
+/* ---- classes and subclasses: what 5etools says in structure, and what the feature text says in plain words (no guessing: only phrases the rules always use) ---- */
+const src5 = x => x || 'PHB';
+/** "Wind Speaker|Sorcerer||Storm|XGE|1" (subclass) or "Font of Magic|Sorcerer|XPHB|2" (class) → its parts; the level is always last. */
+function ref5(r){
+  const str = isObj(r) ? String(r.classFeature || r.subclassFeature || '') : String(r), p = str.split('|');
+  return {n:p[0], cs:p[2] || '', l:parseInt(p[p.length - 1], 10) || 0, gain:isObj(r) && !!r.gainSubclassFeature};
+}
+/** A feature written as "_copy" (same text, other class or level) gets the text of the one it copies. */
+function copy5(f, all){
+  if (!isObj(f._copy) || f.entries) return f;
+  const c = f._copy, b = all.find(x => isObj(x) && x !== f && x.name === c.name && x.className === (c.className || f.className) && src5(x.classSource) === src5(c.classSource ?? f.classSource) && (c.level == null || +x.level === +c.level) && (x.subclassShortName || '') === (c.subclassShortName || f.subclassShortName || ''));
+  return b ? {...b, ...f, entries:b.entries} : f;
+}
+const DMGT5 = ['acid', 'bludgeoning', 'cold', 'fire', 'force', 'lightning', 'necrotic', 'piercing', 'poison', 'psychic', 'radiant', 'slashing', 'thunder'];
+const dmgList5 = s => DMGT5.filter(d => new RegExp('\\b' + d + '\\b', 'i').test(s)).map(tc5);
+const ABKEY5 = {strength:'str', dexterity:'dex', constitution:'con', intelligence:'int', wisdom:'wis', charisma:'cha'};
+/** What a feature gives, read from its text: activation, resistances, immunities, speeds, languages, feats, proficiencies, spells, uses and the save it forces. */
+function grantsOf5(name, entries, spells){
+  const raw = JSON.stringify(entries ?? ''), t = plain5(text5(entries)).replace(/\*\*/g, ''), g = {};
+  const uniq = a => [...new Set(a)].filter(Boolean);
+  const hits = []; const at = (re, v) => { const m = re.exec(t); if (m) hits.push([m.index, v]); };
+  at(/\b(?:as|use|using) (?:a|your) reaction\b/i, 'reaction'); at(/\buse (?:a|your) bonus action\b|\bas a bonus action\b|\bbonus action to\b/i, 'bonus'); at(/\buse (?:an|your) action\b|\bas an action\b|\bMagic action\b|\bTake the Magic action\b/i, 'action');
+  const act = uniq(hits.sort((a, b) => a[0] - b[0]).map(h => h[1])); if (act.length) g.act = act;
+  const res = uniq([...t.matchAll(/(?<!ignore |ignores )resistance to ([^.;]*?) damage/gi)].flatMap(m => dmgList5(m[1]))); if (res.length) g.res = res;
+  const imm = uniq([...t.matchAll(/immunity to ([^.;]*?) damage/gi)].flatMap(m => dmgList5(m[1]))); if (imm.length) g.imm = imm;
+  const cimm = uniq([...raw.matchAll(/immun(?:e|ity) to (?:the )?\{@condition ([^|}]+)/gi)].map(m => tc5(m[1]))); if (cimm.length) g.cimm = cimm;
+  const spd = {}; for (const m of t.matchAll(/(flying|swimming|climbing|burrowing|walking) speed (?:of|equal to|increases by) (\d+) feet/gi)) { const k = {flying:'fly', swimming:'swim', climbing:'climb', burrowing:'burrow', walking:'walk'}[m[1].toLowerCase()]; if (!(k in spd)) spd[k] = +m[2]; }
+  if (Object.keys(spd).length) g.spd = spd;
+  if (/\b(speak|read|write|understand|learn)\b/i.test(t)){ const lg = uniq([...raw.matchAll(/\{@language ([^|}]+)/g)].map(m => m[1].trim())); if (lg.length) g.lang = lg; }
+  const feat = uniq([...raw.matchAll(/gain (?:the |an? )?\{@feat ([^|}]+)/gi)].map(m => m[1].trim())); if (/^ability score improvement$/i.test(name) || feat.some(f => /^ability score improvement$/i.test(f))) g.asi = true;
+  const fs2 = feat.filter(f => !/^ability score improvement$/i.test(f)); if (fs2.length) g.feat = fs2;
+  const pr = uniq([...[...raw.matchAll(/proficiency in (?:the )?\{@skill ([^|}]+)/gi)].map(m => tc5(m[1])), ...[...t.matchAll(/(?:proficiency|training) with ((?:light|medium|heavy|simple|martial)[a-z ,]*?(?:armor|weapons|shields?))/gi)].map(m => tc5(m[1]))]);
+  if (pr.length) g.prof = pr;
+  const sp = uniq([...(spells || []), ...(/always have|always prepared|you (?:can )?cast (?:it|the spell|each of|these)|without expending a spell slot|you know (?:the|these)|you learn (?:the|these)/i.test(t) ? [...raw.matchAll(/\{@spell ([^|}]+)/g)].map(m => tc5(m[1].trim())) : [])]); if (sp.length) g.sp = sp;
+  const rests = t.split(/(?<=[.!?])\s+/).map(se => { const m = se.match(/finish (?:a|an) (short|long)(?: or (short|long))? rest/i); return m && /(?:can't|cannot|regain|expended|once\b|until)/i.test(se) ? {v:m[2] ? 'short or long' : m[1].toLowerCase(), hard:/(?:can't|cannot|until)/i.test(se)} : null; }).filter(Boolean);
+  const rest = rests.find(r => r.hard) || rests[0]; if (rest) g.rest = rest.v;
+  const nt = t.match(/a number of times equal to your (proficiency bonus|(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) modifier)/i);
+  if (nt) g.n = /proficiency/i.test(nt[1]) ? 'PB' : ABKEY5[nt[1].split(' ')[0].toLowerCase()].toUpperCase();
+  else if (/\btwice\b/i.test(t) && g.rest) g.n = 2; else if (g.rest && /\b(?:once|one use|you can't do so again|can't use (?:this|it) again)/i.test(t)) g.n = 1;
+  const sv = t.match(/(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw/i);
+  if (sv && /(?:must|makes?|attempts?|against)/i.test(t)){ g.sv = {ab:ABKEY5[sv[1].toLowerCase()]}; if (/spell save DC/i.test(t)) g.sv.dc = 'spell'; else { const dc = raw.match(/\{@dc (\d+)\}/); if (dc) g.sv.dc = +dc[1]; } }
+  const dice = uniq([...raw.matchAll(/\{@(?:damage|dice) (\d+d\d+)/g)].map(m => m[1])); if (dice.length) g.dice = dice;
+  return Object.keys(g).length ? {g} : {};
+}
+/** 5etools "additionalSpells" (spells a subclass always has) → {level: [names]} */
+function addSpells5(a){
+  const out = {};
+  for (const blk of [].concat(a || [])){
+    if (!isObj(blk)) continue;
+    for (const kind of ['prepared', 'known', 'innate', 'expanded']){
+      const src = blk[kind]; if (!isObj(src)) continue;
+      const walk = (v, l) => { if (Array.isArray(v)) v.forEach(x => typeof x === 'string' ? (out[l] = out[l] || []).push(tc5(x.split('|')[0])) : isObj(x) && x.choose ? null : walk(x, l)); else if (isObj(v)) Object.entries(v).forEach(([k, x]) => /^\d+$/.test(k) && !(l && l > 0 && kind === 'innate') ? walk(x, +k) : walk(x, l)); };
+      for (const [k, v] of Object.entries(src)) if (/^\d+$/.test(k)) walk(v, +k);
+    }
+  }
+  for (const k of Object.keys(out)) out[k] = [...new Set(out[k])];
+  return out;
+}
+/** The level table of a class: one column per 5etools column, 20 rows. */
+function table5(groups){
+  if (!Array.isArray(groups)) return null;
+  const cols = [], rows = Array.from({length:20}, () => []);
+  const ord = i => ['1st', '2nd', '3rd'][i] || (i + 1) + 'th';
+  for (const gp of groups){
+    if (!isObj(gp)) continue;
+    const labels = (gp.colLabels || []).map(plain5), data = gp.rowsSpellProgression || gp.rows || [];
+    if (!labels.length || !Array.isArray(data) || data.length > 20) continue;
+    labels.forEach((lb, i) => { if (gp.rowsSpellProgression){ const sl = data.some(r => r[i]); if (!sl) return; }
+      cols.push({n:gp.rowsSpellProgression ? ord(i) : lb, g:gp.rowsSpellProgression ? 'Spell slots' : (gp.title ? plain5(gp.title) : '')});
+      const j = cols.length - 1; data.forEach((r, ri) => { const c = r[i]; rows[ri][j] = isObj(c) ? (c.type === 'bonus' ? '+' + c.value : c.type === 'dice' ? (c.toRoll || []).map(d => d.number + 'd' + d.faces).join('+') : String(c.value ?? '')) : (c === 0 && !gp.rowsSpellProgression && lb !== 'Sorcery Points' ? '—' : c === 0 ? '—' : String(c ?? '')); }); });
+  }
+  return cols.length && cols.length <= 16 ? {cols, rows} : null;
+}
+/** Feats and options a class hands out at set levels (Epic Boon, Metamagic…). */
+function adv5(o){
+  const out = {};
+  const feats = [].concat(o.featProgression || []).filter(isObj).map(f => ({n:plain5(f.name || ''), by:f.progression || {}})).filter(f => f.n && Object.keys(f.by).length); if (feats.length) out.feat = feats;
+  const opt = [].concat(o.optionalfeatureProgression || []).filter(isObj).map(f => ({n:plain5(f.name || ''), by:isObj(f.progression) ? f.progression : Array.isArray(f.progression) ? Object.fromEntries(f.progression.map((v, i) => [i + 1, v]).filter(([, v]) => v)) : {}})).filter(f => f.n && Object.keys(f.by).length); if (opt.length) out.opt = opt;
+  return Object.keys(out).length ? out : null;
+}
 const FROM5 = {
   spell:{cat:'spells', to:o => { const pw = [], sp = {n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
     conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set((o.classes?.fromClassList || []).map(c => c.name))],
@@ -3962,21 +4112,48 @@ const FROM5 = {
     const sp = o.startingProficiencies || {}, prof = x => [].concat(x || []).map(v => isObj(v) ? plain5(v.full || v.proficiency || '') : plain5(v)).filter(Boolean);
     const gear = p => [...prof(p.armor).map(a => /armor|shield/i.test(a) ? tc5(a) : tc5(a) + ' armor'), ...prof(p.weapons).map(w => /weapon/i.test(w) ? tc5(w) : tc5(w) + ' weapons'), ...prof(p.tools).map(tc5)];
     const sk = [].concat(sp.skills || []).map(s => s.choose ? `Choose ${s.choose.count || 1}: ${(s.choose.from || []).map(tc5).join(', ')}` : isObj(s) && s.any ? `Choose any ${s.any}` : '').filter(Boolean);
-    const feats = (json?.classFeature || []).filter(f => isObj(f) && f.className === o.name && (!f.classSource || !o.source || f.classSource === o.source));
+    const all = json?.classFeature || [], mine = f => isObj(f) && f.className === o.name && src5(f.classSource) === src5(o.source);
+    let feats;
+    if (Array.isArray(o.classFeatures) && o.classFeatures.length){   // the class lists its own features, with the exact level of each: no duplicates from other editions
+      feats = o.classFeatures.map(r => { const k = ref5(r), f = all.find(x => mine(x) && x.name === k.n && +x.level === k.l); return f ? {...copy5(f, all), _gs:k.gain} : null; }).filter(Boolean);
+    } else feats = all.filter(f => isObj(f) && f.className === o.name && (!f.classSource || !o.source || f.classSource === o.source));
     const mc = o.multiclassing?.proficienciesGained || {};
-    return {n:o.name, hd:[6, 8, 10, 12].includes(+o.hd?.faces) ? +o.hd.faces : 8,
+    const out = {n:o.name, hd:[6, 8, 10, 12].includes(+o.hd?.faces) ? +o.hd.faces : 8,
       prim:[].concat(o.primaryAbility || []).map(p => Object.keys(p).filter(k => p[k]).map(k => ABN5[k] || k).join(' and ')).join(' or '),
       saves:[].concat(o.proficiency || []).map(a => String(a).toUpperCase()), prof:gear(sp),
       choice:sk, caster:{full:'full', '1/2':'half', '1/3':'third', pact:'pact', artificer:'half'}[o.casterProgression] || '', spellAb:o.spellcastingAbility || '',
       mcProf:gear(mc).join(', '), x:'',
-      f:feats.map(f => ({l:clamp(+f.level || 1, 1, 20), n:plain5(f.name), x:flat5(f.entries)})).sort((a, b) => a.l - b.l)};
+      f:feats.map(f => ({l:clamp(+f.level || 1, 1, 20), n:plain5(f.name), x:flat5(f.entries), ...(/^(spellcasting|pact magic)$/i.test(f.name) ? {} : grantsOf5(f.name, f.entries))})).sort((a, b) => a.l - b.l)};
+    const ct = table5(o.classTableGroups), adv = adv5(o); if (ct) out.ct = ct; if (adv) out.adv = adv;
+    const eq = o.startingEquipment?.entries ? flat5(o.startingEquipment.entries) : ''; if (eq) out.eq = eq.replace(/\*/g, '').slice(0, 600);
+    return out;
   }},
   subclass:{cat:'subclasses', to:(o, json) => {
-    const short = o.shortName || o.name;
-    const fs = (json?.subclassFeature || []).filter(f => isObj(f) && f.className === o.className && f.subclassShortName === short && (!f.subclassSource || !o.source || f.subclassSource === o.source))
-      .sort((a, b) => (a.level || 0) - (b.level || 0));
+    const short = o.shortName || o.name, all = json?.subclassFeature || [];
+    const mine = f => isObj(f) && f.className === o.className && f.subclassShortName === short && (!f.subclassSource || !o.source || f.subclassSource === o.source);
+    let fs;
+    if (Array.isArray(o.subclassFeatures) && o.subclassFeatures.length){
+      // the subclass lists its features with their exact level; a "_copy" feature (a 2014 subclass reprinted for the 2024 class) borrows its text
+      fs = o.subclassFeatures.map(r => { const k = ref5(r); const f = all.find(x => mine(x) && x.name === k.n && src5(x.classSource) === src5(k.cs) && +x.level === k.l); return f ? copy5(f, all) : null; }).filter(Boolean);
+    } else fs = all.filter(f => mine(f) && (!f.classSource || !o.classSource || f.classSource === o.classSource));
+    fs.sort((a, b) => (a.level || 0) - (b.level || 0));
     const intro = fs.find(f => f.name === o.name || f.name === short);
-    return {n:o.name, cls:o.className || '', sum:'', x:intro ? text5(intro.entries) : '', f:fs.filter(f => f !== intro).map(f => ({l:clamp(+f.level || 3, 1, 20), n:plain5(f.name), x:flat5(f.entries)}))};
+    // the features the intro names ({"type":"refSubclassFeature"}) are not always in the subclass's own list
+    if (intro) for (const m of JSON.stringify(intro.entries || []).matchAll(/"subclassFeature":"([^"]+)"/g)){
+      const k = ref5(m[1]), p = m[1].split('|');
+      if (fs.some(f => f.name === k.n)) continue;
+      const f = all.find(x => mine(x) && x.name === k.n && src5(x.classSource) === src5(p[2]) && +x.level === k.l);
+      if (f) fs.push(copy5(f, all));
+    }
+    fs.sort((a, b) => (a.level || 0) - (b.level || 0));
+    // features the intro hands out ("Wind Speaker", "Tempestuous Magic") arrive with the intro: in the 2024 class that is level 3, not level 1
+    const kids = new Set(JSON.stringify(intro?.entries || []).match(/"subclassFeature":"[^"|]+/g)?.map(m => m.split('"').pop()) || []);
+    const lv = f => kids.has(f.name) && intro ? Math.max(+f.level || 1, +intro.level || 1) : (+f.level || 3);
+    const adds = addSpells5(o.additionalSpells);
+    const feat = f => { const l = clamp(lv(f), 1, 20), sp = adds[l]; const g = grantsOf5(f.name, f.entries, sp && f === (fs.find(x => lv(x) === l && x !== intro) || intro) ? sp : null); return {l, n:plain5(f.name), x:flat5(f.entries), ...g}; };
+    const out = {n:o.name, cls:o.className || '', sum:'', x:intro ? text5(intro.entries) : '', f:fs.filter(f => f !== intro).map(feat).sort((a, b) => a.l - b.l), _sh:short, _ed:o.classSource ? (ONE5.has(o.classSource) ? 'one' : 'classic') : ''};
+    if (intro && Object.keys(adds).length && !out.f.some(f => f.g?.sp)){ const l = +Object.keys(adds)[0]; out.f.unshift({l, n:plain5(intro.name), x:'', ...grantsOf5(intro.name, [], adds[l])}); }
+    return out;
   }},
 };
 FROM5.magicvariant = FROM5.item;
@@ -3995,7 +4172,7 @@ function from5(json, base){
       // a "_copy" entry only lists its changes from another one in the same file
       const base = raw._copy && arr.find(b => isObj(b) && b !== raw && b.name === raw._copy.name && (!raw._copy.source || b.source === raw._copy.source));
       const o = base ? {...base, ...raw} : raw;
-      try { const out = conv.to(o, json); if (out?.n?.trim()){ const {_cat, _pw, ...rest} = out; items.push({cat:_cat || conv.cat, o:rest, src:String(raw.source || ''), ed:raw.edition || (ONE5.has(raw.source) ? 'one' : 'classic'), ...(_pw ? {pw:_pw} : {})}); } else skip++; }
+      try { const out = conv.to(o, json); if (out?.n?.trim()){ const {_cat, _pw, _sh, _ed, ...rest} = out; items.push({cat:_cat || conv.cat, o:rest, src:String(raw.source || ''), ed:_ed || raw.edition || (ONE5.has(raw.source) ? 'one' : 'classic'), ...(_pw ? {pw:_pw} : {}), ...(_sh ? {sh:_sh} : {})}); } else skip++; }
       catch (e) { skip++; }
     }
   }
@@ -4098,7 +4275,9 @@ function hb5Page(u){
   const fl = parts.find(x => /^flstsource:/i.test(x)), books = fl ? fl.replace(/^flstsource:/i, '').split('~').filter(x => /=1$/.test(x)).map(x => x.split('=')[0].toUpperCase()) : [];
   if (page === 'classes'){
     if (!entry || !/^[a-z0-9-]+$/i.test(entry.name)) return {err:'Open the class on 5e.tools first, so the link names it (classes.html#artificer_efa), then paste that link.'};
-    return {files:[`class/class-${entry.name.toLowerCase()}.json`], books:entry.src ? [entry.src] : []};   // the class file also holds its subclasses and features
+    // "state:sub_storm_xge=b1" in the link = the subclass ticked on the page (short name, book): it comes along even from another book than the class
+    const subs = parts.map(x => x.match(/^state:sub_(.+)_([a-z0-9]+)=b1$/i)).filter(Boolean).map(m => ({slug:hb5Slug(m[1]), src:m[2].toUpperCase()}));
+    return {files:[`class/class-${entry.name.toLowerCase()}.json`], books:entry.src ? [entry.src] : [], ...(subs.length ? {subs} : {})};   // the class file also holds its subclasses and features
   }
   if (Object.hasOwn(HB5_PAGES, page)) return {files:HB5_PAGES[page], entry, books:entry ? [] : books};
   if (Object.hasOwn(HB5_INDEXED, page)){
@@ -4140,7 +4319,7 @@ function hb5Prefer24(list){
   const out = list.filter(it => !(it.ed !== 'one' && has24.has(it.cat + '|' + norm(it.o.n))));
   return {out, dropped:list.length - out.length};
 }
-async function hb5Review(json, name, srcWanted, from, entry, notes0 = []){
+async function hb5Review(json, name, srcWanted, from, entry, notes0 = [], subs = []){
   let base = null, notes = [...notes0, 'Converted automatically from 5etools data: it can be incomplete or slightly off, so read the warnings and check each entry after importing.'];
   if (!json.baseitem && Array.isArray(json.item) && json.item.some(i => isObj(i) && i.baseItem && !i.dmg1) && from){
     try { base = (await hb5Load('items-base.json')).json.baseitem; } catch (e) { notes.push('Magic weapons borrow their dice from the base items file, which could not be loaded now: they come in without damage until you import “Weapons (base items)” first.'); }
@@ -4158,7 +4337,9 @@ async function hb5Review(json, name, srcWanted, from, entry, notes0 = []){
     if (!list.length){ toast(`“${entry.name}” (${entry.src || 'any book'}) is not in that file, or has no Workshop form.`); return; }
     notes.push(`Only the entry the link points at: ${before - list.length} others hidden.`);
   } else if (srcWanted && srcWanted.length){
-    const w = [].concat(srcWanted).map(x => String(x).toLowerCase()), before = list.length; list = list.filter(it => w.includes(it.src.toLowerCase()));
+    const w = [].concat(srcWanted).map(x => String(x).toLowerCase()), before = list.length;
+    // with subclasses ticked in the link, the class comes with just those (not every subclass of the class book)
+    list = list.filter(it => subs.length && it.cat === 'subclasses' ? subs.some(s => s.slug === hb5Slug(it.sh) && s.src === it.src.toUpperCase()) : w.includes(it.src.toLowerCase()));
     if (!list.length){ toast(`Nothing from ${w.join(', ').toUpperCase()} in that file.`); return; }
     if (before - list.length) notes.push(`Only ${w.length > 3 ? w.length + ' books' : 'source ' + w.join(', ').toUpperCase()}: ${before - list.length} other entries hidden.`);
   }
@@ -4191,7 +4372,7 @@ Object.assign(ACT_BREW, {
       }
       if (miss.length === files.length) throw new Error('none loaded');
       const name = h.indexed ? `${h.indexed} · ${books.join(', ')}` : files[0].split('/').pop().replace(/\.json$/i, '') + (files.length > 1 ? ` + ${files.length - 1} more` : '');
-      await hb5Review(json, name, books, from, h.entry, miss.length ? [`Could not load ${miss.join(', ')}: those files are left out.`] : []);
+      await hb5Review(json, name, books, from, h.entry, miss.length ? [`Could not load ${miss.join(', ')}: those files are left out.`] : [], h.subs || []);
     } catch (e) { toast('Could not fetch that file. Check the link, or open it in a new tab, copy everything and use Paste JSON.'); }
   },
   brew5Paste(){
