@@ -3,6 +3,31 @@ const hpAct = async (app, act, n) => { await app.page.fill('#hpAmt', String(n));
 const ac = app => app.page.evaluate(() => [...document.querySelectorAll('#page .kv')].find(k => /^Armor Class/.test(k.textContent.trim()))?.querySelector('.big')?.textContent.trim());
 
 module.exports = {sezione:'combattimento', test:[
+  ['barra PF: override max più basso copre la fine e blocca la cura', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {hp:{cur:20, max:32, temp:0}})]}); await app.go('combat');
+    await app.set('#f_hpover', '16');
+    let h = await app.hero(); assert.strictEqual(h.hp.over, 16); assert.strictEqual(h.hp.max, 32); assert.strictEqual(h.hp.cur, 16);
+    assert.strictEqual(await app.page.locator('#page .hpBar .hpCold').count(), 1);
+    await hpAct(app, 'heal', 50);
+    assert.strictEqual((await app.hero()).hp.cur, 16);
+  }],
+  ['barra PF: override max più alto fa crescere la barra e la cura arriva fin lì', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {hp:{cur:20, max:32, temp:0}})]}); await app.go('combat');
+    await app.set('#f_hpover', '42');
+    assert.strictEqual(await app.page.locator('#page .hpBar .hpExtra').count(), 1);
+    assert.strictEqual(await app.page.locator('#page .hpBar .hpExtraFill').evaluate(e => parseFloat(e.style.width)), 0);
+    await hpAct(app, 'heal', 50);
+    assert.strictEqual((await app.hero()).hp.cur, 42);
+    assert.ok(await app.page.locator('#page .hpBar .hpExtraFill').evaluate(e => parseFloat(e.style.width)) > 0);
+  }],
+  ['barra PF: override vuoto o 0 si spegne e i PF temporanei hanno un colore proprio', async ({open}) => {
+    const app = await open({heroes:[fx.hero(fx.VALERIA, {hp:{cur:20, max:32, temp:0}})]}); await app.go('combat');
+    await app.set('#f_hpover', '16'); await app.set('#f_hpover', '');
+    assert.strictEqual('over' in (await app.hero()).hp, false);
+    assert.strictEqual(await app.page.locator('#page .hpBar .hpCold').count(), 0);
+    await hpAct(app, 'tempHP', 6);
+    assert.strictEqual(await app.page.locator('#page .hpBar .hpTemp').count(), 1);
+  }],
   ['danni: tolgono PF e salvano', async ({open}) => {
     const app = await open(); await app.go('combat');
     await hpAct(app, 'damage', 5);

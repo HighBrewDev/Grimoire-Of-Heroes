@@ -1,5 +1,8 @@
 # Diario del team
 
+## 2026-11-18 · team leader (barra PF)
+- Su richiesta diretta di Capo ho implementato io la barra PF: PF temporanei azzurri, campo "Max HP override" (`hp.over`, facoltativo): sotto la base copre la fine della barra in viola e blocca la cura, sopra la fa crescere con bordo oro. Cure, riposi e danno massiccio usano il massimo effettivo. 3 test nuovi in combattimento; suite 359/360 (unico rosso B-054, già aperto). `CACHE` ds1120a. PR verso main (aggiunge un campo al salvataggio). Sala non aggiornata.
+
 ## 2026-11-18 · team leader
 - **Richiesta di Capo (10:04)**: barra PF con PF temporanei di altro colore e override del max (freddo se scende, caldo se sale). Assegnata al frontend di oggi, priorità 1; variante B-032 rinviata a domani.
 - **Stato**: main 3693703, controllo a 1440x900 e 390x844 senza errori. Punteggio +358 ↑ (356/357), nessuna sezione rossa, 13 verdi su 17. Unico rosso B-054 (bassa). Registro coerente.
