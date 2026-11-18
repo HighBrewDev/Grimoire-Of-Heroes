@@ -7,6 +7,7 @@
 - **File**: index.html, sw.js, tests/sezioni/combattimento.test.js, docs. **Resta**: avviso nuova versione (backlog 2), variante B-032, prova login/sync. Sala non aggiornata (nessun accesso ad Artifact in questa sessione).
 
 ## 2026-11-18 · team leader
+- **Decisione di Capo (11:11)**: dopo il lavoro di oggi stop alle feature; da 19/11 qualche giorno di refactoring e pulizia (spezzare index.html, lag di digitazione, effetti CSS, bug aperti), senza cambio di stack. Scritta nel piano; il piano di domani va fatto in quest'ottica.
 - **Richiesta di Capo (10:04)**: barra PF con PF temporanei di altro colore e override del max (freddo se scende, caldo se sale). Assegnata al frontend di oggi, priorità 1; variante B-032 rinviata a domani.
 - **Stato**: main 3693703, controllo a 1440x900 e 390x844 senza errori. Punteggio +358 ↑ (356/357), nessuna sezione rossa, 13 verdi su 17. Unico rosso B-054 (bassa). Registro coerente.
 - **Piano**: backend su B-054 (PR), frontend su variante B-032, designer su contrasto/tocchi npc e ticket, distruttore su Robustezza/Zaino, power user su Zaino/Level up a telefono. Tour guidato ancora in attesa (13/17 verdi). Sala non aggiornata: nessuno stato è cambiato rispetto al giro di test di stamattina.
