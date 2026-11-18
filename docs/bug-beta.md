@@ -5,15 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-054 [bassa] robustezza · Eroe senza `id` nel salvataggio: si vede, ma le modifiche non si salvano
-- Trovato da: distruttore · 2026-11-17
-- Sezione: robustezza (salvataggio locale), 1440x900
-- Passi: 1. Metti in `grimoire-heroes-v1` il testo `{"chars":[{}]}` (o un eroe senza `id`, da file vecchio o modificato a mano). 2. Ricarica: compare "Nameless". 3. Eroe → cambia il nome in "Dopo".
-- Atteso: la modifica resta salvata (o l'eroe riceve un `id` al caricamento).
-- Ottenuto: il salvataggio resta `{"chars":[{}]}`; dopo la ricarica la modifica è sparita, senza avviso. Con un `id` presente tutto funziona.
-- Console: nessun errore.
-- Test: `robustezza` "B-054 …" (oggi fallisce).
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -32,6 +23,9 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-054 [bassa] robustezza · Eroe senza `id` nel salvataggio: si vede, ma le modifiche non si salvano
+- Risolto 2026-11-18 · sviluppo (backend) · PR verso main. `load()` assegna un `id` nuovo a ogni eroe che non ne ha e risalva subito; formato invariato per gli eroi con `id`. Test: `robustezza` "B-054 …" (verde, scritto dal distruttore il 17/11).
 
 ### B-053 [media] Salvataggio locale danneggiato cancellato senza avviso né copia
 - Risolto 2026-11-17 · sviluppo (backend) · PR verso main. `load()` copia il testo illeggibile o di forma sbagliata in `grimoire-heroes-backup-v1:<chiave>:<ora>`, mostra un avviso con link per scaricarlo. Formato dei salvataggi invariato. Test: `robustezza` "B-053 …".

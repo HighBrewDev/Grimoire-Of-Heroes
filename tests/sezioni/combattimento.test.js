@@ -3,6 +3,44 @@ const hpAct = async (app, act, n) => { await app.page.fill('#hpAmt', String(n));
 const ac = app => app.page.evaluate(() => [...document.querySelectorAll('#page .kv')].find(k => /^Armor Class/.test(k.textContent.trim()))?.querySelector('.big')?.textContent.trim());
 
 module.exports = {sezione:'combattimento', test:[
+  ['override PF max minore: la cura si ferma all\'override e la barra mostra la parte coperta', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await hpAct(app, 'damage', 12);
+    await app.page.fill('#f_hpov', '20'); await app.page.dispatchEvent('#f_hpov', 'change');
+    assert.strictEqual((await app.hero()).hp.maxOv, 20);
+    assert.strictEqual((await app.hero()).hp.cur, 20);
+    await hpAct(app, 'heal', 50);
+    assert.strictEqual((await app.hero()).hp.cur, 20, 'la cura supera l\'override');
+    assert.strictEqual(await app.page.locator('#page .hpBar b.cut').count(), 1);
+  }],
+  ['override PF max maggiore: si può curare oltre il massimo base, parte extra dorata e riposo lungo la riempie', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.page.fill('#f_hpov', '40'); await app.page.dispatchEvent('#f_hpov', 'change');
+    assert.strictEqual(await app.page.locator('#page .hpBar b.xtra').count(), 0, 'sotto il vecchio massimo si vede solo il bordo');
+    assert.strictEqual(await app.page.locator('#page .hpBar b.xo').count(), 1);
+    await hpAct(app, 'heal', 8);
+    assert.strictEqual((await app.hero()).hp.cur, 40);
+    assert.strictEqual(await app.page.locator('#page .hpBar b.xtra').count(), 1);
+    await hpAct(app, 'damage', 30);
+    await app.click('longRest');
+    assert.strictEqual((await app.hero()).hp.cur, 40);
+  }],
+  ['override PF max vuoto: tutto come prima e il campo non resta nel salvataggio', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.page.fill('#f_hpov', '10'); await app.page.dispatchEvent('#f_hpov', 'change');
+    await app.page.fill('#f_hpov', ''); await app.page.dispatchEvent('#f_hpov', 'change');
+    const h = await app.hero();
+    assert.ok(!('maxOv' in h.hp), 'maxOv ancora presente');
+    await hpAct(app, 'damage', 5); await hpAct(app, 'heal', 100);
+    assert.strictEqual((await app.hero()).hp.cur, h.hp.max);
+    assert.strictEqual(await app.page.locator('#page .hpBar b.cut, #page .hpBar b.xo').count(), 0);
+  }],
+  ['PF temporanei: segmento di colore diverso nella barra', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await hpAct(app, 'tempHP', 6);
+    const w = await app.page.evaluate(() => parseFloat(document.querySelector('#page .hpBar b.tmp').style.width));
+    assert.ok(w > 0, 'segmento PF temporanei assente');
+  }],
   ['danni: tolgono PF e salvano', async ({open}) => {
     const app = await open(); await app.go('combat');
     await hpAct(app, 'damage', 5);

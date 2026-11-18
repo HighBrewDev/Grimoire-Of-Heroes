@@ -244,7 +244,13 @@ textarea{width:100%;min-height:84px;resize:vertical}
 .dot.p{background:var(--verdigris);border-color:#1d3a21}
 .dot.e{background:var(--lapis);border-color:#152a3f}
 .hpBar{height:16px;background:#3a2417;border-radius:10px;overflow:hidden;border:1px solid #6d5210}
+.hpBar{position:relative}
 .hpBar i{display:block;height:100%;background:linear-gradient(90deg,#7fb069,var(--verdigris));transition:width .35s}
+.hpBar b{position:absolute;top:0;bottom:0;display:block}
+.hpBar b.tmp{background:linear-gradient(90deg,#6fb3d9,#3f86b8)}
+.hpBar b.cut{background:repeating-linear-gradient(135deg,#6b4a9e,#6b4a9e 4px,#563a85 4px,#563a85 8px)}
+.hpBar b.xtra{background:linear-gradient(90deg,#f0b34a,#e08a2c)}
+.hpBar b.xo{box-shadow:inset 0 0 0 2px #e0a040;border-radius:0 10px 10px 0}
 .hpBar.low i{background:linear-gradient(90deg,#d9685d,var(--rubric))}
 .pips{display:flex;gap:6px;flex-wrap:wrap}
 .pip{width:26px;height:26px;border-radius:50%;border:2px solid #6d5210;background:var(--paper);padding:0}
@@ -1232,11 +1238,15 @@ const intIn = (x, d, a, b) => clamp(Math.round(toNum(x, d)), a, b);
 const toTxt = (x, max = 200) => (typeof x === 'string' ? x : typeof x === 'number' && Number.isFinite(x) ? String(x) : '').slice(0, max);
 const objList = x => Array.isArray(x) ? x.filter(isObj).map(o => (typeof o.n === 'string' ? o : {...o, n:toTxt(o.n, 120)})) : [];
 const txtList = x => Array.isArray(x) ? x.map(v => toTxt(v, 200)).filter(Boolean) : [];
+/* HP max override (temporary max, e.g. necrotic damage or Aid): optional hp.maxOv; empty = off */
+const hpMax = c => { const o = c.hp.maxOv; return Number.isFinite(o) && o >= 1 ? o : c.hp.max; };
 function fixup(c){
   const ab = objOr(c.abilities, {});
   c.abilities = Object.fromEntries(['str','dex','con','int','wis','cha'].map(k => [k, clamp(Math.round(toNum(ab[k], 10)), 1, 30)]));
   const hp = objOr(c.hp, {cur:10, max:10, temp:0}), max = intIn(hp.max, 10, 1, LIM.hp);
-  c.hp = {...hp, max, cur:intIn(hp.cur, max, 0, LIM.hp), temp:intIn(hp.temp, 0, 0, LIM.hp)};
+  c.hp = {...hp, max, temp:intIn(hp.temp, 0, 0, LIM.hp)};
+  if (hp.maxOv === '' || hp.maxOv == null || !Number.isFinite(Number(hp.maxOv)) || Math.trunc(Number(hp.maxOv)) < 1) delete c.hp.maxOv; else c.hp.maxOv = intIn(hp.maxOv, max, 1, LIM.hp);
+  c.hp.cur = intIn(hp.cur, hpMax(c), 0, LIM.hp);
   c.hitDice = objOr(c.hitDice, {used:0}); c.death = objOr(c.death, {s:0,f:0});
   c.spells = objOr(c.spells, {}); c.spells.known = txtList(c.spells.known); c.spells.prep = txtList(c.spells.prep); c.spells.slots = objOr(c.spells.slots, {});
   ['attacks','feats','inventory'].forEach(k => c[k] = objList(c[k]));
@@ -1275,15 +1285,16 @@ function savePrefs(){
 async function load(){
   let data = null;
   let raw = null;
-  let bad = false;
+  let bad = false, noId = false;   // B-054: a hero without id gets one
   try { raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) { bad = true; }
   if (raw && !bad && !(isObj(data) && Array.isArray(data.chars))) bad = true;   // B-053: unreadable or wrong shape
   if (bad){ G.damaged = raw; data = null; try { const bk = 'grimoire-heroes-backup-v1:' + heroKey() + ':' + Date.now(); localStorage.setItem(bk, raw); } catch (e) {} }
-  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
+  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.chars.forEach(c => { if (!c.id || typeof c.id !== 'string'){ c.id = uid(); noId = true; } }); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
   G.chars.forEach(c => { c._sig = c._sig ? normSig(c._sig) : sigOf(c); });
   markBase(data?.chars ? raw : null);
+  if (noId) try { save(); markBase(localStorage.getItem(heroKey())); } catch (e) {}
   try { Object.assign(G, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
   if (!['manual','name','recent'].includes(G.shelfSort)) G.shelfSort = 'manual';
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
@@ -1573,7 +1584,7 @@ function renderShelf(){
       <div class="p">${portrait(c)}</div>
       <div class="n">${esc(c.name)}</div>${!isMine(c) ? `<span class="owner" title="${esc(c.ownerName || 'Party member')}'s hero (read-only)">${esc(c.ownerName || 'Party')}</span>` : c._blocked && !plusOK() ? '<span class="owner local" title="Free accounts keep one hero in the cloud">on this device</span>' : ''}
       <div class="s">${esc(c.species)} ${multi(c).length ? esc(classLabel(c)) : esc(c.class) + (c.subclass ? ' · ' + esc(c.subclass) : '')}</div>
-      <div class="hp" title="HP ${c.hp.cur}/${c.hp.max}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>
+      <div class="hp" title="HP ${c.hp.cur}/${hpMax(c)}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, hpMax(c)), 0, 100)}%"></i></div>
     </button>`).join('') + act('wizard', undefined, '＋ New hero', 'shelfAdd');
   barsFrom($('#shelf'), 'shelf:');
 }
@@ -1758,7 +1769,17 @@ const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
 const optsKeep = (list, cur) => (cur && !list.includes(cur) ? [...list, cur] : list).map(s => opt(s, cur, list.includes(s) ? s : `${s} (no longer available)`)).join('');
 const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label ?? v)}</option>`;
 const names = cat => [...new Set(ALL.filter(e => e.cat === cat).map(e => e.n))].sort();
-const hpBar = c => `<div class="hpBar ${c.hp.cur <= c.hp.max / 2 ? 'low' : ''}"><i style="width:${clamp(100 * c.hp.cur / Math.max(1, c.hp.max), 0, 100)}%"></i></div>`;
+function hpBar(c){
+  const base = Math.max(1, c.hp.max), E = Math.max(1, hpMax(c)), cur = clamp(c.hp.cur, 0, E), tmp = Math.max(0, c.hp.temp || 0);
+  const S = Math.max(E > base ? E : base, cur + tmp), pc = n => clamp(100 * n / S, 0, 100).toFixed(2) + '%';
+  let extra = `<b class="tmp" style="left:${pc(cur)};width:${pc(Math.min(tmp, S - cur))}"></b>`;
+  if (E < base) extra += `<b class="cut" title="Max HP reduced to ${E}" style="left:${pc(E)};right:0"></b>`;
+  if (E > base){
+    if (cur > base) extra += `<b class="xtra" style="left:${pc(base)};width:${pc(cur - base)}"></b>`;
+    extra += `<b class="xo" title="Max HP raised to ${E}" style="left:${pc(base)};right:0"></b>`;
+  }
+  return `<div class="hpBar ${cur <= E / 2 ? 'low' : ''}${E < base ? ' cutMax' : E > base ? ' upMax' : ''}"><i style="width:${pc(cur)}"></i>${extra}</div>`;
+}
 const NATIVE = e => e.src === 'SRD' || e.src === 'Quick' || e.src === 'Homebrew';
 const srcTag = e => e && e.src === 'Homebrew' ? '<span class="src brew" title="Made by you in Homebrew">Homebrew</span>' : e ? `<span class="src ${e.src === 'SRD' ? 'srd' : e.src === 'Quick' ? 'quick' : ''}" title="${e.src === 'Quick' ? 'Short table summary written for this tool' : e.src === 'SRD' ? 'System Reference Document 5.2.1 (CC-BY-4.0)' : 'Imported by you'}">${esc(e.src === 'Quick' ? 'Summary' : e.src)}</span>` : '';
 
@@ -1879,7 +1900,7 @@ hero(c){
       <div class="rule"></div><h4>Record</h4>${heroInfo(c)}`)}
     ${card('At a glance', `
       ${kv('Armor Class', `<span class="big num">${getAC(c)}</span>`)}
-      ${kv('Hit Points', `<span class="num">${c.hp.cur} / ${c.hp.max}${c.hp.temp ? ` (+${c.hp.temp})` : ''}</span>`)}
+      ${kv('Hit Points', `<span class="num">${c.hp.cur} / ${hpMax(c)}${c.hp.temp ? ` (+${c.hp.temp})` : ''}</span>`)}
       ${hpBar(c)}
       ${kv('Initiative', fmt(initBonus(c)) + ' ' + act('rollInit', undefined, 'Roll'))}
       ${kv('Speed', esc(c.speedOverride || (sp.speed ? sp.speed + ' ft.' : '30 ft.')))}
@@ -1926,11 +1947,12 @@ combat(c){
   const weapons = (SRD.equipment || []).filter(e => e.dmg);
   return `<div class="grid3">
     ${card('Hit points', `${hpBar(c)}
-      <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${c.hp.max}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= c.hp.max / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
+      <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${hpMax(c)}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= hpMax(c) / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
       <div class="row mt hpAmtRow"><label class="sr" for="hpAmt">Amount</label>${act('hpStep', '-5', '−5', 'sb hpStep', 'aria-label="Lower the amount by 5"')}${act('hpStep', '-1', '−', 'sb hpStep', 'aria-label="Lower the amount by 1"')}<input type="number" id="hpAmt" inputmode="numeric" value="${clamp(+G.hpAmt || 0, 0, LIM.hp) || (G.hpAmt === 0 ? 0 : 5)}" min="0" max="${LIM.hp}">${act('hpStep', '1', '+', 'sb hpStep', 'aria-label="Raise the amount by 1"')}${act('hpStep', '5', '+5', 'sb hpStep', 'aria-label="Raise the amount by 5"')}</div>
       <div class="row mt">${act('damage', undefined, 'Damage')}${act('heal', undefined, 'Heal')}${act('tempHP', undefined, 'Temp')}</div>
       <div class="rule"></div>
       <div class="kv"><label for="f_hpmax">Max HP</label><input type="number" id="f_hpmax" data-bind="hp.max" data-type="int" min="1" max="${LIM.hp}" value="${c.hp.max}"></div>
+      <div class="kv"><label for="f_hpov">Max HP override</label><input type="number" id="f_hpov" data-bind="hp.maxOv" data-type="int" min="1" max="${LIM.hp}" placeholder="off" value="${c.hp.maxOv ?? ''}" title="Temporary max (necrotic damage lowers it, Aid raises it). Leave empty to turn it off."></div>
       ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
       <div class="row mt">${act('spendHD', undefined, 'Spend Hit Die')}${act('shortRest', undefined, 'Short Rest')}${act('longRest', undefined, 'Long Rest')}</div>
       <p class="muted">Short Rest: spend Hit Dice, each heals the roll + Con. Long Rest (2024): regain all HP and all Hit Dice, reduce Exhaustion by 1.</p>`)}
@@ -3838,7 +3860,7 @@ function applyDamage(c, a){
     const d = c.death = c.death || {s:0, f:0};
     if (before === 0 && a - soak > 0) d.f = Math.min(3, (d.f || 0) + 1);      // damage at 0 HP = one failed death save
     else if (before > 0) c.death = {s:0, f:0};
-    if (over >= c.hp.max){ toast(`${c.name} takes massive damage: dies instantly under the 2024 rules (mark 3 failed saves).`); }
+    if (over >= hpMax(c)){ toast(`${c.name} takes massive damage: dies instantly under the 2024 rules (mark 3 failed saves).`); }
   }
   concCheck(c, a);
 }
@@ -3869,7 +3891,7 @@ const saveEnc = () => { try { localStorage.setItem(ENC_KEY, JSON.stringify(G.enc
 const heroOf = r => r.hero ? G.chars.find(c => c.id === r.hero) : null;
 function encView(r){
   const h = heroOf(r);
-  if (h) return {n:h.name, hp:h.hp.cur, max:h.hp.max, temp:h.hp.temp || 0, ac:getAC(h), conds:(h.conditions || []).map(n => ({n, r:h.condDur?.[n] ?? null})), hero:h};
+  if (h) return {n:h.name, hp:h.hp.cur, max:hpMax(h), temp:h.hp.temp || 0, ac:getAC(h), conds:(h.conditions || []).map(n => ({n, r:h.condDur?.[n] ?? null})), hero:h};
   return {n:r.n, hp:r.hp, max:r.max, temp:r.temp || 0, ac:r.ac, conds:r.conds || []};
 }
 function encSort(){ const cur = G.enc.list[G.enc.turn]?.id; G.enc.list.sort((a, b) => (b.init ?? -99) - (a.init ?? -99) || (b.dex || 0) - (a.dex || 0)); G.enc.turn = Math.max(0, G.enc.list.findIndex(r => r.id === cur)); }
@@ -4137,7 +4159,7 @@ const ACT_EXTRA = {
     if (h){ applyDamage(h, a); save(); } else { const soak = Math.min(r.temp || 0, a); r.temp = (r.temp || 0) - soak; r.hp = Math.max(0, r.hp - (a - soak)); if (r.hp === 0) toast(`${r.n} drops!`); }
     saveEnc(); render(); },
   encHeal(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, a = hpNum('amt_' + id), h = heroOf(r); if (!a) return;
-    if (h){ h.hp.cur = Math.min(h.hp.max, h.hp.cur + a); if (h.hp.cur > 0) h.death = {s:0, f:0}; save(); } else r.hp = Math.min(r.max, r.hp + a); saveEnc(); render(); },
+    if (h){ h.hp.cur = Math.min(hpMax(h), h.hp.cur + a); if (h.hp.cur > 0) h.death = {s:0, f:0}; save(); } else r.hp = Math.min(r.max, r.hp + a); saveEnc(); render(); },
   encAddCond(id){ const r = G.enc.list.find(x => x.id === id); if (!isMine(heroOf(r))) return toast(`${heroOf(r).name} belongs to ${heroOf(r).ownerName || 'a party member'}, who tracks it.`); const _r = r, h = heroOf(r), n = $('#cn_' + id).value, rd = $('#cr_' + id).value === '' ? null : Math.max(1, num('cr_' + id));
     if (h){ if (!h.conditions.includes(n)) h.conditions.push(n); h.condDur = h.condDur || {}; if (rd) h.condDur[n] = rd; else delete h.condDur[n]; save(); }
     else { r.conds = (r.conds || []).filter(c => c.n !== n); r.conds.push({n, r:rd}); }
@@ -4184,7 +4206,7 @@ const ACT = {
     toast(`Spent ${coinAmountLabel(cp, k)}: paid ${coinWords(r.paid)}${Object.keys(r.change).length ? `, change ${coinWords(r.change)}` : ''}.`); },
   hpStep(arg){ const el = $('#hpAmt'); if (!el) return; const v = clamp(hpNum('hpAmt') + (parseInt(arg, 10) || 0), 0, LIM.hp); el.value = v; G.hpAmt = v; },
   damage(){ mut(c => applyDamage(c, hpNum('hpAmt'))); },
-  heal(){ mut(c => { c.hp.cur = Math.min(c.hp.max, c.hp.cur + hpNum('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
+  heal(){ mut(c => { c.hp.cur = Math.min(hpMax(c), c.hp.cur + hpNum('hpAmt')); if (c.hp.cur > 0) c.death = {s:0, f:0}; }); },
   tempHP(){ mut(c => c.hp.temp = Math.max(c.hp.temp || 0, hpNum('hpAmt'))); },
   setExh(n){ mut(c => c.exhaustion = +n, false); },
   toggleCond(n){ mut(c => { const i = c.conditions.indexOf(n); if (i >= 0){ c.conditions.splice(i, 1); if (c.condDur) delete c.condDur[n]; } else c.conditions.push(n); }, false); },
@@ -4199,10 +4221,10 @@ const ACT = {
   spendHD(){ const c = active(), p = hdPools(c).find(x => x.n - x.used > 0); if (!p){ toast('No Hit Dice left. They return on a Long Rest.'); return; }
     const r = rollExpr('1d' + p.d), heal = Math.max(1, r.total + mod(c.abilities.con));
     if (multi(c).length){ c.hitDice.by = c.hitDice.by || {}; c.hitDice.by[p.d] = (c.hitDice.by[p.d] || 0) + 1; }
-    c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(c.hp.max, c.hp.cur + heal); save(); render();
+    c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(hpMax(c), c.hp.cur + heal); save(); render();
     logRoll('Hit Die', `${r.parts} ${fmt(mod(c.abilities.con))} Con`, `+${heal} HP`); },
   shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); shortRestPartial(c); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
-  longRest(){ mut(c => { c.hp.cur = c.hp.max; c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
+  longRest(){ mut(c => { c.hp.cur = hpMax(c); c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
   slot(arg){ const [lv, k] = arg.split(':').map(Number); mut(c => { const s = c.spells.slots[lv] = c.spells.slots[lv] || {used:0}; s.used = k < s.used ? k : k + 1; }, false); },
   resetSlots(){ mut(c => { c.spells.slots = {}; c.spells.pact = {used:0}; }, false); },
   mcAdd(){ const c = active(); if (c.level >= 20){ toast('Level 20 is the most a hero can reach.'); return; }
@@ -5115,7 +5137,8 @@ function bindValue(el, done){
     if (done && el.value !== '' && el.value !== String(v)) el.value = v;   // on change (not mid-typing) show what was kept
   }
   if (path === 'level') v = clamp(v, 1 + multi(c).reduce((t, m) => t + m.level, 0), 20);
-  if (path === 'hp.max'){ v = Math.max(1, v); c.hp.cur = Math.min(c.hp.cur, v); }
+  if (path === 'hp.max'){ v = Math.max(1, v); setPath(c, path, v); c.hp.cur = Math.min(c.hp.cur, hpMax(c)); save(); if (!G.chars.includes(c)) heroGone(); return; }
+  if (path === 'hp.maxOv'){ if (String(el.value).trim() === '') delete c.hp.maxOv; else c.hp.maxOv = Math.max(1, v); c.hp.cur = Math.min(c.hp.cur, hpMax(c)); save(); if (!G.chars.includes(c)) heroGone(); return; }
   if (path === 'name' && !String(v).trim()) return;
   if (path === 'class' && v !== c.class) c.subclass = '';
   setPath(c, path, v);

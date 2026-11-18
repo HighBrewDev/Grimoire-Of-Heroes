@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-18 · sviluppo
+- **Backend (B-054, robustezza)**: `load()` dà un `id` nuovo a ogni eroe senza `id` e risalva; modifiche poi persistenti, formato invariato. Bug spostato in "Risolti". Dati utente: PR verso main.
+- **Frontend (richiesta di Capo, barra PF)**: nuovo campo facoltativo `hp.maxOv` ("Max HP override", vuoto = spento, tolto dal salvataggio se vuoto; eroi vecchi invariati). Helper `hpMax(c)` usato da cura, riposo lungo, Dado Vita, incontro, danno massivo. Barra con PF temporanei in azzurro; override minore = coda viola a righe, cura bloccata all'override; maggiore = parte extra dorata (solo bordo se la vita è sotto il vecchio massimo).
+- **Test**: robustezza/importexport/eroe 71/71 e combattimento 39/39 dopo; 4 test nuovi in `combattimento` (override minore, maggiore, vuoto, PF temp). Suite completa: vedi PR. `CACHE` = grimoire-ds1120b. Screenshot a 390 e 1440 in `docs/design/2026-11-18-barra-pf-*.png` (scrollWidth uguale alla finestra, nessun errore di pagina).
+- **File**: index.html, sw.js, tests/sezioni/combattimento.test.js, docs. **Resta**: avviso nuova versione (backlog 2), variante B-032, prova login/sync. Sala non aggiornata (nessun accesso ad Artifact in questa sessione).
+
 ## 2026-11-18 · team leader
 - **Richiesta di Capo (10:04)**: barra PF con PF temporanei di altro colore e override del max (freddo se scende, caldo se sale). Assegnata al frontend di oggi, priorità 1; variante B-032 rinviata a domani.
 - **Stato**: main 3693703, controllo a 1440x900 e 390x844 senza errori. Punteggio +358 ↑ (356/357), nessuna sezione rossa, 13 verdi su 17. Unico rosso B-054 (bassa). Registro coerente.
