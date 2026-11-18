@@ -19,10 +19,10 @@ Chi chiude o cambia qualcosa aggiorna da sé le proprie voci, senza aspettare il
 | Le altre 12 sezioni (Eroe … Telefono, sincronia) | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
 
 ## Oggi
-Zone di index.html oggi: **Backend** (per primo) possiede `load()`, `save()`, `sampleChars` e `sw.js`. **Frontend** (dopo) possiede solo `applyLevelUp` e le sue finestre. **Designer** solo CSS di npc e ticket e `docs/design/`. Nessuno esce dalla propria zona.
+Zone di index.html oggi: **Backend** (per primo) possiede `load()`, `save()`, `sampleChars` e `sw.js`. **Frontend** (dopo) possiede solo il blocco PF e la sua barra (CSS incluso). **Designer** solo CSS di npc e ticket e `docs/design/`. Nessuno esce dalla propria zona.
 
 - **Sviluppo 10:23, una sessione, prima BACKEND · B-054 (robustezza)**: in `load()`, ogni eroe senza `id` ne riceve uno nuovo e viene risalvato; le modifiche poi restano. Formato invariato. *Fatto* = test B-054 verde, `robustezza`/`importexport`/`eroe` senza regressioni, bug in "Risolti", `CACHE` alzata. Tocca dati utente: PR verso main. Se avanza tempo: avviso "New version available" da sw.js (backlog 2).
-- **Sviluppo, poi FRONTEND · variante B-032 (level up)**: Level up nel mezzo dopo un danno fa perdere `hp.conAdj`. Prima un test che la riproduce in `levelup`, poi la correzione in `applyLevelUp`. *Fatto* = test verde, `levelup`/`combattimento`/`telefono` senza regressioni, voce in bug-beta.
+- **Sviluppo, poi FRONTEND · richiesta di Capo, PRIORITÀ 1 · barra della vita (combattimento)**: (a) PF temporanei in un colore diverso dalla vita, nella stessa barra. (b) Nuovo campo "override PF max", vuoto di default e attivo solo se contiene un numero. Se è **minore** del max base (es. danno necrotico): la fine della barra è coperta proporzionalmente da un colore freddo (viola), la differenza è sempre piena e non si può curare oltre l'override. Se è **maggiore** (es. Aiuto): la barra "cresce", la parte in più è piena in un colore caldo dorato/arancio, mai rosso; se la vita attuale è sotto il vecchio massimo, della parte in più si vede solo il bordo. Cura, danni, riposi e PF temporanei devono usare il massimo effettivo. Campo aggiuntivo e facoltativo nel salvataggio (eroi vecchi invariati): PR verso main. Zona: blocco PF di `index.html` + CSS barra. *Fatto* = test nuovi in `combattimento` (override minore, maggiore, vuoto, cura bloccata, PF temp), `combattimento`/`telefono`/`importexport` senza regressioni, screenshot a 390 e 1440. La variante di B-032 scala a domani.
 - **Designer 14:13 · npc e ticket a 390 px**: contrasto e dimensione dei tocchi (min 44 px), solo CSS. *Fatto* = screenshot prima/dopo in docs/design/ a 390 e 1440, `telefono`/`npc`/`ticket` senza rotture.
 - **Distruttore 21:07 · Robustezza e Zaino**: dopo B-054, eroi con campi mancanti o di tipo sbagliato, denari con importi strani, quota di salvataggio piena. *Fatto* = diario, bug nuovi con passi e test.
 - **Power user 21:37 · Zaino e Level up a 390 px**: sessione da giocatore, spese e resto, level up multiclasse con talento. *Fatto* = diario con numeri, bug solo se riproducibili.
@@ -32,7 +32,7 @@ Zone di index.html oggi: **Backend** (per primo) possiede `load()`, `save()`, `s
 **Backend**
 1. B-054 (oggi). 2. Avviso "New version available" da sw.js. 3. Prova di login e sync reali (serve rete verso Supabase e il via di Capo). 4. B-011: l'import deve rispettare `FREE_BREW`? (oggi paywall spento).
 **Frontend**
-5. Variante di B-032 (oggi). 6. Rifinitura dei flussi npc e ticket dopo le prove del power user.
+5. Barra PF con PF temp e override max (oggi, Capo). 5b. Variante di B-032 (domani). 6. Rifinitura dei flussi npc e ticket dopo le prove del power user.
 **Design**
 7. Contrasto e tocchi di npc e ticket (oggi). 8. Bozza di post in docs/promo/ (solo bozza, nessuna pubblicazione).
 9. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali con brevi spiegazioni, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI (oggi 13 su 17).
