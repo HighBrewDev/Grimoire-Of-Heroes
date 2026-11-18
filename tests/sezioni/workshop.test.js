@@ -130,10 +130,10 @@ module.exports = {sezione:'workshop', test:[
     const text = require('fs').readFileSync(await dl.path(), 'utf8');
     assert.ok(text.startsWith('# Grimoire homebrew template'));
     const rows = await review(app, md('modello.md', text));
-    assert.strictEqual(rows.length, 8);
+    assert.strictEqual(rows.length, 9);
     rows.forEach(r => assert.deepStrictEqual([r.n, r.err, r.warn], [r.n, [], []]));
     await app.click('brew5Add');
-    await app.page.waitForFunction(() => document.querySelectorAll('[data-act="brewEdit"]').length === 8);
+    await app.page.waitForFunction(() => document.querySelectorAll('[data-act="brewEdit"]').length === 9);
     await app.go('library'); await app.page.fill('#lib_q', 'ember lash');
     assert.ok((await app.text('#libList')).includes('Ember Lash'));
   }],
