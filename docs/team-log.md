@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-18 · team leader
+- **Stato**: main 3693703, controllo a 1440x900 e 390x844 senza errori. Punteggio +358 ↑ (356/357), nessuna sezione rossa, 13 verdi su 17. Unico rosso B-054 (bassa). Registro coerente.
+- **Piano**: backend su B-054 (PR), frontend su variante B-032, designer su contrasto/tocchi npc e ticket, distruttore su Robustezza/Zaino, power user su Zaino/Level up a telefono. Tour guidato ancora in attesa (13/17 verdi). Sala non aggiornata: nessuno stato è cambiato rispetto al giro di test di stamattina.
+
 ## 2026-11-18 · test
 - Test 356/357 superati (+5 nuovi: ticket ×3, zaino ×2), punteggio totale +358 (ieri +335). Sezioni rosse: nessuna. Unico fallito: B-054 (robustezza, aperto). Peggiori: sincronia +12, ticket +14, biblioteca +16.
 ## 2026-11-17 · sviluppo
