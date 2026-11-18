@@ -723,6 +723,10 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 
 .b5Row[hidden]{display:none}
 .bwCheck{padding:8px 0 6px}
+.bwFx{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 12px;align-items:end}
+.bwFx .bwWide{grid-column:1/-1}
+.bwDice{display:flex;gap:6px;align-items:center}.bwDice input{width:68px}.bwDice select{flex:1;min-width:0}
+.fxLine{font-style:italic;margin:0 0 8px}
 .bwScores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .bwScores label{display:flex;flex-direction:column;font-size:12px;font-family:var(--f-display);letter-spacing:.06em;color:var(--ink2)}
 .bwScores input{width:100%}
@@ -1856,6 +1860,7 @@ const RARITIES = ['', 'Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'A
 function libCat(e){
   if (!e) return '';
   const o = e.o, t = String(o.cat || o.type || '').toLowerCase();
+  if (e.src === 'Homebrew' && o.hw) return 'Weapons';
   if (e.cat === 'items' || e.src !== 'SRD' && e.cat !== 'equipment'){
     if (/potion|scroll|^p$|^sc/.test(t) || /^potion|^spell scroll/i.test(e.n)) return 'Potions & Consumables';
     return 'Magic Items';
@@ -2284,7 +2289,7 @@ function entryMeta(e){
   switch (e.cat){
     case 'spells': return `${o.lv ? `Level ${o.lv} ${esc(o.sc)}` : `${esc(o.sc)} cantrip`}${o.cls?.length ? ' (' + esc(o.cls.join(', ')) + ')' : ''}`;
     case 'feats': return `${esc(o.ty || '')} feat${o.pre ? ' · Prerequisite: ' + esc(o.pre) : ''}${o.rep ? ' · Repeatable' : ''}`;
-    case 'items': return `${esc(o.cat || '')}, ${esc(o.rar || '')}${o.att ? ' (requires attunement)' : ''}`;
+    case 'items': return `${[o.cat, o.rar].filter(Boolean).map(esc).join(', ')}${o.att ? ' (requires attunement)' : ''}`;
     case 'equipment': return `${esc(o.cat || '')} · ${esc(o.cost || '')}${o.wt ? ' · ' + o.wt + ' lb' : ''}`;
     case 'monsters': return `${esc(o.sz)} ${esc(title(o.ty))}, ${esc(o.al)}`;
     case 'species': return `${esc(o.ty || 'Humanoid')} · ${esc(o.size || '')} · Speed ${o.speed} ft.${o.life ? ' · ' + esc(o.life) : ''}`;
@@ -2301,7 +2306,7 @@ function entryBody(e){
   const quick = e.src === 'SRD' ? quickFor(e.cat, e.n) : null;
   const tip = quick && quick.x ? `<p class="muted"><span class="src quick">In short</span> ${esc(quick.x)}</p>` : '';
   switch (e.cat){
-    case 'spells': return `${kv('Casting Time', esc(o.t) + (o.rit ? ' or Ritual' : ''))}${kv('Range', esc(o.r))}${kv('Components', esc(o.c))}${kv('Duration', (o.conc && !/concentration/i.test(o.d) ? 'Concentration, ' : '') + esc(o.d))}${tip}${md(o.x)}${o.h ? `<div class="prose"><p><b><i>Using a Higher-Level Spell Slot.</i></b> ${inline(esc(o.h))}</p></div>` : ''}`;
+    case 'spells': return `${e.src === 'Homebrew' && o.fx ? `<p class="fxLine"><b>Effect.</b> ${esc(spellFxText(o))}</p>` : ''}${kv('Casting Time', esc(o.t) + (o.rit ? ' or Ritual' : ''))}${kv('Range', esc(o.r))}${kv('Components', esc(o.c))}${kv('Duration', (o.conc && !/concentration/i.test(o.d) ? 'Concentration, ' : '') + esc(o.d))}${tip}${md(o.x)}${(o.h || (e.src === 'Homebrew' && spellFxHigher(o))) ? `<div class="prose"><p><b><i>Using a Higher-Level Spell Slot.</i></b> ${inline(esc(o.h || spellFxHigher(o)))}</p></div>` : ''}`;
     case 'species': return `${tip}${o.x && e.src !== 'SRD' ? `<p>${esc(o.x)}</p>` : ''}${(o.tr || []).map(t => `${t.n ? `<h4>${esc(t.n)}</h4>` : ''}${md(t.x)}`).join('')}${(o.subs || []).map(s => `<details class="fold"><summary>${esc(s.n)}</summary><div class="in">${s.tr.map(t => `<h4>${esc(t.n)}${t.l > 1 ? ` <span class="muted">level ${t.l}</span>` : ''}</h4>${md(t.x)}`).join('')}</div></details>`).join('')}`;
     case 'backgrounds': return `${kv('Ability Scores', esc((o.asi || []).join(', ')))}${kv('Feat', o.feat ? xref(o.feat) : '—')}${kv('Skills', esc((o.skills || []).join(', ')))}${kv('Tools', esc((o.tools || []).join(', ')))}${o.eq ? `<p><b>Equipment.</b> ${esc(o.eq)}</p>` : ''}${o.x ? `<p>${esc(o.x)}</p>` : ''}`;
     case 'classes': {
@@ -2475,7 +2480,25 @@ function importPane(){
 
 /* ================================================================== homebrew workshop: your own classes, subclasses, spells… in the same shape as the SRD */
 const BREW_ID = 'homebrew', FREE_BREW = 3;
+const HB_RARITY_LIST = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'];
 const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+/* pickers shared by the weapon and spell editors (2024 rules) */
+const DMG_TYPES = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
+const DIE_SIDES = [4, 6, 8, 10, 12, 20, 100];
+const WEAPON_CATS = ['Simple Melee', 'Martial Melee', 'Simple Ranged', 'Martial Ranged'];
+const WEAPON_PROPS = ['Ammunition', 'Finesse', 'Heavy', 'Light', 'Loading', 'Reach', 'Thrown', 'Two-Handed', 'Versatile'];
+const WEAPON_MASTERY = ['Cleave', 'Graze', 'Nick', 'Push', 'Sap', 'Slow', 'Topple', 'Vex'];
+const CAST_TIMES = ['Action', 'Bonus Action', 'Reaction', '1 minute', '10 minutes', '1 hour', '8 hours', '12 hours', '24 hours'];
+const SPELL_RANGES = ['Self', 'Touch', '5 feet', '10 feet', '30 feet', '60 feet', '90 feet', '120 feet', '150 feet', '300 feet', '500 feet', '1 mile', 'Sight', 'Unlimited', 'Self (10-foot Emanation)', 'Self (15-foot Cone)', 'Self (30-foot Line)'];
+const SPELL_DURATIONS = ['Instantaneous', '1 round', '1 minute', '10 minutes', '1 hour', '8 hours', '24 hours', '7 days', 'Until dispelled', 'Special'];
+const SPELL_SHAPES = ['Cone', 'Cube', 'Cylinder', 'Emanation', 'Line', 'Sphere'];
+const SAVE_ABS = [['str', 'Strength'], ['dex', 'Dexterity'], ['con', 'Constitution'], ['int', 'Intelligence'], ['wis', 'Wisdom'], ['cha', 'Charisma']];
+const diceParse = v => { const m = String(v || '').match(/^(\d+)d(\d+)$/i); return m ? {n:+m[1], d:+m[2]} : {n:'', d:''}; };
+const diceStr = (n, d) => { n = parseInt(n, 10); d = parseInt(d, 10); return n > 0 && d > 0 ? `${n}d${d}` : ''; };
+const diceField = (id, label, v) => { const p = diceParse(v);
+  return `<div><label class="f" for="${id}">${esc(label)}</label><div class="bwDice"><input type="number" id="${id}" min="0" max="99" value="${p.n}" placeholder="0" aria-label="${esc(label)}: number of dice"><span aria-hidden="true">d</span><select id="${id}_d" aria-label="${esc(label)}: die"><option value="">—</option>${DIE_SIDES.map(d => opt(d, p.d, 'd' + d)).join('')}</select></div></div>`; };
+const readDice = id => diceStr($('#' + id)?.value, $('#' + id + '_d')?.value);
+const pickField = (id, label, v, list, blank) => `<div><label class="f" for="${id}">${esc(label)}</label><select id="${id}" style="width:100%">${blank !== undefined ? opt('', v ?? '', blank) : ''}${list.map(x => Array.isArray(x) ? opt(x[0], v ?? '', x[1]) : opt(x, v ?? '')).join('')}</select></div>`;
 // one form per kind: [key, label, type, options/placeholder]
 const BREW = {
   classes:{t:'Class', hint:'Appears in the class menus, in Level up and in multiclassing.', f:[
@@ -2490,8 +2513,9 @@ const BREW = {
     ['f', 'Features', 'feats', '3 Rite of the Dawn: …\n7 Ethereal Step: …']]},
   spells:{t:'Spell', hint:'Search it from the Spellbook; it shows on the lists of the classes you tick.', f:[
     ['n', 'Name', 'text', 'e.g. Ember Lash'], ['lv', 'Level', 'select', [['0', 'Cantrip'], ...[1,2,3,4,5,6,7,8,9].map(n => [String(n), 'Level ' + n])]], ['sc', 'School', 'select', SCHOOLS],
-    ['t', 'Casting time', 'text', 'Action'], ['r', 'Range', 'text', '60 feet'], ['c', 'Components', 'text', 'V, S, M (a pinch of ash)'], ['d', 'Duration', 'text', 'Instantaneous'],
-    ['conc', 'Concentration', 'check'], ['rit', 'Ritual', 'check'], ['cls', 'Spell lists', 'classes'], ['x', 'Effect', 'area', 'Make a ranged spell attack… 2d8 Fire damage.'], ['h', 'Using a higher-level slot', 'area']]},
+    ['t', 'Casting time', 'combo', CAST_TIMES], ['r', 'Range', 'combo', SPELL_RANGES], ['c', 'Components', 'comps'], ['d', 'Duration', 'combo', SPELL_DURATIONS],
+    ['conc', 'Concentration', 'check'], ['rit', 'Ritual', 'check'], ['cls', 'Spell lists', 'classes'], ['fx', 'What it does', 'fx'],
+    ['x', 'Effect text', 'area', 'Anything the pickers above can’t say. The rules line they write is added on top of it.'], ['h', 'Using a higher-level slot (optional)', 'area', 'Left empty, it is written for you from the “Grows” pickers.']]},
   feats:{t:'Feat', hint:'Offered in Traits & Feats and at Ability Score Improvements.', f:[
     ['n', 'Name', 'text'], ['ty', 'Category', 'select', ['Origin', 'General', 'Fighting Style', 'Epic Boon']], ['pre', 'Prerequisite', 'text', 'Level 4+'], ['rep', 'Repeatable', 'check'], ['x', 'Benefit', 'area']]},
   species:{t:'Species', hint:'Appears in the species menu of the Hero page.', f:[
@@ -2503,6 +2527,13 @@ const BREW = {
   items:{t:'Magic item', hint:'Add it to a pack from Pack & Riches or the Library.', f:[
     ['n', 'Name', 'text'], ['cat', 'Type', 'select', ['Wondrous Item', 'Armor', 'Weapon', 'Ring', 'Rod', 'Staff', 'Wand', 'Potion', 'Scroll']], ['rar', 'Rarity', 'select', RARITIES.slice(1)],
     ['att', 'Requires attunement', 'check'], ['base', 'Base item (when equipped)', 'text', 'Longsword, Chain Mail…'], ['acm', 'AC bonus (when equipped)', 'number', '1'], ['wb', 'Attack and damage bonus', 'number', '1'], ['wd', 'Weapon damage (no base item)', 'text', '1d8 Slashing'], ['x', 'Description', 'area']]},
+  weapons:{t:'Weapon', hint:'Add it to a pack from Pack & Riches or the Library; equipped, it joins your attacks.', f:[
+    ['n', 'Name', 'text', 'e.g. Emberfang'], ['wc', 'Weapon type', 'select', WEAPON_CATS], ['dd', 'Damage dice', 'dice'], ['dt', 'Damage type', 'select', DMG_TYPES],
+    ['props', 'Properties', 'multi', WEAPON_PROPS], ['vd', 'Versatile damage (two hands)', 'dice'], ['mast', 'Mastery', 'select', [['', 'None'], ...WEAPON_MASTERY]],
+    ['rn', 'Normal range (feet)', 'number', '80'], ['rl', 'Long range (feet)', 'number', '320'],
+    ['mb', 'Magic bonus', 'select', [['0', 'None'], ['1', '+1'], ['2', '+2'], ['3', '+3']]], ['rar', 'Rarity', 'select', ['Mundane', ...HB_RARITY_LIST]], ['att', 'Requires attunement', 'check'],
+    ['wt', 'Weight (lb)', 'number', '3'], ['val', 'Cost', 'text', '15 gp'],
+    ['sp', 'Special abilities', 'area', 'e.g. Flame Lash: once per turn, deal an extra 1d6 Fire damage to a creature you hit.'], ['x', 'Description', 'area']]},
   monsters:{t:'Creature', hint:'Add it to fights from the Encounter page.', f:[
     ['n', 'Name', 'text'], ['sz', 'Size', 'select', ['Tiny', 'Small', 'Medium', 'Small or Medium', 'Large', 'Huge', 'Gargantuan']], ['ty', 'Type', 'text', 'monstrosity'], ['al', 'Alignment', 'text', 'unaligned'],
     ['ac', 'Armor Class', 'number', '13'], ['hp', 'Hit Points', 'text', '45 (6d10 + 12)'], ['spd', 'Speed', 'text', '30 ft., fly 60 ft.'], ['ab', 'Ability scores', 'scores'],
@@ -2514,10 +2545,43 @@ const BREW = {
 };
 let BREW_ITEMS = [];
 const brewPack = () => ({id:BREW_ID, name:'Homebrew', kind:'brew', added:Date.now(), count:BREW_ITEMS.length, items:BREW_ITEMS});
-const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${hbStr(o.lv)} · ${hbStr(o.sc)}` : `Cantrip · ${hbStr(o.sc)}`) : cat === 'feats' ? hbStr(o.ty) : cat === 'subclasses' ? hbStr(o.cls) : cat === 'classes' ? `d${hbStr(o.hd)} · ${hbStr(o.prim)}` : cat === 'items' ? hbStr(o.rar) : cat === 'monsters' ? 'CR ' + hbStr(o.cr) : '';
+const brewKey = (cat, o) => cat === 'spells' ? (+o.lv ? `Lv ${hbStr(o.lv)} · ${hbStr(o.sc)}` : `Cantrip · ${hbStr(o.sc)}`) : cat === 'feats' ? hbStr(o.ty) : cat === 'subclasses' ? hbStr(o.cls) : cat === 'classes' ? `d${hbStr(o.hd)} · ${hbStr(o.prim)}` : cat === 'items' ? hbStr(o.rar) : cat === 'weapons' ? `${hbStr(o.wc)} · ${hbStr(o.dd)} ${hbStr(o.dt)}` : cat === 'monsters' ? 'CR ' + hbStr(o.cr) : '';
 const cleanBrew = list => (Array.isArray(list) ? list : []).filter(it => isObj(it) && typeof it.cat === 'string' && Object.hasOwn(BREW, it.cat) && isObj(it.o) && typeof it.o.n === 'string' && it.o.n.trim())
   .map(it => ({...it, o:{...it.o, n:it.o.n.trim().slice(0, 80)}}));
-const brewEntry = it => ({cat:it.cat, n:it.o.n, o:it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
+/* a homebrew weapon is stored as the form (so it can be edited) and shown to the rest of the tome as a Magic item that carries weapon damage, so the pack, Equip and the attacks already know it */
+const brewEntry = it => ({cat:it.cat === 'weapons' ? 'items' : it.cat, n:it.o.n, o:it.cat === 'weapons' ? weaponAsItem(it.o) : it.o, src:'Homebrew', k:brewKey(it.cat, it.o), id:'brew:' + it.id});
+function weaponAsItem(o){
+  const props = (Array.isArray(o.props) ? o.props : []).filter(p => WEAPON_PROPS.includes(p)), mb = clamp(parseInt(o.mb, 10) || 0, 0, 3), wc = o.wc || 'Martial Melee';
+  const dd = hbStr(o.dd) || '1d6', dt = hbStr(o.dt) || 'Slashing', rng = +o.rn > 0 ? `${+o.rn}/${+o.rl > 0 ? +o.rl : +o.rn * 4} ft.` : '';
+  const pt = props.map(p => p === 'Versatile' && o.vd ? `Versatile (${o.vd})` : (p === 'Ammunition' || p === 'Thrown') && rng ? `${p} (range ${rng})` : p);
+  const L = [`*Weapon (${wc})*${mb ? ', ' + fmt(mb) + ' to attack and damage rolls' : ''}`, `**Damage.** ${dd}${mb ? fmt(mb) : ''} ${dt}${o.vd && props.includes('Versatile') ? `, ${o.vd} two-handed` : ''}`];
+  if (pt.length) L.push(`**Properties.** ${pt.join(', ')}`);
+  if (o.mast) L.push(`**Mastery.** ${o.mast}`);
+  if (rng && !props.some(p => p === 'Ammunition' || p === 'Thrown')) L.push(`**Range.** ${rng}`);
+  if (hbStr(o.sp)) L.push(`**Special.** ${hbStr(o.sp)}`);
+  if (hbStr(o.x)) L.push(hbStr(o.x));
+  return {n:o.n, cat:`Weapon (${wc})`, rar:o.rar === 'Mundane' ? '' : hbStr(o.rar), att:!!o.att, wd:`${dd} ${dt}`, wb:mb || undefined, wt:+o.wt > 0 ? +o.wt : undefined, cost:hbStr(o.val) || undefined,
+    hw:{wc, props, vd:hbStr(o.vd), mast:hbStr(o.mast), rng, sp:!!hbStr(o.sp)}, x:L.join('\n\n')};
+}
+/* the rules line a spell's pickers write, in the 2024 wording */
+function spellFxText(o){
+  const f = o.fx; if (!isObj(f)) return '';
+  const dmg = f.dd ? `${f.dd} ${f.dt || ''} damage`.replace(/\s+/g, ' ').trim() : '', area = f.shape ? `${+f.size > 0 ? f.size + '-foot ' : ''}${f.shape}` : '', ab = (SAVE_ABS.find(a => a[0] === f.ab) || [])[1];
+  const L = [];
+  if (f.mode === 'attack') L.push(`Make a spell attack roll${area ? ` against each creature in a ${area}` : ' against a target within range'}. On a hit: ${dmg || 'the effect applies'}.`);
+  else if (f.mode === 'save') L.push(`${area ? `Each creature in a ${area}` : 'The target'} makes a ${ab || ''} saving throw. Failure: ${dmg || 'the effect applies'}. Success: ${dmg && f.half ? 'half damage' : 'no effect'}.`.replace('a  saving', 'a saving'));
+  else if (dmg) L.push(`${area ? `Each creature in a ${area} takes` : 'The target takes'} ${dmg}.`);
+  else if (area) L.push(`Area: ${area}.`);
+  if (f.heal) L.push(`The target regains ${f.heal}${f.hm ? ' plus your spellcasting ability modifier' : ''} Hit Points.`);
+  return L.join(' ');
+}
+function spellFxHigher(o){
+  const f = o.fx; if (!isObj(f)) return '';
+  const what = f.dd ? 'damage' : f.heal ? 'healing' : '';
+  if (!what) return '';
+  if (+o.lv === 0){ const p = diceParse(f.dd); return f.cant && p.n ? `The damage increases by ${p.n}d${p.d} when you reach levels 5 (${p.n * 2}d${p.d}), 11 (${p.n * 3}d${p.d}) and 17 (${p.n * 4}d${p.d}).` : ''; }
+  return f.up ? `The ${what} increases by ${f.up} for each spell slot level above ${o.lv}.` : '';
+}
 const brewClass = n => BREW_ITEMS.find(it => it.cat === 'classes' && it.o.n === n)?.o;
 async function saveBrew(){
   brewStamp();
@@ -2620,6 +2684,23 @@ function brewField([k, label, type, extra], o){
     case 'classes': return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="row">${names('classes').map(n => `<label class="row"><input type="checkbox" class="${id}" value="${esc(n)}" ${(v || []).includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></div>`;
     case 'scores': { const ab = v || [10, 10, 10, 10, 10, 10];
       return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="bwScores">${ABIL.map((a, i) => `<label>${a.id.toUpperCase()}<input type="number" class="${id}" min="1" max="30" value="${ab[i]}"></label>`).join('')}</div></div>`; }
+    case 'combo': return `<div>${lab}<input type="text" id="${id}" list="${id}_l" value="${esc(v ?? '')}" style="width:100%" autocomplete="off"><datalist id="${id}_l">${extra.map(x => `<option value="${esc(x)}">`).join('')}</datalist></div>`;
+    case 'dice': return diceField(id, label, v);
+    case 'multi': return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="row">${extra.map(n => `<label class="row"><input type="checkbox" class="${id}" value="${esc(n)}" ${(v || []).includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></div>`;
+    case 'comps': { const set = String(v || '').toUpperCase(), mat = String(v || '').match(/M\s*\(([^)]*)\)/i)?.[1] || '';
+      return `<div class="bwWide"><span class="f">${esc(label)}</span><div class="row">${['V', 'S', 'M'].map(k => `<label class="row"><input type="checkbox" class="${id}" value="${k}" ${new RegExp('(^|[^A-Z])' + k + '([^A-Z]|$)').test(set.replace(/\([^)]*\)/g, '')) ? 'checked' : ''}> ${k === 'V' ? 'Verbal' : k === 'S' ? 'Somatic' : 'Material'}</label>`).join('')}</div>
+        <label class="f" for="${id}_m">Material (when ticked)</label><input type="text" id="${id}_m" value="${esc(mat)}" placeholder="a pinch of ash" style="width:100%"></div>`; }
+    case 'fx': { const f = isObj(v) ? v : {};
+      return `<div class="bwWide"><span class="f">${esc(label)}</span><p class="muted small">Optional. Fill what applies and the entry writes the rules line for you.</p><div class="bwFx">
+        ${pickField('bw_fx_mode', 'How it works', f.mode, [['attack', 'Spell attack roll'], ['save', 'Saving throw']], 'Nothing to roll')}
+        ${pickField('bw_fx_ab', 'Saving throw', f.ab, SAVE_ABS)}
+        ${diceField('bw_fx_dd', 'Damage dice', f.dd)}${pickField('bw_fx_dt', 'Damage type', f.dt, DMG_TYPES, '—')}
+        <label class="row bwCheck"><input type="checkbox" id="bw_fx_half" ${f.half ? 'checked' : ''}> Half damage on a save</label>
+        ${diceField('bw_fx_heal', 'Healing dice', f.heal)}<label class="row bwCheck"><input type="checkbox" id="bw_fx_hm" ${f.hm ? 'checked' : ''}> Add your spellcasting modifier</label>
+        ${pickField('bw_fx_shape', 'Area', f.shape, SPELL_SHAPES, 'Single target')}<div><label class="f" for="bw_fx_size">Size (feet)</label><input type="number" id="bw_fx_size" min="0" max="500" value="${esc(f.size ?? '')}" placeholder="20"></div>
+        <div class="bwWide"><span class="f">Grows</span></div>
+        ${diceField('bw_fx_up', 'Extra per slot level above', f.up)}<label class="row bwCheck"><input type="checkbox" id="bw_fx_cant" ${f.cant ? 'checked' : ''}> Cantrip: more dice at levels 5, 11 and 17</label>
+      </div></div>`; }
     case 'area': return `<div class="bwWide">${lab}<textarea id="${id}" placeholder="${esc(extra || '')}">${esc(v || '')}</textarea></div>`;
     case 'feats': return `<div class="bwWide">${lab}<p class="muted small">One per line: the level, the name, a colon, then the text.</p><textarea id="${id}" style="min-height:140px" placeholder="${esc(extra)}">${esc(featsText(v))}</textarea></div>`;
     case 'traits': return `<div class="bwWide">${lab}<p class="muted small">One per line: the name, a colon, then the text.</p><textarea id="${id}" placeholder="${esc(extra)}">${esc(traitsText(v))}</textarea></div>`;
@@ -2633,22 +2714,29 @@ function readBrew(cat){
     if (type === 'check') o[k] = !!el?.checked;
     else if (type === 'abil' || type === 'classes') o[k] = all.filter(x => x.checked).map(x => x.value);
     else if (type === 'scores') o[k] = all.map(x => clamp(parseInt(x.value, 10) || 10, 1, 30));
+    else if (type === 'dice') o[k] = readDice('bw_' + k);
+    else if (type === 'multi') o[k] = all.filter(x => x.checked).map(x => x.value);
+    else if (type === 'comps'){ const ch = all.filter(x => x.checked).map(x => x.value), mat = ($('#bw_' + k + '_m')?.value || '').trim(); o[k] = ch.map(x => x === 'M' && mat ? `M (${mat})` : x).join(', '); }
+    else if (type === 'fx'){ const f = {mode:$('#bw_fx_mode')?.value || '', ab:$('#bw_fx_ab')?.value || '', dd:readDice('bw_fx_dd'), dt:$('#bw_fx_dt')?.value || '', half:!!$('#bw_fx_half')?.checked, heal:readDice('bw_fx_heal'), hm:!!$('#bw_fx_hm')?.checked,
+        shape:$('#bw_fx_shape')?.value || '', size:clamp(parseInt($('#bw_fx_size')?.value, 10) || 0, 0, 500) || '', up:readDice('bw_fx_up'), cant:!!$('#bw_fx_cant')?.checked};
+      o[k] = Object.fromEntries(Object.entries(f).filter(([, x]) => x)); }
     else if (type === 'feats') o[k] = parseFeats(el.value);
     else if (type === 'traits') o[k] = parseTraits(el.value);
     else o[k] = el.value.trim();
   }
   if (cat === 'classes'){ o.hd = +o.hd || 8; o.prof = o.prof ? o.prof.split(/,\s*/) : []; o.choice = o.choice ? [o.choice] : []; }
   if (cat === 'spells') o.lv = +o.lv || 0;
+  if (cat === 'weapons'){ o.mb = parseInt(o.mb, 10) || 0; o.rn = +o.rn || ''; o.rl = +o.rl || ''; o.wt = +o.wt || ''; }
   if (cat === 'species') o.speed = +o.speed || 30;
   if (cat === 'backgrounds'){ o.skills = o.skills ? o.skills.split(/,\s*/) : []; o.tools = o.tools ? [o.tools] : []; }
   if (cat === 'monsters'){ o.cr = isNaN(+o.cr) ? o.cr : +o.cr; o.ac = o.ac || '10'; o.hp = o.hp || '10'; }
   return o;
 }
 /* ---- the Homebrew page: a home with everything you made (create · find · import), and an editor with a live preview */
-const BREW_ICON = {classes:'🛡️', subclasses:'🔱', spells:'✨', feats:'🏅', species:'🧝', backgrounds:'📜', items:'💍', monsters:'🐉'};
-const BREW_DESC = {classes:'Hit die, proficiencies, spellcasting and features by level', subclasses:'A new path for any class', spells:'Level, school, components and the classes that learn it',
+const BREW_ICON = {classes:'🛡️', subclasses:'🔱', spells:'✨', feats:'🏅', species:'🧝', backgrounds:'📜', items:'💍', weapons:'⚔️', monsters:'🐉'};
+const BREW_DESC = {classes:'Hit die, proficiencies, spellcasting and features by level', subclasses:'A new path for any class', spells:'Level, school, components, damage or save, scaling and the classes that learn it',
   feats:'Origin, general, fighting style or epic boon', species:'Size, speed and traits', backgrounds:'Ability scores, origin feat, skills and gear',
-  items:'Rarity, type and attunement', monsters:'A full stat block, ready for the Encounter page'};
+  items:'Rarity, type and attunement', weapons:'Dice, damage type, properties, mastery and magic bonus', monsters:'A full stat block, ready for the Encounter page'};
 const brewCount = k => BREW_ITEMS.filter(it => it.cat === k).length;
 const brewFreeNote = () => plusOK() ? '' : `<p class="muted small">Free plan: ${Math.max(0, FREE_BREW - BREW_ITEMS.length)} of ${FREE_BREW} creations left. ${act('plus', undefined, 'Unlimited with Grimoire+', 'sb')}</p>`;
 function workshopHTML(){ return G.brewView === 'edit' ? brewEditorHTML() : brewHomeHTML(); }
@@ -2727,7 +2815,7 @@ function brewPreview(cat, o){
   return brewChecksHTML(cat, o) + brewPreviewEntry(cat, o);
 }
 function brewPreviewEntry(cat, o){
-  try { o = checkBrew(cat, o, {}).o; const e = {cat, n:o.n, o, src:'Homebrew', k:brewKey(cat, o), id:'brew:preview'};
+  try { o = checkBrew(cat, o, {}).o; const e = brewEntry({cat, o, id:'preview'});
     return `<div class="head"><h2>${esc(o.n)}</h2>${srcTag(e)}</div><div class="meta">${entryMeta(e)}</div><div class="rule"></div>${entryBody(e)}`; }
   catch (err) { return '<p class="muted">The preview appears as you fill in the form.</p>'; }
 }
@@ -2934,10 +3022,42 @@ const HB_RULES = {
     const cl = hbClassNames(ctx);
     o.cls = hbList(o.cls).map(c => { const k = hbPick(cl, c); if (!k) W(`Class “${c}” is not in the tome, so the spell won’t show on its list.` + hbSuggest(c, cl)); return k || c; });
     if (!o.cls.length) W('On no class list: heroes will only find it by searching.');
+    if (isObj(o.fx)){ const f = o.fx;
+      f.mode = ['attack', 'save'].includes(f.mode) ? f.mode : ''; f.ab = SAVE_ABS.some(a => a[0] === f.ab) ? f.ab : '';
+      ['dd', 'heal', 'up'].forEach(k => { if (f[k] && !/^\d+d\d+$/i.test(f[k])) delete f[k]; });
+      f.dt = hbPick(DMG_TYPES, f.dt) || ''; f.shape = SPELL_SHAPES.includes(f.shape) ? f.shape : ''; f.size = f.shape && +f.size > 0 ? +f.size : '';
+      if (f.mode === 'save' && !f.ab) E('Saving throw: pick the ability it uses.');
+      if (f.dd && !f.dt) W('Damage dice without a damage type.'); if (f.dt && !f.dd) f.dt = '';
+      if (f.half && !(f.mode === 'save' && f.dd)) f.half = false;
+      if (f.mode !== 'save') f.ab = '';
+      if (f.cant && o.lv !== 0) f.cant = false; if (o.lv === 0 && f.up) f.up = '';
+      if (f.up && o.lv === 9) W('A level 9 spell can’t grow with a higher slot.');
+      o.fx = Object.fromEntries(Object.entries(f).filter(([, x]) => x)); if (!Object.keys(o.fx).length) delete o.fx; }
     o.x = hbStr(o.x); o.h = hbStr(o.h);
     if (!o.x) W('No effect text.');
     if (o.lv === 0 && /slot/i.test(o.h)) W('Cantrips don’t use spell slots: say how it grows at levels 5, 11 and 17 instead.');
     if (o.lv === 0 && o.rit) W('Cantrips are not cast as rituals.');
+  },
+  weapons(o, E, W){
+    const wc = hbPick(WEAPON_CATS, o.wc); if (!wc) E(`“${hbStr(o.wc)}” is not a weapon type: ${WEAPON_CATS.join(', ')}.`); else o.wc = wc;
+    o.dd = hbStr(o.dd); if (!/^\d+d\d+$/i.test(o.dd)) E('Damage dice: pick how many dice and which die.'); else if (!DIE_SIDES.includes(+o.dd.split(/d/i)[1])) W(`Unusual die ${o.dd}.`);
+    const dt = hbPick(DMG_TYPES, o.dt); if (!dt) E('Pick a damage type.'); else o.dt = dt;
+    o.props = (Array.isArray(o.props) ? o.props : hbList(o.props)).map(p => hbPick(WEAPON_PROPS, p)).filter(Boolean);
+    if (o.props.includes('Light') && o.props.includes('Heavy')) W('A weapon can’t be both Light and Heavy.');
+    if (o.props.includes('Two-Handed') && o.props.includes('Versatile')) W('Two-Handed and Versatile don’t go together.');
+    o.vd = hbStr(o.vd); if (o.vd && !/^\d+d\d+$/i.test(o.vd)) E('Versatile damage must be dice like 1d10.');
+    if (o.props.includes('Versatile') && !o.vd) W('Versatile needs its two-handed damage dice.'); if (o.vd && !o.props.includes('Versatile')) W('Versatile damage is ignored unless the Versatile property is ticked.');
+    o.mast = hbPick(WEAPON_MASTERY, o.mast) || '';
+    const mb = parseInt(o.mb, 10) || 0; if (mb < 0 || mb > 3) W('The magic bonus is kept between +0 and +3.'); o.mb = clamp(mb, 0, 3);
+    o.rar = hbStr(o.rar) === 'Mundane' || !hbStr(o.rar) ? 'Mundane' : hbPick(HB_RARITY_LIST, o.rar) || (E(`“${o.rar}” is not a rarity.`), o.rar);
+    if (o.mb && o.rar === 'Mundane') W('A magic bonus makes it a magic weapon: pick a rarity (+1 is usually Uncommon, +2 Rare, +3 Very Rare).');
+    if (o.att && o.rar === 'Mundane') W('A mundane weapon doesn’t need attunement.');
+    o.att = hbBool(o.att, W, 'Attunement');
+    const rn = parseInt(o.rn, 10) || 0, rl = parseInt(o.rl, 10) || 0; o.rn = rn > 0 ? rn : ''; o.rl = rl > 0 ? rl : ''; if (o.rl && o.rl < o.rn) W('Long range is shorter than normal range.');
+    if ((o.props.includes('Ammunition') || o.props.includes('Thrown')) && !o.rn) W('Ammunition and Thrown weapons need a range (80/320 for a longbow, 20/60 for a javelin).');
+    if (/ranged/i.test(o.wc) && !o.props.includes('Ammunition') && !o.props.includes('Thrown') && !o.rn) W('A ranged weapon normally has a range.');
+    o.wt = +o.wt > 0 ? +o.wt : ''; o.val = hbStr(o.val); o.sp = hbStr(o.sp); o.x = hbStr(o.x);
+    if (!o.sp && !o.x) W('No description.');
   },
   feats(o, E, W){
     if (!hbStr(o.ty)){ W('No category, so it is a General feat.'); o.ty = 'General'; }
@@ -3420,12 +3540,12 @@ function brewToMd(list){
   const field = (k, v) => { v = Array.isArray(v) ? v.filter(Boolean).join(', ') : hbStr(v); if (v) L.push(`- ${k}: ${v}`); };
   const text = x => { if (hbStr(x)){ L.push(''); L.push(hbStr(x).replace(/\n/g, '\n\n')); } };
   const ents = arr => (arr || []).forEach(t => L.push(t.n ? `**${fl(t.n).replace(/[.:]$/, '')}.** ${fl(t.x)}` : fl(t.x)));
-  for (const {cat, o} of list){
+  for (const {cat, o} of list.map(it => it.cat === 'weapons' ? {cat:'items', o:{...weaponAsItem(it.o), cat:'Weapon', rar:it.o.rar === 'Mundane' ? '' : it.o.rar}} : it)){
     if (L.length) L.push('', '---', '');
     L.push(`# ${BREW[cat].t === 'Magic item' ? 'Item' : BREW[cat].t}: ${o.n}`, '');
     switch (cat){
       case 'spells': field('Level', +o.lv ? o.lv : 'Cantrip'); field('School', o.sc); field('Casting time', o.t); field('Range', o.r); field('Components', o.c); field('Duration', o.d);
-        field('Concentration', yes(o.conc)); field('Ritual', yes(o.rit)); field('Classes', o.cls); text(o.x); if (hbStr(o.h)) L.push('', '## Using a Higher-Level Spell Slot', '', fl(o.h)); break;
+        field('Concentration', yes(o.conc)); field('Ritual', yes(o.rit)); field('Classes', o.cls); text([spellFxText(o), o.x].filter(Boolean).join('\n\n')); if (hbStr(o.h) || spellFxHigher(o)) L.push('', '## Using a Higher-Level Spell Slot', '', fl(o.h || spellFxHigher(o))); break;
       case 'feats': field('Category', o.ty); field('Prerequisite', o.pre); if (o.rep) field('Repeatable', 'yes'); text(o.x); break;
       case 'species': field('Creature type', o.ty); field('Size', o.size); field('Speed', o.speed); text(o.x); if ((o.tr || []).length){ L.push('', '## Traits', ''); ents(o.tr); } break;
       case 'backgrounds': field('Ability scores', (o.asi || []).map(a => hbAbilName(hbAbil(a)))); field('Origin feat', o.feat); field('Skills', o.skills); field('Tools', o.tools); field('Equipment', o.eq); text(o.x); break;
@@ -3963,8 +4083,10 @@ function gearAttacks(c){
     let a;
     if (st.w) a = weaponAttack(c, st.w, st.wb);
     else {
-      const m = st.dm.match(/^(\d*d\d+)\s*(.*)$/i), ab = it.wab === 'dex' ? 'dex' : 'str', md = mod(c.abilities[ab]) + st.wb;
-      a = {n:it.n, bonus:mod(c.abilities[ab]) + profFor(c.level) + st.wb, dmg:m ? `${m[1]}${md ? fmt(md) : ''} ${m[2]}`.trim() : st.dm, note:[st.wb && fmt(st.wb) + ' magic weapon', it.d].filter(Boolean).join(' · ')};
+      const hw = st.info.e?.src === 'Homebrew' ? st.info.e.o.hw : null, m = st.dm.match(/^(\d*d\d+)\s*(.*)$/i);
+      const ab = hw ? (/ranged/i.test(hw.wc) || (hw.props.includes('Finesse') && mod(c.abilities.dex) > mod(c.abilities.str)) ? 'dex' : 'str') : it.wab === 'dex' ? 'dex' : 'str', md = mod(c.abilities[ab]) + st.wb;
+      a = {n:it.n, bonus:mod(c.abilities[ab]) + profFor(c.level) + st.wb, dmg:m ? `${m[1]}${md ? fmt(md) : ''} ${m[2]}`.trim() : st.dm,
+        note:[st.wb && fmt(st.wb) + ' magic weapon', hw && hw.props.length && hw.props.map(p => p === 'Versatile' && hw.vd ? `Versatile (${hw.vd})` : p).join(', '), hw && hw.mast && 'Mastery: ' + hw.mast, hw && hw.rng && 'Range ' + hw.rng, it.d].filter(Boolean).join(' · ')};
     }
     out.push({...a, n:it.n, i});
   });
