@@ -4083,15 +4083,36 @@ Object.assign(ACT_BREW, {
 const HB5_MIRROR = 'https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/';
 const HB5_PRESETS = [['spells/spells-xphb.json', 'Spells · Player’s Handbook 2024'], ['spells/spells-efa.json', 'Spells · Eberron: Forge of the Artificer'], ['items-base.json', 'Weapons (base items)'], ['items.json', 'Magic items and magic weapons'],
   ['feats.json', 'Feats'], ['backgrounds.json', 'Backgrounds'], ['races.json', 'Species'], ['bestiary/bestiary-xmm.json', 'Creatures · Monster Manual 2025']];
+/* A 5e.tools page link (backgrounds.html#merchant_xphb,flstsource:…) → the data file(s) behind that page, the entry the link points at, and the books ticked in its filter. */
+const HB5_PAGES = {backgrounds:['backgrounds.json'], feats:['feats.json'], races:['races.json'], items:['items.json', 'items-base.json']};
+const HB5_INDEXED = {spells:'spells', bestiary:'bestiary'};   // one file per book, listed in <dir>/index.json
+const hb5Slug = x => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+function hb5Page(u){
+  const m = u.pathname.match(/\/([a-z0-9-]+)\.html$/i), page = m ? m[1].toLowerCase() : '';
+  const hash = (() => { try { return decodeURIComponent(u.hash.slice(1)); } catch (e) { return u.hash.slice(1); } })(), parts = hash.split(',').filter(Boolean);
+  const first = parts[0] && !/^flst/i.test(parts[0]) ? parts[0] : '';
+  const ix = first.lastIndexOf('_'), entry = first ? {name:ix > 0 ? first.slice(0, ix) : first, src:ix > 0 ? first.slice(ix + 1).toUpperCase() : ''} : null;
+  const fl = parts.find(x => /^flstsource:/i.test(x)), books = fl ? fl.replace(/^flstsource:/i, '').split('~').filter(x => /=1$/.test(x)).map(x => x.split('=')[0].toUpperCase()) : [];
+  if (page === 'classes'){
+    if (!entry || !/^[a-z0-9-]+$/i.test(entry.name)) return {err:'Open the class on 5e.tools first, so the link names it (classes.html#artificer_efa), then paste that link.'};
+    return {files:[`class/class-${entry.name.toLowerCase()}.json`], books:entry.src ? [entry.src] : []};   // the class file also holds its subclasses and features
+  }
+  if (Object.hasOwn(HB5_PAGES, page)) return {files:HB5_PAGES[page], entry, books:entry ? [] : books};
+  if (Object.hasOwn(HB5_INDEXED, page)){
+    const want = entry && entry.src ? [entry.src] : books;
+    if (!want.length) return {err:`The ${page} page has one file per book. Open the page with the book you want ticked in its Source filter, or open one ${page === 'spells' ? 'spell' : 'creature'}, then paste that link.`};
+    return {indexed:HB5_INDEXED[page], books:want, entry};
+  }
+  return {err:`The ${page || 'site'} page has no Workshop form: Homebrew holds classes, subclasses, spells, feats, species, backgrounds, magic items, weapons and creatures. Pages that work: classes, spells, feats, races, backgrounds, items and bestiary.`, page:true};
+}
 /** What the person typed → the data path inside 5etools ("spells/spells-efa.json"), or an error to show. */
 function hb5Path(v){
   v = String(v || '').trim(); if (!v) return {err:'Pick a list or paste a link first.'};
   let path = v;
   if (/^https?:\/\//i.test(v) || /^(www\.)?5e\.tools\//i.test(v)){
     let u; try { u = new URL(/^https?:/i.test(v) ? v : 'https://' + v); } catch (e) { return {err:'That is not a valid link.'}; }
-    const cl = /(^|\.)5e\.tools$/i.test(u.hostname) && /\/classes\.html$/i.test(u.pathname) && /^[a-z0-9-]+(_[a-z0-9]+)?$/i.test(u.hash.slice(1).split(',')[0]) ? u.hash.slice(1).split(',')[0].toLowerCase().split('_') : null;
-    if (cl) return {path:`class/class-${cl[0]}.json`, src:(cl[1] || '').toUpperCase()};   // a class page → that class's data file, narrowed to the book in the link
-    path = u.pathname; if (/(^|\.)5e\.tools$/i.test(u.hostname) && !/\/data\//.test(path)) return {err:'That is a page of the site, not a data file. Class pages (classes.html#artificer_efa) work; for anything else use a data link like 5e.tools/data/spells/spells-efa.json.', page:true};
+    if (/(^|\.)5e\.tools$/i.test(u.hostname) && !/\/data\//.test(u.pathname)) return hb5Page(u);
+    path = u.pathname;
     if (!/\/data\//.test(path) && !/githubusercontent\.com$/i.test(u.hostname)) return {err:'Only 5etools data links work here (…/data/…json). For anything else use Choose file or Paste JSON.', direct:v};
   }
   path = path.replace(/^.*\/data\//, '').replace(/^\/+/, '').replace(/^data\//, '');
@@ -4116,8 +4137,8 @@ function hb5Prefer24(list){
   const out = list.filter(it => !(it.ed !== 'one' && has24.has(it.cat + '|' + norm(it.o.n))));
   return {out, dropped:list.length - out.length};
 }
-async function hb5Review(json, name, srcWanted, from){
-  let base = null, notes = [];
+async function hb5Review(json, name, srcWanted, from, entry, notes0 = []){
+  let base = null, notes = [...notes0];
   if (!json.baseitem && Array.isArray(json.item) && json.item.some(i => isObj(i) && i.baseItem && !i.dmg1) && from){
     try { base = (await hb5Load('items-base.json')).json.baseitem; } catch (e) { notes.push('Magic weapons borrow their dice from the base items file, which could not be loaded now: they come in without damage until you import “Weapons (base items)” first.'); }
   }
@@ -4129,23 +4150,46 @@ async function hb5Review(json, name, srcWanted, from){
   }
   const r = from5(json, base);
   let list = r.items, skip = r.skip;
+  if (entry && !json.class){   // the link points at one entry
+    const sl = hb5Slug(entry.name), before = list.length; list = list.filter(it => hb5Slug(it.o.n) === sl && (!entry.src || it.src.toUpperCase() === entry.src));
+    if (!list.length){ toast(`“${entry.name}” (${entry.src || 'any book'}) is not in that file, or has no Workshop form.`); return; }
+    notes.push(`Only the entry the link points at: ${before - list.length} others hidden.`);
+  } else if (srcWanted && srcWanted.length){
+    const w = [].concat(srcWanted).map(x => String(x).toLowerCase()), before = list.length; list = list.filter(it => w.includes(it.src.toLowerCase()));
+    if (!list.length){ toast(`Nothing from ${w.join(', ').toUpperCase()} in that file.`); return; }
+    if (before - list.length) notes.push(`Only ${w.length > 3 ? w.length + ' books' : 'source ' + w.join(', ').toUpperCase()}: ${before - list.length} other entries hidden.`);
+  }
   const d = hb5Prefer24(list); list = d.out; if (d.dropped) notes.push(`${d.dropped} older-edition ${d.dropped === 1 ? 'entry was' : 'entries were'} left out because the 2024 version of the same name is in the file.`);
-  if (srcWanted){ const w = srcWanted.toLowerCase(), before = list.length; list = list.filter(it => it.src.toLowerCase() === w); if (!list.length){ toast(`Nothing from source “${srcWanted}” in that file.`); return; } notes.push(`Only source ${srcWanted.toUpperCase()}: ${before - list.length} other entries hidden.`); }
   if (!list.length){ toast(`Nothing Homebrew can use in that file${skip ? ` (${skip} entries of kinds it has no form for)` : ''}.`); return; }
   brewReview(list, name + (from ? ` (from ${from})` : ''), {skip, notes});
 }
 Object.assign(ACT_BREW, {
   brew5Pre(){ const v = $('#hb5_pre')?.value; if (v){ $('#hb5_url').value = v; } },
   async brew5Fetch(){
-    const url = $('#hb5_url')?.value, h = hb5Path(url);
+    const h = hb5Path($('#hb5_url')?.value);
     if (h.err){ toast(h.err); return; }
-    const src = ($('#hb5_src')?.value || '').trim() || h.src || '';
+    const typed = ($('#hb5_src')?.value || '').trim(), books = typed ? [typed.toUpperCase()] : h.books || [];
     toast('Fetching…');
-    let got;
-    try { got = await hb5Load(h.path); }
-    catch (e) { toast('Could not fetch that file. Check the link, or open it in a new tab, copy everything and use Paste JSON.'); return; }
-    if (!isObj(got.json)){ toast('That file is not 5etools data.'); return; }
-    await hb5Review(got.json, h.path.split('/').pop().replace(/\.json$/i, ''), src, got.from);
+    try {
+      let files = h.files || [], got, from = '';
+      if (h.path) files = [h.path];
+      if (h.indexed){
+        const idx = (await hb5Load(h.indexed + '/index.json')).json, key = Object.keys(idx);
+        files = [...new Set(books.map(b => key.find(k => k.toUpperCase() === b)).filter(Boolean).map(k => `${h.indexed}/${idx[k]}`))];
+        if (!files.length){ toast(`None of those books has ${h.indexed} files on 5etools.`); return; }
+        if (files.length > 15){ toast(`That link ticks ${files.length} books at once: tick fewer in the Source filter (up to 15) or type one book in the Source box.`); return; }
+      }
+      const json = {}, miss = [];
+      for (const f of files){
+        try { got = await hb5Load(f); } catch (e) { if (files.length === 1) throw e; miss.push(f.split('/').pop()); continue; }
+        from = got.from;
+        if (!isObj(got.json)) throw new Error('not 5etools data');
+        for (const [k, v] of Object.entries(got.json)) if (Array.isArray(v)) json[k] = (json[k] || []).concat(v);
+      }
+      if (miss.length === files.length) throw new Error('none loaded');
+      const name = h.indexed ? `${h.indexed} · ${books.join(', ')}` : files[0].split('/').pop().replace(/\.json$/i, '') + (files.length > 1 ? ` + ${files.length - 1} more` : '');
+      await hb5Review(json, name, books, from, h.entry, miss.length ? [`Could not load ${miss.join(', ')}: those files are left out.`] : []);
+    } catch (e) { toast('Could not fetch that file. Check the link, or open it in a new tab, copy everything and use Paste JSON.'); }
   },
   brew5Paste(){
     modal(`<div class="head"><h2>Paste 5etools JSON</h2><span class="spacer"></span>${closeBtn()}</div>

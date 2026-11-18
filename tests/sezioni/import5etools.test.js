@@ -16,7 +16,8 @@ const SPELLS = {spell:[
     entries:['Each creature in a 20-foot-radius Sphere makes a Dexterity saving throw, taking {@damage 4d6} Lightning damage on a failed save or half as much on a success.'], entriesHigherLevel:[{type:'entries', name:'Slot', entries:['The damage increases by {@scaledamage 4d6|2-9|1d6}.']}], damageInflict:['lightning'], savingThrow:['dexterity']}]};
 const SOURCES = {XPHB:{'Fire Bolt':{class:[{name:'Sorcerer', source:'XPHB'}, {name:'Artificer', source:'EFA'}, {name:'Mage', source:'WoW', definedInSource:'WoW'}]}}};
 const CLS = {class:[{name:'Artificer', source:'TCE', hd:{faces:8}}, {name:'Artificer', source:'EFA', hd:{faces:8}, casterProgression:'artificer', proficiency:['con', 'int']}], subclass:[{name:'Alchemist', shortName:'Alchemist', source:'TCE', className:'Artificer', classSource:'TCE'}], classFeature:[{name:'Infuse Item', source:'EFA', className:'Artificer', classSource:'EFA', level:2, entries:['Infuse.']}]};
-const FILES = {'class/class-artificer.json':CLS, 'items-base.json':BASE, 'items.json':ITEMS, 'spells/spells-xphb.json':SPELLS, 'spells/sources.json':SOURCES};
+const BG = {background:[{name:'Merchant', source:'XPHB', edition:'one', skillProficiencies:[{insight:true, persuasion:true}], entries:['Trade.']}, {name:'Acolyte', source:'XPHB', edition:'one', entries:['Prayer.']}, {name:'Acolyte', source:'PHB', edition:'classic', entries:['Old.']}]};
+const FILES = {'backgrounds.json':BG, 'spells/index.json':{XPHB:'spells-xphb.json', EFA:'spells-efa.json'}, 'class/class-artificer.json':CLS, 'items-base.json':BASE, 'items.json':ITEMS, 'spells/spells-xphb.json':SPELLS, 'spells/sources.json':SOURCES};
 async function wire(app){
   await app.context.route('https://5e.tools/**', r => r.abort());
   await app.context.route('https://raw.githubusercontent.com/**', r => {
@@ -28,7 +29,7 @@ async function fetch5(app, link, src){
   await app.page.waitForTimeout(300);   // la pagina si ridisegna subito dopo un import
   await app.page.fill('#hb5_url', link); await app.page.fill('#hb5_src', src || '');
   await app.page.locator('[data-act="brew5Fetch"]').click();
-  await app.page.waitForSelector('#modalBk .b5List');
+  try { await app.page.waitForSelector('#modalBk .b5List'); } catch (e) { throw new Error(link + ' → ' + await app.page.locator('#toast').innerText()); }
   return app.page.$$eval('.b5Row', rows => rows.map(r => ({n:r.dataset.n, text:r.innerText.replace(/\n+/g, ' | '), ok:!r.querySelector('.b5').disabled})));
 }
 const added = app => app.page.waitForFunction(() => /join your homebrew/.test(document.getElementById('toast')?.textContent || ''));
@@ -80,10 +81,33 @@ module.exports = {sezione:'import5etools', test:[
     const rows = await fetch5(app, 'https://5e.tools/classes.html#artificer_efa,flstsource:tce=1~efa=1,flstmiscellaneous:');
     assert.ok(rows.length === 1 && /EFA/.test(rows[0].text), rows.map(r => r.text).join(' || '));
   }],
+  ["pagina backgrounds.html#merchant_xphb: solo quella voce, dal file dati", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    const rows = await fetch5(app, 'https://5e.tools/backgrounds.html#merchant_xphb,flstsource:tce=1~xphb=1~phb=1,flstmiscellaneous:');
+    assert.deepStrictEqual(rows.map(r => r.n), ['merchant'], rows.map(r => r.n).join());
+  }],
+  ["pagina senza voce: i libri spuntati nel filtro; items.html porta armi base e oggetti", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    let rows = await fetch5(app, 'https://5e.tools/backgrounds.html#flstsource:xphb=1');
+    assert.deepStrictEqual(rows.map(r => r.n).sort(), ['acolyte', 'merchant']);
+    await app.click('close');
+    rows = await fetch5(app, 'https://5e.tools/spells.html#flstsource:xphb=1~efa=1~24griffonssaddlebag1=1');
+    assert.ok(rows.some(r => r.n === 'fire bolt'));
+    await app.click('close');
+    rows = await fetch5(app, 'https://5e.tools/items.html');
+    assert.ok(rows.some(r => r.n === 'flame tongue longsword') && rows.some(r => r.n === 'longbow'));
+  }],
+  ["pagine che non si possono mappare: errore chiaro", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    for (const [link, re] of [['https://5e.tools/optionalfeatures.html#x_phb', /no Workshop form/], ['https://5e.tools/spells.html', /one file per book/], ['https://5e.tools/classes.html', /Open the class/]]){
+      await app.page.waitForTimeout(200); await app.page.fill('#hb5_url', link); await app.page.locator('[data-act="brew5Fetch"]').click();
+      await app.page.waitForFunction(r => new RegExp(r).test(document.getElementById('toast')?.textContent || ''), re.source);
+    }
+  }],
   ["link che non e un file dati, e incolla JSON", async ({open}) => {
     const app = await open(); await wire(app); await app.go('workshop');
-    await app.page.fill('#hb5_url', 'https://5e.tools/spells.html'); await app.page.locator('[data-act="brew5Fetch"]').click();
-    await app.page.waitForFunction(() => /not a data file|page of the site/.test(document.body.innerText));
+    await app.page.fill('#hb5_url', 'https://example.com/foo.json'); await app.page.locator('[data-act="brew5Fetch"]').click();
+    await app.page.waitForFunction(() => /Only 5etools data links/.test(document.body.innerText));
     await app.click('brew5Paste'); await app.page.fill('#hb5_json', JSON.stringify(ITEMS)); await app.click('brew5PasteGo');
     await app.page.waitForSelector('#modalBk .b5List');
     assert.ok((await app.page.locator('.b5Row').count()) >= 2);
