@@ -1275,15 +1275,16 @@ function savePrefs(){
 async function load(){
   let data = null;
   let raw = null;
-  let bad = false;
+  let bad = false, noId = false;   // B-054: a hero without id gets one
   try { raw = localStorage.getItem(heroKey()); if (raw) data = JSON.parse(raw); } catch (e) { bad = true; }
   if (raw && !bad && !(isObj(data) && Array.isArray(data.chars))) bad = true;   // B-053: unreadable or wrong shape
   if (bad){ G.damaged = raw; data = null; try { const bk = 'grimoire-heroes-backup-v1:' + heroKey() + ':' + Date.now(); localStorage.setItem(bk, raw); } catch (e) {} }
-  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
+  if (data && data.chars && (data.chars.length || me())){ G.chars = data.chars.filter(isObj).map(fixup); G.chars.forEach(c => { if (!c.id || typeof c.id !== 'string'){ c.id = uid(); noId = true; } }); G.activeId = data.activeId || G.chars[0]?.id || null; G.showCover = false; }
   else if (me()) { G.chars = []; G.activeId = null; }
   else { G.chars = sampleChars().map(fixup); G.activeId = G.chars[0].id; }
   G.chars.forEach(c => { c._sig = c._sig ? normSig(c._sig) : sigOf(c); });
   markBase(data?.chars ? raw : null);
+  if (noId) try { save(); markBase(localStorage.getItem(heroKey())); } catch (e) {}
   try { Object.assign(G, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
   if (!['manual','name','recent'].includes(G.shelfSort)) G.shelfSort = 'manual';
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
