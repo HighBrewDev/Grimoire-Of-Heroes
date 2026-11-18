@@ -104,6 +104,8 @@ button{cursor:pointer}
 .coinCalc input{width:110px}
 .coinCalc .sb{min-height:44px;min-width:44px}
 .sb{border:1px solid var(--gold3);background:var(--paper);border-radius:7px;padding:3px 9px;font-size:14px;line-height:1.3;color:var(--ink)}
+.spRes{border-left:3px solid var(--gold3);padding-left:8px;margin:6px 0}.spFilt{display:grid;gap:6px;margin:8px 0}.spFilt .row{gap:4px 6px}.spFilt select{max-width:100%}
+@media (max-width:560px){.spFilt .sb{min-height:40px;min-width:40px}}
 .sb:hover{background:var(--paperHi)}
 .sb.on{background:var(--chip);color:var(--chipInk);border-color:var(--chip)}
 .sb.x{padding:3px 7px;color:var(--rubric)}
@@ -4160,13 +4162,37 @@ Object.assign(ACT_BREW, {
 });
 
 /* ================================================================== spell search on the spellbook page */
+const SPELL_PAGE = 30;
+function spellFilterBar(){
+  const sp = ALL.filter(e => e.cat === 'spells'), lvs = [...new Set(sp.map(e => e.o.lv ?? e.o.level).filter(v => v != null))].sort((a, b) => a - b);
+  const schools = [...new Set(sp.map(e => e.o.sc).filter(Boolean))].sort(), hasBrew = sp.some(e => e.src === 'Homebrew');
+  const on = (v, k) => 'sb' + (String(G[k] ?? '') === String(v) ? ' on' : '');
+  return `<div class="spFilt" role="group" aria-label="Spell filters">
+    <div class="row"><span class="muted small">Level</span>${act('spellF', 'spellLv:', 'All', on('', 'spellLv'))}${lvs.map(l => act('spellF', 'spellLv:' + l, l == 0 ? 'Cantrips' : String(l), on(l, 'spellLv'), `aria-label="${l == 0 ? 'Cantrips' : 'Level ' + l}"`)).join('')}</div>
+    <div class="row"><label class="muted small" for="spell_sc">School</label><select id="spell_sc"><option value="">All schools</option>${schools.map(x => `<option value="${esc(x)}"${G.spellSc === x ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>
+    ${hasBrew ? `${act('spellF', 'spellSrc:', 'All sources', on('', 'spellSrc'))}${act('spellF', 'spellSrc:SRD', 'SRD', on('SRD', 'spellSrc'))}${act('spellF', 'spellSrc:Homebrew', 'Homebrew', on('Homebrew', 'spellSrc'))}` : ''}</div></div>`;
+}
 function spellSearch(q){
   const box = $('#spellResults'); if (!box) return;
-  q = norm(q);
-  if (!q){ box.innerHTML = ''; return; }
-  const c = active(), mine = $('#spell_mine')?.checked;
-  const list = ALL.filter(e => e.cat === 'spells' && (e.lc.includes(q) || norm(e.o.sc || '').includes(q)) && (!mine || !e.o.cls || classList(c).some(x => e.o.cls.includes(x.class)))).slice(0, 10);
-  box.innerHTML = list.map(e => `<div class="entry"><div class="row"><button type="button" class="chip" data-act="detailId" data-arg="${esc(e.id)}">${esc(e.n)}</button><span class="meta">${esc(e.k)}</span> ${e.src !== 'SRD' ? srcTag(e) : ''}<span class="spacer"></span>${c.spells.known.includes(e.n) ? '<span class="muted">known</span>' : act('learn', e.n, '＋ Learn')}</div></div>`).join('') || '<p class="muted">No match.</p>';
+  G.spellQ = q; q = norm(q);
+  const c = active(), mine = $('#spell_mine')?.checked, lv = G.spellLv ?? '', sc = G.spellSc || '', sr = G.spellSrc || '';
+  const filtering = !!(q || lv !== '' || sc || sr);
+  const bar = spellFilterBar();
+  if (!filtering && !G.spellBrowse){
+    const n = ALL.filter(e => e.cat === 'spells').length;
+    box.innerHTML = `${bar}<p class="muted small">${n} spells in the library. Type a name, pick a level or school, or ${act('spellBrowse', undefined, 'browse them all', 'sb')}.</p>`; return;
+  }
+  const mc = classList(c);
+  const all = ALL.filter(e => e.cat === 'spells' && (!q || e.lc.includes(q) || norm(e.o.sc || '').includes(q)) && (lv === '' || (e.o.lv ?? e.o.level) == lv) && (!sc || e.o.sc === sc)
+    && (!sr || (sr === 'SRD' ? e.src !== 'Homebrew' : e.src === 'Homebrew')) && (!mine || !e.o.cls || mc.some(x => e.o.cls.includes(x.class))))
+    .sort((a, b) => ((a.o.lv ?? a.o.level ?? 99) - (b.o.lv ?? b.o.level ?? 99)) || (q ? (b.lc.startsWith(q) - a.lc.startsWith(q)) : 0) || a.n.localeCompare(b.n));
+  const max = G.spellMax || SPELL_PAGE, list = all.slice(0, max);
+  let last = null;
+  const rows = list.map(e => { const l = e.o.lv ?? e.o.level ?? 99, head = l !== last ? `<h4>${l == 0 ? 'Cantrips' : l == 99 ? 'Unlisted' : 'Level ' + l}</h4>` : ''; last = l;
+    return `${head}<div class="entry"><div class="row"><button type="button" class="chip" data-act="detailId" data-arg="${esc(e.id)}">${esc(e.n)}</button><span class="meta">${esc(e.k)}</span> ${e.src !== 'SRD' ? srcTag(e) : ''}<span class="spacer"></span>${c.spells.known.includes(e.n) ? '<span class="muted">known</span>' : act('learn', e.n, '＋ Learn')}</div></div>`; }).join('');
+  box.innerHTML = `${bar}<div class="spRes"><p class="muted small" role="status">${all.length} ${all.length === 1 ? 'spell' : 'spells'}${filtering ? ' match' : ''}${mine ? ' on your class list' : ''}${filtering ? ` ${act('spellF', 'clear:', 'Clear filters', 'sb')}` : ''}</p>`
+    + (rows || '<p class="muted">No match.</p>')
+    + (all.length > max ? `<div class="row mt">${act('spellMore', undefined, `Show ${Math.min(SPELL_PAGE, all.length - max)} more`, 'btn small')}<span class="muted small">${max} of ${all.length}</span></div>` : '') + '</div><div class="rule"></div><h4 class="muted">Your spellbook</h4>';
 }
 
 /* ================================================================== omnibox */
@@ -4666,6 +4692,9 @@ const ACT = {
   pactSlot(k){ mut(c => { const s = c.spells.pact = c.spells.pact || {used:0}; s.used = +k < s.used ? +k : +k + 1; }, false); },
   prep(n){ mut(c => { const i = c.spells.prep.indexOf(n); i >= 0 ? c.spells.prep.splice(i, 1) : c.spells.prep.push(n); }, false); },
   unlearn(n){ mut(c => { c.spells.known = c.spells.known.filter(x => x !== n); c.spells.prep = c.spells.prep.filter(x => x !== n); }, false); },
+  spellF(arg){ const [k, v] = arg.split(':'); if (k === 'clear'){ G.spellLv = ''; G.spellSc = ''; G.spellSrc = ''; G.spellQ = ''; const i = $('#spell_q'); if (i) i.value = ''; } else G[k] = v; G.spellMax = SPELL_PAGE; spellSearch($('#spell_q')?.value || ''); },
+  spellBrowse(){ G.spellBrowse = true; spellSearch($('#spell_q')?.value || ''); },
+  spellMore(){ G.spellMax = (G.spellMax || SPELL_PAGE) + SPELL_PAGE; spellSearch($('#spell_q')?.value || ''); },
   learn(n){ const c = active(); if (!c.spells.known.includes(n)){ c.spells.known.push(n); save(); } toast(`${n} added to ${c.name}'s spellbook.`); refreshAfterModalAction(); },
   takeFeat(n){ const c = active(); if (!hasFeat(c, n)){ c.feats.push({n, src:'Library'}); save(); } toast(`${c.name} takes ${n}.`); refreshAfterModalAction(); },
   become(arg){ const i = arg.indexOf(':'), k = arg.slice(0, i), v = arg.slice(i + 1); mut(c => { c[k] = k === 'subclass' ? v.replace(/^(Path|College|Circle|Oath|Warrior) of (the )?/, '').replace(/ (Domain|Patron|Sorcery)$/, '') : v; if (k === 'class') c.subclass = ''; }); closeModal(); toast(`${active().name}: ${k} is now ${active()[k]}.`); },
@@ -5508,7 +5537,7 @@ const ACT_TICKETS = {
 Object.assign(ACT, ACT_TICKETS);
 
 /* ---- read-only heroes: party members' sheets can be read and rolled, never changed ---- */
-const READ_SAFE = new Set(['pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack','gearAttack',
+const READ_SAFE = new Set(['spellF','spellBrowse','spellMore','pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack','gearAttack',
   'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
   ...Object.keys(ACT_CLOUD)]);
 const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew|np[A-Z]|tk[A-Z]|ticket$)/.test(name) && !$('#modalBk .acct'); };
@@ -5519,7 +5548,7 @@ function lockReadOnly(){
   const c = active(), ro = !!c && !isMine(c);
   $('#page').classList.toggle('ro', ro);
   if (!ro || BOOKISH(G.chapter) || G.chapter === 'encounter') return;
-  $$('#page .pageBody input, #page .pageBody select, #page .pageBody textarea').forEach(el => { if (!/^(spell_q|lib_q|gear_q|inv_q|spell_mine|gear_cat|gear_att|atk_w)$/.test(el.id)) el.disabled = true; });
+  $$('#page .pageBody input, #page .pageBody select, #page .pageBody textarea').forEach(el => { if (!/^(spell_q|spell_sc|lib_q|gear_q|inv_q|spell_mine|gear_cat|gear_att|atk_w)$/.test(el.id)) el.disabled = true; });
 }
 function heroInfo(c){
   if (!c) return '';
@@ -5611,6 +5640,7 @@ function wire(){
     if (el.id === 'lu_cls'){ G.lu.cls = el.value; openLevelUp(true); return; }
     if (el.dataset.bind){ bindValue(el, true); const quiet = el.tagName === 'TEXTAREA' || /^currency\.|^notes\./.test(el.dataset.bind); quiet ? null : render(); return; }
     if (el.dataset.lib !== undefined){ G.libF[el.dataset.lib] = el.value; renderLibList(); return; }
+    if (el.id === 'spell_sc'){ G.spellSc = el.value; G.spellMax = SPELL_PAGE; spellSearch($('#spell_q').value); }
     if (el.id === 'spell_mine'){ G.spellMine = el.checked; spellSearch($('#spell_q').value); }
     if (el.id === 'imp_file') importFiles([...el.files]);
     if ((el.id === 'brew_file' || el.id === 'brew_file2') && el.files[0]){ brewImport(el.files[0]); el.value = ''; }
@@ -5625,7 +5655,7 @@ function wire(){
     if (el.dataset.bind && (el.tagName === 'TEXTAREA' || /^currency\./.test(el.dataset.bind))){ bindValue(el); return; }
     if (el.id === 'hpAmt') G.hpAmt = hpNum('hpAmt');
     if (el.id === 'coinAmt') G.coinAmt = el.value;
-    if (el.id === 'spell_q') spellSearch(el.value);
+    if (el.id === 'spell_q'){ G.spellMax = SPELL_PAGE; spellSearch(el.value); }
     if (el.id === 'gear_q'){ G.gearQ = el.value; gearSearch(); }
     if (el.id === 'inv_q'){ G.invQ = el.value; const pos = el.selectionStart; renderPage(); const n = $('#inv_q'); n.focus(); n.setSelectionRange(pos, pos); }
     if (el.id === 'shelf_q'){ G.shelfQ = el.value; renderShelf(); }

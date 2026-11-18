@@ -104,4 +104,20 @@ module.exports = {sezione:'incantesimi', test:[
     const app = await open({heroes:[fx.blank({class:'Barbarian', level:5})]}); await app.go('spells');
     assert.strictEqual(await app.page.locator('[data-act="slot"]').count(), 0);
   }],
+  ['sfogliare gli incantesimi per livello e scuola senza cercare per nome', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    const rows = () => app.page.locator('#spellResults .entry').count();
+    assert.strictEqual(await rows(), 0);
+    await app.click('spellF', 'spellLv:0');
+    assert.ok(await rows() > 3 && /Cantrips/.test(await app.text('#spellResults')));
+    assert.ok(!/Level 3/.test(await app.text('#spellResults')));
+    await app.page.selectOption('#spell_sc', 'Evocation');
+    const evo = await rows(); assert.ok(evo > 0);
+    await app.click('spellF', 'clear:');
+    await app.click('spellBrowse');
+    assert.ok(await rows() >= 30);
+    assert.ok(await app.page.locator('[data-act="spellMore"]').count() === 1);
+    await app.click('spellMore');
+    assert.ok(await rows() >= 60);
+  }],
 ]};
