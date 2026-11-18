@@ -19,6 +19,17 @@ module.exports = {sezione:'tratti', test:[
     const f = (await app.hero()).feats.find(f => f.n === 'Benedizione del fiume');
     assert.ok(f && f.src === 'Custom');
   }],
+  ['talento personalizzato: descrizione e prerequisito si scrivono e restano', async ({open}) => {
+    const app = await open(); await app.go('traits');
+    await app.page.fill('#feat_custom', 'Benedizione del fiume'); await app.click('addFeatCustom');
+    const i = (await app.hero()).feats.findIndex(f => f.n === 'Benedizione del fiume');
+    await app.page.fill(`#fd_${i}`, 'Respiri sott\'acqua e +1 alla Costituzione.');
+    await app.page.fill(`#fp_${i}`, 'Livello 4+'); await app.page.press(`#fp_${i}`, 'Tab');
+    const f = (await app.hero()).feats[i];
+    assert.strictEqual(f.d, 'Respiri sott\'acqua e +1 alla Costituzione.'); assert.strictEqual(f.pre, 'Livello 4+');
+    await app.go('traits');
+    assert.strictEqual(await app.page.inputValue(`#fd_${i}`), f.d);
+  }],
   ['rimuovere un talento', async ({open}) => {
     const app = await open(); await app.go('traits');
     await app.clickJS('delFeat', '0');
