@@ -35,6 +35,21 @@ module.exports = {sezione:'zaino', test:[
     // 12 mr + 30 ma + 45 mo = 0,12 + 3 + 45 = 48,1 (arrotondato a 48.1)
     assert.ok(/≈ 48\.1 gp/.test(await app.text('#page')));
   }],
+  ['filtro dello zaino: senza risultati non rompe nulla e svuotandolo tornano tutte le righe', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    const tot = await invRows(app);
+    await app.page.fill('#inv_q', 'zzzzqqqq');
+    assert.strictEqual(await invRows(app), 0);
+    await app.page.fill('#inv_q', '');
+    assert.strictEqual(await invRows(app), tot);
+  }],
+  ['monete: testo al posto del numero non salva NaN', async ({open}) => {
+    const app = await open(); await app.go('pack');
+    const prima = (await app.hero()).currency.gp;
+    await app.page.fill('#coin_gp', 'abc').catch(() => {});
+    const c = (await app.hero()).currency;
+    assert.ok(Number.isFinite(c.gp) && c.gp >= 0, 'gp salvato come ' + c.gp);
+  }],
   ['filtro dello zaino', async ({open}) => {
     const app = await open(); await app.go('pack');
     await app.page.fill('#inv_q', 'rope');

@@ -1,5 +1,7 @@
 # Diario del team
 
+## 2026-11-18 · test
+- Test 356/357 superati (+5 nuovi: ticket ×3, zaino ×2), punteggio totale +358 (ieri +335). Sezioni rosse: nessuna. Unico fallito: B-054 (robustezza, aperto). Peggiori: sincronia +12, ticket +14, biblioteca +16.
 ## 2026-11-17 · sviluppo
 - **Backend (B-053, sezione Robustezza/Import-export)**: `load()` ora riconosce JSON illeggibile o con forma sbagliata, ne copia il testo in `grimoire-heroes-backup-v1:<chiave>:<ora>` e mostra un avviso con download della copia; formato e schema invariati. **Frontend (B-052, Zaino)**: `coinSpend` riprova con una moneta in più della specie scelta, con resto.
 - Test prima 345/347, dopo 347/347 (nessuna regressione). File: index.html, sw.js (CACHE ds1118b), docs. Pubblicato come PR verso main (tocca la lettura dei dati utente), non provato a mano su schermo. Resta: B-011, backlog 2-3, 6-7.

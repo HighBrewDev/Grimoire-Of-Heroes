@@ -91,6 +91,33 @@ module.exports = {sezione:'ticket', test:[
     await adm.click('tkAdminDel', 't-spam-1'); await adm.page.locator('#cfOk').click();
     assert.ok(await until(() => tickets.size === 0));
   }],
+  ["ticket: due ticket scritti offline partono entrambi al ritorno della rete", async ({open}) => {
+    const cloud = new Cloud(); const app = await open({cloud});
+    await app.page.context().setOffline(true);
+    await openForm(app); await fill(app, 'Primo offline'); await app.click('tkSend');
+    assert.ok(await until(async () => (await queue(app)).length === 1));
+    await app.page.keyboard.press('Escape'); await app.page.waitForTimeout(300);
+    await openForm(app); await fill(app, 'Secondo offline'); await app.click('tkSend');
+    assert.ok(await until(async () => (await queue(app)).length === 2), 'servono due ticket in coda');
+    await app.page.context().setOffline(false);
+    await app.page.evaluate(() => window.dispatchEvent(new Event('online')));
+    assert.ok(await until(() => cloud.tickets.size === 2), 'non sono partiti tutti e due');
+    assert.ok(await until(async () => (await queue(app)).length === 0));
+  }],
+  ["ticket: HTML nel titolo si mostra come testo, nessun elemento iniettato", async ({open}) => {
+    const cloud = new Cloud(); const app = await open({cloud}); await openForm(app);
+    await fill(app, '<img src=x onerror="window.__xss=1"> titolo', '<b>corpo</b>'); await app.click('tkSend');
+    assert.ok(await until(() => cloud.tickets.size === 1));
+    await app.page.waitForTimeout(500);
+    assert.strictEqual(await app.page.locator('#tkMine img').count(), 0, 'immagine iniettata');
+    assert.strictEqual(await app.page.evaluate(() => window.__xss || 0), 0, 'codice eseguito');
+  }],
+  ["ticket: un secondo clic su Invia con la rete lenta non duplica il ticket", async ({open}) => {
+    const cloud = new Cloud(); const app = await open({cloud}); await openForm(app); await fill(app, 'Doppio clic');
+    await app.page.locator('[data-act="tkSend"]').first().dblclick();
+    await app.page.waitForTimeout(1200);
+    assert.strictEqual(cloud.tickets.size, 1, 'ticket duplicati: ' + cloud.tickets.size);
+  }],
   ["ticket: a 390 px il modulo non esce dallo schermo", async ({open}) => {
     const app = await open({cloud:new Cloud(), viewport:{width:390, height:844}, mobile:true}); await openForm(app);
     const o = await app.page.evaluate(() => { const m = document.querySelector('.modal'); return {sw:m.scrollWidth, cw:m.clientWidth, doc:document.documentElement.scrollWidth, iw:innerWidth}; });
