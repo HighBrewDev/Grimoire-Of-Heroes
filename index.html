@@ -204,6 +204,8 @@ button.chip:hover{filter:brightness(1.12)}
 /* ---------- page content ---------- */
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.combatTop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px;align-items:start}
+.combatTop .gearAtk,.combatTop .atkList{min-width:0}
 .gridAb{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .stack{display:flex;flex-direction:column;gap:14px}
 .card{background:var(--surf);border:1px solid var(--gold3);border-radius:var(--r);padding:11px 13px;min-width:0;
@@ -387,7 +389,7 @@ details.fold > .in{padding:0 12px 10px}
 @property --chL{syntax:'<length>';inherits:false;initial-value:0px}
 @keyframes chapFade{0%{--chF:0px;--chL:44px}4%{--chF:44px}96%{--chL:44px}100%{--chF:44px;--chL:0px}}
 @media (max-width:820px){
-  .grid2,.grid3{grid-template-columns:minmax(0,1fr)}
+  .grid2,.grid3,.combatTop{grid-template-columns:minmax(0,1fr)}
   .gridAb{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:560px){
@@ -2025,7 +2027,8 @@ combat(c){
   const sp = speciesInfo(c);
   const res = resources(c);
   const weapons = (SRD.equipment || []).filter(e => e.dmg);
-  return `<div class="grid3">
+  return `<div class="combatTop">
+    <div class="stack">
     ${card('Hit points', `${hpBar(c)}
       <div class="row mt"><span class="big num">${c.hp.cur}</span><span class="muted num">/ ${hpMax(c)}${c.hp.temp ? ` · ${c.hp.temp} temp` : ''}</span>${c.hp.cur > 0 && c.hp.cur <= hpMax(c) / 2 ? `<button type="button" class="chip light" data-act="detail" data-arg="Bloodied">Bloodied</button>` : ''}</div>
       <div class="row mt hpAmtRow"><label class="sr" for="hpAmt">Amount</label>${act('hpStep', '-5', '−5', 'sb hpStep', 'aria-label="Lower the amount by 5"')}${act('hpStep', '-1', '−', 'sb hpStep', 'aria-label="Lower the amount by 1"')}<input type="number" id="hpAmt" inputmode="numeric" value="${clamp(+G.hpAmt || 0, 0, LIM.hp) || (G.hpAmt === 0 ? 0 : 5)}" min="0" max="${LIM.hp}">${act('hpStep', '1', '+', 'sb hpStep', 'aria-label="Raise the amount by 1"')}${act('hpStep', '5', '+5', 'sb hpStep', 'aria-label="Raise the amount by 5"')}</div>
@@ -2036,21 +2039,25 @@ combat(c){
       ${kv('Hit Dice', `<span class="num">${hdText(c)}</span>`)}
       <div class="row mt">${act('spendHD', undefined, 'Spend Hit Die')}${act('shortRest', undefined, 'Short Rest')}${act('longRest', undefined, 'Long Rest')}</div>
       <p class="muted">Short Rest: spend Hit Dice, each heals the roll + Con. Long Rest (2024): regain all HP and all Hit Dice, reduce Exhaustion by 1.</p>`)}
+      ${res.pool.length || res.stats.length ? card(`${multi(c).length ? 'Class' : esc(c.class)} resources`, `
+        ${res.pool.map(r => `<div class="kv"><span>${esc(r.n)}</span><span class="pips">${Array.from({length:r.max}, (_, k) => `<button type="button" class="pip ${k < (c.res[r.k] || 0) ? 'used' : ''}" data-act="usePip" data-arg="${r.k}:${k}" aria-label="${esc(r.n)} ${k + 1}"></button>`).join('')}</span></div>`).join('')}
+        ${res.stats.map(s => kv(esc(s.n), esc(s.v))).join('')}`) : ''}
+    </div>
+  <div class="stack">
   ${card('Attacks & cantrips <span class="muted">roll to hit, then damage (doubled dice on a natural 20)</span>', `
     ${gearAttacks(c).map(a => `<div class="entry gearAtk"><div class="row"><b>${esc(a.n)}</b><span class="chip">Equipped</span><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('gearAttack', a.i, 'Attack', 'btn small')}${act('equip', a.i, 'Unequip', 'sb x')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`).join('')}
     ${c.attacks.map((a, i) => `<div class="entry"><div class="row"><b>${esc(a.n)}</b><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('attack', i, 'Attack', 'btn small')}${act('editAttack', i, 'Edit')}${act('delAttack', i, '✕', 'sb x', 'aria-label="Remove attack"')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`).join('') || (gearAttacks(c).length ? '' : '<p class="empty">No attacks yet. Equip a weapon from the pack, add one below, or type your own.</p>')}
     <div class="row mt"><label class="sr" for="atk_w">Weapon</label><select id="atk_w">${weapons.map(w => `<option value="${esc(w.n)}">${esc(w.n)} · ${esc(w.sum || w.dmg)}</option>`).join('')}</select>${act('addWeaponAttack', undefined, '＋ Add weapon attack')}</div>
     <div class="row mt"><input type="text" id="atk_n" placeholder="Name (e.g. Fire Bolt)"><input type="number" id="atk_b" placeholder="+hit"><input type="text" id="atk_d" placeholder="Damage (1d10 Fire)">${act('addAttack', undefined, '＋ Add custom')}</div>`)}
+  ${equippedCard(c)}
+  </div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
     ${card('Death saves', `
       <p class="muted">At 0 HP roll a d20 each turn: 10+ succeeds, 3 successes stabilise, 3 failures kill. A 1 counts twice; a 20 wakes you with 1 HP.</p>
       ${kv('Successes', [1,2,3].map(n => act('setDeath', 's:' + n, n, 'sb' + ((c.death.s || 0) >= n ? ' on' : ''))).join(' '))}
       ${kv('Failures', [1,2,3].map(n => act('setDeath', 'f:' + n, n, 'sb' + ((c.death.f || 0) >= n ? ' on' : ''))).join(' '))}
-      <div class="row mt">${act('rollDeath', undefined, 'Roll death save')}${act('setDeath', 'reset', 'Clear')}</div>
-      ${res.pool.length || res.stats.length ? `<div class="rule"></div><h4>${multi(c).length ? 'Class' : esc(c.class)} resources</h4>
-        ${res.pool.map(r => `<div class="kv"><span>${esc(r.n)}</span><span class="pips">${Array.from({length:r.max}, (_, k) => `<button type="button" class="pip ${k < (c.res[r.k] || 0) ? 'used' : ''}" data-act="usePip" data-arg="${r.k}:${k}" aria-label="${esc(r.n)} ${k + 1}"></button>`).join('')}</span></div>`).join('')}
-        ${res.stats.map(s => kv(esc(s.n), esc(s.v))).join('')}` : ''}`)}
-  </div>
-  <div class="grid2" style="margin-top:14px">
+      <div class="row mt">${act('rollDeath', undefined, 'Roll death save')}${act('setDeath', 'reset', 'Clear')}</div>`)}
     ${card('Armor & motion', `
       ${kv('Armor Class', `<span class="big num">${getAC(c)}</span>`)}
       <p class="muted acParts">${acParts(c).map(p => `${esc(p.n)} ${p.k === 'base' ? p.v : fmt(p.v)}`).join(' · ')}</p>
@@ -2064,7 +2071,6 @@ combat(c){
       <div class="row">${c.conc ? concChip(c) : '<span class="muted">Not concentrating. Cast a Concentration spell from the Spellbook.</span>'}</div>
       ${c.conc ? `<div class="row mt"><label class="sr" for="concDmg">Damage taken</label><input type="number" id="concDmg" min="1" placeholder="dmg" style="width:70px">${act('concSave', undefined, 'Con save')}</div>` : ''}
       <p class="muted">Damage above rolls the save by itself. ${act('go', 'encounter', 'Encounter tracker →')}</p>`)}
-  <div class="stack">${equippedCard(c)}</div>
   </div>
   <details class="fold"><summary>Actions you can take on your turn</summary><div class="in">${(QUICK.rules.filter(r => r.kind === 'Action')).map(a => `<div class="kv"><span><b>${esc(a.n)}</b> ${esc(a.x)}</span></div>`).join('')}</div></details>`;
 },
