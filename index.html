@@ -2115,9 +2115,9 @@ traits(c){
     </div>
     <div class="stack">
       ${card('Feats', `${c.feats.map((f, i) => { const e = find(f.n, 'feats') || find(f.n);
-        return `<details class="fold"><summary>${esc(f.n)} <span class="muted">${esc(f.src || '')}</span> ${srcTag(e)}</summary><div class="in">${e ? entryBody(e) : '<p class="muted">Not in the library.</p>'}<div class="row">${act('delFeat', i, 'Remove feat', 'sb x')}</div></div></details>`; }).join('') || '<p class="muted">Every 2024 background grants an Origin feat.</p>'}
+        return `<details class="fold"${f.src === 'Custom' && !f.d ? ' open' : ''}><summary>${esc(f.n)} <span class="muted">${esc(f.src || '')}</span> ${srcTag(e)}</summary><div class="in">${e ? entryBody(e) : (f.src === 'Custom' ? '' : '<p class="muted">Not in the library.</p>')}${f.src === 'Custom' ? `<label class="f" for="fp_${i}">Prerequisite</label><input type="text" id="fp_${i}" data-bind="feats.${i}.pre" maxlength="200" value="${esc(f.pre || '')}" placeholder="e.g. Level 4+, Strength 13+" style="width:100%"><label class="f" for="fd_${i}">What it does</label><textarea id="fd_${i}" data-bind="feats.${i}.d" maxlength="3000" rows="5" placeholder="Describe the feat: benefits, bonuses, limits…" style="width:100%">${esc(f.d || '')}</textarea>` : ''}<div class="row">${act('delFeat', i, 'Remove feat', 'sb x')}</div></div></details>`; }).join('') || '<p class="muted">Every 2024 background grants an Origin feat.</p>'}
         <div class="row mt"><label class="sr" for="feat_pick">Feat</label><select id="feat_pick">${ALL.filter(e => e.cat === 'feats').map(e => `<option value="${esc(e.n)}">${esc(e.n)} · ${esc(e.k)}${e.src !== 'SRD' ? ' (' + esc(e.src === 'Quick' ? 'summary' : e.src) + ')' : ''}</option>`).join('')}</select>${act('addFeat', undefined, '＋ Take')}</div>
-        <div class="row mt"><input type="text" id="feat_custom" placeholder="Or a custom feat">${act('addFeatCustom', undefined, '＋ Custom')}</div>`)}
+        <div class="row mt"><label class="sr" for="feat_custom">Custom feat name</label><input type="text" id="feat_custom" maxlength="80" placeholder="Or a custom feat (name)">${act('addFeatCustom', undefined, '＋ Custom')}</div>`)}
       ${card('Proficiencies', `
         ${kv('Saving throws', esc((cl.saves || []).join(', ')))}
         ${kv(multi(c).length ? esc(c.class) + ' training' : 'Training', esc((cl.prof || []).join(', ')))}
@@ -4772,7 +4772,7 @@ const ACT = {
   saveAttack(i){ mut(c => Object.assign(c.attacks[+i], {n:$('#ea_n').value.trim() || c.attacks[+i].n, bonus:num('ea_b'), dmg:$('#ea_d').value.trim(), note:$('#ea_t').value.trim()}), false); closeModal(); },
   delAttack(i){ mut(c => c.attacks.splice(+i, 1), false); },
   addFeat(){ const n = $('#feat_pick').value; mut(c => { if (!hasFeat(c, n)) c.feats.push({n, src:'Added'}); }, false); },
-  addFeatCustom(){ const n = $('#feat_custom').value.trim(); if (n) mut(c => c.feats.push({n, src:'Custom'}), false); },
+  addFeatCustom(){ const n = $('#feat_custom').value.trim(); if (n) mut(c => c.feats.push({n, src:'Custom', pre:'', d:''}), false); },
   delFeat(i){ mut(c => c.feats.splice(+i, 1), false); },
   addClassFeat(){ const n = $('#cf_n').value.trim(); if (n) mut(c => c.classFeats.push(n), false); },
   delClassFeat(i){ mut(c => c.classFeats.splice(+i, 1), false); },
