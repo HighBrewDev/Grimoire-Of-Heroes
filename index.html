@@ -4087,7 +4087,9 @@ function hb5Path(v){
   let path = v;
   if (/^https?:\/\//i.test(v) || /^(www\.)?5e\.tools\//i.test(v)){
     let u; try { u = new URL(/^https?:/i.test(v) ? v : 'https://' + v); } catch (e) { return {err:'That is not a valid link.'}; }
-    path = u.pathname; if (/(^|\.)5e\.tools$/i.test(u.hostname) && !/\/data\//.test(path)) return {err:'That is a page of the site, not a data file. Data links look like 5e.tools/data/spells/spells-efa.json.', page:true};
+    const cl = /(^|\.)5e\.tools$/i.test(u.hostname) && /\/classes\.html$/i.test(u.pathname) && /^[a-z0-9-]+(_[a-z0-9]+)?$/i.test(u.hash.slice(1).split(',')[0]) ? u.hash.slice(1).split(',')[0].toLowerCase().split('_') : null;
+    if (cl) return {path:`class/class-${cl[0]}.json`, src:(cl[1] || '').toUpperCase()};   // a class page → that class's data file, narrowed to the book in the link
+    path = u.pathname; if (/(^|\.)5e\.tools$/i.test(u.hostname) && !/\/data\//.test(path)) return {err:'That is a page of the site, not a data file. Class pages (classes.html#artificer_efa) work; for anything else use a data link like 5e.tools/data/spells/spells-efa.json.', page:true};
     if (!/\/data\//.test(path) && !/githubusercontent\.com$/i.test(u.hostname)) return {err:'Only 5etools data links work here (…/data/…json). For anything else use Choose file or Paste JSON.', direct:v};
   }
   path = path.replace(/^.*\/data\//, '').replace(/^\/+/, '').replace(/^data\//, '');
@@ -4133,8 +4135,9 @@ async function hb5Review(json, name, srcWanted, from){
 Object.assign(ACT_BREW, {
   brew5Pre(){ const v = $('#hb5_pre')?.value; if (v){ $('#hb5_url').value = v; } },
   async brew5Fetch(){
-    const url = $('#hb5_url')?.value, h = hb5Path(url), src = ($('#hb5_src')?.value || '').trim();
+    const url = $('#hb5_url')?.value, h = hb5Path(url);
     if (h.err){ toast(h.err); return; }
+    const src = ($('#hb5_src')?.value || '').trim() || h.src || '';
     toast('Fetching…');
     let got;
     try { got = await hb5Load(h.path); }

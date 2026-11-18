@@ -15,7 +15,8 @@ const SPELLS = {spell:[
   {name:'Zap Test', source:'XPHB', level:2, school:'E', time:[{number:1, unit:'action'}], range:{type:'point', distance:{type:'feet', amount:60}}, components:{v:true}, duration:[{type:'instant'}],
     entries:['Each creature in a 20-foot-radius Sphere makes a Dexterity saving throw, taking {@damage 4d6} Lightning damage on a failed save or half as much on a success.'], entriesHigherLevel:[{type:'entries', name:'Slot', entries:['The damage increases by {@scaledamage 4d6|2-9|1d6}.']}], damageInflict:['lightning'], savingThrow:['dexterity']}]};
 const SOURCES = {XPHB:{'Fire Bolt':{class:[{name:'Sorcerer', source:'XPHB'}, {name:'Artificer', source:'EFA'}, {name:'Mage', source:'WoW', definedInSource:'WoW'}]}}};
-const FILES = {'items-base.json':BASE, 'items.json':ITEMS, 'spells/spells-xphb.json':SPELLS, 'spells/sources.json':SOURCES};
+const CLS = {class:[{name:'Artificer', source:'TCE', hd:{faces:8}}, {name:'Artificer', source:'EFA', hd:{faces:8}, casterProgression:'artificer', proficiency:['con', 'int']}], subclass:[{name:'Alchemist', shortName:'Alchemist', source:'TCE', className:'Artificer', classSource:'TCE'}], classFeature:[{name:'Infuse Item', source:'EFA', className:'Artificer', classSource:'EFA', level:2, entries:['Infuse.']}]};
+const FILES = {'class/class-artificer.json':CLS, 'items-base.json':BASE, 'items.json':ITEMS, 'spells/spells-xphb.json':SPELLS, 'spells/sources.json':SOURCES};
 async function wire(app){
   await app.context.route('https://5e.tools/**', r => r.abort());
   await app.context.route('https://raw.githubusercontent.com/**', r => {
@@ -73,6 +74,11 @@ module.exports = {sezione:'import5etools', test:[
     await app.page.locator('[aria-label="Edit Zap Test"]').click();
     await app.page.waitForSelector('#bwForm');
     assert.ok(/4d6 Lightning/.test(await app.page.locator('#bwPreview').innerText()));
+  }],
+  ["link di una pagina classi di 5e.tools: va al file della classe, solo il libro del link", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    const rows = await fetch5(app, 'https://5e.tools/classes.html#artificer_efa,flstsource:tce=1~efa=1,flstmiscellaneous:');
+    assert.ok(rows.length === 1 && /EFA/.test(rows[0].text), rows.map(r => r.text).join(' || '));
   }],
   ["link che non e un file dati, e incolla JSON", async ({open}) => {
     const app = await open(); await wire(app); await app.go('workshop');
