@@ -257,6 +257,7 @@ textarea{width:100%;min-height:84px;resize:vertical}
 .hpBar b.xo{box-shadow:inset 0 0 0 2px #e0a040;border-radius:0 10px 10px 0}
 .hpBar.low i{background:linear-gradient(90deg,#d9685d,var(--rubric))}
 .pips{display:flex;gap:6px;flex-wrap:wrap}
+details.fold.turnFt > summary{flex-wrap:wrap}details.fold.turnFt > summary > b{overflow-wrap:normal;word-break:normal}.stdActs{margin-top:6px;gap:4px}
 .pip{width:26px;height:26px;border-radius:50%;border:2px solid #6d5210;background:var(--paper);padding:0}
 .pip.used{background:#3a2417;box-shadow:inset 0 0 0 4px var(--paper)}
 .entry{border:1px solid var(--gold3);border-radius:10px;background:var(--surfHi);padding:8px 11px;margin:8px 0}
@@ -2029,6 +2030,53 @@ function classCards(c, mc){
         `<p class="muted">${esc(sub.src || '')}${sub.sum ? ' · ' + esc(sub.sum) : ''}</p>${subNow.map(feat).join('') || '<p class="muted">No subclass features at this level yet.</p>'}`) :
         `<p class="muted">${c.subclass ? `“${esc(c.subclass)}” isn't in the library. The SRD has one subclass per class; import more from the Library, or note its features below.` : 'No subclass chosen yet (most classes pick one at level 3).'}</p>`)}`;
 }
+/* ================================================================== actions on your turn
+   One list for the Combat page: equipped weapons, cantrips and prepared spells, class and subclass features, plus the standard actions,
+   grouped by what they cost (Action, Bonus Action, Reaction). Features carry the activation the parser read from their text (g.act);
+   SRD features without it are read once from their text and remembered. Plain strings and one pass over the features: nothing heavy. */
+const TURN_MEMO = new Map();
+function featActs(f){
+  if (isObj(f.g)) return f.g.act || [];
+  const k = f.n + '|' + String(f.x || '').length;
+  if (!TURN_MEMO.has(k)){ let a = []; try { a = (grantsOf5(f.n, f.x || '').g || {}).act || []; } catch (e) {} TURN_MEMO.set(k, a); }
+  return TURN_MEMO.get(k);
+}
+function turnFeatures(c){
+  const seen = new Set(), out = [];
+  classList(c).forEach(e => {
+    const ac = asClass(c, e), where = ac.subclass || ac.class;
+    [...(clsInfo(ac).f || []).map(f => ({f, w:ac.class})), ...(subclassOf(ac)?.f || []).map(f => ({f, w:where}))].filter(x => x.f.l <= e.level).forEach(({f, w}) => {
+      const a = featActs(f); if (!a.length || seen.has(norm(f.n))) return;
+      seen.add(norm(f.n)); out.push({f, w, a});
+    });
+  });
+  return out;
+}
+const spellWhen = t => { t = String(t || '').trim(); return /^(1 )?bonus/i.test(t) ? 'bonus' : /^(1 )?reaction/i.test(t) ? 'reaction' : /^(1 )?action/i.test(t) ? 'action' : ''; };
+function turnActions(c){
+  const G3 = {action:[], bonus:[], reaction:[]}, pool = resources(c).pool;
+  gearAttacks(c).forEach(a => G3.action.push(`<div class="entry gearAtk"><div class="row"><b>${esc(a.n)}</b><span class="chip">Equipped</span><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('gearAttack', a.i, 'Attack', 'btn small')}${act('equip', a.i, 'Unequip', 'sb x')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`));
+  const mine = new Set(c.attacks.map(a => norm(a.n)));
+  c.attacks.forEach((a, i) => G3.action.push(`<div class="entry"><div class="row"><b>${esc(a.n)}</b><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('attack', i, 'Attack', 'btn small')}${act('editAttack', i, 'Edit')}${act('delAttack', i, '✕', 'sb x', 'aria-label="Remove attack"')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`));
+  const known = c.spells?.known || [], prep = c.spells?.prep || [];
+  known.forEach(n => {
+    const o = find(n, 'spells')?.o || {}, lv = +(o.lv ?? o.level ?? 0), w = spellWhen(o.t); if (!w || mine.has(norm(n))) return;
+    if (lv > 0 && prep.length && !prep.includes(n)) return;
+    G3[w].push(`<div class="entry"><div class="row"><button type="button" class="xref" data-act="detail" data-arg="${esc(n)}"><b>${esc(n)}</b></button><span class="chip light">${lv ? 'Level ' + lv : 'Cantrip'}</span>${o.conc ? '<span class="chip light">C</span>' : ''}${o.r ? `<span class="muted small">${esc(o.r)}</span>` : ''}<span class="spacer"></span>${act('cast', n, 'Cast', 'btn small')}</div></div>`);
+  });
+  turnFeatures(c).forEach(({f, w, a}) => {
+    const key = 'hb_' + norm(f.n).replace(/[^a-z0-9]+/g, '_'), r = pool.find(p => p.k === key || norm(p.n) === norm(f.n) || (norm(f.n) === 'font of magic' && p.k === 'sorcery_points'));
+    const also = a.length > 1 ? ` <span class="muted small">also ${a.slice(1).map(x => ACT_WORD[x].toLowerCase()).join(', ')}</span>` : '';
+    G3[a[0]].push(`<div class="entry"><details class="fold turnFt"><summary><b>${esc(f.n)}</b> <span class="chip light">${esc(w)} · Lv ${f.l}</span>${also}</summary><div class="in">${md(f.x || '')}</div></details>${r ? `<div class="row"><span class="pips">${Array.from({length:r.max}, (_, k) => `<button type="button" class="pip ${k < (c.res[r.k] || 0) ? 'used' : ''}" data-act="usePip" data-arg="${r.k}:${k}" aria-label="${esc(r.n)} ${k + 1}"></button>`).join('')}</span><span class="muted small">${esc(r.n)}: tap a dot when you use it</span></div>` : ''}</div>`);
+  });
+  const std = (QUICK.rules || []).filter(r => r.kind === 'Action').map(r => `<button type="button" class="chip light" data-act="detail" data-arg="${esc(r.n)}">${esc(r.n.replace(/ \(2024\)$/, ''))}</button>`).join('');
+  const opp = find('Opportunity Attack') ? `<button type="button" class="chip light" data-act="detail" data-arg="Opportunity Attack">Opportunity Attack</button>` : '';
+  const sec = (h, list, tail = '', empty = '') => `<h4>${h}</h4>${list.join('')}${tail}${!list.length && !tail ? `<p class="muted small">${empty}</p>` : ''}`;
+  return sec('Action', G3.action, `<div class="row stdActs"><span class="muted small">Standard:</span>${std}</div>`)
+    + sec('Bonus Action', G3.bonus, '', 'Nothing from your class, spells or gear right now.')
+    + sec('Reaction', G3.reaction, opp ? `<div class="row stdActs"><span class="muted small">Standard:</span>${opp}</div>` : '', 'Nothing from your class or spells right now.')
+    + `<h4>Free</h4><p class="muted small">Move up to your Speed (split it around your actions) and interact with one object for free. Talking, dropping something or standing up costs no action.</p>`;
+}
 const PAGES = {
 hero(c){
   const p = profFor(c.level), sp = speciesInfo(c), bg = bgInfo(c), cl = clsInfo(c);
@@ -2122,11 +2170,11 @@ combat(c){
         ${res.stats.map(s => kv(esc(s.n), esc(s.v))).join('')}`) : ''}
     </div>
   <div class="stack">
-  ${card('Attacks & cantrips <span class="muted">roll to hit, then damage (doubled dice on a natural 20)</span>', `
-    ${gearAttacks(c).map(a => `<div class="entry gearAtk"><div class="row"><b>${esc(a.n)}</b><span class="chip">Equipped</span><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('gearAttack', a.i, 'Attack', 'btn small')}${act('equip', a.i, 'Unequip', 'sb x')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`).join('')}
-    ${c.attacks.map((a, i) => `<div class="entry"><div class="row"><b>${esc(a.n)}</b><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('attack', i, 'Attack', 'btn small')}${act('editAttack', i, 'Edit')}${act('delAttack', i, '✕', 'sb x', 'aria-label="Remove attack"')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`).join('') || (gearAttacks(c).length ? '' : '<p class="empty">No attacks yet. Equip a weapon from the pack, add one below, or type your own.</p>')}
-    <div class="row mt"><label class="sr" for="atk_w">Weapon</label><select id="atk_w">${weapons.map(w => `<option value="${esc(w.n)}">${esc(w.n)} · ${esc(w.sum || w.dmg)}</option>`).join('')}</select>${act('addWeaponAttack', undefined, '＋ Add weapon attack')}</div>
-    <div class="row mt"><input type="text" id="atk_n" placeholder="Name (e.g. Fire Bolt)"><input type="number" id="atk_b" placeholder="+hit"><input type="text" id="atk_d" placeholder="Damage (1d10 Fire)">${act('addAttack', undefined, '＋ Add custom')}</div>`)}
+  ${card('Actions on your turn <span class="muted">attacks roll to hit, then damage (doubled dice on a natural 20)</span>', `
+    ${turnActions(c)}
+    <details class="fold"><summary>Add an attack</summary><div class="in">
+    <div class="row"><label class="sr" for="atk_w">Weapon</label><select id="atk_w">${weapons.map(w => `<option value="${esc(w.n)}">${esc(w.n)} · ${esc(w.sum || w.dmg)}</option>`).join('')}</select>${act('addWeaponAttack', undefined, '＋ Add weapon attack')}</div>
+    <div class="row mt"><input type="text" id="atk_n" placeholder="Name (e.g. Fire Bolt)"><input type="number" id="atk_b" placeholder="+hit"><input type="text" id="atk_d" placeholder="Damage (1d10 Fire)">${act('addAttack', undefined, '＋ Add custom')}</div></div></details>`)}
   ${equippedCard(c)}
   </div>
   </div>
@@ -2150,8 +2198,7 @@ combat(c){
       <div class="row">${c.conc ? concChip(c) : '<span class="muted">Not concentrating. Cast a Concentration spell from the Spellbook.</span>'}</div>
       ${c.conc ? `<div class="row mt"><label class="sr" for="concDmg">Damage taken</label><input type="number" id="concDmg" min="1" placeholder="dmg" style="width:70px">${act('concSave', undefined, 'Con save')}</div>` : ''}
       <p class="muted">Damage above rolls the save by itself. ${act('go', 'encounter', 'Encounter tracker →')}</p>`)}
-  </div>
-  <details class="fold"><summary>Actions you can take on your turn</summary><div class="in">${(QUICK.rules.filter(r => r.kind === 'Action')).map(a => `<div class="kv"><span><b>${esc(a.n)}</b> ${esc(a.x)}</span></div>`).join('')}</div></details>`;
+  </div>`;
 },
 
 traits(c){

@@ -285,4 +285,18 @@ module.exports = {sezione:'combattimento', test:[
     await app.page.fill('#hpAmt', '9998'); await app.click('hpStep', '5');
     assert.strictEqual(await app.page.inputValue('#hpAmt'), '9999');
   }],
+  ['Azioni nel turno: armi equipaggiate, incantesimi e capacità raggruppati per Azione, Azione bonus e Reazione', async ({open}) => {
+    const h = fx.hero(fx.ELDRIN, {inventory:[{n:'Longsword', q:1, d:'', eq:true}]});
+    const app = await open({heroes:[h]}); await app.go('combat');
+    const card = app.page.locator('#page .card:has(h3:has-text("Actions on your turn"))');
+    const t = await card.innerText();
+    assert.ok(!/Attacks & cantrips/i.test(await app.text('#page')), 'vecchio titolo sparito');
+    const at = k => t.indexOf(k);
+    assert.ok(at('Longsword') > at('Action') && at('Longsword') < at('Bonus Action'), 'arma equipaggiata sotto Azione');
+    assert.ok(at('Burning Hands') > -1 && at('Burning Hands') < at('Bonus Action'), 'incantesimo con tempo Azione');
+    assert.ok(at('Misty Step') > at('Bonus Action') && at('Misty Step') < at('Reaction'), 'Misty Step sotto Azione bonus');
+    assert.ok(at('Shield') > at('Reaction'), 'Shield sotto Reazione');
+    await card.locator('[data-act="detail"][data-arg="Dash"]').click();
+    assert.ok(await app.modalOpen(), 'tap su Dash apre il dettaglio');
+  }],
 ]};
