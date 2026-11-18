@@ -274,6 +274,7 @@ details.fold > .in{padding:0 12px 10px}
 .prose th,.prose td{border-bottom:1px solid var(--line);padding:3px 8px;text-align:left;vertical-align:top}
 .prose th{font-family:var(--f-display);font-size:12.5px;letter-spacing:.04em}
 .tblWrap{overflow-x:auto;max-width:100%}
+.benActs{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}.benLine{margin:4px 0}
 .grants{margin:2px 0 6px;display:flex;flex-wrap:wrap;gap:4px}.chip.gr{font-size:12px;padding:1px 8px}
 .ctable{border-collapse:collapse;font-size:14px;width:100%}
 .ctable th,.ctable td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;white-space:nowrap}
@@ -1308,6 +1309,7 @@ function fixup(c){
   return c;
 }
 function save(){
+  try { syncGrants(active()); } catch (e) {}
   stampHeroes(); writeLocal();
   savePrefs();
 }
@@ -1522,9 +1524,54 @@ function resources(c){
     if (RES_LABEL[k] && typeof v === 'number' && v > 0 && v <= 20) pool.push({k, n:RES_LABEL[k], max:v});
     else stats.push({k, n:title(k.replace(/_count$|_uses$/, '')), v: /die$/.test(k) ? 'd' + v : v});
   }
+  benefits(c).uses.forEach(u => pool.some(x => x.k === u.k) || pool.push({k:u.k, n:u.n, max:u.max}));
   if (c.class === 'Bard') pool.push({k:'bardic_inspiration', n:'Bardic Inspiration', max:Math.max(1, mod(c.abilities.cha))});
   if (c.class === 'Paladin') stats.push({k:'loh', n:'Lay on Hands pool', v:5 * c.level + ' HP'});
   return {pool, stats};
+}
+
+/* ================================================================== class benefits
+   What the features unlocked at the hero's level give (resistances, speeds, languages, feats, uses…), read from the structured
+   "grants" of homebrew features. Nothing here is stored except the uses spent (c.res) and the feats it adds on its own (auto:true). */
+function benefits(c){
+  const out = {res:[], imm:[], cimm:[], spd:{}, lang:[], prof:[], feat:[], sp:[], uses:[], acts:[]}, add = (a, v) => (v || []).forEach(x => a.some(y => norm(y) === norm(x)) || a.push(x));
+  classList(c).forEach(e => {
+    const ac = asClass(c, e), where = ac.subclass || ac.class;
+    [...(clsInfo(ac).f || []).map(f => ({f, w:ac.class})), ...(subclassOf(ac)?.f || []).map(f => ({f, w:where}))].filter(x => isObj(x.f.g) && x.f.l <= e.level).forEach(({f, w}) => {
+      const g = f.g;
+      add(out.res, g.res); add(out.imm, g.imm); add(out.cimm, g.cimm); add(out.lang, g.lang); add(out.prof, g.prof); add(out.sp, g.sp);
+      add(out.feat, (g.feat || []).map(n => n + '\u0000' + w));
+      Object.entries(g.spd || {}).forEach(([k, v]) => { out.spd[k] = Math.max(out.spd[k] || 0, v); });
+      if (g.act?.length) out.acts.push({n:f.n, a:g.act, l:f.l, w});
+      if (g.rest && g.n){
+        const max = g.n === 'PB' ? profFor(c.level) : typeof g.n === 'string' ? Math.max(1, mod(c.abilities?.[g.n.toLowerCase()])) : g.n;
+        if (max >= 1 && max <= 20 && !out.uses.some(u => u.n === f.n)) out.uses.push({k:'hb_' + norm(f.n).replace(/[^a-z0-9]+/g, '_'), n:f.n, max, rest:g.rest});
+      }
+    });
+  });
+  out.feat = out.feat.map(x => { const [n, w] = x.split('\u0000'); return {n, w}; });
+  return out;
+}
+/** Feats a feature hands out are added to the hero by themselves, and taken away again only if the tome added them and the feature is no longer unlocked. */
+function syncGrants(c){
+  if (!isObj(c) || !Array.isArray(c.feats)) return;
+  const want = benefits(c).feat, no = new Set((Array.isArray(c.noAuto) ? c.noAuto : []).map(norm));
+  c.feats = c.feats.filter(f => !f.auto || want.some(w => norm(w.n) === norm(f.n)));
+  want.forEach(w => { if (!no.has(norm(w.n)) && !c.feats.some(f => norm(f.n) === norm(w.n))) c.feats.push({n:w.n, src:'Class: ' + w.w, auto:true}); });
+}
+const ACT_WORD = {action:'Action', bonus:'Bonus Action', reaction:'Reaction'};
+const speedWord = (k, v) => `${k === 'walk' ? 'Speed' : tc5(k)} ${v} ft.`;
+/** One line for the Combat page: defenses and extra speeds that come from class features. */
+function benefitLine(c){
+  const b = benefits(c), bits = [b.res.length && 'Resistance: ' + b.res.join(', '), b.imm.length && 'Immunity: ' + b.imm.join(', '), b.cimm.length && 'Immune: ' + b.cimm.join(', '), ...Object.entries(b.spd).map(([k, v]) => speedWord(k, v))].filter(Boolean);
+  return bits.length ? `<p class="muted small benLine"><b>From your class:</b> ${esc(bits.join(' · '))}</p>` : '';
+}
+function benefitCard(c){
+  const b = benefits(c); if (!b.res.length && !b.imm.length && !b.cimm.length && !Object.keys(b.spd).length && !b.lang.length && !b.prof.length && !b.feat.length && !b.sp.length && !b.acts.length) return '';
+  const row = (l, v) => v ? kv(l, esc(v)) : '';
+  return card('Class benefits', `<p class="muted small">Read from the features you have unlocked. They follow your level.</p>
+    ${row('Resistances', b.res.join(', '))}${row('Immunities', [...b.imm, ...b.cimm].join(', '))}${row('Speed', Object.entries(b.spd).map(([k, v]) => speedWord(k, v)).join(', '))}${row('Languages', b.lang.join(', '))}${row('Proficiencies', b.prof.join(', '))}${row('Always have', b.sp.join(', '))}${row('Feats added', b.feat.map(f => f.n).join(', '))}
+    ${b.acts.length ? `<label class="f">On your turn</label><p class="grants">${b.acts.map(a => `<span class="chip light gr">${esc(a.n)} · ${a.a.map(x => ACT_WORD[x]).join(' / ')}</span>`).join(' ')}</p>` : ''}`);
 }
 
 /* ================================================================== dice */
@@ -2095,6 +2142,7 @@ combat(c){
       <div class="kv"><label for="f_acb">AC adjustment</label><input type="number" id="f_acb" data-bind="acBonus" data-type="int" min="-${LIM.acb}" max="${LIM.acb}" value="${c.acBonus || 0}"></div>
       ${kv('Initiative', `${fmt(initBonus(c))}${hasFeat(c, 'Alert') ? ' <span class="muted">(Alert)</span>' : ''} ${act('rollInit', undefined, 'Roll')}`)}
       <div class="kv"><label for="f_spd">Speed</label><input type="text" id="f_spd" data-bind="speedOverride" value="${esc(c.speedOverride || '')}" placeholder="${esc(sp.speed ? sp.speed + ' ft.' : '30 ft.')}" style="width:110px"></div>
+      ${benefitLine(c)}
       <label class="f">Exhaustion</label><div class="row">${[0,1,2,3,4,5,6].map(n => act('setExh', n, n, 'sb' + (c.exhaustion === n ? ' on' : ''), `aria-pressed="${c.exhaustion === n}"`)).join('')} <button type="button" class="xref" data-act="detail" data-arg="Exhaustion">rules</button></div>
       <label class="f">Conditions</label><div class="row">${(SRD.conditions || []).filter(k => k.n !== 'Exhaustion').map(k => act('toggleCond', k.n, esc(k.n), 'sb' + (c.conditions.includes(k.n) ? ' on' : ''), `aria-pressed="${c.conditions.includes(k.n)}"`)).join('')}</div>
       ${c.conditions.length ? `<p class="muted">Active: ${c.conditions.map(n => xref(n) + (c.condDur?.[n] ? ` (${c.condDur[n]} rd)` : '')).join(', ')}</p>` : ''}
@@ -2115,7 +2163,7 @@ traits(c){
         <div class="row mt"><input type="text" id="cf_n" placeholder="Add a feature"> ${act('addClassFeat', undefined, '＋ Add')}</div>`)}
     </div>
     <div class="stack">
-      ${card('Feats', `${c.feats.map((f, i) => { const e = find(f.n, 'feats') || find(f.n);
+      ${benefitCard(c)}${card('Feats', `${c.feats.map((f, i) => { const e = find(f.n, 'feats') || find(f.n);
         return `<details class="fold"${f.src === 'Custom' && !f.d ? ' open' : ''}><summary>${esc(f.n)} <span class="muted">${esc(f.src || '')}</span> ${srcTag(e)}</summary><div class="in">${e ? entryBody(e) : (f.src === 'Custom' ? '' : '<p class="muted">Not in the library.</p>')}${f.src === 'Custom' ? `<label class="f" for="fp_${i}">Prerequisite</label><input type="text" id="fp_${i}" data-bind="feats.${i}.pre" maxlength="200" value="${esc(f.pre || '')}" placeholder="e.g. Level 4+, Strength 13+" style="width:100%"><label class="f" for="fd_${i}">What it does</label><textarea id="fd_${i}" data-bind="feats.${i}.d" maxlength="3000" rows="5" placeholder="Describe the feat: benefits, bonuses, limits…" style="width:100%">${esc(f.d || '')}</textarea>` : ''}<div class="row">${act('delFeat', i, 'Remove feat', 'sb x')}</div></div></details>`; }).join('') || '<p class="muted">Every 2024 background grants an Origin feat.</p>'}
         <div class="row mt"><label class="sr" for="feat_pick">Feat</label><select id="feat_pick">${ALL.filter(e => e.cat === 'feats').map(e => `<option value="${esc(e.n)}">${esc(e.n)} · ${esc(e.k)}${e.src !== 'SRD' ? ' (' + esc(e.src === 'Quick' ? 'summary' : e.src) + ')' : ''}</option>`).join('')}</select>${act('addFeat', undefined, '＋ Take')}</div>
         <div class="row mt"><label class="sr" for="feat_custom">Custom feat name</label><input type="text" id="feat_custom" maxlength="80" placeholder="Or a custom feat (name)">${act('addFeatCustom', undefined, '＋ Custom')}</div>`)}
@@ -3982,10 +4030,10 @@ function weapon5(w, bi, pw){
 }
 /* ---- classes and subclasses: what 5etools says in structure, and what the feature text says in plain words (no guessing: only phrases the rules always use) ---- */
 const src5 = x => x || 'PHB';
-/** "Wind Speaker|Sorcerer||Storm|XGE|1" (subclass) or "Font of Magic|Sorcerer|XPHB|2" (class) → its parts; the level is always last. */
-function ref5(r){
+/** "Font of Magic|Sorcerer|XPHB|2" (class) or "Wind Speaker|Sorcerer||Storm|XGE|1" (subclass), each with an optional "|source" at the end → its parts. */
+function ref5(r, sub){
   const str = isObj(r) ? String(r.classFeature || r.subclassFeature || '') : String(r), p = str.split('|');
-  return {n:p[0], cs:p[2] || '', l:parseInt(p[p.length - 1], 10) || 0, gain:isObj(r) && !!r.gainSubclassFeature};
+  return {n:p[0], cs:p[2] || '', l:parseInt(p[sub ? 5 : 3], 10) || 0, gain:isObj(r) && !!r.gainSubclassFeature};
 }
 /** A feature written as "_copy" (same text, other class or level) gets the text of the one it copies. */
 function copy5(f, all){
@@ -3997,7 +4045,7 @@ const DMGT5 = ['acid', 'bludgeoning', 'cold', 'fire', 'force', 'lightning', 'nec
 const dmgList5 = s => DMGT5.filter(d => new RegExp('\\b' + d + '\\b', 'i').test(s)).map(tc5);
 const ABKEY5 = {strength:'str', dexterity:'dex', constitution:'con', intelligence:'int', wisdom:'wis', charisma:'cha'};
 /** What a feature gives, read from its text: activation, resistances, immunities, speeds, languages, feats, proficiencies, spells, uses and the save it forces. */
-function grantsOf5(name, entries, spells){
+function grantsOf5(name, entries, spells, noTextSpells){
   const raw = JSON.stringify(entries ?? ''), t = plain5(text5(entries)).replace(/\*\*/g, ''), g = {};
   const uniq = a => [...new Set(a)].filter(Boolean);
   const hits = []; const at = (re, v) => { const m = re.exec(t); if (m) hits.push([m.index, v]); };
@@ -4013,7 +4061,7 @@ function grantsOf5(name, entries, spells){
   const fs2 = feat.filter(f => !/^ability score improvement$/i.test(f)); if (fs2.length) g.feat = fs2;
   const pr = uniq([...[...raw.matchAll(/proficiency in (?:the )?\{@skill ([^|}]+)/gi)].map(m => tc5(m[1])), ...[...t.matchAll(/(?:proficiency|training) with ((?:light|medium|heavy|simple|martial)[a-z ,]*?(?:armor|weapons|shields?))/gi)].map(m => tc5(m[1]))]);
   if (pr.length) g.prof = pr;
-  const sp = uniq([...(spells || []), ...(/always have|always prepared|you (?:can )?cast (?:it|the spell|each of|these)|without expending a spell slot|you know (?:the|these)|you learn (?:the|these)/i.test(t) ? [...raw.matchAll(/\{@spell ([^|}]+)/g)].map(m => tc5(m[1].trim())) : [])]); if (sp.length) g.sp = sp;
+  const sp = uniq([...(spells || []), ...(!noTextSpells && /always have|always prepared|you (?:can )?cast (?:it|the spell|each of|these)|without expending a spell slot|you know (?:the|these)|you learn (?:the|these)/i.test(t) ? [...raw.matchAll(/\{@spell ([^|}]+)/g)].map(m => tc5(m[1].trim())) : [])]); if (sp.length) g.sp = sp;
   const rests = t.split(/(?<=[.!?])\s+/).map(se => { const m = se.match(/finish (?:a|an) (short|long)(?: or (short|long))? rest/i); return m && /(?:can't|cannot|regain|expended|once\b|until)/i.test(se) ? {v:m[2] ? 'short or long' : m[1].toLowerCase(), hard:/(?:can't|cannot|until)/i.test(se)} : null; }).filter(Boolean);
   const rest = rests.find(r => r.hard) || rests[0]; if (rest) g.rest = rest.v;
   const nt = t.match(/a number of times equal to your (proficiency bonus|(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) modifier)/i);
@@ -4134,13 +4182,13 @@ const FROM5 = {
     let fs;
     if (Array.isArray(o.subclassFeatures) && o.subclassFeatures.length){
       // the subclass lists its features with their exact level; a "_copy" feature (a 2014 subclass reprinted for the 2024 class) borrows its text
-      fs = o.subclassFeatures.map(r => { const k = ref5(r); const f = all.find(x => mine(x) && x.name === k.n && src5(x.classSource) === src5(k.cs) && +x.level === k.l); return f ? copy5(f, all) : null; }).filter(Boolean);
+      fs = o.subclassFeatures.map(r => { const k = ref5(r, true); const f = all.find(x => mine(x) && x.name === k.n && src5(x.classSource) === src5(k.cs) && +x.level === k.l); return f ? copy5(f, all) : null; }).filter(Boolean);
     } else fs = all.filter(f => mine(f) && (!f.classSource || !o.classSource || f.classSource === o.classSource));
     fs.sort((a, b) => (a.level || 0) - (b.level || 0));
     const intro = fs.find(f => f.name === o.name || f.name === short);
     // the features the intro names ({"type":"refSubclassFeature"}) are not always in the subclass's own list
     if (intro) for (const m of JSON.stringify(intro.entries || []).matchAll(/"subclassFeature":"([^"]+)"/g)){
-      const k = ref5(m[1]), p = m[1].split('|');
+      const k = ref5(m[1], true), p = m[1].split('|');
       if (fs.some(f => f.name === k.n)) continue;
       const f = all.find(x => mine(x) && x.name === k.n && src5(x.classSource) === src5(p[2]) && +x.level === k.l);
       if (f) fs.push(copy5(f, all));
@@ -4150,7 +4198,11 @@ const FROM5 = {
     const kids = new Set(JSON.stringify(intro?.entries || []).match(/"subclassFeature":"[^"|]+/g)?.map(m => m.split('"').pop()) || []);
     const lv = f => kids.has(f.name) && intro ? Math.max(+f.level || 1, +intro.level || 1) : (+f.level || 3);
     const adds = addSpells5(o.additionalSpells);
-    const feat = f => { const l = clamp(lv(f), 1, 20), sp = adds[l]; const g = grantsOf5(f.name, f.entries, sp && f === (fs.find(x => lv(x) === l && x !== intro) || intro) ? sp : null); return {l, n:plain5(f.name), x:flat5(f.entries), ...g}; };
+    // spells a level hands out go on the feature of that level named "… Spells", else on the first feature of that level; with them, spells named in the text are not guessed at
+    const body = fs.filter(f => f !== intro), target = {};
+    Object.keys(adds).forEach(l => { target[l] = body.find(f => lv(f) === +l && /spells$/i.test(f.name)) || body.find(f => lv(f) === +l); });
+    const hasAdds = Object.keys(adds).length > 0;
+    const feat = f => { const l = clamp(lv(f), 1, 20); return {l, n:plain5(f.name), x:flat5(f.entries), ...grantsOf5(f.name, f.entries, target[l] === f ? adds[l] : null, hasAdds)}; };
     const out = {n:o.name, cls:o.className || '', sum:'', x:intro ? text5(intro.entries) : '', f:fs.filter(f => f !== intro).map(feat).sort((a, b) => a.l - b.l), _sh:short, _ed:o.classSource ? (ONE5.has(o.classSource) ? 'one' : 'classic') : ''};
     if (intro && Object.keys(adds).length && !out.f.some(f => f.g?.sp)){ const l = +Object.keys(adds)[0]; out.f.unshift({l, n:plain5(intro.name), x:'', ...grantsOf5(intro.name, [], adds[l])}); }
     return out;
@@ -4697,7 +4749,7 @@ function openLevelUp(keep){
     <div class="row mt"><label class="row"><input type="radio" name="lu_hp" value="roll"> Roll 1d${hd} ${fmt(con)} Con${extra ? ` +${extra}` : ''}</label>${act('luRoll', undefined, 'Roll', 'sb')}<span id="luRolled" class="muted"></span></div>
     ${extra ? `<p class="muted">${c.species === 'Dwarf' ? 'Dwarven Toughness +1. ' : ''}${hasFeat(c, 'Tough') ? 'Tough +2.' : ''}</p>` : ''}
     <h4>2 · New features</h4>
-    ${[...P.feats, ...P.subFeats].map(f => `<details class="fold"><summary>${esc(f.n)}</summary><div class="in">${md(f.x)}</div></details>`).join('') || '<p class="muted">No new class features listed at this level in the library.</p>'}
+    ${[...P.feats, ...P.subFeats].map(f => `<details class="fold"><summary>${esc(f.n)}</summary><div class="in">${grantChips(f.g)}${md(f.x)}</div></details>`).join('') || '<p class="muted">No new class features listed at this level in the library.</p>'}
     ${P.needSub ? `<h4>3 · Choose your subclass</h4>${subSelect('id="lu_sub" style="width:100%"', T.class, '')}` : ''}
     ${P.asi || P.boon ? `<h4>${P.needSub ? 4 : 3} · ${P.boon ? 'Epic Boon or Ability Score Improvement' : 'Ability Score Improvement or feat'}</h4>
       <div class="stack" style="gap:6px">
@@ -4908,7 +4960,7 @@ const ACT = {
     if (multi(c).length){ c.hitDice.by = c.hitDice.by || {}; c.hitDice.by[p.d] = (c.hitDice.by[p.d] || 0) + 1; }
     c.hitDice.used = (c.hitDice.used || 0) + 1; c.hp.cur = Math.min(hpMax(c), c.hp.cur + heal); save(); render();
     logRoll('Hit Die', `${r.parts} ${fmt(mod(c.abilities.con))} Con`, `+${heal} HP`); },
-  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); shortRestPartial(c); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
+  shortRest(){ mut(c => { const info = slotsFor(c); if (info.type === 'pact') c.spells.slots = {}; if (info.pact) c.spells.pact = {used:0}; SHORT_REST_RES.forEach(k => delete c.res[k]); benefits(c).uses.filter(u => /short/.test(u.rest)).forEach(u => delete c.res[u.k]); shortRestPartial(c); }); toast('Short Rest: spend Hit Dice to heal.' + (hasClass(active(), 'Warlock') ? ' Pact slots restored.' : '')); },
   longRest(){ mut(c => { c.hp.cur = hpMax(c); c.hp.temp = 0; c.hitDice.used = 0; c.hitDice.by = {}; c.spells.slots = {}; c.spells.pact = {used:0}; c.res = {}; c.death = {s:0, f:0}; c.exhaustion = Math.max(0, (c.exhaustion || 0) - 1); if (c.species === 'Human') c.inspiration = true; }); toast('Long Rest: HP, Hit Dice, slots and resources restored; Exhaustion −1.'); },
   slot(arg){ const [lv, k] = arg.split(':').map(Number); mut(c => { const s = c.spells.slots[lv] = c.spells.slots[lv] || {used:0}; s.used = k < s.used ? k : k + 1; }, false); },
   resetSlots(){ mut(c => { c.spells.slots = {}; c.spells.pact = {used:0}; }, false); },
@@ -4954,7 +5006,7 @@ const ACT = {
   delAttack(i){ mut(c => c.attacks.splice(+i, 1), false); },
   addFeat(){ const n = $('#feat_pick').value; mut(c => { if (!hasFeat(c, n)) c.feats.push({n, src:'Added'}); }, false); },
   addFeatCustom(){ const n = $('#feat_custom').value.trim(); if (n) mut(c => c.feats.push({n, src:'Custom', pre:'', d:''}), false); },
-  delFeat(i){ mut(c => c.feats.splice(+i, 1), false); },
+  delFeat(i){ mut(c => { const [f] = c.feats.splice(+i, 1); if (f?.auto) c.noAuto = [...new Set([...(Array.isArray(c.noAuto) ? c.noAuto : []), f.n])]; }, false); },
   addClassFeat(){ const n = $('#cf_n').value.trim(); if (n) mut(c => c.classFeats.push(n), false); },
   delClassFeat(i){ mut(c => c.classFeats.splice(+i, 1), false); },
   qty(arg){ const [i, d] = arg.split(':').map(Number); const it = active().inventory[i];
