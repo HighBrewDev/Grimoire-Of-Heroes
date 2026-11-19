@@ -1853,7 +1853,7 @@ function turnTo(id){
   rustle();
 
   // jumping several chapters turns them as one sheet (loose blank leaves crossing each other looked broken), just quicker
-  const narrow = page.offsetWidth < 640, strips = narrow ? 4 : 6, dur = (narrow ? 820 : 1050) * (steps > 1 ? .85 : 1);
+  const narrow = page.offsetWidth < 640, strips = narrow ? 4 : 6, dur = (narrow ? 520 : 650) * (steps > 1 ? .85 : 1);
   const geo = {top:page.offsetTop + band.top, left:page.offsetLeft, w:page.offsetWidth, h:H};
   const els = [], anims = [];
   const shadow = document.createElement('div'); shadow.className = 'castShadow';
