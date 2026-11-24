@@ -299,4 +299,11 @@ module.exports = {sezione:'combattimento', test:[
     await card.locator('[data-act="detail"][data-arg="Dash"]').click();
     assert.ok(await app.modalOpen(), 'tap su Dash apre il dettaglio');
   }],
+  ['B-055 [UX] "Add an attack" resta aperto dopo aver aggiunto un attacco', async ({open}) => {
+    const app = await open(); await app.go('combat');
+    await app.page.locator('summary', {hasText:'Add an attack'}).click();
+    await app.page.fill('#atk_n', 'Uno'); await app.page.fill('#atk_b', '3'); await app.page.fill('#atk_d', '1d6 Piercing');
+    await app.click('addAttack');
+    assert.ok(await app.page.locator('#atk_n').isVisible(), 'il modulo si è richiuso: per il secondo attacco serve riaprirlo');
+  }],
 ]};
