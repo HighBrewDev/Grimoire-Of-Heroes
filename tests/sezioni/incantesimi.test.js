@@ -21,6 +21,23 @@ module.exports = {sezione:'incantesimi', test:[
     await app.clickJS('prep', 'Sleep');
     assert.ok(!(await app.hero()).spells.prep.includes('Sleep'));
   }],
+  ['Mago: i preparati sono solo a destra, i conosciuti a sinistra', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
+    const t = await app.page.evaluate(() => ({k:[...document.querySelectorAll('#page .stack .entry')].map(e => e.textContent), r:[...document.querySelectorAll('#page .grid2 > .card details.fold > summary')].map(e => e.textContent)}));
+    assert.ok(t.k.some(x => x.includes('Sleep')), 'Sleep è conosciuto, a sinistra');
+    assert.ok(!t.r.some(x => x.includes('Sleep')), 'Sleep non è preparato: non sta a destra');
+    assert.ok(t.r.some(x => x.includes('Shield')) && t.r.some(x => x.includes('Fire Bolt')), 'preparati e trucchetti a destra');
+    await app.clickJS('prep', 'Sleep');
+    assert.ok((await app.page.locator('#page .grid2 > .card details.fold > summary', {hasText:'Sleep'}).count()) === 1);
+  }],
+  ['Stregone: conosciuti = preparati, nessun bottone Prepara', async ({open}) => {
+    const h = fx.hero(fx.ELDRIN, {id:'tsorc', name:'Mira', class:'Sorcerer', subclass:'', level:3, abilities:{...fx.ELDRIN.abilities, cha:16}, feats:[], spells:{known:['Fire Bolt','Shield','Sleep'], prep:[], slots:{}}});
+    const app = await open({heroes:[h], activeId:'tsorc'}); await app.go('spells');
+    assert.strictEqual(await app.page.locator('[data-act="prep"]').count(), 0);
+    const r = await app.page.locator('#page .grid2 > .card details.fold > summary').allTextContents();
+    assert.ok(['Fire Bolt', 'Shield', 'Sleep'].every(n => r.some(x => x.includes(n))), 'tutti pronti a destra');
+    assert.ok(/Spells known\s*2 \/ \d+/.test(await app.text('#page')));
+  }],
   ['cercare e imparare un incantesimo', async ({open}) => {
     const app = await open({activeId:'teldrin'}); await app.go('spells');
     await app.page.fill('#spell_q', 'magic missile');

@@ -1499,6 +1499,12 @@ function slotsFor(c){
   return {type:'none', slots:pad([])};
 }
 const isCaster = c => slotsFor(c).type !== 'none' || (c.spells?.known || []).length > 0;
+/* 2024: Bard, Sorcerer and Warlock (and the Eldritch Knight / Arcane Trickster) only change their prepared list when they level up, so for them every known spell is always prepared.
+   Artificer, Cleric, Druid, Paladin, Ranger and Wizard pick the list again after a Long Rest. A mixed multiclass is treated as the daily kind. */
+const FIXED_PREP = ['Bard', 'Sorcerer', 'Warlock'];
+const fixedPrep = c => { const cs = classList(c).map(e => asClass(c, e)).filter(v => slotsFor(v).type !== 'none'); return cs.length > 0 && cs.every(v => FIXED_PREP.includes(v.class) || isThird(v)); };
+const spellLvOf = n => { const o = find(n, 'spells')?.o; return o ? +(o.lv ?? o.level ?? 0) : 1; };
+const isPrepared = (c, n) => spellLvOf(n) === 0 || fixedPrep(c) || (c.spells.prep || []).includes(n);
 const abFor = cls => SPELL_AB[cls] || clsInfo({class:cls}).spellAb || 'int';
 const spellAb = c => c.spellAbility || abFor((classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class);
 
@@ -2059,10 +2065,10 @@ function turnActions(c){
   gearAttacks(c).forEach(a => G3.action.push(`<div class="entry gearAtk"><div class="row"><b>${esc(a.n)}</b><span class="chip">Equipped</span><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('gearAttack', a.i, 'Attack', 'btn small')}${act('equip', a.i, 'Unequip', 'sb x')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`));
   const mine = new Set(c.attacks.map(a => norm(a.n)));
   c.attacks.forEach((a, i) => G3.action.push(`<div class="entry"><div class="row"><b>${esc(a.n)}</b><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('attack', i, 'Attack', 'btn small')}${act('editAttack', i, 'Edit')}${act('delAttack', i, '✕', 'sb x', 'aria-label="Remove attack"')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`));
-  const known = c.spells?.known || [], prep = c.spells?.prep || [];
+  const known = c.spells?.known || [];
   known.forEach(n => {
     const o = find(n, 'spells')?.o || {}, lv = +(o.lv ?? o.level ?? 0), w = spellWhen(o.t); if (!w || mine.has(norm(n))) return;
-    if (lv > 0 && prep.length && !prep.includes(n)) return;
+    if (lv > 0 && !isPrepared(c, n)) return;
     G3[w].push(`<div class="entry"><div class="row"><button type="button" class="xref" data-act="detail" data-arg="${esc(n)}"><b>${esc(n)}</b></button><span class="chip light">${lv ? 'Level ' + lv : 'Cantrip'}</span>${o.conc ? '<span class="chip light">C</span>' : ''}${o.r ? `<span class="muted small">${esc(o.r)}</span>` : ''}<span class="spacer"></span>${act('cast', n, 'Cast', 'btn small')}</div></div>`);
   });
   turnFeatures(c).forEach(({f, w, a}) => {
@@ -2237,32 +2243,48 @@ spells(c){
   const pact = info.pact ? `<h4>Pact Magic <span class="muted">Warlock slots, all return on a Short Rest</span></h4><div class="kv"><span>Level ${info.pact.lv}</span><span class="pips">${Array.from({length:info.pact.n}, (_, k) => `<button type="button" class="pip ${k < pactUsed ? 'used' : ''}" data-act="pactSlot" data-arg="${k}" aria-label="Pact slot ${k + 1}"></button>`).join('')}</span></div>` : '';
   const perClass = (info.per || []).length > 1 ? info.per.map(x => { const a = abFor(x.class), am = mod(c.abilities[a]);
     return kv(esc(x.class), `${a.toUpperCase()} · DC ${8 + am + p} · ${fmt(am + p)} to hit${x.prepared !== undefined ? ` · ${x.prepared} prepared` : ''}`); }).join('') : '';
-  const known = c.spells.known.map(n => ({n, e:find(n, 'spells')}));
-  const groups = {};
-  known.forEach(k => { const lv = k.e?.o?.lv ?? k.e?.o?.level ?? 99; (groups[lv] = groups[lv] || []).push(k); });
-  const list = Object.keys(groups).sort((a, b) => a - b).map(lv => `<h4>${lv == 0 ? 'Cantrips' : lv == 99 ? 'Unlisted' : 'Level ' + lv}</h4>` + groups[lv].map(({n, e}) => {
-    const prep = c.spells.prep.includes(n), o = e?.o || {};
+  const fixed = fixedPrep(c), known = c.spells.known.map(n => ({n, e:find(n, 'spells')}));
+  const lvOf = k => k.e?.o?.lv ?? k.e?.o?.level ?? 99;
+  const grouped = list => { const g = {}; list.forEach(k => (g[lvOf(k)] = g[lvOf(k)] || []).push(k)); return Object.keys(g).sort((a, b) => a - b).map(lv => ({lv, rows:g[lv]})); };
+  const lvName = lv => lv == 0 ? 'Cantrips' : lv == 99 ? 'Unlisted' : 'Level ' + lv;
+  const nPrep = known.filter(k => lvOf(k) !== 0 && isPrepared(c, k.n)).length, cap = info.prepared;
+  const ready = known.filter(k => isPrepared(c, k.n));
+  const knownList = grouped(known).map(({lv, rows}) => `<h4>${lvName(lv)}</h4>` + rows.map(({n, e}) => {
+    const o = e?.o || {}, on = isPrepared(c, n), cantrip = lvOf({e}) === 0;
+    const state = cantrip ? '<span class="muted small">always ready</span>' : fixed ? '<span class="chip light" title="Prepared automatically">★ Prepared</span>' : act('prep', n, on ? '★ Prepared' : 'Prepare', 'sb' + (on ? ' on' : ''), `aria-pressed="${on}"`);
+    return `<div class="entry"><div class="row"><button type="button" class="chip" data-act="detail" data-arg="${esc(n)}">${esc(n)}</button>${o.conc ? '<span class="chip light">C</span>' : ''}${o.rit ? '<span class="chip light">R</span>' : ''}<span class="spacer"></span>${state}${act('unlearn', n, 'Remove', 'sb x', `aria-label="Remove ${esc(n)} from known spells"`)}</div></div>`; }).join('')).join('');
+  const readyList = grouped(ready).map(({lv, rows}) => `<h4>${lvName(lv)}</h4>` + rows.map(({n, e}) => {
+    const o = e?.o || {};
     return `<details class="fold"><summary>${esc(n)} ${o.conc ? '<span class="chip light">C</span>' : ''}${o.rit ? '<span class="chip light">R</span>' : ''}<span class="spacer"></span><span class="muted">${esc(String(o.t || '').split(',')[0])}${o.r ? ' · ' + esc(o.r) : ''}</span></summary>
       <div class="in">${e ? entryBody(e) : '<p class="muted">Not in the library: add a note in the Chronicle or import a source.</p>'}
-      <div class="row">${act('cast', n, 'Cast', 'btn small')}${act('prep', n, prep ? '★ Prepared' : 'Prepare', 'sb' + (prep ? ' on' : ''), `aria-pressed="${prep}"`)}${act('unlearn', n, 'Remove', 'sb x')}</div></div></details>`; }).join('')).join('');
+      <div class="row">${act('cast', n, 'Cast', 'btn small')}${lvOf({e}) !== 0 && !fixed ? act('prep', n, 'Unprepare', 'sb x') : ''}</div></div></details>`; }).join('')).join('');
+  const over = cap !== undefined && nPrep > cap;
+  const count = cap !== undefined ? ` <span class="chip ${over ? '' : 'light'}" id="prepCount" title="Prepared spells (cantrips do not count)">${nPrep} / ${cap}</span>` : '';
+  const classNames = esc(multi(c).length ? (info.per || []).map(x => x.class).join(' / ') : c.class);
   return `<div class="grid2">
-    ${card(`Spellcasting · ${esc(multi(c).length ? (info.per || []).map(x => x.class).join(' / ') : c.class)}`, `
+    <div class="stack">
+    ${card(`Spellcasting · ${classNames}`, `
       ${c.conc ? `<div class="row" style="margin-bottom:6px"><span class="muted">Concentrating:</span>${concChip(c)}</div>` : ''}
       ${kv('Spell attack', `${fmt(m + p)} ${act('rollSpellAtk', undefined, 'Roll')}`)}
       ${kv('Save DC', `<span class="big num">${8 + m + p}</span>`)}
       <div class="kv"><label for="f_spellab">Casting ability</label><select id="f_spellab" data-bind="spellAbility">${['int','wis','cha'].map(a => opt(a, ab, a.toUpperCase())).join('')}</select></div>
       ${perClass ? `<div class="rule"></div>${perClass}` : ''}
-      ${info.cantrips !== undefined ? kv('Cantrips known', info.cantrips) : ''}
-      ${info.prepared !== undefined ? kv('Prepared spells', `${c.spells.prep.length} / ${info.prepared}`) : ''}
+      ${info.cantrips !== undefined ? kv('Cantrips known', `${known.filter(k => lvOf(k) === 0).length} / ${info.cantrips}`) : ''}
+      ${cap !== undefined ? kv(fixed ? 'Spells known' : 'Prepared spells', `${nPrep} / ${cap}`) : ''}
       <div class="rule"></div>
       <h4>Spell slots ${info.type === 'pact' ? '<span class="muted">Pact Magic: all return on a Short Rest</span>' : '<span class="muted">tap to spend</span>'}</h4>
       ${slots}${pact}
       <div class="row mt">${act('resetSlots', undefined, 'Restore all slots')}</div>`)}
-    ${card(`Known & prepared <span class="muted">${known.length} spells</span>`, `
+    ${card(`Known spells <span class="muted">${known.length}</span>`, `
+      <p class="muted small">${fixed ? `${esc(classNames)} never re-pick their spells each day: every known spell is always prepared, and you change them when you level up.` : 'Everything you know or have in your spellbook. Mark the ones you want ready today with Prepare.'}</p>
       <div class="row"><label class="sr" for="spell_q">Search spells</label><input type="search" id="spell_q" placeholder="Search spells to add… (fire, heal, teleport)" style="flex:1">
-      <label class="row muted"><input type="checkbox" id="spell_mine" ${G.spellMine !== false ? 'checked' : ''}> ${esc(multi(c).length ? (info.per || []).map(x => x.class).join(' / ') : c.class)} list</label></div>
+      <label class="row muted"><input type="checkbox" id="spell_mine" ${G.spellMine !== false ? 'checked' : ''}> ${classNames} list</label></div>
       <div id="spellResults"></div>
-      ${list || '<p class="empty">No spells yet. Search above and tap ＋ to inscribe one.</p>'}`)}
+      ${knownList || '<p class="empty">No spells yet. Search above and tap ＋ to add one.</p>'}`)}
+    </div>
+    ${card(`${fixed ? 'Ready to cast' : 'Prepared'}${count}`, `
+      ${fixed ? '' : '<p class="muted small">Your list for today. Prepare more from Known spells, swap them after a Long Rest. Cantrips are always ready.</p>'}
+      ${readyList || `<p class="empty">Nothing ready yet. ${fixed ? 'Add spells from the search on the left.' : 'Tap Prepare on a known spell.'}</p>`}`)}
   </div>`;
 },
 
@@ -4542,7 +4564,7 @@ function spellSearch(q){
     return `${head}<div class="entry"><div class="row"><button type="button" class="chip" data-act="detailId" data-arg="${esc(e.id)}">${esc(e.n)}</button><span class="meta">${esc(e.k)}</span> ${e.src !== 'SRD' ? srcTag(e) : ''}<span class="spacer"></span>${c.spells.known.includes(e.n) ? '<span class="muted">known</span>' : act('learn', e.n, '＋ Learn')}</div></div>`; }).join('');
   box.innerHTML = `${bar}<div class="spRes"><p class="muted small" role="status">${all.length} ${all.length === 1 ? 'spell' : 'spells'}${filtering ? ' match' : ''}${mine ? ' on your class list' : ''}${filtering ? ` ${act('spellF', 'clear:', 'Clear filters', 'sb')}` : ''}</p>`
     + (rows || '<p class="muted">No match.</p>')
-    + (all.length > max ? `<div class="row mt">${act('spellMore', undefined, `Show ${Math.min(SPELL_PAGE, all.length - max)} more`, 'btn small')}<span class="muted small">${max} of ${all.length}</span></div>` : '') + '</div><div class="rule"></div><h4 class="muted">Your spellbook</h4>';
+    + (all.length > max ? `<div class="row mt">${act('spellMore', undefined, `Show ${Math.min(SPELL_PAGE, all.length - max)} more`, 'btn small')}<span class="muted small">${max} of ${all.length}</span></div>` : '') + '</div><div class="rule"></div><h4 class="muted">Known spells</h4>';
 }
 
 /* ================================================================== omnibox */
@@ -4882,7 +4904,7 @@ function sheetHTML(c){
   }).join('');
   const feats = [...classList(c).flatMap(e => { const v = asClass(c, e), tag = multi(c).length ? e.class + ' ' : '';
     return [...(clsInfo(v).f || []).filter(f => f.l <= v.level).map(f => `<b>${esc(f.n)}</b> <i>(${esc(tag)}${f.l})</i>`), ...(subclassOf(v)?.f || []).filter(f => f.l <= v.level).map(f => `<b>${esc(f.n)}</b> <i>(${esc(v.subclass)} ${f.l})</i>`)]; }), ...c.classFeats.map(esc)];
-  const spells = c.spells.known.map(n => { const o = find(n, 'spells')?.o || {}; return {n, lv:+(o.lv ?? o.level ?? 0), t:String(o.t || '').split(',')[0], r:o.r || '', cr:(o.conc ? 'C' : '') + (o.rit ? 'R' : ''), prep:c.spells.prep.includes(n)}; }).sort((a, b) => a.lv - b.lv || a.n.localeCompare(b.n));
+  const spells = c.spells.known.map(n => { const o = find(n, 'spells')?.o || {}; return {n, lv:+(o.lv ?? o.level ?? 0), t:String(o.t || '').split(',')[0], r:o.r || '', cr:(o.conc ? 'C' : '') + (o.rit ? 'R' : ''), prep:isPrepared(c, n)}; }).sort((a, b) => a.lv - b.lv || a.n.localeCompare(b.n));
   const attuned = c.inventory.filter(i => i.attuned);
   return `<section class="sPage">
     <header class="sHead"><div class="sName"><div class="sVal">${esc(c.name)}</div><div class="sLab">Character Name${c.player ? ' · Player: ' + esc(c.player) : ''}</div></div>
