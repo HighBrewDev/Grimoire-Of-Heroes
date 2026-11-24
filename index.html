@@ -1116,12 +1116,51 @@ function crStr(cr){ return cr === 0.125 ? '1/8' : cr === 0.25 ? '1/4' : cr === 0
 /* ================================================================== text rendering */
 const COND_NAMES = (SRD.conditions || []).map(c => c.n).concat(['Bloodied']);
 const COND_RE = new RegExp('\\b(' + COND_NAMES.join('|') + ')\\b', 'g');
-/* "[label](xref:Name)" is how imported text keeps its 5etools links: it becomes a button that opens the entry, or plain words when the library does not have it */
-const XREF_RE = /\[([^\[\]\n]+?)\]\(xref:([^()\n]+?)\)/g;
+/* References, LaTeX-style. Imported text and hand-written homebrew can name anything: [[Fireball]], [[spell:Fireball]], [[Fireball|that fiery spell]].
+   The name is looked up when the text is shown, in the SRD, in what was imported and in the person's own homebrew, so it links to whatever exists at that moment and stays plain words when nothing does.
+   The older "[label](xref:Name)" form (saved by an earlier import) still works. */
+const REF_RE = /\[\[(?:([a-z]+):)?([^\[\]\n|]+?)(?:\|([^\[\]\n]+?))?\]\]|\[([^\[\]\n]+?)\]\(xref:([^()\n]+?)\)/g;
+const REF_CATS = {spell:['spells'], item:['items', 'equipment'], weapon:['items', 'equipment'], feat:['feats'], species:['species'], race:['species'], background:['backgrounds'], class:['classes'], subclass:['subclasses'],
+  creature:['monsters'], monster:['monsters'], rule:['rules', 'conditions'], condition:['conditions'], skill:['rules'], action:['rules'], sense:['rules'], feature:['features', 'other'], other:['other', 'features'], deity:['other']};
+const refFind = (pre, name) => { const cs = REF_CATS[pre]; if (!cs) return find(name); for (const c of cs){ const e = find(name, c); if (e) return e; } return find(name); };
 function inline(s){
   const links = [];
-  s = s.replace(XREF_RE, (m, lab, nm) => { links.push(find(nm.replace(/&#39;/g, "'").replace(/&amp;/g, '&')) ? `<button type="button" class="xref" data-act="detail" data-arg="${nm}">${lab}</button>` : lab); return '\u0001' + (links.length - 1) + '\u0001'; });
+  s = s.replace(REF_RE, (m, pre, nm, lab, lab2, nm2) => {
+    const name = String(nm ?? nm2).trim().replace(/&#39;/g, "'").replace(/&amp;/g, '&'), text = String(lab ?? lab2 ?? nm).trim();
+    const e = refFind(pre, name);
+    links.push(e ? `<button type="button" class="xref" data-act="detailId" data-arg="${esc(e.id)}">${text}</button>` : text);
+    return '\u0001' + (links.length - 1) + '\u0001'; });
+  if (AUTOLINK) s = autolink(s, links);
   return inline0(s).replace(/\u0001(\d+)\u0001/g, (m, i) => links[+i]);
+}
+/* Names written in plain text link too, with no syntax to learn: only in imported and homebrew entries, only spells, items and feats,
+   only with the exact capital letters, and only for names of 6+ letters or more than one word ("Light" in a normal sentence stays a word; [[spell:Light]] forces it). */
+let AUTOLINK = false, AUTO_MAP = null, AUTO_N = -1;
+function autoMap(){
+  if (AUTO_MAP && AUTO_N === ALL.length) return AUTO_MAP;
+  AUTO_MAP = new Map(); AUTO_N = ALL.length;
+  for (const e of ALL){
+    if (!['spells', 'items', 'equipment', 'feats'].includes(e.cat) || typeof e.n !== 'string' || !/^[A-Z]/.test(e.n) || !(e.n.length >= 6 || /\s/.test(e.n))) continue;
+    for (const k of [e.n, esc(e.n)]) if (!AUTO_MAP.has(k) || (PRI[e.src] ?? 1) < (PRI[AUTO_MAP.get(k).src] ?? 1)) AUTO_MAP.set(k, e);
+  }
+  return AUTO_MAP;
+}
+function autolink(s, links){
+  const map = autoMap(), words = [...s.matchAll(/[A-Za-z][A-Za-z'’-]*/g)];
+  let out = '', pos = 0;
+  for (let i = 0; i < words.length; i++){
+    let hit = null, end = 0;
+    for (let n = Math.min(5, words.length - i); n >= 1; n--){
+      const a = words[i].index, b = words[i + n - 1].index + words[i + n - 1][0].length, t = s.slice(a, b);
+      if (/[\u0001]/.test(t)) continue;
+      const e = map.get(t); if (e){ hit = {e, a, b, t}; end = i + n - 1; break; }
+    }
+    if (!hit) continue;
+    out += s.slice(pos, hit.a); pos = hit.b; i = end;
+    links.push(`<button type="button" class="xref" data-act="detailId" data-arg="${esc(hit.e.id)}">${hit.t}</button>`);
+    out += '\u0001' + (links.length - 1) + '\u0001';
+  }
+  return out + s.slice(pos);
 }
 function inline0(s){
   return s
@@ -2488,7 +2527,9 @@ function entryCard(e){
 }
 function showEntry(e){
   if (!e) return;
-  modal(`${entryCard(e).replace('<span class="spacer"></span>', '<span class="spacer"></span>' + closeBtn())}`, {label:e.n});
+  AUTOLINK = e.src !== 'SRD';
+  let card; try { card = entryCard(e); } finally { AUTOLINK = false; }
+  modal(`${card.replace('<span class="spacer"></span>', '<span class="spacer"></span>' + closeBtn())}`, {label:e.n});
 }
 function showDetail(name){
   const e = find(name);
@@ -3985,8 +4026,9 @@ function plain5(s){
         case 'actTrigger': return 'Trigger:';
         case 'actResponse': return 'Response:';
         case 'spell': case 'item': case 'skill': case 'creature': case 'feat': case 'race': case 'background': case 'class': case 'action': case 'variantrule': case 'sense': case 'optfeature': case 'deity': {
-          const lab = (p[2] || txt).trim().replace(/[\[\]()]/g, ''), nm = txt.replace(/[\[\]()]/g, '');
-          return LINKS5 && nm && lab ? `[${lab}](xref:${nm})` : lab; }
+          const lab = (p[2] || txt).trim().replace(/[\[\]()|]/g, ''), nm = txt.replace(/[\[\]()|:]/g, '');
+          const pre = {race:'species', variantrule:'rule', optfeature:'feature'}[t] || t;
+          return LINKS5 && nm && lab ? `[[${pre}:${nm}${lab.toLowerCase() === nm.toLowerCase() ? '' : '|' + lab}]]` : lab; }
         case 'dice': case 'damage': case 'autodice': return txt;
         case 'scaledice': case 'scaledamage': return p[2] || txt;
         case 'note': case 'filter': case 'link': case '5etools': case 'book': case 'adventure': case 'footnote': case 'area': case 'loader': case 'homebrew': case 'color': case 'highlight': case 'help': case 'style': case 'code': case 'sup': case 'sub': case 'strike': case 'kbd': case 'font': return txt;
@@ -4081,7 +4123,7 @@ function pre5(list){
   }).filter(Boolean).join('; or ');
 }
 const flags5 = x => [].concat(x || []).flatMap(o => isObj(o) ? Object.keys(o).filter(k => o[k] === true) : []);
-const acts5 = arr => [].concat(arr || []).filter(isObj).map(a => ({n:plain5(a.name || ''), x:flat5(a.entries ?? a.entry ?? '')})).filter(a => a.n || a.x);
+const acts5 = arr => [].concat(arr || []).filter(isObj).map(a => ({n:plain5(a.name || ''), x:flatL5(a.entries ?? a.entry ?? '')})).filter(a => a.n || a.x);
 // one converter per 5etools list; each returns the object a Workshop form would save
 /* ---- spells: the structured "What it does" picker, read from 5etools' own tags (deterministic, no guessing beyond them) ---- */
 function fx5(o, pw){
@@ -4128,7 +4170,7 @@ function weapon5(w, bi, pw){
   const mb = parseInt(w.bonusWeapon, 10) || 0, rar = String(w.rarity || 'none');
   const out = {n:w.name, wc:`${cat === 'simple' ? 'Simple' : 'Martial'} ${melee ? 'Melee' : 'Ranged'}`, dd:String(w.dmg1).replace(/\s+/g, ''), dt:DMG5[w.dmgType], props, vd:vers && w.dmg2 ? String(w.dmg2) : '', mast,
     rn:rg ? +rg[1] : '', rl:rg ? +rg[2] : '', mb, rar:rar === 'none' || rar === 'None' ? (mb ? 'Uncommon' : 'Mundane') : tc5(rar), att:!!w.reqAttune, wt:+w.weight || '', val:money5(w.value),
-    sp:'', x:(typeof w.reqAttune === 'string' ? `*Requires attunement ${plain5(w.reqAttune)}.*\n` : '') + text5(w.entries)};
+    sp:'', x:(typeof w.reqAttune === 'string' ? `*Requires attunement ${plain5(w.reqAttune)}.*\n` : '') + textL5(w.entries)};
   if (!out.x) out.x = `${out.wc} weapon: ${out.dd} ${out.dt}${props.length ? '. Properties: ' + props.join(', ') : ''}${rg ? ` (range ${rg[1]}/${rg[2]})` : ''}${mast ? '. Mastery: ' + mast : ''}.`;
   if (!HB_RARITY_LIST.includes(out.rar) && out.rar !== 'Mundane'){ pw.push(`Rarity “${out.rar}” is not a known one, so ${mb ? ['Uncommon', 'Rare', 'Very Rare'][mb - 1] : 'Rare'} was picked: change it if the book says otherwise.`); out.rar = mb ? ['Uncommon', 'Rare', 'Very Rare'][mb - 1] : 'Rare'; }
   if (rar === 'none' && mb) pw.push('The file has no rarity for this magic weapon, so Uncommon was picked: change it if the book says otherwise.');
@@ -4218,13 +4260,13 @@ function adv5(o){
 const FROM5 = {
   spell:{cat:'spells', to:o => { const pw = [], sp = {n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
     conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set((o.classes?.fromClassList || []).map(c => c.name))],
-    x:text5(o.entries), h:flat5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))};
+    x:textL5(o.entries), h:flatL5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))};
     const fx = fx5(o, pw); if (fx) sp.fx = fx; if (pw.length) sp._pw = pw; return sp; }},
-  feat:{cat:'feats', to:o => ({n:o.name, ty:FEAT5[String(o.category || 'G').split(':')[0]] || 'General', pre:pre5(o.prerequisite), rep:!!o.repeatable, x:text5(o.entries)})},
+  feat:{cat:'feats', to:o => ({n:o.name, ty:FEAT5[String(o.category || 'G').split(':')[0]] || 'General', pre:pre5(o.prerequisite), rep:!!o.repeatable, x:textL5(o.entries)})},
   race:{cat:'species', to:o => {
     const sz = [].concat(o.size || ['M']).map(s => SIZE5[s] || s), named = [].concat(o.entries || []).filter(e => isObj(e) && e.name);
     return {n:o.name, ty:tc5([].concat(o.creatureTypes || ['humanoid']).join(' or ')), size:sz.join(' or '), speed:+(isObj(o.speed) ? o.speed.walk : o.speed) || 30,
-      x:text5([].concat(o.entries || []).filter(e => !(isObj(e) && e.name))), tr:named.map(e => ({n:plain5(e.name), x:flat5(e.entries ?? e.entry)}))};
+      x:textL5([].concat(o.entries || []).filter(e => !(isObj(e) && e.name))), tr:named.map(e => ({n:plain5(e.name), x:flatL5(e.entries ?? e.entry)}))};
   }},
   background:{cat:'backgrounds', to:o => {
     const a = [].concat(o.ability || [])[0] || {}, from = a.choose?.weighted?.from || a.choose?.from || Object.keys(a).filter(k => ABN5[k]);
@@ -4240,7 +4282,7 @@ const FROM5 = {
     const wty = String(w.type || '').split('|')[0];
     if (w.dmg1 && DMG5[w.dmgType] && (wty === 'M' || wty === 'R')) return weapon5(w, bi, pw);
     const ty = String(o.type || '').split('|')[0], rar = tc5(o.rarity || 'common'), out = {n:o.name, cat:o.wondrous ? 'Wondrous Item' : ITEM5[ty] || (o.weapon || o.weaponCategory ? 'Weapon' : o.armor ? 'Armor' : 'Wondrous Item'), rar:rar === 'None' ? 'Common' : rar,
-      att:!!o.reqAttune, x:(typeof o.reqAttune === 'string' ? `*Requires attunement ${plain5(o.reqAttune)}.*\n` : '') + text5(o.entries)};
+      att:!!o.reqAttune, x:(typeof o.reqAttune === 'string' ? `*Requires attunement ${plain5(o.reqAttune)}.*\n` : '') + textL5(o.entries)};
     const bn = String(o.baseItem || '').split('|')[0];
     if (bn) out.base = bn;
     const bac = parseInt(o.bonusAc, 10), bw = parseInt(o.bonusWeapon, 10); if (bac) out.acm = bac; if (bw) out.wb = bw;
@@ -4255,7 +4297,7 @@ const FROM5 = {
     const ac = [].concat(o.ac || []).map(a => isObj(a) ? (a.special ? plain5(a.special) : `${a.ac}${a.from ? ` (${a.from.map(plain5).join(', ')})` : ''}${a.condition ? ' ' + plain5(a.condition) : ''}`) : a).join(', ');
     const hp = isObj(o.hp) ? (o.hp.special ? plain5(o.hp.special) : `${o.hp.average ?? ''}${o.hp.formula ? ` (${o.hp.formula})` : ''}`) : String(o.hp ?? '');
     const sp = isObj(o.speed) ? Object.entries(o.speed).filter(([k, v]) => k !== 'canHover' && k !== 'choose' && k !== 'alternate' && v != null && v !== true).map(([k, v]) => `${k === 'walk' ? '' : k + ' '}${isObj(v) ? `${v.number} ft. ${plain5(v.condition || '')}`.trim() : v + ' ft.'}${k === 'fly' && o.speed.canHover ? ' (hover)' : ''}`).join(', ') : String(o.speed ?? '30') + ' ft.';
-    const casts = [].concat(o.spellcasting || []).filter(isObj).map(s => ({n:plain5(s.name || 'Spellcasting'), x:flat5(spellList5(s)), as:s.displayAs || 'trait'}));
+    const casts = [].concat(o.spellcasting || []).filter(isObj).map(s => ({n:plain5(s.name || 'Spellcasting'), x:flatL5(spellList5(s)), as:s.displayAs || 'trait'}));
     return {n:o.name, sz:[].concat(o.size || ['M']).map(s => SIZE5[s] || s).join(' or '), ty, al, ac:ac || '10', hp:hp || '10', spd:sp, ab:AB5.map(a => clamp(+o[a] || 10, 1, 30)), cr:crNum5(o.cr),
       sv:bonus5(o.save), sk:bonus5(o.skill), vul:names5(o.vulnerable, 'vulnerable'), res:names5(o.resist, 'resist'),
       imm:[names5(o.immune, 'immune'), names5(o.conditionImmune, 'conditionImmune')].filter(Boolean).join('; '),

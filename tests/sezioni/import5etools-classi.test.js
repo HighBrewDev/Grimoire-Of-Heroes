@@ -49,11 +49,11 @@ module.exports = {sezione:'import5etoolsClassi', test:[
     await app.page.locator('[data-act="detailId"]', {hasText:'Tester'}).first().click();
     await app.page.waitForSelector('#modalBk');
     const m = '#modalBk ';
-    assert.ok(await app.page.locator(m + 'button.xref[data-arg="Fire Bolt"]').count() >= 1, await app.text('#modalBk'));
-    assert.strictEqual(await app.page.locator(m + 'button.xref[data-arg="Zorgnax the Unknown"]').count(), 0);
+    assert.ok(await app.page.locator(m + 'button.xref:text-is("Fire Bolt")').count() >= 1, await app.text('#modalBk'));
+    assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("Zorgnax the Unknown")').count(), 0);
     const mt = await app.page.locator('#modalBk').textContent(); assert.ok(/Zorgnax the Unknown/.test(mt), mt.slice(0, 3000));
     await app.page.evaluate(() => document.querySelectorAll('#modalBk details').forEach(d => d.open = true));
-    await app.page.locator(m + 'button.xref[data-arg="Fire Bolt"]').first().click();
+    await app.page.locator(m + 'button.xref:text-is("Fire Bolt")').first().click();
     await app.page.waitForFunction(() => /Fire Bolt/.test(document.querySelector('#modalBk')?.textContent || '') && /Casting Time/.test(document.querySelector('#modalBk')?.textContent || ''));
   }],
   ['link di classe con sottoclasse spuntata: arriva la classe e solo quella sottoclasse, una volta sola', async ({open}) => {
