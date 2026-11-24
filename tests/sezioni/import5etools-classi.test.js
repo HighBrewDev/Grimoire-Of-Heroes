@@ -38,6 +38,24 @@ async function fetchLink(app, link){
 const exported = async app => { const [dl] = await Promise.all([app.page.waitForEvent('download'), app.page.locator('[data-act="brewExport"]').first().click()]); return JSON.parse(require('fs').readFileSync(await dl.path(), 'utf8')).grimoireHomebrew; };
 
 module.exports = {sezione:'import5etoolsClassi', test:[
+  ["link nei testi di classe e sottoclasse: {@spell}, {@item}, {@skill} restano link che aprono la scheda, quelli sconosciuti diventano testo", async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const j = {class:[{name:'Tester', source:'XPHB', edition:'one', hd:{faces:8}, proficiency:['con', 'cha'], primaryAbility:[{cha:true}], startingProficiencies:{armor:['light'], weapons:['simple'], skills:[{choose:{from:['arcana', 'insight'], count:2}}]}, classFeatures:['Magic Link|Tester|XPHB|1', {classFeature:'Tester Subclass|Tester|XPHB|3', gainSubclassFeature:true}]}],
+      classFeature:[{name:'Magic Link', source:'XPHB', className:'Tester', classSource:'XPHB', level:1, entries:['You cast {@spell Fire Bolt|XPHB}, wield a {@item Spear|XPHB}, roll {@skill Arcana} or meet {@creature Zorgnax the Unknown|XMM}.']}]};
+    await app.page.setInputFiles('#brew_file', {name:'c.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify(j))});
+    await app.page.waitForSelector('#modalBk .b5List');
+    const rv = await app.page.locator('#modalBk').innerText(); await app.click('brew5Add');
+    await app.page.waitForSelector('[data-act="detailId"]', {timeout:4000}).catch(() => { throw new Error(rv); });
+    await app.page.locator('[data-act="detailId"]', {hasText:'Tester'}).first().click();
+    await app.page.waitForSelector('#modalBk');
+    const m = '#modalBk ';
+    assert.ok(await app.page.locator(m + 'button.xref[data-arg="Fire Bolt"]').count() >= 1, await app.text('#modalBk'));
+    assert.strictEqual(await app.page.locator(m + 'button.xref[data-arg="Zorgnax the Unknown"]').count(), 0);
+    const mt = await app.page.locator('#modalBk').textContent(); assert.ok(/Zorgnax the Unknown/.test(mt), mt.slice(0, 3000));
+    await app.page.evaluate(() => document.querySelectorAll('#modalBk details').forEach(d => d.open = true));
+    await app.page.locator(m + 'button.xref[data-arg="Fire Bolt"]').first().click();
+    await app.page.waitForFunction(() => /Fire Bolt/.test(document.querySelector('#modalBk')?.textContent || '') && /Casting Time/.test(document.querySelector('#modalBk')?.textContent || ''));
+  }],
   ['link di classe con sottoclasse spuntata: arriva la classe e solo quella sottoclasse, una volta sola', async ({open}) => {
     const app = await open(); await wire(app);
     const rows = await fetchLink(app, LINK);
