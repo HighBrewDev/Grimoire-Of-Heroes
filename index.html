@@ -1130,7 +1130,37 @@ function inline(s){
     const e = refFind(pre, name);
     links.push(e ? `<button type="button" class="xref" data-act="detailId" data-arg="${esc(e.id)}">${text}</button>` : text);
     return '\u0001' + (links.length - 1) + '\u0001'; });
+  if (AUTOLINK) s = autolink(s, links);
   return inline0(s).replace(/\u0001(\d+)\u0001/g, (m, i) => links[+i]);
+}
+/* Names written in plain text link too, with no syntax to learn: only in imported and homebrew entries, only spells, items and feats,
+   only with the exact capital letters, and only for names of 6+ letters or more than one word ("Light" in a normal sentence stays a word; [[spell:Light]] forces it). */
+let AUTOLINK = false, AUTO_MAP = null, AUTO_N = -1;
+function autoMap(){
+  if (AUTO_MAP && AUTO_N === ALL.length) return AUTO_MAP;
+  AUTO_MAP = new Map(); AUTO_N = ALL.length;
+  for (const e of ALL){
+    if (!['spells', 'items', 'equipment', 'feats'].includes(e.cat) || typeof e.n !== 'string' || !/^[A-Z]/.test(e.n) || !(e.n.length >= 6 || /\s/.test(e.n))) continue;
+    for (const k of [e.n, esc(e.n)]) if (!AUTO_MAP.has(k) || (PRI[e.src] ?? 1) < (PRI[AUTO_MAP.get(k).src] ?? 1)) AUTO_MAP.set(k, e);
+  }
+  return AUTO_MAP;
+}
+function autolink(s, links){
+  const map = autoMap(), words = [...s.matchAll(/[A-Za-z][A-Za-z'’-]*/g)];
+  let out = '', pos = 0;
+  for (let i = 0; i < words.length; i++){
+    let hit = null, end = 0;
+    for (let n = Math.min(5, words.length - i); n >= 1; n--){
+      const a = words[i].index, b = words[i + n - 1].index + words[i + n - 1][0].length, t = s.slice(a, b);
+      if (/[\u0001]/.test(t)) continue;
+      const e = map.get(t); if (e){ hit = {e, a, b, t}; end = i + n - 1; break; }
+    }
+    if (!hit) continue;
+    out += s.slice(pos, hit.a); pos = hit.b; i = end;
+    links.push(`<button type="button" class="xref" data-act="detailId" data-arg="${esc(hit.e.id)}">${hit.t}</button>`);
+    out += '\u0001' + (links.length - 1) + '\u0001';
+  }
+  return out + s.slice(pos);
 }
 function inline0(s){
   return s
@@ -2497,7 +2527,9 @@ function entryCard(e){
 }
 function showEntry(e){
   if (!e) return;
-  modal(`${entryCard(e).replace('<span class="spacer"></span>', '<span class="spacer"></span>' + closeBtn())}`, {label:e.n});
+  AUTOLINK = e.src !== 'SRD';
+  let card; try { card = entryCard(e); } finally { AUTOLINK = false; }
+  modal(`${card.replace('<span class="spacer"></span>', '<span class="spacer"></span>' + closeBtn())}`, {label:e.n});
 }
 function showDetail(name){
   const e = find(name);

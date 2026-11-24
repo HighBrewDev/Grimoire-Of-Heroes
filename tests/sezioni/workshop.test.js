@@ -97,7 +97,7 @@ module.exports = {sezione:'workshop', test:[
   ['riferimenti [[Nome]] nei testi homebrew: si risolvono con SRD e homebrew, il nome sconosciuto resta testo', async ({open}) => {
     const app = await open(); await app.go('workshop');
     await app.page.setInputFiles('#brew_file', file('hb.json', {grimoireHomebrew:[
-      {cat:'spells', o:{n:'Ember Lash', lv:'1', sc:'Evocation', t:'Action', r:'60 feet', c:{v:true, s:false, m:false}, d:'Instantaneous', cls:['Wizard'], x:'Like [[spell:Fire Bolt]], see [[Fire Bolt|that cantrip]] and [[Feat Uno]] but not [[Nessuno Qui]].'}},
+      {cat:'spells', o:{n:'Ember Lash', lv:'1', sc:'Evocation', t:'Action', r:'60 feet', c:{v:true, s:false, m:false}, d:'Instantaneous', cls:['Wizard'], x:'Like [[spell:Fire Bolt]], also Magic Missile and a Light in the dark, see [[Fire Bolt|that cantrip]] and [[Feat Uno]] but not [[Nessuno Qui]].'}},
       {cat:'feats', o:{n:'Feat Uno', ty:'General', pre:'', x:'Pairs with [[Ember Lash]].'}}]}));
     await app.page.waitForSelector('#modalBk .b5List');
     await app.click('brew5Add');
@@ -105,6 +105,8 @@ module.exports = {sezione:'workshop', test:[
     await app.page.locator('[data-act="detailId"]', {hasText:'Ember Lash'}).first().click();
     const m = '#modalBk ';
     await app.page.waitForSelector(m + 'button.xref:text-is("Fire Bolt")');
+    assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("Magic Missile")').count(), 1, 'nome scritto a mano: link automatico');
+    assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("Light")').count(), 0, 'nome corto comune: nessun link automatico');
     assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("that cantrip")').count(), 1);
     assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("Feat Uno")').count(), 1, 'link verso una voce homebrew');
     assert.strictEqual(await app.page.locator(m + 'button.xref:text-is("Nessuno Qui")').count(), 0);
