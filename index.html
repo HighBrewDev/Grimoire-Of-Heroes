@@ -687,6 +687,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
 .hbTile .n{font-size:12.5px;color:var(--ink3);margin-top:4px}
 .hbBar{gap:8px 12px;flex-wrap:wrap;margin-bottom:6px}
 .hbBar input{flex:1 1 220px;min-width:0}
+.hbGrp h4{margin:10px 0 2px}.hbGrpBtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;width:100%;padding:8px 4px;font-weight:700;border-bottom:1px solid var(--gold3)}.hbGrpBtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.hbSub h5{margin:10px 0 0;font-size:.9em;opacity:.85}.hbGrpBody{padding-left:4px}
 .hbRow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed var(--gold3)}
 .hbRow .ico{font-size:1.3em;width:1.4em;text-align:center}
 .hbRow .t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
@@ -2847,10 +2848,30 @@ function workshopHTML(){ return G.brewView === 'edit' ? brewEditorHTML() : brewH
 const brewRow = it => `<div class="hbRow"><span class="ico" aria-hidden="true">${BREW_ICON[it.cat]}</span>
   <span class="t"><button type="button" class="xref" data-act="detailId" data-arg="brew:${esc(it.id)}">${esc(it.o.n)}</button><span class="muted small">${esc(BREW[it.cat].t)}${brewKey(it.cat, it.o) ? ' · ' + esc(brewKey(it.cat, it.o)) : ''}</span></span>
   <span class="row">${act('brewEdit', it.id, 'Edit', 'sb', `aria-label="Edit ${esc(it.o.n)}"`)}${act('brewDup', it.id, 'Duplicate', 'sb', `aria-label="Duplicate ${esc(it.o.n)}"`)}${act('brewDel', it.id, 'Delete', 'sb x', `aria-label="Delete ${esc(it.o.n)}"`)}</span></div>`;
+/* the list is grouped by kind (and inside a kind by spell level, subclass class or rarity), each group folded until opened, so a long collection does not mean a long scroll */
+const BREW_SUB = {spells:it => +it.o.lv ? 'Level ' + (+it.o.lv) : 'Cantrips', subclasses:it => hbStr(it.o.cls) || 'No class', items:it => hbStr(it.o.rar) || 'No rarity'};
+const BREW_CAP = 40;
 function brewListHTML(){
   const f = Object.hasOwn(BREW, G.brewFilter || '') ? G.brewFilter : '', q = norm(G.brewQ || '');
   const list = BREW_ITEMS.filter(it => (!f || it.cat === f) && (!q || norm(it.o.n).includes(q))).sort((a, b) => a.o.n.localeCompare(b.o.n));
-  return list.length ? list.map(brewRow).join('') : '<p class="empty">Nothing matches. Try another word or kind.</p>';
+  if (!list.length) return '<p class="empty">Nothing matches. Try another word or kind.</p>';
+  const open = G.brewOpen || (G.brewOpen = {}), kinds = Object.keys(BREW).filter(k => list.some(it => it.cat === k));
+  const forced = !!q || !!f || kinds.length === 1 || list.length <= 12;   // a search, a kind picked, a single kind or a short list: nothing to fold
+  const rows = (k, arr) => {
+    const sub = BREW_SUB[k];
+    if (!sub) return capRows(k, '', arr);
+    const m = new Map(); arr.forEach(it => { const g = sub(it); (m.get(g) || m.set(g, []).get(g)).push(it); });
+    const keys = [...m.keys()].sort((a, b) => k === 'spells' ? (a === 'Cantrips' ? -1 : b === 'Cantrips' ? 1 : parseInt(a.slice(6)) - parseInt(b.slice(6))) : k === 'items' ? HB_RARITY_LIST.indexOf(a) - HB_RARITY_LIST.indexOf(b) : a.localeCompare(b));
+    return keys.map(g => `<div class="hbSub"><h5>${esc(g)} <span class="muted">${m.get(g).length}</span></h5>${capRows(k, g, m.get(g))}</div>`).join('');
+  };
+  const capRows = (k, g, arr) => {
+    const id = k + '/' + g, all = (G.brewAll || {})[id] || arr.length <= BREW_CAP;
+    return arr.slice(0, all ? arr.length : BREW_CAP).map(brewRow).join('') + (all ? '' : `<div class="row">${act('brewMore', id, `Show all ${arr.length}`, 'sb')}</div>`);
+  };
+  return kinds.map(k => {
+    const arr = list.filter(it => it.cat === k), on = forced || open[k];
+    return `<section class="hbGrp"><h4>${forced && kinds.length === 1 ? '' : act('brewGrp', k, `<span aria-hidden="true">${on ? '▾' : '▸'}</span> ${BREW_ICON[k]} ${esc(BREW[k].t)} <span class="muted">${arr.length}</span>`, 'hbGrpBtn', `aria-expanded="${on}"`)}</h4>${on ? `<div class="hbGrpBody">${rows(k, arr)}</div>` : ''}</section>`;
+  }).join('');
 }
 const HB_GUIDE = {
   '# Spell:':'Level (Cantrip or 1–9), School, Casting time, Range, Components, Duration, Concentration, Ritual, Classes; text; “## Using a Higher-Level Spell Slot”.',
@@ -2967,6 +2988,8 @@ const ACT_BREW = {
     const imp = w === 'import', t = $(imp ? '#hb_import' : '#hb_create'); t?.scrollIntoView({block:'start', behavior:reduceMotion() ? 'auto' : 'smooth'});
     (imp ? $('#hb_imp_h') : t?.querySelector('.hbTile'))?.focus({preventScroll:true}); },
   brewFilter(k){ G.brewFilter = k; renderPage(); },
+  brewGrp(k){ const o = G.brewOpen || (G.brewOpen = {}); o[k] = !o[k]; const l = $('#hb_list'); if (l) l.innerHTML = brewListHTML(); },
+  brewMore(id){ (G.brewAll || (G.brewAll = {}))[id] = true; const l = $('#hb_list'); if (l) l.innerHTML = brewListHTML(); },
   brewEdit(id){ const it = BREW_ITEMS.find(x => x.id === id); if (!it) return; closeModal(); G.brewCat = it.cat; G.brewEdit = id; G.brewDraft = null; G.brewView = 'edit';
     if (G.chapter !== 'workshop') turnTo('workshop'); else { renderPage(); brewTop(); } $('#bw_n')?.focus({preventScroll:true}); },
   async brewDup(id){

@@ -79,6 +79,21 @@ module.exports = {sezione:'workshop', test:[
     await app.page.waitForFunction(() => document.querySelectorAll('[data-act="brewEdit"]').length === 1);
     assert.ok(/1 entry joins your homebrew \(1 new\)/.test(await app.toast()), await app.toast());
   }],
+  ['lista lunga: raggruppata per tipo, chiusa finché non la apri, incantesimi per livello', async ({open}) => {
+    const app = await open(); await app.go('workshop');
+    const feats = Array.from({length:8}, (_, i) => ({cat:'feats', o:{n:'Talento ' + i, ty:'General', pre:'', x:'x'}}));
+    const spells = Array.from({length:50}, (_, i) => ({cat:'spells', o:{n:'Incanto ' + String(i).padStart(2, '0'), lv:String(i % 3), sc:'Evocation', t:'Action', r:'60 feet', c:{v:true, s:false, m:false}, d:'Instantaneous', cls:['Wizard'], x:'x'}}));
+    await app.page.setInputFiles('#brew_file', file('hb.json', {grimoireHomebrew:[...feats, ...spells]}));
+    await app.page.waitForSelector('#modalBk .b5List');
+    await app.click('brew5Add');
+    await app.page.waitForSelector('.hbGrpBtn');
+    assert.strictEqual(await app.page.locator('[data-act="brewEdit"]').count(), 0, 'chiusa all inizio');
+    await app.page.locator('[data-act="brewGrp"][data-arg="spells"]').click();
+    assert.ok(await app.page.locator('.hbSub h5').count() >= 2, 'sottogruppi per livello');
+    assert.ok(await app.page.locator('[data-act="brewEdit"]').count() <= 3 * 40, 'tetto per gruppo');
+    await app.page.fill('#brew_q', 'Talento 3');
+    assert.strictEqual(await app.page.locator('[data-act="brewEdit"]').count(), 1);
+  }],
   ['B-001 homebrew con nome numerico non blocca la ricarica', async ({open}) => {
     const app = await open(); await app.go('workshop');
     await app.page.setInputFiles('#brew_file', file('hb.json', {grimoireHomebrew:[{cat:'spells', o:{n:42, lv:1}}, {cat:'spells', o:{n:{a:1}, lv:1}}]}));
