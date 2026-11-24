@@ -1,6 +1,6 @@
 // Grimoire of Heroes · offline cache. The app shell is served from the cache at once and refreshed in the
-// background, so the tome opens without a connection and picks up a new version on the next launch.
-const CACHE = 'grimoire-ds1120c';
+// background, so the tome opens without a connection. Opening the page takes the new version at once when the network is quick, the cached one otherwise.
+const CACHE = 'grimoire-ds1124a';
 
 
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
@@ -16,6 +16,8 @@ self.addEventListener('fetch', e => {
   e.respondWith(caches.open(CACHE).then(async c => {
     const hit = await c.match(key, {ignoreSearch:req.mode === 'navigate'});
     const net = fetch(req).then(r => { if (r.ok) c.put(key, r.clone()); return r; }).catch(() => hit);
+    // opening the page: the new version first when the network answers within 3 s (so a release shows on the first reopen, not the second); the cache only when offline or slow
+    if (req.mode === 'navigate' && hit) return Promise.race([net, new Promise(res => setTimeout(() => res(hit), 3000))]);
     return hit || net;
   }));
 });
