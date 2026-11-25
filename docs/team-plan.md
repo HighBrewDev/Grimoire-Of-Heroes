@@ -1,53 +1,54 @@
-# Piano del team · mercoledì 18 novembre 2026
+# Piano del team · mercoledì 25 novembre 2026
 
 ## Regole di squadra
 Chi chiude o cambia qualcosa aggiorna da sé le proprie voci, senza aspettare il giro del punteggio. A fine lavoro: (1) in docs/bug-beta.md sposta in 'Bug risolti' i bug che hai chiuso (ID, data, chi, commit) o correggi stato e gravità di quelli che hai toccato; (2) se hai cambiato lo stato di bug, compiti, PR o decisioni, ritocca le voci corrispondenti della Sala del Team: leggi la pagina pubblicata con Artifact (action read, url https://claude.ai/artifact/S9vKKKbzFy2Jb9UNboQ8jv), modifica SOLO le voci toccate dell'oggetto DATA (bugs, solved, running, decisions, la riga del tuo ruolo in team) nel file docs/sala/sala-team.html di main copiato fuori dal repo, controlla che il JavaScript resti valido e ripubblica con Artifact sullo stesso url, senza icona nuova e senza commit del file. Fallo solo se qualcosa è davvero cambiato, in una modifica sola, e nel diario scrivi 'Sala aggiornata' o il motivo se non ci sei riuscito. Vale per sviluppo, designer, tester e leader.
 
-## Decisione di Capo (18/11): da domani 19/11 refactoring, niente nuove feature
-Dopo il lavoro di oggi (equipaggiamento oggetti) si fermano le feature. Per qualche giorno: pulizia e refactoring, senza cambio di stack. Ordine proposto: (1) bug aperti e test rossi; (2) lag di digitazione e effetti CSS pesanti (misurare prima); (3) spezzare `index.html` in file (CSS, JS per area) con la suite verde a ogni passo, un passo = una PR piccola; (4) smussare gli angoli (nomi, codice morto, duplicati, avvisi). Il tour guidato e il resto del backlog feature restano fermi. Ogni passo: nessun cambio di comportamento, suite completa uguale a prima.
+## Fase: refactoring e pulizia (decisione di Capo, 18/11)
+Niente nuove feature finché Capo non le riapre. Compiti piccoli, suite verde a ogni passo, nessun cambio di stack, un passo = una PR piccola se tocca dati utente o spezza `index.html`. Ritmo ridotto dal 24/11: sviluppo in UNA sessione al giorno.
 
 ## Stato dell'app
-- Main `3693703` (live = main). Controllo con Chromium a 1440x900 e 390x844 in locale: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto da ieri.
-- Punteggio totale **+358, tendenza ↑** (ieri +335). Test **356/357**; nessuna sezione rossa, nessuna regressione. 13 sezioni VERDI su 17, 4 GIALLE (Zaino, Robustezza, npc, ticket).
-- Aperti: B-054 [bassa, eroe senza `id` nel salvataggio: le modifiche non restano; test rosso in robustezza], B-011 [bassa, da decidere]. B-052 e B-053 chiusi (PR #28 e #29 unite). Nessuna PR aperta.
+- Main `69b3423` (live = main). Controllo Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto da ieri.
+- Punteggio **+373, tendenza ↑** (ieri +358). Test **405/410**. Rosse: combattimento, telefono, beneficiClasse.
+- I 5 rossi hanno una sola causa: B-055 (la fold "Add an attack" si richiude; 3 test non la aprono) e B-056 (pallini doppi; 1 test). Sono bug [UX] bassi, ma tengono 3 sezioni in rosso.
+- `index.html` è ancora un file unico da 6645 righe. PR #48 (service worker + avviso "Reload now") aperta, aspetta Capo.
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
 |---|---|---|---|---|
-| Robustezza | 🟡 GIALLO | MEDIO | backend | B-054, unico test rosso |
-| Import/export e salvataggio | 🟢 VERDE | BASSO | backend | B-054 tocca `load()` |
-| Zaino e monete | 🟡 GIALLO | MEDIO | frontend | tutto verde, manca il terzo giorno |
-| npc, ticket | 🟡 GIALLO | MEDIO | designer/frontend | sezioni nuove, pochi giorni di verde |
-| Level up e multiclasse | 🟢 VERDE | BASSO | frontend | solo la variante di B-032 |
-| Le altre 12 sezioni (Eroe … Telefono, sincronia) | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
+| Combattimento | 🔴 ROSSO | ALTO | frontend | B-055, 2 test rossi |
+| Telefono | 🔴 ROSSO | ALTO | frontend | B-030 rosso per B-055 |
+| beneficiClasse | 🔴 ROSSO | ALTO | frontend | B-056, test pallini |
+| Zaino, Robustezza, equipaggiamento, armi-incantesimi, import5etools(+Classi) | 🟡 GIALLO | MEDIO | tester/backend | pochi giorni di verde |
+| Le altre 12 sezioni | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
 
 ## Oggi
-Zone di index.html oggi: **Backend** (per primo) possiede `load()`, `save()`, `sampleChars` e `sw.js`. **Frontend** (dopo) possiede solo il blocco PF e la sua barra (CSS incluso). **Designer** solo CSS di npc e ticket e `docs/design/`. Nessuno esce dalla propria zona.
+Zone di index.html: **Sviluppo** possiede il blocco Combattimento (azioni del turno, risorse di classe) e `sw.js` solo per `CACHE`. **Designer** solo CSS (effetti pesanti) e `docs/design/`. Nessuno esce dalla propria zona.
 
-- **Sviluppo 10:23, una sessione, prima BACKEND · B-054 (robustezza)**: in `load()`, ogni eroe senza `id` ne riceve uno nuovo e viene risalvato; le modifiche poi restano. Formato invariato. *Fatto* = test B-054 verde, `robustezza`/`importexport`/`eroe` senza regressioni, bug in "Risolti", `CACHE` alzata. Tocca dati utente: PR verso main. Se avanza tempo: avviso "New version available" da sw.js (backlog 2).
-- **FATTO (PR #31, unita, campo `hp.maxOv`; la #30 duplicata è chiusa)** · barra della vita (combattimento): (a) PF temporanei in un colore diverso dalla vita, nella stessa barra. (b) Nuovo campo "override PF max", vuoto di default e attivo solo se contiene un numero. Se è **minore** del max base (es. danno necrotico): la fine della barra è coperta proporzionalmente da un colore freddo (viola), la differenza è sempre piena e non si può curare oltre l'override. Se è **maggiore** (es. Aiuto): la barra "cresce", la parte in più è piena in un colore caldo dorato/arancio, mai rosso; se la vita attuale è sotto il vecchio massimo, della parte in più si vede solo il bordo. Cura, danni, riposi e PF temporanei devono usare il massimo effettivo. Campo aggiuntivo e facoltativo nel salvataggio (eroi vecchi invariati): PR verso main. Zona: blocco PF di `index.html` + CSS barra. *Fatto* = test nuovi in `combattimento` (override minore, maggiore, vuoto, cura bloccata, PF temp), `combattimento`/`telefono`/`importexport` senza regressioni, screenshot a 390 e 1440. La variante di B-032 scala a domani.
-- **Designer 14:13 · npc e ticket a 390 px**: contrasto e dimensione dei tocchi (min 44 px), solo CSS. *Fatto* = screenshot prima/dopo in docs/design/ a 390 e 1440, `telefono`/`npc`/`ticket` senza rotture.
-- **Distruttore 21:07 · Robustezza e Zaino**: dopo B-054, eroi con campi mancanti o di tipo sbagliato, denari con importi strani, quota di salvataggio piena. *Fatto* = diario, bug nuovi con passi e test.
-- **Power user 21:37 · Zaino e Level up a 390 px**: sessione da giocatore, spese e resto, level up multiclasse con talento. *Fatto* = diario con numeri, bug solo se riproducibili.
-- **Test e punteggio (domani 8:47)**: confermare B-054; test nuovi solo in Zaino, npc, ticket.
+- **Sviluppo 10:23 · B-055 + B-056 (frontend)**. (1) B-055: dopo "Add" il modulo "Add an attack" (`index.html:2228`, `<details class="fold">`) resta aperto, con i campi svuotati e il focus sul nome. Se la fold si richiude per un re-render, ripristinare lo stato aperto. I 3 test (`combattimento` ×2, `telefono` B-030) devono aprire la fold: aggiornarli è legittimo solo se l'app mostra la fold chiusa di partenza (è la scelta voluta), non per far passare un bug. (2) B-056: un solo gruppo di pallini per risorsa nella pagina (tenere quello nella card "Sorcerer resources" o nella riga azione, non entrambi), sincronizzati, nessun uso perso. *Fatto* = test `B-055` e `usi: pallini per Wind Soul…` verdi, `combattimento`/`telefono`/`beneficiClasse` senza regressioni, suite completa ≥ 410/410, bug in "Risolti" con commit, `CACHE` alzata, screenshot 390 e 1440. Sala aggiornata. Se avanza tempo: misurare il lag di digitazione (backlog 1), solo misura, senza fix.
+- **Designer 14:13 · effetti CSS pesanti (solo misura e proposta)**: elencare `backdrop-filter`, `filter: blur`, ombre grandi, animazioni infinite in `index.html`; misurare il costo di digitazione/scroll con Chromium (Performance trace o `requestAnimationFrame`) a 390 e 1440. *Fatto* = `docs/design/effetti-css-2026-11-25.md` con tabella (selettore, riga, costo, rimovibile sì/no) e al massimo 2 rimozioni senza cambio visibile, screenshot prima/dopo, `telefono` e `eroe` senza rotture.
+- **Distruttore 21:07 · Combattimento e Robustezza**: dopo il fix di B-055/B-056, aggiungere 30 attacchi di fila, PF con override, risorse a usi, import file strani. *Fatto* = diario, bug nuovi con passi e test.
+- **Test e punteggio (domani 8:47)**: confermare B-055/B-056 chiusi e le 3 sezioni uscite dal rosso.
 
 ## Backlog (ordinato)
-**Backend**
-1. B-054 (oggi). 2. Avviso "New version available" da sw.js. 3. Prova di login e sync reali (serve rete verso Supabase e il via di Capo). 4. B-011: l'import deve rispettare `FREE_BREW`? (oggi paywall spento).
-**Frontend**
-5. Barra PF con PF temp e override max (oggi, Capo). 5b. Variante di B-032 (domani). 6. Rifinitura dei flussi npc e ticket dopo le prove del power user.
-**Design**
-7. Contrasto e tocchi di npc e ticket (oggi). 8. Bozza di post in docs/promo/ (solo bozza, nessuna pubblicazione).
-9. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali con brevi spiegazioni, avvio dal menu, saltabile): designer + frontend dopo il 23/11, o prima se tutte le sezioni sono VERDI (oggi 13 su 17).
-10. Integrazione AI nell'import (rimandata): da riconsiderare solo se i file reali continuano a non passare; solo come PR.
+1. Misurare il lag di digitazione (campi lunghi, note, cronaca): trace prima di toccare qualcosa. (frontend)
+2. Effetti CSS pesanti (oggi, designer).
+3. Spezzare `index.html`, passo 1: estrarre il CSS in `style.css`, aggiornare precache in `sw.js`, suite identica. Solo PR. (frontend)
+4. Spezzare `index.html`, passo 2: estrarre il JS in moduli per area (dati SRD, combattimento, spellbook, homebrew). Solo PR, un'area per volta.
+5. B-011: l'import homebrew deve rispettare `FREE_BREW`? (oggi paywall spento; decisione di Capo se serve)
+6. Codice morto, nomi doppi, avvisi in console (backend/frontend).
+7. Test di regressione per i test `tests/` che dipendono da fold chiuse (robustezza dei selettori).
+8. Prova di login e sync reali con Supabase (serve rete e il via di Capo).
+9. Rifinitura dei flussi npc e ticket dopo le prove del power user.
+10. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile). Fermo finché non finisce il refactoring o Capo lo chiede.
 
 ## Regole per tutti
-- Solo SRD 5.2.1; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
+- Solo SRD 5.2.1 nella versione pubblica; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
 - Dati utenti, Supabase, pagamenti, login, schema e redesign grandi: **solo PR**.
 - Mai cambiare un test per farlo passare se l'app è sbagliata. Ogni correzione: test della sezione + suite completa, `tests/risultati` ripristinato.
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- Nessuna PR aperta. Migrazioni Supabase in `supabase/migrations/` (homebrew 16/11, npc 17/11, ticket 18/11, note npc 19/11): se non le hai ancora eseguite, vanno nell'editor SQL; finché mancano, l'app resta locale senza errori.
-- Keep-alive Supabase: workflow su main (`supabase-keepalive.yml`); da provare: GitHub → Actions → "supabase-keepalive" → Run workflow, deve rispondere 2xx. Serve il tuo ok per considerarlo chiuso.
-- Decisione facoltativa: aprire nella rete dell'ambiente l'host Supabase per provare login e sync.
+- **PR #48** (https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/48): service worker più robusto, avviso "Reload now", etichetta versione. Tocca `sw.js`: va unita da te (o dimmi "mergia tu"); dopo il merge chiudi e riapri il sito una volta.
+- **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok per chiuderlo.
+- Migrazioni Supabase in `supabase/migrations/`: se non le hai ancora eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
+- Decisione facoltativa: B-011 (limite di 3 elementi gratuiti nell'import) e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.

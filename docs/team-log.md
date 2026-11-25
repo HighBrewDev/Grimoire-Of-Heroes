@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-25 · team leader
+- **Stato**: main 69b3423, controllo a 1440x900 e 390x844 senza errori di pagina e senza overflow. Punteggio +373 ↑ (405/410), rosse combattimento, telefono, beneficiClasse: tutte da B-055 e B-056 (bassi [UX]). Registro bug coerente con il codice (la fold "Add an attack" c'è ancora).
+- **Piano**: sviluppo su B-055 + B-056, designer (mercoledì) su misura degli effetti CSS pesanti, distruttore su Combattimento/Robustezza. PR #48 (service worker) in attesa di Capo. Tour guidato fermo. Sala non aggiornata: nessuno stato è cambiato rispetto al giro di test di stamattina.
+
 ## 2026-11-25 · test
 - **Suite su main 585a1a5**: 405/410, punteggio +373 ↑ (ieri +358). Sezioni rosse: combattimento, telefono, beneficiClasse.
 - **Rossi**: 2 test di combattimento e B-030 (telefono) falliscono perché il modulo "Add an attack" è chiuso (B-055, resta rosso apposta); "Wind Soul al livello 18" fallisce per i pallini doppi (B-056, correlato). Sono problemi dell'app, test non toccati.
