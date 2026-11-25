@@ -997,7 +997,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
     <p class="stats">3 sample heroes · 339 spells · 341 creatures<br>243 magic items · the full SRD 5.2.1, offline</p>
     <button type="button" class="btn" style="font-size:18px;padding:12px 26px;margin-top:8px" data-act="enter">Open the Grimoire</button>
     <p style="font-size:13.5px">Turn pages with the arrows, ← → keys or a swipe.</p>
-    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a> · <span title="Version of this page">build ds1125a</span><span id="coverCoffee"></span></p>
+    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a> · <span title="Version of this page">build ds1125c</span><span id="coverCoffee"></span></p>
     <label class="coverOpt"><input type="checkbox" id="coverStart" checked> Show this cover each time the tome opens</label>
   </div>
 </div>
@@ -1532,6 +1532,8 @@ function multiSlots(c){
   if (pact) return {type:'pact', slots:pact.s.slots, ...base};
   return {type:'none', slots, ...base};
 }
+// Prepared-spell counts for official 2024 classes that are not in the SRD (they arrive as imported or homebrew classes); any other custom class has no table and stays a soft hint.
+const PREP_EXTRA = {Artificer:[2,2,3,4,4,6,6,7,7,9,9,10,10,11,11,12,12,14,14,15]};
 function slotsFor(c){
   if (multi(c).length) return multiSlots(c);
   const pad = padSlots;
@@ -1539,8 +1541,8 @@ function slotsFor(c){
   if (row?.sp) return {type:c.class === 'Warlock' ? 'pact' : 'std', slots:pad(Array.from({length:9}, (_, i) => row.sp['spell_slots_level_' + (i + 1)] || 0)), cantrips:row.sp.cantrips_known, prepared:row.sp.prepared_spells};
   if (isThird(c)) return {type:'std', slots:pad(THIRD[c.level] || [])};
   const kind = !srdClass(c) && clsInfo(c).caster;
-  if (kind === 'full') return {type:'std', slots:pad(FULL_SLOTS[c.level - 1])};
-  if (kind === 'half') return {type:'std', slots:pad(FULL_SLOTS[Math.ceil(c.level / 2) - 1])};
+  if (kind === 'full') return {type:'std', slots:pad(FULL_SLOTS[c.level - 1]), prepared:PREP_EXTRA[c.class]?.[c.level - 1]};
+  if (kind === 'half') return {type:'std', slots:pad(FULL_SLOTS[Math.ceil(c.level / 2) - 1]), prepared:PREP_EXTRA[c.class]?.[c.level - 1]};
   if (kind === 'third' && c.level >= 3) return {type:'std', slots:pad(THIRD[c.level] || [])};
   const pact = kind === 'pact' && (SRD.classes || []).find(k => k.n === 'Warlock')?.tbl?.[c.level - 1]?.sp;
   if (pact) return {type:'pact', slots:pad(Array.from({length:9}, (_, i) => pact['spell_slots_level_' + (i + 1)] || 0))};

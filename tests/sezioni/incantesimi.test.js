@@ -37,6 +37,17 @@ module.exports = {sezione:'incantesimi', test:[
     await app.clickJS('prep', 'Sleep');
     assert.ok((await app.hero()).spells.prep.includes('Sleep'));
   }],
+  ['Artificiere importato (classe homebrew): anche lui ha il limite preparati e il muro livelli', async ({open}) => {
+    const h = fx.hero(fx.ELDRIN, {id:'tart', class:'Artificer', subclass:'Armorer', level:5, spells:{known:['Cure Wounds', 'Fireball', 'Healing Word', 'Shield', 'Sleep'], prep:['Cure Wounds', 'Healing Word', 'Shield', 'Sleep'], slots:{}}});
+    const app = await open({heroes:[h], activeId:'tart'});
+    await app.page.evaluate(() => new Promise((res, rej) => { const r = indexedDB.open('grimoire-library', 1); r.onupgradeneeded = () => r.result.createObjectStore('packs', {keyPath:'id'});
+      r.onsuccess = () => { const t = r.result.transaction('packs', 'readwrite'); t.objectStore('packs').put({id:'homebrew', items:[{id:'hb1', cat:'classes', o:{n:'Artificer', hd:8, caster:'half', spellAb:'int'}}]}); t.oncomplete = res; t.onerror = rej; }; }));
+    await app.page.reload(); await app.page.waitForSelector('#page');
+    await app.go('spells');
+    assert.ok(/Prepared spells\s*4 \/ 4/.test(await app.text('#page')), await app.text('#page'));
+    await app.clickJS('prep', 'Fireball');
+    assert.ok(!(await app.hero()).spells.prep.includes('Fireball'));
+  }],
   ['i trucchetti non contano nel limite e salendo di livello il muro si alza', async ({open}) => {
     const h = fx.hero(fx.ELDRIN, {id:'tlv5', level:5, spells:{known:['Fire Bolt', 'Fireball'], prep:[], slots:{}}});
     const app = await open({heroes:[h], activeId:'tlv5'}); await app.go('spells');
