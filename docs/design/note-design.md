@@ -55,6 +55,9 @@ Regola: niente colori nuovi scritti a mano dentro le pagine; usare le variabili,
 
 ## Diario
 
+### 2026-11-25
+- **Fatto**: misura degli effetti CSS pesanti (`effetti-css-2026-11-25.md`). Tolto `will-change:transform` da `.page::before/::after`: scroll 36 → 20 ms/frame e digitazione 60 → 18 ms a 1440. **Regola nuova**: niente `will-change` su strati grandi come la pagina che portano `filter:url(#rough)`. Nessuna nuova licenza.
+
 ### 2026-11-17
 - **Fatto**: indizio di scorrimento dello scaffale eroi sotto 980 px, stessa maschera/animazione dei segnalibri (`--chF`/`--chL`, `chapFade`), con base `--chL:0px` perché senza overflow la timeline è inattiva e non deve sfumare. Nessuna nuova licenza. Immagini: `2026-11-17-scaffale-prima|dopo-*.png`.
 
