@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-25 · design
+- **Fatto** · effetti CSS pesanti (compito del piano, solo misura e una rimozione). Chromium a 1440 e 390: l'unico costo vero era `will-change:transform` su `.page::before/::after` con il filtro `rough` sopra (scroll 36 → 20 ms/frame, digitazione 60 → 18 ms a 1440; a 390 25 → 17). Tolto, nessun cambio visibile. Il filtro, i `mix-blend-mode` e le ombre restano (estetica, guadagno trascurabile); `backdrop-filter` non esiste. `CACHE` → `grimoire-ds1125c`.
+- **File**: index.html (righe 535, 545), sw.js, docs/design/effetti-css-2026-11-25.md, note-design.md, screenshot `docs/design/2026-11-25-page-prima|dopo-*.png`.
+- **Verifica**: `telefono` + `eroe` 44/44; schermate identiche a occhio a 390/768/1440; rumore di misura alto (rendering software). Nessun bug [UX] chiuso. Sala non aggiornata (nessuno stato cambiato).
+- **Prossima idea**: bordo irregolare con maschera precalcolata al posto di `feTurbulence` (solo PR); link legali del footer e dadi del vassoio a 390.
+
 ## 2026-11-25 · sviluppo
 - **Fatto** · Combattimento, B-055 + B-056 (frontend, compito del piano). B-055: la fold "Add an attack" resta aperta dopo "Add" (stato `S.atkOpen`); B-056: un solo gruppo di pallini per risorsa (resta nella riga azione, la card "resources" salta quelle già mostrate). Nessun backend/schema/dati toccati.
 - **Test**: prima 405/410 (dal punteggio del giorno; la mia copia di base è stata interrotta per non sporcarla), dopo **412/412**. Aggiornati 3 test che non aprivano la fold (`combattimento` ×2, `telefono` B-030), come previsto dal piano: la fold parte chiusa per scelta; nessuna asserzione cambiata. `tests/risultati` ripristinato.
