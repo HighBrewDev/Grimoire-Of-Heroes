@@ -103,6 +103,7 @@ button{cursor:pointer}
 .coinCalc input,.coinCalc select{min-height:44px}
 .coinCalc input{width:110px}
 .coinCalc .sb{min-height:44px;min-width:44px}
+.sb[data-locked]{opacity:.5;cursor:not-allowed}
 .sb{border:1px solid var(--gold3);background:var(--paper);border-radius:7px;padding:3px 9px;font-size:14px;line-height:1.3;color:var(--ink)}
 .spRes{border-left:3px solid var(--gold3);padding-left:8px;margin:6px 0}.spFilt{display:grid;gap:6px;margin:8px 0}.spFilt .row{gap:4px 6px}.spFilt select{max-width:100%}
 @media (max-width:560px){.spFilt .sb{min-height:40px;min-width:40px}}
@@ -1552,6 +1553,17 @@ const FIXED_PREP = ['Bard', 'Sorcerer', 'Warlock'];
 const fixedPrep = c => { const cs = classList(c).map(e => asClass(c, e)).filter(v => slotsFor(v).type !== 'none'); return cs.length > 0 && cs.every(v => FIXED_PREP.includes(v.class) || isThird(v)); };
 const spellLvOf = n => { const o = find(n, 'spells')?.o; return o ? +(o.lv ?? o.level ?? 0) : 1; };
 const isPrepared = (c, n) => spellLvOf(n) === 0 || fixedPrep(c) || (c.spells.prep || []).includes(n);
+/* Prepared list: hard limit from the class table (2024) and a "wall" on spell levels above the highest slot the hero has. Cantrips are exempt.
+   No table (homebrew class) or no slots at all: no limit, the count stays a soft hint. Bard, Sorcerer, Warlock never prepare by hand. */
+const maxSpellLv = c => { const i = slotsFor(c); if (i.type === 'none') return undefined; return Math.max(i.slots.reduce((m, n, k) => n > 0 ? k + 1 : m, 0), i.pact?.lv || 0); };
+const prepCount = c => (c.spells.known || []).filter(n => spellLvOf(n) !== 0 && isPrepared(c, n)).length;
+const prepBlock = (c, n) => {
+  const lv = spellLvOf(n); if (lv === 0 || fixedPrep(c)) return '';
+  const ml = maxSpellLv(c), cap = slotsFor(c).prepared;
+  if (ml !== undefined && ml > 0 && lv > ml) return `${n} is level ${lv}, but your highest spell slot is level ${ml}.`;
+  if (cap !== undefined && prepCount(c) >= cap) return `Prepared list full (${cap}). Unprepare a spell first.`;
+  return '';
+};
 const abFor = cls => SPELL_AB[cls] || clsInfo({class:cls}).spellAb || 'int';
 const spellAb = c => c.spellAbility || abFor((classList(c).find(e => slotsFor(asClass(c, e)).type !== 'none') || c).class);
 
@@ -2301,7 +2313,7 @@ spells(c){
   const ready = known.filter(k => isPrepared(c, k.n));
   const knownList = grouped(known).map(({lv, rows}) => `<h4>${lvName(lv)}</h4>` + rows.map(({n, e}) => {
     const o = e?.o || {}, on = isPrepared(c, n), cantrip = lvOf({e}) === 0;
-    const state = cantrip ? '<span class="muted small">always ready</span>' : fixed ? '<span class="chip light" title="Prepared automatically">★ Prepared</span>' : act('prep', n, on ? '★ Prepared' : 'Prepare', 'sb' + (on ? ' on' : ''), `aria-pressed="${on}"`);
+    const state = cantrip ? '<span class="muted small">always ready</span>' : fixed ? '<span class="chip light" title="Prepared automatically">★ Prepared</span>' : (() => { const why = on ? '' : prepBlock(c, n); return act('prep', n, on ? '★ Prepared' : 'Prepare', 'sb' + (on ? ' on' : ''), `aria-pressed="${on}"` + (why ? ` aria-disabled="true" title="${esc(why)}" data-locked="1"` : '')) + (why && /highest spell slot/.test(why) ? ` <span class="muted small">needs a level ${lvOf({e})} slot</span>` : ''); })();
     return `<div class="entry"><div class="row"><button type="button" class="chip" data-act="detail" data-arg="${esc(n)}">${esc(n)}</button>${o.conc ? '<span class="chip light">C</span>' : ''}${o.rit ? '<span class="chip light">R</span>' : ''}<span class="spacer"></span>${state}${act('unlearn', n, 'Remove', 'sb x', `aria-label="Remove ${esc(n)} from known spells"`)}</div></div>`; }).join('')).join('');
   const readyList = grouped(ready).map(({lv, rows}) => `<h4>${lvName(lv)}</h4>` + rows.map(({n, e}) => {
     const o = e?.o || {};
@@ -5123,7 +5135,8 @@ const ACT = {
   mcDel(i){ const c = active(), m = multi(c)[+i]; if (!m) return;
     confirmBox(`Remove ${m.class} ${m.level}? The total level drops by ${m.level}.`, 'Remove', () => mut(c => { c.multi.splice(+i, 1); c.level = Math.max(1, c.level - m.level); })); },
   pactSlot(k){ mut(c => { const s = c.spells.pact = c.spells.pact || {used:0}; s.used = +k < s.used ? +k : +k + 1; }, false); },
-  prep(n){ mut(c => { const i = c.spells.prep.indexOf(n); i >= 0 ? c.spells.prep.splice(i, 1) : c.spells.prep.push(n); }, false); },
+  prep(n){ const c0 = active(); if (!(c0.spells.prep || []).includes(n)){ const why = prepBlock(c0, n); if (why){ toast(why); return; } }
+    mut(c => { const i = c.spells.prep.indexOf(n); i >= 0 ? c.spells.prep.splice(i, 1) : c.spells.prep.push(n); }, false); },
   unlearn(n){ mut(c => { c.spells.known = c.spells.known.filter(x => x !== n); c.spells.prep = c.spells.prep.filter(x => x !== n); }, false); },
   spellF(arg){ const [k, v] = arg.split(':'); if (k === 'clear'){ G.spellLv = ''; G.spellSc = ''; G.spellSrc = ''; G.spellQ = ''; const i = $('#spell_q'); if (i) i.value = ''; } else G[k] = v; G.spellMax = SPELL_PAGE; spellSearch($('#spell_q')?.value || ''); },
   spellBrowse(){ G.spellBrowse = true; spellSearch($('#spell_q')?.value || ''); },

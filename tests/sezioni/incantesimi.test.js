@@ -15,11 +15,33 @@ module.exports = {sezione:'incantesimi', test:[
   }],
   ['preparare e togliere un incantesimo', async ({open}) => {
     const app = await open({activeId:'teldrin'}); await app.go('spells');
+    await app.clickJS('prep', 'Shatter');
+    assert.ok(!(await app.hero()).spells.prep.includes('Shatter'));
+    assert.ok(/Prepared spells\s*6 \/ 7/.test(await app.text('#page')));
     await app.clickJS('prep', 'Sleep');
     assert.ok((await app.hero()).spells.prep.includes('Sleep'));
-    assert.ok(/Prepared spells\s*8 \/ \d+/.test(await app.text('#page')));
+    assert.ok(/Prepared spells\s*7 \/ 7/.test(await app.text('#page')));
+  }],
+  ['limite preparati: a 7/7 il Mago di livello 4 non ne prepara un ottavo', async ({open}) => {
+    const app = await open({activeId:'teldrin'}); await app.go('spells');
     await app.clickJS('prep', 'Sleep');
     assert.ok(!(await app.hero()).spells.prep.includes('Sleep'));
+    assert.ok(/Prepared list full \(7\)/.test(await app.toast()));
+  }],
+  ['muro livelli: un incantesimo di 4° livello non si prepara a livello 4 (slot max 2°)', async ({open}) => {
+    const h = fx.hero(fx.ELDRIN, {id:'twall', level:3, spells:{known:['Fire Bolt', 'Sleep', 'Fireball', 'Polymorph'], prep:[], slots:{}}});
+    const app = await open({heroes:[h], activeId:'twall'}); await app.go('spells');
+    await app.clickJS('prep', 'Fireball');
+    assert.ok(!(await app.hero()).spells.prep.includes('Fireball'));
+    assert.ok(/level 3, but your highest spell slot is level 2/.test(await app.toast()));
+    await app.clickJS('prep', 'Sleep');
+    assert.ok((await app.hero()).spells.prep.includes('Sleep'));
+  }],
+  ['i trucchetti non contano nel limite e salendo di livello il muro si alza', async ({open}) => {
+    const h = fx.hero(fx.ELDRIN, {id:'tlv5', level:5, spells:{known:['Fire Bolt', 'Fireball'], prep:[], slots:{}}});
+    const app = await open({heroes:[h], activeId:'tlv5'}); await app.go('spells');
+    await app.clickJS('prep', 'Fireball');
+    assert.ok((await app.hero()).spells.prep.includes('Fireball'));
   }],
   ['Mago: i preparati sono solo a destra, i conosciuti a sinistra', async ({open}) => {
     const app = await open({activeId:'teldrin'}); await app.go('spells');
@@ -27,7 +49,7 @@ module.exports = {sezione:'incantesimi', test:[
     assert.ok(t.k.some(x => x.includes('Sleep')), 'Sleep è conosciuto, a sinistra');
     assert.ok(!t.r.some(x => x.includes('Sleep')), 'Sleep non è preparato: non sta a destra');
     assert.ok(t.r.some(x => x.includes('Shield')) && t.r.some(x => x.includes('Fire Bolt')), 'preparati e trucchetti a destra');
-    await app.clickJS('prep', 'Sleep');
+    await app.clickJS('prep', 'Shatter'); await app.clickJS('prep', 'Sleep');
     assert.ok((await app.page.locator('#page .grid2 > .card details.fold > summary', {hasText:'Sleep'}).count()) === 1);
   }],
   ['Stregone: conosciuti = preparati, nessun bottone Prepara', async ({open}) => {
@@ -95,7 +117,7 @@ module.exports = {sezione:'incantesimi', test:[
   }],
   ['gli incantesimi preparati restano dopo la ricarica', async ({open}) => {
     const app = await open({activeId:'teldrin'}); await app.go('spells');
-    await app.clickJS('prep', 'Sleep');
+    await app.clickJS('prep', 'Shatter'); await app.clickJS('prep', 'Sleep');
     await app.reload(); await app.go('spells');
     assert.ok((await app.hero()).spells.prep.includes('Sleep'));
   }],
@@ -106,7 +128,7 @@ module.exports = {sezione:'incantesimi', test:[
   }],
   ['ripristinare gli slot non tocca gli incantesimi preparati', async ({open}) => {
     const app = await open({activeId:'teldrin'}); await app.go('spells');
-    await app.clickJS('prep', 'Sleep'); await app.click('slot', '1:0');
+    await app.clickJS('prep', 'Shatter'); await app.clickJS('prep', 'Sleep'); await app.click('slot', '1:0');
     await app.click('resetSlots');
     const h = await app.hero();
     assert.ok(h.spells.prep.includes('Sleep')); assert.deepStrictEqual(h.spells.slots, {});
