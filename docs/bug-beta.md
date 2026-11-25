@@ -5,23 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-055 [bassa] [UX] Combattimento: la sezione "Add an attack" si richiude dopo ogni attacco aggiunto
-- Trovato da: power user · 2026-11-24
-- Dove: Combattimento → Actions on your turn → "Add an attack", 390x844 e 1440x900 (main 7740290)
-- Passi: 1. Apri "Add an attack". 2. Compila nome, bonus, danno e premi "Add". 3. Vuoi aggiungere il secondo attacco.
-- Atteso: il modulo resta aperto (prima dell'8dace03 / 9b9bcdf era sempre visibile) o almeno si può aggiungere di seguito.
-- Ottenuto: la fold si richiude a ogni aggiunta: per 30 attacchi di fila servono 30 tocchi in più su "Add an attack". Collegato: i test `aggiungere un attacco con arma calcola bonus e danni`, `attacco personalizzato: aggiungi e rimuovi` (combattimento) e `B-030 390 px: un link nel danno…` (telefono) falliscono perché riempiono i campi senza aprire la fold (timeout su `#atk_w`/`#atk_n`): sono test da aggiornare, B-030 in sé regge (scrollWidth 390 con il link lungo nel danno, verificato a mano aprendo la fold).
-- Console: nessun errore.
-- Test di regressione: `B-055` in tests/sezioni/combattimento.test.js (oggi rosso).
-
-### B-056 [bassa] [UX] Combattimento: i pallini delle risorse di classe compaiono due volte nella stessa pagina
-- Trovato da: power user · 2026-11-24
-- Dove: Combattimento, Stregone 18 con sottoclasse homebrew (Wind Soul, usi 1) e Punti stregoneria, 1440x900
-- Passi: 1. Eroe Stregone livello 18 con tratto homebrew a usi (`g.n:1`, `rest`). 2. Vai su Combattimento.
-- Atteso: un solo gruppo di pallini per risorsa.
-- Ottenuto: 18 pallini di Punti stregoneria nella card "Sorcerer resources" e altri 18 nella riga dell'azione; 2 pallini di Wind Soul. Restano sincronizzati (toccandone uno si segna anche l'altro), quindi non si perde nulla, ma la pagina è lunga. Il test `usi: pallini per Wind Soul al livello 18` (beneficiClasse) è rosso perché si aspetta un solo pallino (`count() === 1`): o il test o la scheda vanno decisi.
-- Console: nessun errore.
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -40,6 +23,12 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-055 [bassa] [UX] Combattimento: "Add an attack" si richiudeva dopo ogni attacco aggiunto
+- Risolto 2026-11-25 · sviluppo (frontend) · commit su main. La fold ricorda lo stato aperto (`S.atkOpen`, aggiornato dall'evento `toggle`) e dopo "Add" resta aperta; parte chiusa. I 3 test che riempivano i campi senza aprirla (`combattimento` ×2, `telefono` B-030) ora aprono la fold (legittimo: la fold chiusa di partenza è voluta). Test: `B-055`.
+
+### B-056 [bassa] [UX] Combattimento: pallini delle risorse di classe due volte nella stessa pagina
+- Risolto 2026-11-25 · sviluppo (frontend) · commit su main. I pallini restano nella riga dell'azione; la card "… resources" non ripete le risorse già mostrate lì (helper `turnPool`/`turnPoolKeys`). Le risorse senza azione restano nella card. Test: `usi: pallini per Wind Soul…` (verde, non toccato).
 
 ### B-054 [bassa] robustezza · Eroe senza `id` nel salvataggio: si vede, ma le modifiche non si salvano
 - Risolto 2026-11-18 · sviluppo (backend) · PR verso main. `load()` assegna un `id` nuovo a ogni eroe che non ne ha e risalva subito; formato invariato per gli eroi con `id`. Test: `robustezza` "B-054 …" (verde, scritto dal distruttore il 17/11).

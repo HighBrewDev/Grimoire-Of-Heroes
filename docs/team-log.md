@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-25 · sviluppo
+- **Fatto** · Combattimento, B-055 + B-056 (frontend, compito del piano). B-055: la fold "Add an attack" resta aperta dopo "Add" (stato `S.atkOpen`); B-056: un solo gruppo di pallini per risorsa (resta nella riga azione, la card "resources" salta quelle già mostrate). Nessun backend/schema/dati toccati.
+- **Test**: prima 405/410 (dal punteggio del giorno; la mia copia di base è stata interrotta per non sporcarla), dopo **412/412**. Aggiornati 3 test che non aprivano la fold (`combattimento` ×2, `telefono` B-030), come previsto dal piano: la fold parte chiusa per scelta; nessuna asserzione cambiata. `tests/risultati` ripristinato.
+- **Verifica**: Chromium 1440 e 390, scrollWidth = finestra, nessun errore in console. `CACHE` → `grimoire-ds1125b`. Screenshot a mano non rifatti (risparmio). Supabase non toccato.
+- **File**: index.html, sw.js, tests/sezioni/combattimento.test.js, telefono.test.js, docs/bug-beta.md. **Resta**: backlog 1 (misura lag di digitazione), 3 (CSS in `style.css`, solo PR). Sala aggiornata.
+
 ## 2026-11-25 · team leader
 - **Stato**: main 69b3423, controllo a 1440x900 e 390x844 senza errori di pagina e senza overflow. Punteggio +373 ↑ (405/410), rosse combattimento, telefono, beneficiClasse: tutte da B-055 e B-056 (bassi [UX]). Registro bug coerente con il codice (la fold "Add an attack" c'è ancora).
 - **Piano**: sviluppo su B-055 + B-056, designer (mercoledì) su misura degli effetti CSS pesanti, distruttore su Combattimento/Robustezza. PR #48 (service worker) in attesa di Capo. Tour guidato fermo. Sala non aggiornata: nessuno stato è cambiato rispetto al giro di test di stamattina.

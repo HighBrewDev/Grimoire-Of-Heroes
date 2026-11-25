@@ -79,6 +79,7 @@ module.exports = {sezione:'combattimento', test:[
   }],
   ['aggiungere un attacco con arma calcola bonus e danni', async ({open}) => {
     const app = await open({heroes:[fx.hero(fx.VALERIA, {attacks:[]})]}); await app.go('combat');
+    await app.page.locator('summary', {hasText:'Add an attack'}).click();
     await app.set('#atk_w', 'Greataxe'); await app.click('addWeaponAttack');
     const a = (await app.hero()).attacks[0];
     assert.strictEqual(a.n, 'Greataxe'); assert.strictEqual(a.bonus, 5);
@@ -86,6 +87,7 @@ module.exports = {sezione:'combattimento', test:[
   }],
   ['attacco personalizzato: aggiungi e rimuovi', async ({open}) => {
     const app = await open(); await app.go('combat');
+    await app.page.locator('summary', {hasText:'Add an attack'}).click();
     await app.page.fill('#atk_n', 'Pugno di fuoco'); await app.page.fill('#atk_b', '4'); await app.page.fill('#atk_d', '2d6 Fire');
     await app.click('addAttack');
     let h = await app.hero();

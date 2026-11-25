@@ -2107,6 +2107,9 @@ function turnFeatures(c){
   return out;
 }
 const spellWhen = t => { t = String(t || '').trim(); return /^(1 )?bonus/i.test(t) ? 'bonus' : /^(1 )?reaction/i.test(t) ? 'reaction' : /^(1 )?action/i.test(t) ? 'action' : ''; };
+/* the pool resource a turn feature tracks (its pips live on the action row) */
+const turnPool = (f, pool) => { const key = 'hb_' + norm(f.n).replace(/[^a-z0-9]+/g, '_'); return pool.find(p => p.k === key || norm(p.n) === norm(f.n) || (norm(f.n) === 'font of magic' && p.k === 'sorcery_points')); };
+const turnPoolKeys = c => { const pool = resources(c).pool; return new Set(turnFeatures(c).map(({f}) => turnPool(f, pool)?.k).filter(Boolean)); };
 function turnActions(c){
   const G3 = {action:[], bonus:[], reaction:[]}, pool = resources(c).pool;
   gearAttacks(c).forEach(a => G3.action.push(`<div class="entry gearAtk"><div class="row"><b>${esc(a.n)}</b><span class="chip">Equipped</span><span class="chip light">${fmt(+a.bonus || 0)} to hit</span><span class="chip light">${esc(a.dmg || '')}</span><span class="spacer"></span>${act('gearAttack', a.i, 'Attack', 'btn small')}${act('equip', a.i, 'Unequip', 'sb x')}</div>${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}</div>`));
@@ -2119,7 +2122,7 @@ function turnActions(c){
     G3[w].push(`<div class="entry"><div class="row"><button type="button" class="xref" data-act="detail" data-arg="${esc(n)}"><b>${esc(n)}</b></button><span class="chip light">${lv ? 'Level ' + lv : 'Cantrip'}</span>${o.conc ? '<span class="chip light">C</span>' : ''}${o.r ? `<span class="muted small">${esc(o.r)}</span>` : ''}<span class="spacer"></span>${act('cast', n, 'Cast', 'btn small')}</div></div>`);
   });
   turnFeatures(c).forEach(({f, w, a}) => {
-    const key = 'hb_' + norm(f.n).replace(/[^a-z0-9]+/g, '_'), r = pool.find(p => p.k === key || norm(p.n) === norm(f.n) || (norm(f.n) === 'font of magic' && p.k === 'sorcery_points'));
+    const r = turnPool(f, pool);
     const also = a.length > 1 ? ` <span class="muted small">also ${a.slice(1).map(x => ACT_WORD[x].toLowerCase()).join(', ')}</span>` : '';
     G3[a[0]].push(`<div class="entry"><details class="fold turnFt"><summary><b>${esc(f.n)}</b> <span class="chip light">${esc(w)} · Lv ${f.l}</span>${also}</summary><div class="in">${md(f.x || '')}</div></details>${r ? `<div class="row"><span class="pips">${Array.from({length:r.max}, (_, k) => `<button type="button" class="pip ${k < (c.res[r.k] || 0) ? 'used' : ''}" data-act="usePip" data-arg="${r.k}:${k}" aria-label="${esc(r.n)} ${k + 1}"></button>`).join('')}</span><span class="muted small">${esc(r.n)}: tap a dot when you use it</span></div>` : ''}</div>`);
   });
@@ -2205,7 +2208,7 @@ abilities(c){
 
 combat(c){
   const sp = speciesInfo(c);
-  const res = resources(c);
+  const res = resources(c), own = turnPoolKeys(c); res.pool = res.pool.filter(r => !own.has(r.k));
   const weapons = (SRD.equipment || []).filter(e => e.dmg);
   return `<div class="combatTop">
     <div class="stack">
@@ -2226,7 +2229,7 @@ combat(c){
   <div class="stack">
   ${card('Actions on your turn <span class="muted">attacks roll to hit, then damage (doubled dice on a natural 20)</span>', `
     ${turnActions(c)}
-    <details class="fold"><summary>Add an attack</summary><div class="in">
+    <details class="fold" id="atkFold"${S.atkOpen ? ' open' : ''}><summary>Add an attack</summary><div class="in">
     <div class="row"><label class="sr" for="atk_w">Weapon</label><select id="atk_w">${weapons.map(w => `<option value="${esc(w.n)}">${esc(w.n)} · ${esc(w.sum || w.dmg)}</option>`).join('')}</select>${act('addWeaponAttack', undefined, '＋ Add weapon attack')}</div>
     <div class="row mt"><input type="text" id="atk_n" placeholder="Name (e.g. Fire Bolt)"><input type="number" id="atk_b" placeholder="+hit"><input type="text" id="atk_d" placeholder="Damage (1d10 Fire)">${act('addAttack', undefined, '＋ Add custom')}</div></div></details>`)}
   ${equippedCard(c)}
@@ -5144,8 +5147,8 @@ const ACT = {
   addTab(k){ G.addTab = k; renderPage(); },
   attack(i){ rollAttack(active().attacks[+i]); },
   gearAttack(i){ const a = gearAttacks(active()).find(x => x.i === +i); if (a) rollAttack(a); },
-  addAttack(){ const n = $('#atk_n').value.trim(); if (!n) { toast('Give the attack a name.'); return; } mut(c => c.attacks.push({n, bonus:num('atk_b'), dmg:$('#atk_d').value.trim() || '1d6', note:''}), false); },
-  addWeaponAttack(){ const w = (SRD.equipment || []).find(e => e.n === $('#atk_w').value); if (w) mut(c => c.attacks.push(weaponAttack(c, w)), false); },
+  addAttack(){ const n = $('#atk_n').value.trim(); if (!n) { toast('Give the attack a name.'); return; } S.atkOpen = true; mut(c => c.attacks.push({n, bonus:num('atk_b'), dmg:$('#atk_d').value.trim() || '1d6', note:''}), false); },
+  addWeaponAttack(){ const w = (SRD.equipment || []).find(e => e.n === $('#atk_w').value); if (w) { S.atkOpen = true; mut(c => c.attacks.push(weaponAttack(c, w)), false); } },
   editAttack(i){ const a = active().attacks[+i];
     modal(`<div class="head"><h2>Edit attack</h2><span class="spacer"></span>${closeBtn()}</div>
       <label class="f" for="ea_n">Name</label><input type="text" id="ea_n" value="${esc(a.n)}" style="width:100%" autofocus>
@@ -6114,6 +6117,7 @@ function wire(){
     else if (e.key === 'Enter' && res[omniSel]){ e.preventDefault(); const b = res[omniSel]; omni.blur(); setTimeout(() => b.click(), 0); }
     else if (e.key === 'Escape'){ omni.value = ''; renderOmni(); omni.blur(); }
   });
+  document.addEventListener('toggle', e => { if (e.target.id === 'atkFold') S.atkOpen = e.target.open; }, true);
   document.addEventListener('pointerdown', e => { if (!e.target.closest('.omni')) $('#omniList').hidden = true; });
   document.addEventListener('keydown', e => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
