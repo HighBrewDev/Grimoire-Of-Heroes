@@ -12,3 +12,7 @@ La Sala (https://claude.ai/artifact/S9vKKKbzFy2Jb9UNboQ8jv) mostra un pupino "al
 3. A fine lavoro, prima del messaggio finale: `update` con `state:"idle"`, `updated` = ora. Se la sessione si interrompe, la Sala considera comunque in pausa chi non aggiorna da 45 minuti.
 
 Se `ArtifactData` fallisce, ignora e prosegui: il segnale non deve mai bloccare il lavoro.
+
+**Strumento**: carica `ArtifactData` con ToolSearch (query `select:ArtifactData`); `url` = https://claude.ai/artifact/S9vKKKbzFy2Jb9UNboQ8jv, `collection` = `live`, `doc_id` = il tuo id.
+
+**Attenzione quando ritocchi la Sala**: la pagina pubblicata ora contiene anche il codice dei segnali, che `docs/sala/sala-team.html` del repo non ha. Parti SEMPRE dal file della pagina pubblicata (Artifact `read`, file salvato; togli lo scheletro `<!doctype…><body>` iniziale e `</body></html>` finale prima di ripubblicare) e cambia solo `DATA`. Non ripartire dal file del repo.
