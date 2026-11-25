@@ -32,6 +32,17 @@ module.exports = {sezione:'robustezza', test:[
     await app.go('library'); await app.page.fill('#lib_q', 'fireball');
     assert.ok((await app.text('#libList')).includes('Fireball'));
   }],
+  ['service worker: una versione nuova della pagina si vede alla prima riapertura, non alla seconda', async ({open}) => {
+    const app = await open({sw:true});
+    await app.page.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await app.page.reload(); await app.ready();
+    await app.page.waitForFunction(() => !!navigator.serviceWorker.controller, null, {timeout:10000});
+    // il server ora serve una pagina diversa (come dopo un rilascio)
+    await app.context.route('**/index.html', async r => { const res = await r.fetch(); const body = (await res.text()).replace('</body>', '<script>window.__nuova = 1</script></body>'); r.fulfill({response:res, body}); });
+    await app.context.route(u => u.pathname.endsWith('/'), async r => { const res = await r.fetch(); const body = (await res.text()).replace('</body>', '<script>window.__nuova = 1</script></body>'); r.fulfill({response:res, body}); });
+    await app.page.reload(); await app.ready();
+    assert.strictEqual(await app.page.evaluate(() => window.__nuova), 1);
+  }],
   ['nome con HTML non viene eseguito (niente XSS)', async ({open}) => {
     const app = await open();
     await app.set('#f_name', '<img src=x onerror="window.__xss=1">');
