@@ -43,6 +43,18 @@ module.exports = {sezione:'robustezza', test:[
     await app.page.reload(); await app.ready();
     assert.strictEqual(await app.page.evaluate(() => window.__nuova), 1);
   }],
+  ["avviso di versione nuova: Reload now ricarica solo quando lo premi, e si può chiudere", async ({open}) => {
+    const app = await open();
+    await app.page.evaluate(() => { window.__prima = 1; window.updateBar(); window.updateBar(); });
+    assert.strictEqual(await app.page.locator('#updBar').count(), 1, 'un solo avviso');
+    assert.strictEqual(await app.page.evaluate(() => window.__prima), 1, 'la pagina non si ricarica da sola');
+    await app.page.locator('#updX').click();
+    assert.strictEqual(await app.page.locator('#updBar').count(), 0);
+    await app.page.evaluate(() => window.updateBar());
+    await Promise.all([app.page.waitForNavigation(), app.page.locator('#updGo').click()]);
+    await app.ready();
+    assert.strictEqual(await app.page.evaluate(() => window.__prima), undefined, 'ricaricata');
+  }],
   ['nome con HTML non viene eseguito (niente XSS)', async ({open}) => {
     const app = await open();
     await app.set('#f_name', '<img src=x onerror="window.__xss=1">');
