@@ -1,6 +1,6 @@
 # Scoreboard di Grimoire of Heroes
 
-Aggiornato il **2026-11-18** sul commit `ce2d031` di main dall'agente "Test e punteggio". Fase intensiva fino al 23 novembre 2026: il lavoro del team si sceglie da questi punteggi.
+Aggiornato il **2026-11-25** sul commit `585a1a5` di main dall'agente "Test e punteggio". Dal 24 novembre 2026 il team lavora a ritmo ridotto: il lavoro si sceglie da questi punteggi.
 
 ## Regole (sono la legge per tutto il team)
 
@@ -14,73 +14,91 @@ Aggiornato il **2026-11-18** sul commit `ce2d031` di main dall'agente "Test e pu
 
 ## Oggi
 
-- Test superati: **356 / 357**
-- Punteggio totale: **+358**, tendenza ↑ (ieri 335)
-- Sezioni rosse: nessuna
+- Test superati: **405 / 410**
+- Punteggio totale: **+373**, tendenza ↑ (ieri 358)
+- Sezioni rosse: combattimento, telefono, beneficiClasse
 
 | Sezione | Punteggio oggi | Media 7 gg | Tendenza | Test superati | Bug aperti | Stato |
 |---|---:|---:|:---:|---:|---|---|
-| Eroe (creazione, nome, specie, background) | +21 | 20,3 | = | 21/21 | — | 🟢 VERDE |
-| Caratteristiche (punteggi, modificatori, TS, abilità) | +21 | 16,6 | = | 21/21 | — | 🟢 VERDE |
-| Combattimento (PF, CA, attacchi, riposi) | +35 | 35 | = | 35/35 | — | 🟢 VERDE |
-| Incontro (iniziativa, round) | +17 | 14,3 | = | 17/17 | — | 🟢 VERDE |
-| Tratti e talenti | +18 | 14,9 | = | 18/18 | — | 🟢 VERDE |
-| Incantesimi (slot, preparati, multiclasse) | +17 | 13,7 | = | 17/17 | — | 🟢 VERDE |
-| Zaino e monete | +21 | 14,4 | ↑ | 21/21 | — | 🟡 GIALLO |
-| Cronaca | +17 | 13,9 | = | 17/17 | — | 🟢 VERDE |
-| Biblioteca (ricerca regole) | +16 | 13,4 | = | 16/16 | — | 🟢 VERDE |
-| Workshop homebrew | +32 | 28 | = | 32/32 | B-011 (bassa) | 🟢 VERDE |
-| Level up e multiclasse | +26 | 21,4 | = | 26/26 | — | 🟢 VERDE |
-| Import/export e salvataggio | +23 | 18,1 | ↑ | 21/21 | B-054 (bassa) | 🟢 VERDE |
-| Telefono (390x844) | +23 | 19,4 | = | 23/23 | — | 🟢 VERDE |
-| Robustezza (console, offline, input strani) | +28 | 16,9 | ↑ | 28/29 | — | 🟡 GIALLO |
-| npc | +17 | 15 | ↑ | 17/17 | — | 🟡 GIALLO |
+| Eroe (creazione, nome, specie, background) | +21 | 21 | = | 21/21 | — | 🟢 VERDE |
+| Caratteristiche (punteggi, modificatori, TS, abilità) | +21 | 21 | = | 21/21 | — | 🟢 VERDE |
+| Combattimento (PF, CA, attacchi, riposi) | +19 | 19 | ↓ | 38/41 | — | 🔴 ROSSO |
+| Incontro (iniziativa, round) | +17 | 17 | = | 17/17 | — | 🟢 VERDE |
+| Tratti e talenti | +19 | 19 | ↑ | 19/19 | — | 🟢 VERDE |
+| Incantesimi (slot, preparati, multiclasse) | +20 | 20 | ↑ | 20/20 | — | 🟢 VERDE |
+| Zaino e monete | +21 | 21 | = | 21/21 | — | 🟡 GIALLO |
+| Cronaca | +17 | 17 | = | 17/17 | — | 🟢 VERDE |
+| Biblioteca (ricerca regole) | +16 | 16 | = | 16/16 | — | 🟢 VERDE |
+| Workshop homebrew | +33 | 33 | ↑ | 34/34 | B-056 (UX), B-011 (bassa) | 🟢 VERDE |
+| Level up e multiclasse | +26 | 26 | = | 26/26 | — | 🟢 VERDE |
+| Import/export e salvataggio | +21 | 21 | ↓ | 21/21 | — | 🟢 VERDE |
+| Telefono (390x844) | +13 | 13 | ↓ | 22/23 | B-055 (UX) | 🔴 ROSSO |
+| Robustezza (console, offline, input strani) | +29 | 29 | ↑ | 29/29 | — | 🟡 GIALLO |
+| armi-incantesimi | +6 | 6 | — | 6/6 | — | 🟡 GIALLO |
+| beneficiClasse | -1 | -1 | — | 2/3 | — | 🔴 ROSSO |
+| equipaggiamento | +18 | 18 | — | 18/18 | — | 🟡 GIALLO |
+| import5etoolsClassi | +4 | 4 | — | 4/4 | — | 🟡 GIALLO |
+| import5etools | +10 | 10 | — | 10/10 | — | 🟡 GIALLO |
+| npc | +17 | 17 | = | 17/17 | — | 🟢 VERDE |
 | sincronia | +12 | 12 | = | 12/12 | — | 🟢 VERDE |
-| ticket | +14 | 12,5 | ↑ | 14/14 | — | 🟡 GIALLO |
+| ticket | +14 | 14 | = | 14/14 | — | 🟢 VERDE |
 
 ## Dettaglio delle sezioni
 
+- **beneficiClasse** -1 (2 × +1, 1 × −3)
+  - ✗ usi: pallini per Wind Soul al livello 18, tornano con il riposo breve: Expected values to be strictly equal:
+- **import5etoolsClassi** +4 (4 × +1, 0 × −3): tutto verde oggi.
+- **armi-incantesimi** +6 (6 × +1, 0 × −3): tutto verde oggi.
+- **import5etools** +10 (10 × +1, 0 × −3): tutto verde oggi.
 - **sincronia** +12 (12 × +1, 0 × −3): tutto verde oggi.
+- **telefono** +13 (22 × +1, 1 × −3, 1 × −5, bug nuovi -1)
+  - ✗ B-030 390 px: un link nel danno di un attacco non allarga Combattimento **(regressione, −5)**: page.fill: Timeout 8000ms exceeded. Call log: - waiting for locator('#atk_n') - locator resolved to <input id="atk_n" type="text" placeholder="Name (e.g. Fire Bolt)"/> - fill("Spada") - attempting fill action
+  - Bug nuovo B-055 [bassa, UX] -1: Combattimento: la sezione "Add an attack" si richiude dopo ogni attacco aggiunto
 - **ticket** +14 (14 × +1, 0 × −3): tutto verde oggi.
 - **biblioteca** +16 (16 × +1, 0 × −3): tutto verde oggi.
 - **incontro** +17 (17 × +1, 0 × −3): tutto verde oggi.
-- **incantesimi** +17 (17 × +1, 0 × −3): tutto verde oggi.
 - **cronaca** +17 (17 × +1, 0 × −3): tutto verde oggi.
 - **npc** +17 (17 × +1, 0 × −3): tutto verde oggi.
-- **tratti** +18 (18 × +1, 0 × −3): tutto verde oggi.
+- **equipaggiamento** +18 (18 × +1, 0 × −3): tutto verde oggi.
+- **combattimento** +19 (38 × +1, 3 × −3, 2 × −5)
+  - ✗ aggiungere un attacco con arma calcola bonus e danni **(regressione, −5)**: locator.selectOption: Timeout 8000ms exceeded. Call log: - waiting for locator('#atk_w').first() - locator resolved to <select id="atk_w">…</select> - attempting select option action 2 × waiting for element to be visible
+  - ✗ attacco personalizzato: aggiungi e rimuovi **(regressione, −5)**: page.fill: Timeout 8000ms exceeded. Call log: - waiting for locator('#atk_n') - locator resolved to <input id="atk_n" type="text" placeholder="Name (e.g. Fire Bolt)"/> - fill("Pugno di fuoco") - attempting fill action
+  - ✗ B-055 [UX] "Add an attack" resta aperto dopo aver aggiunto un attacco: il modulo si è richiuso: per il secondo attacco serve riaprirlo
+- **tratti** +19 (19 × +1, 0 × −3): tutto verde oggi.
+- **incantesimi** +20 (20 × +1, 0 × −3): tutto verde oggi.
 - **eroe** +21 (21 × +1, 0 × −3): tutto verde oggi.
 - **caratteristiche** +21 (21 × +1, 0 × −3): tutto verde oggi.
 - **zaino** +21 (21 × +1, 0 × −3): tutto verde oggi.
-- **importexport** +23 (21 × +1, 0 × −3, bug nuovi -1, bug chiusi +3)
-  - Bug nuovo B-054 [bassa] -1: robustezza · Eroe senza `id` nel salvataggio: si vede, ma le modifiche non si salvano
-  - Bug chiuso B-053 con test che passa +3: Salvataggio locale danneggiato cancellato senza avviso né copia
-- **telefono** +23 (23 × +1, 0 × −3): tutto verde oggi.
+- **importexport** +21 (21 × +1, 0 × −3): tutto verde oggi.
 - **levelup** +26 (26 × +1, 0 × −3): tutto verde oggi.
-- **robustezza** +28 (28 × +1, 1 × −3, bug chiusi +3)
-  - ✗ B-054 eroe senza id nel salvataggio (modificato a mano o vecchio): si vede ma le modifiche non vengono salvate: la modifica del nome non è nel salvataggio dopo la ricarica
-  - Bug chiuso B-052 con test che passa +3: Denari: "Spend" rifiuta pagamenti validi
-- **workshop** +32 (32 × +1, 0 × −3): tutto verde oggi.
-- **combattimento** +35 (35 × +1, 0 × −3): tutto verde oggi.
+- **robustezza** +29 (29 × +1, 0 × −3): tutto verde oggi.
+- **workshop** +33 (34 × +1, 0 × −3, bug nuovi -1)
+  - Bug nuovo B-056 [bassa, UX] -1: Combattimento: i pallini delle risorse di classe compaiono due volte nella stessa pagina
 
 ## Classifica (dalla peggiore alla migliore)
 
-1. sincronia +12 · 12/12 · VERDE
-2. ticket +14 · 14/14 · GIALLO
-3. biblioteca +16 · 16/16 · VERDE
-4. incontro +17 · 17/17 · VERDE
-5. incantesimi +17 · 17/17 · VERDE
-6. cronaca +17 · 17/17 · VERDE
-7. npc +17 · 17/17 · GIALLO
-8. tratti +18 · 18/18 · VERDE
-9. eroe +21 · 21/21 · VERDE
-10. caratteristiche +21 · 21/21 · VERDE
-11. zaino +21 · 21/21 · GIALLO
-12. importexport +23 · 21/21 · VERDE
-13. telefono +23 · 23/23 · VERDE
-14. levelup +26 · 26/26 · VERDE
-15. robustezza +28 · 28/29 · GIALLO
-16. workshop +32 · 32/32 · VERDE
-17. combattimento +35 · 35/35 · VERDE
+1. beneficiClasse -1 · 2/3 · ROSSO
+2. import5etoolsClassi +4 · 4/4 · GIALLO
+3. armi-incantesimi +6 · 6/6 · GIALLO
+4. import5etools +10 · 10/10 · GIALLO
+5. sincronia +12 · 12/12 · VERDE
+6. telefono +13 · 22/23 · ROSSO
+7. ticket +14 · 14/14 · VERDE
+8. biblioteca +16 · 16/16 · VERDE
+9. incontro +17 · 17/17 · VERDE
+10. cronaca +17 · 17/17 · VERDE
+11. npc +17 · 17/17 · VERDE
+12. equipaggiamento +18 · 18/18 · GIALLO
+13. combattimento +19 · 38/41 · ROSSO
+14. tratti +19 · 19/19 · VERDE
+15. incantesimi +20 · 20/20 · VERDE
+16. eroe +21 · 21/21 · VERDE
+17. caratteristiche +21 · 21/21 · VERDE
+18. zaino +21 · 21/21 · GIALLO
+19. importexport +21 · 21/21 · VERDE
+20. levelup +26 · 26/26 · VERDE
+21. robustezza +29 · 29/29 · GIALLO
+22. workshop +33 · 34/34 · VERDE
 
 ## Storico
 
@@ -95,4 +113,5 @@ Aggiornato il **2026-11-18** sul commit `ce2d031` di main dall'agente "Test e pu
 2026-11-16  totale  +309  test 315/315  922693f
 2026-11-17  totale  +335  test 345/347  6258d74
 2026-11-18  totale  +358  test 356/357  ce2d031
+2026-11-25  totale  +373  test 405/410  585a1a5
 ```

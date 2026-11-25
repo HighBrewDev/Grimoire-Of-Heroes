@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-25 · test
+- **Suite su main 585a1a5**: 405/410, punteggio +373 ↑ (ieri +358). Sezioni rosse: combattimento, telefono, beneficiClasse.
+- **Rossi**: 2 test di combattimento e B-030 (telefono) falliscono perché il modulo "Add an attack" è chiuso (B-055, resta rosso apposta); "Wind Soul al livello 18" fallisce per i pallini doppi (B-056, correlato). Sono problemi dell'app, test non toccati.
+- **File**: tests/risultati/2026-11-25.json, storico.json, docs/scoreboard.md. Nessun test nuovo (ritmo ridotto).
+
 ## 2026-11-18 · design
 - **Fatto** · contrasto e tocchi di NPC e ticket a 390 px (compito del piano, solo CSS). Misurati con Chromium touch: erano sotto i 44 px i campi dei moduli NPC e ticket (33-37 px), le caselle "visibile ai giocatori" (32), i filtri dei gruppi (36), "Open" nell'elenco (32), il campo file della segnalazione (24) e, nell'intestazione, ricerca e "Sign in" (36-37). Nel dossier l'etichetta "🔒 hidden from players" copriva i titoli delle sezioni ("PROFILE & ROLE"): sotto 560 px diventa "🔒 hidden". Nastro delle sezioni nascoste #7b6a52 → #6a5a43 (contrasto del testo da 4,0 a 5,1). Le sei caselle delle statistiche vanno su 3 colonne a telefono. `CACHE` → `grimoire-ds1120c`.
 - **File**: index.html (CSS NPC, dopo `.npMini`), sw.js, docs/design/note-design.md, screenshot `docs/design/2026-11-18-npc-*|ticket-*-prima|dopo-*.png`.
