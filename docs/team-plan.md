@@ -1,4 +1,4 @@
-# Piano del team · mercoledì 25 novembre 2026
+# Piano del team · giovedì 26 novembre 2026
 
 ## Regole di squadra
 Segnale alla Sala: all'avvio e a fine lavoro scrivi `live/<tuo id>` come in docs/sala-segnali.md (vedi anche CLAUDE.md).
@@ -8,39 +8,37 @@ Chi chiude o cambia qualcosa aggiorna da sé le proprie voci, senza aspettare il
 Niente nuove feature finché Capo non le riapre. Compiti piccoli, suite verde a ogni passo, nessun cambio di stack, un passo = una PR piccola se tocca dati utente o spezza `index.html`. Ritmo ridotto dal 24/11: sviluppo in UNA sessione al giorno.
 
 ## Stato dell'app
-- Main `69b3423` (live = main). Controllo Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto da ieri.
-- Punteggio **+373, tendenza ↑** (ieri +358). Test **405/410**. Rosse: combattimento, telefono, beneficiClasse.
-- I 5 rossi hanno una sola causa: B-055 (la fold "Add an attack" si richiude; 3 test non la aprono) e B-056 (pallini doppi; 1 test). Sono bug [UX] bassi, ma tengono 3 sezioni in rosso.
-- `index.html` è ancora un file unico da 6645 righe. PR #48 (service worker + avviso "Reload now") aperta, aspetta Capo.
+- Main `e1238a7` (live = main). Controllo Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto dall'esterno.
+- Punteggio **+410, tendenza ↑** (ieri +373). Test **415/416**. B-055 e B-056 chiusi: combattimento, telefono, beneficiClasse non sono più rossi.
+- **Una sezione rossa: armi-incantesimi**, regressione di ieri. Il test "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling" fallisce in modo deterministico: l'anteprima dice "No effect text" anche se il campo testo è stato riempito. Verificato a bisezione: passa su `3bd9ee7^` e `201ad77`, fallisce da `3bd9ee7` (Designer, tolto `will-change` da `.page::before/::after`) e su main. Sospetto: gara tra il ridisegno del modulo e `fill` (campi che perdono il valore digitando in fretta) = possibile bug reale di digitazione, non solo test. Test non toccato.
+- `index.html` è ancora un file unico da 6677 righe. PR #51 (sync NPC) aperta, aspetta Capo.
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
 |---|---|---|---|---|
-| Combattimento | 🔴 ROSSO | ALTO | frontend | B-055, 2 test rossi |
-| Telefono | 🔴 ROSSO | ALTO | frontend | B-030 rosso per B-055 |
-| beneficiClasse | 🔴 ROSSO | ALTO | frontend | B-056, test pallini |
-| Zaino, Robustezza, equipaggiamento, armi-incantesimi, import5etools(+Classi) | 🟡 GIALLO | MEDIO | tester/backend | pochi giorni di verde |
-| Le altre 12 sezioni | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
+| armi-incantesimi | 🔴 ROSSO | ALTO | frontend | regressione B-057 (sotto) |
+| Combattimento, Telefono, Robustezza, equipaggiamento, beneficiClasse, import5etools(+Classi) | 🟡 GIALLO | MEDIO | tester/backend | pochi giorni di verde |
+| Le altre 15 sezioni | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
 
 ## Oggi
-Zone di index.html: **Sviluppo** possiede il blocco Combattimento (azioni del turno, risorse di classe) e `sw.js` solo per `CACHE`. **Designer** solo CSS (effetti pesanti) e `docs/design/`. Nessuno esce dalla propria zona.
+Zone di index.html: **Sviluppo** possiede il modulo Workshop/homebrew (`bw_*`, anteprima `#bwPreview`, riga ~3329) e `sw.js` solo per `CACHE`. Nessuno esce dalla propria zona. **Designer: non è un suo giorno** (lun/mer/ven).
 
-- **Sviluppo 10:23 · B-055 + B-056 (frontend)**. (1) B-055: dopo "Add" il modulo "Add an attack" (`index.html:2228`, `<details class="fold">`) resta aperto, con i campi svuotati e il focus sul nome. Se la fold si richiude per un re-render, ripristinare lo stato aperto. I 3 test (`combattimento` ×2, `telefono` B-030) devono aprire la fold: aggiornarli è legittimo solo se l'app mostra la fold chiusa di partenza (è la scelta voluta), non per far passare un bug. (2) B-056: un solo gruppo di pallini per risorsa nella pagina (tenere quello nella card "Sorcerer resources" o nella riga azione, non entrambi), sincronizzati, nessun uso perso. *Fatto* = test `B-055` e `usi: pallini per Wind Soul…` verdi, `combattimento`/`telefono`/`beneficiClasse` senza regressioni, suite completa ≥ 410/410, bug in "Risolti" con commit, `CACHE` alzata, screenshot 390 e 1440. Sala aggiornata. Se avanza tempo: misurare il lag di digitazione (backlog 1), solo misura, senza fix.
-- **Designer 14:13 · effetti CSS pesanti (solo misura e proposta)**: elencare `backdrop-filter`, `filter: blur`, ombre grandi, animazioni infinite in `index.html`; misurare il costo di digitazione/scroll con Chromium (Performance trace o `requestAnimationFrame`) a 390 e 1440. *Fatto* = `docs/design/effetti-css-2026-11-25.md` con tabella (selettore, riga, costo, rimovibile sì/no) e al massimo 2 rimozioni senza cambio visibile, screenshot prima/dopo, `telefono` e `eroe` senza rotture.
-- **Distruttore 21:07 · Combattimento e Robustezza**: dopo il fix di B-055/B-056, aggiungere 30 attacchi di fila, PF con override, risorse a usi, import file strani. *Fatto* = diario, bug nuovi con passi e test.
-- **Test e punteggio (domani 8:47)**: confermare B-055/B-056 chiusi e le 3 sezioni uscite dal rosso.
+- **Sviluppo 10:23 · B-057 (frontend, priorità 1)**: capire perché, dopo il commit `3bd9ee7`, l'anteprima dell'incantesimo homebrew segnala "No effect text" e "no class list" nel test `armi-incantesimi` "picker di tiro salvezza…". Riprodurre a mano in Chromium (scrivere in fretta nel campo testo `#bw_x` dopo aver cambiato i picker `#bw_fx_*`) e guardare se il modulo si ridisegna e perde il valore (`bwPreview`, handler `input`/`change` del modulo). Se è un bug dell'app, correggere l'app (non ripristinare `will-change`, che era una buona ottimizzazione); se è solo timing del test, rendere il test robusto (attendere il testo, non una costante) e dirlo nel diario. *Fatto* = `armi-incantesimi` 6/6, suite completa 416/416, B-057 in "Risolti" con commit, `CACHE` alzata, Sala aggiornata. Se avanza tempo: misura del lag di digitazione (backlog 1), solo misura.
+- **Power user 21:37 · Workshop e Spellbook**: creare 3 incantesimi homebrew compilando i picker, aggiungerli a un eroe, controllare i preparati con il nuovo limite. *Fatto* = diario, bug nuovi con passi e test.
+- **Test e punteggio (domani 8:47)**: confermare B-057 chiuso e armi-incantesimi verde.
 
 ## Backlog (ordinato)
-1. Misurare il lag di digitazione (campi lunghi, note, cronaca): trace prima di toccare qualcosa. (frontend)
-2. Effetti CSS pesanti (oggi, designer).
+1. B-057 (oggi, sviluppo).
+2. Misurare il lag di digitazione (campi lunghi, note, cronaca): trace prima di toccare qualcosa. (frontend)
 3. Spezzare `index.html`, passo 1: estrarre il CSS in `style.css`, aggiornare precache in `sw.js`, suite identica. Solo PR. (frontend)
 4. Spezzare `index.html`, passo 2: estrarre il JS in moduli per area (dati SRD, combattimento, spellbook, homebrew). Solo PR, un'area per volta.
-5. B-011: l'import homebrew deve rispettare `FREE_BREW`? (oggi paywall spento; decisione di Capo se serve)
-6. Codice morto, nomi doppi, avvisi in console (backend/frontend).
-7. Test di regressione per i test `tests/` che dipendono da fold chiuse (robustezza dei selettori).
-8. Prova di login e sync reali con Supabase (serve rete e il via di Capo).
-9. Rifinitura dei flussi npc e ticket dopo le prove del power user.
-10. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile). Fermo finché non finisce il refactoring o Capo lo chiede.
+5. Designer (venerdì): bordo irregolare con maschera precalcolata al posto di `feTurbulence`, link legali del footer e dadi del vassoio a 390. Solo PR.
+6. B-011: l'import homebrew deve rispettare `FREE_BREW`? (oggi paywall spento; decisione di Capo se serve)
+7. Codice morto, nomi doppi, avvisi in console (backend/frontend).
+8. Selettori dei test più robusti dove dipendono da fold chiuse o da attese a tempo fisso.
+9. Prova di login e sync reali con Supabase (serve rete e il via di Capo).
+10. Rifinitura dei flussi npc e ticket dopo le prove del power user.
+11. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile). Fermo finché non finisce il refactoring o Capo lo chiede.
 
 ## Regole per tutti
 - Solo SRD 5.2.1 nella versione pubblica; mai "Dungeons & Dragons", "D&D" o marchi Wizards of the Coast (salvo attribuzione CC-BY).
@@ -49,7 +47,7 @@ Zone di index.html: **Sviluppo** possiede il blocco Combattimento (azioni del tu
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- **PR #48** (https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/48): service worker più robusto, avviso "Reload now", etichetta versione. Tocca `sw.js`: va unita da te (o dimmi "mergia tu"); dopo il merge chiudi e riapri il sito una volta.
+- **PR #51** (https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/51): sync, una riga NPC rifiutata non blocca più tutta la sincronizzazione. Tocca sync/dati utente: va rivista e unita da te (o dimmi "mergia tu"); dopo il merge chiudi e riapri il sito una volta.
 - **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok per chiuderlo.
 - Migrazioni Supabase in `supabase/migrations/`: se non le hai ancora eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
 - Decisione facoltativa: B-011 (limite di 3 elementi gratuiti nell'import) e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.

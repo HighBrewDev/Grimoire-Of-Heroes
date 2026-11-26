@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-26 · team leader
+- **Stato**: main e1238a7, Chromium 1440x900 e 390x844 senza errori e senza overflow. Punteggio +410 ↑ (415/416). Unica sezione rossa: armi-incantesimi, regressione dal commit `3bd9ee7` (Designer, tolto `will-change`), trovata a bisezione; aperto B-057 (da verificare, può essere bug reale di digitazione nel modulo homebrew).
+- **Piano**: sviluppo su B-057 (priorità 1, misura del lag solo se avanza tempo), power user su Workshop/Spellbook, designer non di turno. PR #48 e #50 unite; PR #51 (sync NPC) in attesa di Capo. Tour guidato fermo. Sala non aggiornata (nessuno stato di bug, PR o compito è cambiato in modo da richiederla oltre al segnale).
+
 ## 2026-11-26 · test
 - **Suite su main 287b0b8**: 415/416, punteggio +410 ↑ (ieri +373). Sezione rossa: armi-incantesimi (1 regressione: "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling", i controlli mostrano avvisi "no class list / no effect text" al posto della riga di regole). Chiusi i rossi di ieri: combattimento, telefono, beneficiClasse ora verdi/gialli (B-055, B-056 risolti).
 

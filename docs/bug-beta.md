@@ -5,6 +5,14 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
+### B-057 [bassa · da verificare] Incantesimo homebrew: l'anteprima dice "No effect text" dopo aver riempito il testo (regressione da `3bd9ee7`)
+- Trovato da: team leader (via test) · 2026-11-26
+- Dove: Workshop → nuovo incantesimo, 1440x900
+- Passi: test `armi-incantesimi` "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling…" (compila nome, picker `#bw_fx_*`, testo `#bw_x`).
+- Atteso: anteprima con la riga di regole (Sphere, 8d6 Fire, scaling).
+- Ottenuto: l'anteprima mostra solo "⚠ On no class list" e "⚠ No effect text". Passa su `3bd9ee7^` e `201ad77`, fallisce da `3bd9ee7` (tolto `will-change`) in poi. Possibile gara tra ridisegno del modulo e digitazione veloce; da stabilire se bug dell'app o solo del test.
+- Test: `armi-incantesimi` (rosso).
+
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
