@@ -60,7 +60,7 @@ module.exports = {sezione:'armi-incantesimi', test:[
     await app.page.selectOption('#bw_fx_shape', 'Sphere'); await app.page.fill('#bw_fx_size', '20');
     await app.page.fill('#bw_fx_up', '1'); await app.page.selectOption('#bw_fx_up_d', '6');
     await app.page.fill('#bw_x', 'Un globo di brace.');
-    await app.page.waitForFunction(() => /Sphere/.test(document.querySelector('#bwPreview').innerText));
+    await app.page.waitForFunction(() => { const t = document.querySelector('#bwPreview').innerText; return /Sphere/.test(t) && !/No effect text/.test(t); });
     const prev = await app.text('#bwPreview');
     assert.ok(/Each creature in a 20-foot Sphere makes a Dexterity saving throw/.test(prev) && /8d6 Fire damage/.test(prev) && /half damage/.test(prev) && /increases by 1d6 for each spell slot level above 3/.test(prev), prev);
     assert.ok(/V, S, M \(a pinch of ash\)/.test(prev), prev);

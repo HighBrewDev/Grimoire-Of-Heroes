@@ -5,14 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-057 [bassa · da verificare] Incantesimo homebrew: l'anteprima dice "No effect text" dopo aver riempito il testo (regressione da `3bd9ee7`)
-- Trovato da: team leader (via test) · 2026-11-26
-- Dove: Workshop → nuovo incantesimo, 1440x900
-- Passi: test `armi-incantesimi` "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling…" (compila nome, picker `#bw_fx_*`, testo `#bw_x`).
-- Atteso: anteprima con la riga di regole (Sphere, 8d6 Fire, scaling).
-- Ottenuto: l'anteprima mostra solo "⚠ On no class list" e "⚠ No effect text". Passa su `3bd9ee7^` e `201ad77`, fallisce da `3bd9ee7` (tolto `will-change`) in poi. Possibile gara tra ridisegno del modulo e digitazione veloce; da stabilire se bug dell'app o solo del test.
-- Test: `armi-incantesimi` (rosso).
-
 ### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
 - Trovato da: distruttore · 2026-11-06
 - Dove: X Workshop → Import file
@@ -31,6 +23,9 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-057 [bassa] Incantesimo homebrew: il test dell'anteprima falliva a intermittenza ("No effect text")
+- Risolto 2026-11-26 · sviluppo · commit su main. Non era un bug dell'app: l'anteprima si aggiorna con un `requestAnimationFrame` dopo l'ultimo campo e il risultato finale è corretto (verificato: 1,5 s dopo, testo, picker e riga di regole sono tutti presenti). Il test aspettava solo `/Sphere/`, già vero dopo i picker e prima del campo testo, quindi leggeva un'anteprima intermedia. Ora aspetta anche l'assenza di "No effect text" (stesso controllo, attesa più precisa). Prima 1 verde su 5 ripetizioni, dopo 6 su 6. `will-change` non toccato.
 
 ### B-055 [bassa] [UX] Combattimento: "Add an attack" si richiudeva dopo ogni attacco aggiunto
 - Risolto 2026-11-25 · sviluppo (frontend) · commit su main. La fold ricorda lo stato aperto (`S.atkOpen`, aggiornato dall'evento `toggle`) e dopo "Add" resta aperta; parte chiusa. I 3 test che riempivano i campi senza aprirla (`combattimento` ×2, `telefono` B-030) ora aprono la fold (legittimo: la fold chiusa di partenza è voluta). Test: `B-055`.

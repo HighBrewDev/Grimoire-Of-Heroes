@@ -1,5 +1,11 @@
 # Diario del team
 
+## 2026-11-26 · sviluppo
+- **Fatto**: B-057 (priorità 1 del piano). Causa: il test `armi-incantesimi` "picker di tiro salvezza…" aspettava solo `/Sphere/` nell'anteprima, ma quel testo compare già prima di riempire il campo testo; l'anteprima è ridisegnata in `requestAnimationFrame`, quindi il test a volte leggeva lo stato intermedio ("No effect text"). L'app è corretta (nessun valore perso dal modulo). Ho reso l'attesa del test più precisa (aspetta anche che "No effect text" sparisca): è una modifica del test annotata qui perché l'app non è sbagliata. `will-change` non toccato.
+- **Test**: prima 415/416 (e il test mirato passava 1 volta su 5); dopo 416/416, test mirato 6/6 ripetuto. Build `ds1126a` (CACHE alzata in sw.js e tag in index.html).
+- **File**: tests/sezioni/armi-incantesimi.test.js, sw.js, index.html, docs/bug-beta.md. Controllo a mano in Chromium non rifatto per intero: nessun codice dell'app è cambiato oltre al tag di build.
+- **Resta**: misura del lag di digitazione (backlog 2), poi estrazione CSS (solo PR). Sala aggiornata: solo il segnale `devm`; voci bug/risolti da ritoccare.
+
 ## 2026-11-26 · team leader
 - **Stato**: main e1238a7, Chromium 1440x900 e 390x844 senza errori e senza overflow. Punteggio +410 ↑ (415/416). Unica sezione rossa: armi-incantesimi, regressione dal commit `3bd9ee7` (Designer, tolto `will-change`), trovata a bisezione; aperto B-057 (da verificare, può essere bug reale di digitazione nel modulo homebrew).
 - **Piano**: sviluppo su B-057 (priorità 1, misura del lag solo se avanza tempo), power user su Workshop/Spellbook, designer non di turno. PR #48 e #50 unite; PR #51 (sync NPC) unita nel frattempo. Tour guidato fermo. Sala non aggiornata (nessuno stato di bug, PR o compito è cambiato in modo da richiederla oltre al segnale).
