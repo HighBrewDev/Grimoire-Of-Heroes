@@ -11,7 +11,7 @@ Niente nuove feature finché Capo non le riapre. Compiti piccoli, suite verde a 
 - Main `e1238a7` (live = main). Controllo Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto dall'esterno.
 - Punteggio **+410, tendenza ↑** (ieri +373). Test **415/416**. B-055 e B-056 chiusi: combattimento, telefono, beneficiClasse non sono più rossi.
 - **Una sezione rossa: armi-incantesimi**, regressione di ieri. Il test "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling" fallisce in modo deterministico: l'anteprima dice "No effect text" anche se il campo testo è stato riempito. Verificato a bisezione: passa su `3bd9ee7^` e `201ad77`, fallisce da `3bd9ee7` (Designer, tolto `will-change` da `.page::before/::after`) e su main. Sospetto: gara tra il ridisegno del modulo e `fill` (campi che perdono il valore digitando in fretta) = possibile bug reale di digitazione, non solo test. Test non toccato.
-- `index.html` è ancora un file unico da 6677 righe. PR #51 (sync NPC) aperta, aspetta Capo.
+- `index.html` è ancora un file unico da 6677 righe. PR #51 (sync NPC) unita oggi.
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
@@ -47,7 +47,7 @@ Zone di index.html: **Sviluppo** possiede il modulo Workshop/homebrew (`bw_*`, a
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- **PR #51** (https://github.com/HighBrewDev/Grimoire-Of-Heroes/pull/51): sync, una riga NPC rifiutata non blocca più tutta la sincronizzazione. Tocca sync/dati utente: va rivista e unita da te (o dimmi "mergia tu"); dopo il merge chiudi e riapri il sito una volta.
+- **PR #51** (sync NPC) è stata unita su main: chiudi e riapri il sito una volta per il service worker.
 - **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok per chiuderlo.
 - Migrazioni Supabase in `supabase/migrations/`: se non le hai ancora eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
 - Decisione facoltativa: B-011 (limite di 3 elementi gratuiti nell'import) e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.
