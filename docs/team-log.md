@@ -1,5 +1,8 @@
 # Diario del team
 
+## 2026-11-26 · test
+- **Suite su main 287b0b8**: 415/416, punteggio +410 ↑ (ieri +373). Sezione rossa: armi-incantesimi (1 regressione: "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling", i controlli mostrano avvisi "no class list / no effect text" al posto della riga di regole). Chiusi i rossi di ieri: combattimento, telefono, beneficiClasse ora verdi/gialli (B-055, B-056 risolti).
+
 ## 2026-11-25 · design
 - **Fatto** · effetti CSS pesanti (compito del piano, solo misura e una rimozione). Chromium a 1440 e 390: l'unico costo vero era `will-change:transform` su `.page::before/::after` con il filtro `rough` sopra (scroll 36 → 20 ms/frame, digitazione 60 → 18 ms a 1440; a 390 25 → 17). Tolto, nessun cambio visibile. Il filtro, i `mix-blend-mode` e le ombre restano (estetica, guadagno trascurabile); `backdrop-filter` non esiste. `CACHE` → `grimoire-ds1125c`.
 - **File**: index.html (righe 535, 545), sw.js, docs/design/effetti-css-2026-11-25.md, note-design.md, screenshot `docs/design/2026-11-25-page-prima|dopo-*.png`.
