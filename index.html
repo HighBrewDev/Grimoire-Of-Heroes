@@ -997,7 +997,7 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
     <p class="stats">3 sample heroes · 339 spells · 341 creatures<br>243 magic items · the full SRD 5.2.1, offline</p>
     <button type="button" class="btn" style="font-size:18px;padding:12px 26px;margin-top:8px" data-act="enter">Open the Grimoire</button>
     <p style="font-size:13.5px">Turn pages with the arrows, ← → keys or a swipe.</p>
-    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a> · <span title="Version of this page">build ds1125d</span><span id="coverCoffee"></span></p>
+    <p class="maker">Crafted by <b>HighBrew</b> · <a href="#" data-act="welcome">about the beta</a> · <span title="Version of this page">build ds1125e</span><span id="coverCoffee"></span></p>
     <label class="coverOpt"><input type="checkbox" id="coverStart" checked> Show this cover each time the tome opens</label>
   </div>
 </div>
@@ -6318,7 +6318,22 @@ async function syncNpc(){
   for (const id of Object.keys(sigs)) if (!next[id]){                // deleted here: take it away from the players too
     if (sigs[id][0] && sigs[id][1]) pub.push({id, owner:me(), party_id:sigs[id][1], data:{updatedAt:now}, deleted:true});
   }
-  for (let i = 0; i < pub.length; i += 10) await db('/npc_public?on_conflict=id', {method:'POST', body:pub.slice(i, i + 10), prefer:'resolution=merge-duplicates,return=minimal'});
+  // A row the server refuses (row-level security: the hero's party is gone, or this account left it) must not sink the whole sync
+  // into "Sync problem" every minute: send the batch, and on a refusal retry one by one and skip only the refused rows.
+  const pubPost = body => db('/npc_public?on_conflict=id', {method:'POST', body, prefer:'resolution=merge-duplicates,return=minimal'});
+  const refused = [];
+  for (let i = 0; i < pub.length; i += 10){
+    const part = pub.slice(i, i + 10);
+    try { await pubPost(part); }
+    catch (e){
+      if (!/row-level security|violates|HTTP 403/i.test(e.message)) throw e;
+      for (const row of part){
+        try { await pubPost([row]); }
+        catch (e2){ if (!/row-level security|violates|HTTP 403/i.test(e2.message)) throw e2; refused.push(row.id); }
+      }
+    }
+  }
+  if (refused.length && !S.pubWarned){ S.pubWarned = true; toast('Some NPCs could not be shared with the party (you are no longer in that party). They stay safe on your device.', 'fumble'); }
   npPubSet(next);
   if (Object.keys(tomb).length){ const t = npTombGet(); for (const id of Object.keys(tomb)) delete t[id]; npTombSet(t); }
   await npPullShared();
