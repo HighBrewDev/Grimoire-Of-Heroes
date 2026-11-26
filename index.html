@@ -2988,9 +2988,10 @@ function brewHomeHTML(){
       <div class="row" style="justify-content:center;gap:8px"><label class="btn small" for="brew_file2">Choose file</label><input type="file" id="brew_file2" accept=".json,.md,.markdown,.txt,application/json,text/markdown,text/plain" class="sr">${act('brewMdPaste', undefined, 'Paste Markdown', 'btn small ghost')}${act('brewMdTemplate', undefined, 'Markdown template', 'btn small ghost')}${n ? act('brewExportMd', undefined, 'Export as Markdown', 'btn small ghost') : ''}</div></div>
     <div class="hb5" id="hb5"><h4>From 5etools</h4>
       <p class="muted small">Pick a list or paste a 5e.tools data link (or just a file name like <code>spells/spells-efa.json</code>). Your browser fetches it straight from the source, then you get the same check and tick-list as any import. No AI, nothing leaves your device.</p>
-      <div class="row hb5Row"><label class="sr" for="hb5_pre">Ready-made lists</label><select id="hb5_pre"><option value="">Choose a list…</option>${HB5_PRESETS.map(([f, t]) => `<option value="${esc(f)}">${esc(t)}</option>`).join('')}</select></div>
+      <div class="row hb5Row"><label class="sr" for="hb5_pre">Ready-made lists</label><select id="hb5_pre"><option value="">Choose a list…</option>${HB5_PRESETS.map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(([f, t]) => `<option value="${esc(f)}">${esc(t)}</option>`).join('')}</optgroup>`).join('')}</select></div>
       <div class="row hb5Row"><label class="sr" for="hb5_url">5etools link or file</label><input type="text" id="hb5_url" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://5e.tools/data/spells/spells-efa.json">
-        <label class="sr" for="hb5_src">Only this source (optional)</label><input type="text" id="hb5_src" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Source, e.g. EFA" class="hb5Src"></div>
+        <label class="sr" for="hb5_src">Only this source (optional)</label><input type="text" id="hb5_src" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Source, e.g. EFA or PHB, XGE" class="hb5Src">
+        <label class="sr" for="hb5_ed">Rules edition</label><select id="hb5_ed" title="Which edition of the rules to bring in"><option value="">Any edition</option><option value="one">2024 rules only</option><option value="classic">2014 rules only</option></select></div>
       <div class="row hb5Row">${act('brew5Fetch', undefined, 'Fetch and check', 'btn small')}${act('brew5Paste', undefined, 'Paste JSON instead', 'btn small ghost')}</div>
       <p class="hb5Warn" role="note"><b>⚠ Check what you import.</b> 5etools data is converted automatically, so some entries may come out incomplete or not quite right (effects, scaling, special rules). Read the warnings in the preview and look over each entry after importing. Book content belongs to its publishers: use it for your own table.</p></div>
     <details class="hbGuide"><summary>How to write homebrew in Markdown</summary>
@@ -4508,8 +4509,20 @@ Object.assign(ACT_BREW, {
 
 /* ---- fetch straight from 5etools (or its GitHub mirror) and review ---- */
 const HB5_MIRROR = 'https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/';
-const HB5_PRESETS = [['spells/spells-xphb.json', 'Spells · Player’s Handbook 2024'], ['spells/spells-efa.json', 'Spells · Eberron: Forge of the Artificer'], ['items-base.json', 'Weapons (base items)'], ['items.json', 'Magic items and magic weapons'],
-  ['feats.json', 'Feats'], ['backgrounds.json', 'Backgrounds'], ['races.json', 'Species'], ['bestiary/bestiary-xmm.json', 'Creatures · Monster Manual 2025']];
+const HB5_SPELLBOOKS = [['xphb', 'Player’s Handbook 2024'], ['phb', 'Player’s Handbook 2014'], ['xge', 'Xanathar’s Guide to Everything'], ['tce', 'Tasha’s Cauldron of Everything'], ['efa', 'Eberron: Forge of the Artificer'],
+  ['ftd', 'Fizban’s Treasury of Dragons'], ['scc', 'Strixhaven'], ['aag', 'Astral Adventurer’s Guide'], ['egw', 'Explorer’s Guide to Wildemount'], ['ggr', 'Guildmasters’ Guide to Ravnica'], ['bmt', 'The Book of Many Things'],
+  ['idrotf', 'Icewind Dale: Rime of the Frostmaiden'], ['ai', 'Acquisitions Incorporated'], ['llk', 'Lost Laboratory of Kwalish'], ['sato', 'Sigil and the Outlands'], ['frhof', 'Forgotten Realms: Heroes of Faerûn'], ['wow', 'Warcraft (WoW)'], ['au', 'Unearthed Arcana']];
+const HB5_CLASSES = ['Artificer', 'Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard', 'Sidekick'];
+const HB5_BESTIARIES = [['xmm', 'Monster Manual 2025'], ['mm', 'Monster Manual 2014'], ['xdmg', 'Dungeon Master’s Guide 2024'], ['dmg', 'Dungeon Master’s Guide 2014'], ['mpmm', 'Mordenkainen Presents: Monsters of the Multiverse'], ['vgm', 'Volo’s Guide to Monsters'],
+  ['mtf', 'Mordenkainen’s Tome of Foes'], ['ftd', 'Fizban’s Treasury of Dragons'], ['bgg', 'Bigby Presents: Glory of the Giants'], ['efa', 'Eberron: Forge of the Artificer'], ['egw', 'Explorer’s Guide to Wildemount'], ['phb', 'Player’s Handbook 2014']];
+// [group, [[data file, label]]]: what the “Ready-made lists” picker offers, one group per kind of entry
+const HB5_PRESETS = [
+  ['Spells', HB5_SPELLBOOKS.map(([k, t]) => [`spells/spells-${k}.json`, t])],
+  ['Classes and subclasses', HB5_CLASSES.map(c => [`class/class-${c.toLowerCase()}.json`, c + ' (with its subclasses)'])],
+  ['Feats, species, backgrounds', [['feats.json', 'Feats'], ['races.json', 'Species (races)'], ['backgrounds.json', 'Backgrounds']]],
+  ['Items', [['items-base.json', 'Weapons (base items)'], ['items.json', 'Magic items and magic weapons'], ['magicvariants.json', 'Magic variants (+1 weapons, armor of resistance…)']]],
+  ['Creatures', HB5_BESTIARIES.map(([k, t]) => [`bestiary/bestiary-${k}.json`, t])],
+];
 /* A 5e.tools page link (backgrounds.html#merchant_xphb,flstsource:…) → the data file(s) behind that page, the entry the link points at, and the books ticked in its filter. */
 const HB5_PAGES = {backgrounds:['backgrounds.json'], feats:['feats.json'], races:['races.json'], items:['items.json', 'items-base.json']};
 const HB5_INDEXED = {spells:'spells', bestiary:'bestiary'};   // one file per book, listed in <dir>/index.json
@@ -4591,6 +4604,10 @@ async function hb5Review(json, name, srcWanted, from, entry, notes0 = [], subs =
     if (!list.length){ toast(`Nothing from ${w.join(', ').toUpperCase()} in that file.`); return; }
     if (before - list.length) notes.push(`Only ${w.length > 3 ? w.length + ' books' : 'source ' + w.join(', ').toUpperCase()}: ${before - list.length} other entries hidden.`);
   }
+  const ed = $('#hb5_ed')?.value;   // the edition picker next to the link box
+  if (ed){ const before = list.length; list = list.filter(it => ed === 'one' ? it.ed === 'one' : it.ed !== 'one');
+    if (!list.length){ toast(`Nothing for the ${ed === 'one' ? '2024' : '2014'} rules in that file: pick “Any edition”.`); return; }
+    if (before - list.length) notes.push(`${before - list.length} ${ed === 'one' ? 'older-edition' : '2024-edition'} entries hidden by the edition choice.`); }
   const d = hb5Prefer24(list); list = d.out; if (d.dropped) notes.push(`${d.dropped} older-edition ${d.dropped === 1 ? 'entry was' : 'entries were'} left out because the 2024 version of the same name is in the file.`);
   if (!list.length){ toast(`Nothing Homebrew can use in that file${skip ? ` (${skip} entries of kinds it has no form for)` : ''}.`); return; }
   brewReview(list, name + (from ? ` (from ${from})` : ''), {skip, notes});
@@ -4600,7 +4617,7 @@ Object.assign(ACT_BREW, {
   async brew5Fetch(){
     const h = hb5Path($('#hb5_url')?.value);
     if (h.err){ toast(h.err); return; }
-    const typed = ($('#hb5_src')?.value || '').trim(), books = typed ? [typed.toUpperCase()] : h.books || [];
+    const typed = ($('#hb5_src')?.value || '').trim(), books = typed ? typed.toUpperCase().split(/[\s,;+]+/).filter(Boolean) : h.books || [];
     toast('Fetching…');
     try {
       let files = h.files || [], got, from = '';
