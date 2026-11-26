@@ -3055,7 +3055,7 @@ async function brewImport0(file){
   if (!Array.isArray(j?.grimoireHomebrew)){
     const r = from5(j);
     if (r.items.length) return brewReview(r.items, file.name.replace(/\.json$/i, ''), {skip:r.skip});
-    toast(`Nothing Homebrew can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON such as {"spell":[…]}.`); return;
+    toast(`Nothing Homebrew can use in that file${r.skip ? ` (${r.skip} entries of kinds it has no form for)` : ''}. It takes a Grimoire homebrew export or 5etools-style JSON: one entry, or a file like {"spell":[…]}.`); return;
   }
   const items = cleanBrew(j.grimoireHomebrew), bad = j.grimoireHomebrew.length - items.length;
   if (!items.length){ toast(`No usable entries in that file${bad ? ` (${bad} skipped: each needs a known kind and a text name)` : ''}.`); return; }
@@ -3647,7 +3647,8 @@ function hbLevelHead(s){
 }
 const HB_STRUCT = /^(features?|class features?|subclass features?|traits?|species traits?|actions?|bonus actions?|reactions?|legendary actions?|description|effect|benefits?|(?:using a )?higher[- ]level spell slot|at higher levels|equipment|starting equipment|proficiencies|multiclassing|privilegi.*|tratti|azioni.*|reazioni|descrizione)$/i;
 const HB_NOTITLE = /^(?:pack|homebrew|notes?|changelog|index|contents|table of contents|indice)\b/i;
-const hbHeadingOf = l => { const m = l.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/); return m ? {d:m[1].length, t:m[2].trim()} : null; };
+// “#Spell: Name” (no space after #) is still a title
+const hbHeadingOf = l => { const m = l.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/) || l.match(/^(#{1,6})(?=[A-Za-z])([A-Za-z][^#\n]*?)\s*#*\s*$/); return m ? {d:m[1].length, t:m[2].trim()} : null; };
 function hbInfer(title, lines, featCount){
   if (title.cat) return {cat:title.cat, why:'its title'};
   const keys = new Set(), head = lines.slice(0, 40);
@@ -3747,10 +3748,10 @@ function parseBrewMd(text, def){
   let cur = null;
   const start = (kind, line) => { cur = {cat:kind.cat, n:kind.n, line, fields:{}, body:[], secs:[], pw:[], head:true}; items.push(cur); };
   for (; i < lines.length; i++){
-    const l = lines[i], t = l.trim(), h1 = t.match(/^#\s+(.+)$/), h2 = t.match(/^##\s+(.+)$/);
+    const l = lines[i], t = l.trim(), h1 = t.match(/^#\s*(?=\S)([^#].*)$/), h2 = t.match(/^##\s*(?=\S)([^#].*)$/);
     if (h1){ const k = hbKindOf(hbUnmark(h1[1])); if (k) start(k, i + 1); else { if (items.length) notes.push(`Line ${i + 1}: “${t}” doesn’t say what it is (write “# Spell: ${hbUnmark(h1[1])}”), so it and its text were skipped.`); cur = null; } continue; }
     if (!cur) continue;   // a title or notes before the first entry
-    if (/^---+$/.test(t) || /^\*\*\*+$/.test(t)) continue;
+    if (/^---+$/.test(t) || /^\*\*\*+$/.test(t) || /^___+$/.test(t)) continue;
     if (h2){ cur.head = false; cur.secs.push({t:hbUnmark(h2[1]).replace(/[.:]$/, ''), lines:[], line:i + 1}); continue; }
     if (cur.secs.length){ cur.secs[cur.secs.length - 1].lines.push(l); continue; }
     const fm = t.match(HB_FIELD_RE), key = fm && hbKey(fm[1].replace(/\s*\(.*\)$/, ''));
@@ -3783,6 +3784,10 @@ function hbMdBuild(e){
       Object.assign(o, {lv:f('lv'), sc:f('sc'), t:f('t'), r:f('r'), c:f('c'), d:f('d'), conc:f('conc'), rit:f('rit'), cls:f('cls'), h:f('h')});
       if (!o.lv && !o.sc){ const m = takeFirst(/^\*{1,2}_?(?:level\s*(\d)\s+(\w+)|(\d)(?:st|nd|rd|th)-level\s+(\w+)|(\w+)\s+cantrip)(?:\s*\(([^)]*)\))?_?\*{1,2}$/i);
         if (m){ o.lv = m[1] || m[3] || (m[5] ? '0' : ''); o.sc = m[2] || m[4] || m[5]; if (m[6] && !o.cls) o.cls = m[6]; } }
+      // "***At Higher Levels.*** When you cast…" as a bold run-in (the way books and 5e wikis print it) goes to its own field
+      const hi = body.findIndex(l => { const m = l.trim().match(/^(?:\*{2,3}|_{2,3})\s*([^*_]{3,60}?)\s*[.:]?\s*(?:\*{2,3}|_{2,3})\s*[.:]?\s*(.*)$/); return m && HB_HIGHER.test(m[1]); });
+      if (hi >= 0){ let end = hi + 1; while (end < body.length && body[end].trim()) end++;
+        const [first, ...more] = body.splice(hi, end - hi); o.h = [o.h, [first.trim().replace(/^(?:\*{2,3}|_{2,3})[^*_]*(?:\*{2,3}|_{2,3})\s*[.:]?\s*/, ''), ...more.map(l => l.trim())].filter(Boolean).join(' ')].filter(Boolean).join(' '); }
       xs.push(hbMdText(body));
       e.secs.forEach(s => { if (HB_HIGHER.test(s.t)) o.h = [o.h, hbFlat(s.lines)].filter(Boolean).join(' '); else if (/^(effect|description|effetto|descrizione)$/i.test(s.t)) xs.push(secText(s)); else xs.push(runIn(s)); });
       break;
@@ -4277,7 +4282,7 @@ function adv5(o){
 }
 const FROM5 = {
   spell:{cat:'spells', to:o => { const pw = [], sp = {n:o.name, lv:clamp(+o.level || 0, 0, 9), sc:SCHOOL[o.school] || tc5(o.school || 'Evocation'), t:time5(o.time), r:range5(o.range), c:comp5(o.components), d:dur5(o.duration),
-    conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set((o.classes?.fromClassList || []).map(c => c.name))],
+    conc:[].concat(o.duration || []).some(d => d?.concentration), rit:!!o.meta?.ritual, cls:[...new Set([...(o.classes?.fromClassList || []), ...(o.classes?.fromClassListVariant || [])].map(c => c.name))],
     x:textL5(o.entries), h:flatL5([].concat(o.entriesHigherLevel || []).map(e => isObj(e) ? e.entries : e))};
     const fx = fx5(o, pw); if (fx) sp.fx = fx; if (pw.length) sp._pw = pw; return sp; }},
   feat:{cat:'feats', to:o => ({n:o.name, ty:FEAT5[String(o.category || 'G').split(':')[0]] || 'General', pre:pre5(o.prerequisite), rep:!!o.repeatable, x:textL5(o.entries)})},
@@ -4377,9 +4382,32 @@ const FROM5 = {
 };
 FROM5.magicvariant = FROM5.item;
 FROM5.baseitem = {cat:'weapons', to:o => { if (!(o.dmg1 && DMG5[o.dmgType])) throw 0; return weapon5(o, null, []); }};   // armor and gear have no Workshop form: they count as left out
+/** One entry copied from the 5e.tools page (a bare object, or a plain array of them) has no {"spell":[…]} around it: guess the list from its shape. */
+function kind5Of(o){
+  if (!isObj(o) || typeof o.name !== 'string') return null;
+  if (typeof o.level === 'number' && (o.school !== undefined || o.time || o.range)) return 'spell';
+  if (o.cr !== undefined && (o.ac || o.hp)) return 'monster';
+  if (o.hd || (o.classFeatures && !o.className)) return 'class';
+  if (o.className && (o.shortName || o.subclassFeatures)) return 'subclass';
+  if (o.rarity !== undefined || o.baseItem) return 'item';
+  if (o.dmg1 && o.weaponCategory) return 'baseitem';
+  if (o.startingEquipment || (o.skillProficiencies && o.speed === undefined && !o.size)) return 'background';
+  if (o.size && o.speed !== undefined) return 'race';
+  if (o.category || o.prerequisite || o.ability) return 'feat';
+  return null;
+}
+function wrap5(json){
+  if (Array.isArray(json)){
+    const out = {}; json.forEach(o => { const k = kind5Of(o); if (k) (out[k] = out[k] || []).push(o); });
+    return out;
+  }
+  if (isObj(json) && !Object.keys(json).some(k => Array.isArray(json[k]) && Object.hasOwn(FROM5, k))){ const k = kind5Of(json); if (k) return {[k]:[json]}; }
+  return json;
+}
 /** Read a whole 5etools file. Returns {items:[{cat, o, src}], skip}: skip counts entries of kinds the Workshop has no form for. */
 function from5(json, base){
   const items = []; let skip = 0;
+  json = wrap5(json);
   if (!isObj(json)) return {items, skip};
   setBase5(base || json.baseitem);
   for (const [k, arr] of Object.entries(json)){
@@ -4539,6 +4567,7 @@ function hb5Prefer24(list){
   return {out, dropped:list.length - out.length};
 }
 async function hb5Review(json, name, srcWanted, from, entry, notes0 = [], subs = []){
+  json = wrap5(json);
   let base = null, notes = [...notes0, 'Converted automatically from 5etools data: it can be incomplete or slightly off, so read the warnings and check each entry after importing.'];
   if (!json.baseitem && Array.isArray(json.item) && json.item.some(i => isObj(i) && i.baseItem && !i.dmg1) && from){
     try { base = (await hb5Load('items-base.json')).json.baseitem; } catch (e) { notes.push('Magic weapons borrow their dice from the base items file, which could not be loaded now: they come in without damage until you import “Weapons (base items)” first.'); }
@@ -4603,7 +4632,7 @@ Object.assign(ACT_BREW, {
   async brew5PasteGo(){
     const t = $('#hb5_json')?.value || ''; if (!t.trim()){ toast('Paste the JSON first.'); return; }
     let j; try { j = JSON.parse(t); } catch (e) { toast('That is not valid JSON.'); return; }
-    if (!isObj(j)){ toast('Expected a 5etools file like {"spell":[…]}.'); return; }
+    if (!isObj(j) && !Array.isArray(j)){ toast('Expected 5etools data: one entry, or a file like {"spell":[…]}.'); return; }
     await hb5Review(j, 'Pasted JSON', '', '');
   },
 });

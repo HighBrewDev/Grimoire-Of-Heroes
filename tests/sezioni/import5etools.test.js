@@ -32,7 +32,7 @@ async function fetch5(app, link, src){
   try { await app.page.waitForSelector('#modalBk .b5List'); } catch (e) { throw new Error(link + ' → ' + await app.page.locator('#toast').innerText()); }
   return app.page.$$eval('.b5Row', rows => rows.map(r => ({n:r.dataset.n, text:r.innerText.replace(/\n+/g, ' | '), ok:!r.querySelector('.b5').disabled})));
 }
-const added = app => app.page.waitForFunction(() => /join your homebrew/.test(document.getElementById('toast')?.textContent || ''));
+const added = app => app.page.waitForFunction(() => /joins? your homebrew/.test(document.getElementById('toast')?.textContent || ''));
 const find = (rows, n) => { const r = rows.find(x => x.n === n); if (!r) throw new Error('riga mancante ' + n + ': ' + rows.map(x => x.n)); return r; };
 
 module.exports = {sezione:'import5etools', test:[
@@ -124,5 +124,45 @@ module.exports = {sezione:'import5etools', test:[
     await app.click('brew5Paste'); await app.page.fill('#hb5_json', JSON.stringify(ITEMS)); await app.click('brew5PasteGo');
     await app.page.waitForSelector('#modalBk .b5List');
     assert.ok((await app.page.locator('.b5Row').count()) >= 2);
+  }],
+  ["un incantesimo copiato da 5e.tools (oggetto senza {spell:[…]}) e il suo .md si importano", async ({open}) => {
+    const MELF = {name:"Melf's Minute Meteors", source:'XGE', page:161, level:3, school:'V', time:[{number:1, unit:'action'}], range:{type:'point', distance:{type:'self'}},
+      components:{v:true, s:true, m:'niter, sulfur, and pine tar formed into a bead'}, duration:[{type:'timed', duration:{type:'minute', amount:10}, concentration:true}],
+      entries:['You create six tiny meteors in your space. Each creature within 5 feet of the point must make a Dexterity saving throw. A creature takes {@damage 2d6} fire damage on a failed save, or half as much damage on a successful one.'],
+      entriesHigherLevel:[{type:'entries', name:'At Higher Levels', entries:['The number of meteors created increases by two for each slot level above 3rd.']}],
+      damageInflict:['fire'], savingThrow:['dexterity'],
+      classes:{fromClassListVariant:[{name:'Sorcerer', source:'PHB', definedInSource:'XGE'}, {name:'Wizard', source:'PHB', definedInSource:'XGE'}],
+        fromSubclass:[{class:{name:'Bard', source:'XPHB'}, subclass:{name:'College of Lore', shortName:'Lore', source:'XPHB'}}]},
+      feats:[{name:'Boon of Siberys', source:'EFA'}]};
+    const app = await open(); await wire(app); await app.go('workshop');
+    // incolla: oggetto singolo e array semplice
+    for (const txt of [JSON.stringify(MELF), JSON.stringify([MELF])]){
+      await app.click('brew5Paste'); await app.page.fill('#hb5_json', txt); await app.click('brew5PasteGo');
+      await app.page.waitForSelector('#modalBk .b5List');
+      const t = await app.page.locator('#modalBk').innerText();
+      assert.ok(/Melf's Minute Meteors/.test(t) && /Lv 3 · Evocation/.test(t) && /0 with errors/.test(t), t.slice(0, 400));
+      await app.click('close'); await app.page.waitForSelector('#modalBk', {state:'detached'});
+    }
+    // da file
+    await app.page.locator('input[type=file]').first().setInputFiles({name:'melf.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify(MELF))});
+    await app.page.waitForSelector('#modalBk .b5List');
+    await app.page.locator('[data-act="brew5Add"]').click(); await added(app);
+    assert.ok(/Melf's Minute Meteors/.test(await app.page.locator('#page').innerText()));
+    // il file .md con "#Spell:" senza spazio, riga ___ e "***At Higher Levels.***" in linea
+    const md = require('fs').readFileSync(require('path').join(__dirname, '..', 'md', 'melfs-minute-meteors.md'));
+    await app.page.locator('input[type=file]').first().setInputFiles({name:'Melfs Minute Meteors.md', mimeType:'text/markdown', buffer:md});
+    await app.page.waitForSelector('#modalBk .b5List');
+    const tm = await app.page.locator('#modalBk').innerText();
+    assert.ok(/Melf's Minute Meteors/.test(tm) && /Lv 3 · Evocation/.test(tm) && !/Untitled/.test(tm) && /0 with errors/.test(tm), tm.slice(0, 500));
+    await app.page.locator('[data-act="brew5Add"]').click(); await added(app);
+    // un solo incantesimo, non due: stesso nome = sostituisce
+    assert.strictEqual(await app.page.locator('[data-act="brewEdit"]').count(), 1);
+    await app.page.locator('[data-act="brewEdit"]').first().click(); await app.page.waitForSelector('#bw_h');
+    assert.ok(/number of meteors created increases by two/.test(await app.page.inputValue('#bw_h')) && await app.page.isChecked('#bw_conc') && !/At Higher Levels/.test(await app.page.inputValue('#bw_x')), 'livelli superiori e concentrazione');
+  }],
+  ["JSON che non e 5etools: messaggio chiaro, niente errori JS", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    await app.page.locator('input[type=file]').first().setInputFiles({name:'x.json', mimeType:'application/json', buffer:Buffer.from('{"foo":1}')});
+    await app.page.waitForFunction(() => /Nothing Homebrew can use/.test(document.getElementById('toast')?.textContent || ''));
   }],
 ]};
