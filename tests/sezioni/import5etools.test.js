@@ -165,4 +165,25 @@ module.exports = {sezione:'import5etools', test:[
     await app.page.locator('input[type=file]').first().setInputFiles({name:'x.json', mimeType:'application/json', buffer:Buffer.from('{"foo":1}')});
     await app.page.waitForFunction(() => /Nothing Homebrew can use/.test(document.getElementById('toast')?.textContent || ''));
   }],
+  ["picker 5etools: liste pronte per gruppi (incantesimi, classi, bestiari...) e scelta dell'edizione", async ({open}) => {
+    const app = await open(); await wire(app); await app.go('workshop');
+    const groups = await app.page.$$eval('#hb5_pre optgroup', g => g.map(x => [x.label, [...x.querySelectorAll('option')].map(o => o.value)]));
+    assert.ok(groups.length >= 5, 'gruppi: ' + groups.map(g => g[0]));
+    const all = groups.flatMap(g => g[1]);
+    for (const f of ['spells/spells-xge.json', 'spells/spells-tce.json', 'class/class-wizard.json', 'class/class-fighter.json', 'bestiary/bestiary-mm.json', 'magicvariants.json', 'feats.json', 'races.json', 'backgrounds.json']) assert.ok(all.includes(f), 'manca ' + f);
+    await app.page.selectOption('#hb5_pre', 'items-base.json'); assert.strictEqual(await app.page.inputValue('#hb5_url'), 'items-base.json');
+    // solo regole 2024: niente Longsword PHB; solo 2014: solo il Longsword PHB
+    await app.page.selectOption('#hb5_ed', 'classic');
+    let rows = await fetch5(app, 'items-base.json');
+    assert.ok(/ PHB/.test(find(rows, 'longsword').text) && !/XPHB/.test(find(rows, 'longsword').text) && !rows.some(r => r.n === 'longbow'), JSON.stringify(rows.map(r => r.n)));
+    await app.click('close');
+    await app.page.selectOption('#hb5_ed', 'one');
+    rows = await fetch5(app, 'items-base.json');
+    assert.ok(/XPHB/.test(find(rows, 'longsword').text) && rows.some(r => r.n === 'longbow'));
+    await app.click('close');
+    // piu libri nella casella "source"
+    await app.page.selectOption('#hb5_ed', '');
+    rows = await fetch5(app, 'items-base.json', 'PHB, XPHB');
+    assert.ok(rows.length >= 3);
+  }],
 ]};
