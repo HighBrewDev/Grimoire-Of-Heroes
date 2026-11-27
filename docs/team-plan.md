@@ -45,7 +45,7 @@ Zone di index.html: **Sviluppo** lavora su misura e CSS; **Designer** non tocca 
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- Nessuna PR aperta al momento.
+- **PR #54** (sviluppo): CSS in `style.css`, suite 419/419 identica; annulla = revert. Da unire quando vuoi.
 - **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok; il progetto potrebbe doversi ripristinare da te.
 - Migrazioni in `supabase/migrations/`: se non le hai eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
 - Decisione facoltativa: apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.
