@@ -1,6 +1,6 @@
 import {$, $$, esc, mod, fmt, profFor, uid, clamp, norm, title, reduceMotion, act, xref} from './util.js';
 import {ABIL, ABIL_ID, PORTRAITS, ALIGN, XP_TABLE, SPELL_AB, ICON_BOOK} from './costanti.js';
-import {rollExpr, d20, takeTrace} from './dadi.js';
+import {rollExpr, d20, takeTrace, MAX_DICE} from './dadi.js';
 import {curlLeaf} from './curl.js';
 
 /* Grimoire of Heroes — app logic (fifth edition, 2024 rules) */
@@ -618,8 +618,9 @@ function logRoll(label, detail, total, kind){
   const line = `${label}: ${detail} = ${total}`;
   G.log.unshift({line, kind, t:Date.now()}); G.log = G.log.slice(0, 50);
   const el = $('#diceLast'); if (el){ el.textContent = line; if (!reduceMotion()) el.animate([{transform:'translateX(-6px) rotate(-1deg)', opacity:.3}, {transform:'translateX(3px) rotate(.6deg)', opacity:1, offset:.45}, {transform:'none'}], {duration:420, easing:'ease-out'}); }
-  toast('🎲 ' + line, kind);
-  window.Fx?.rollDice?.(takeTrace());   // dadi 3D sopra l'interfaccia (spenti se gli effetti sono spenti)
+  const thrown = takeTrace();   // dadi 3D sopra l'interfaccia (spenti se gli effetti sono spenti)
+  toast('🎲 ' + line + (thrown.over && window.Fx?.level?.() !== 'off' ? ` · 3D scene shows only the first ${MAX_DICE} dice (the total counts all of them)` : ''), kind);
+  window.Fx?.rollDice?.(thrown);
 }
 function testRoll(label, bonus){
   const c = active(); const r = d20(G.adv);
@@ -724,6 +725,13 @@ function renderShelf(){
     </button>`).join('') + act('wizard', undefined, '＋ New hero', 'shelfAdd');
   barsFrom($('#shelf'), 'shelf:');
 }
+// Cheap path used while a page turns: only the highlighted tab changes, the buttons stay (no innerHTML rebuild).
+function syncTabs(){
+  const tabs = $$('#chapTabs .tab');
+  if (tabs.length !== CHAPTERS.length) return renderTabs();
+  $$('.topActions [data-act="go"]').forEach(b => b.setAttribute('aria-current', G.chapter === b.dataset.arg ? 'page' : 'false'));
+  tabs.forEach(b => b.setAttribute('aria-current', G.chapter === b.dataset.arg ? 'page' : 'false'));
+}
 function renderTabs(){
   $$('.topActions [data-act="go"]').forEach(b => b.setAttribute('aria-current', G.chapter === b.dataset.arg ? 'page' : 'false'));
   $('#chapTabs').innerHTML = CHAPTERS.map((ch, i) =>
@@ -809,19 +817,19 @@ function turnTo(id){
   const bookTop = book.getBoundingClientRect().top;
   if (bookTop < 0) window.scrollTo({top:window.scrollY + bookTop - 8, behavior:'auto'});
 
-  if (reduceMotion()){ G.chapter = id; save(); renderTabs(); renderPage(); return; }
+  if (reduceMotion()){ G.chapter = id; save(); syncTabs(); renderPage(); return; }
 
   const oldH = page.offsetHeight, oldBand = visibleBand(page);
   const oldSnap = snapshot(page, oldBand);
   book.style.minHeight = book.offsetHeight + 'px';   // held before the new page renders, so a shorter page cannot pull the scroll up mid-turn
-  G.chapter = id; save(); renderTabs(); renderPage();
+  G.chapter = id; save(); syncTabs(); renderPage();
   const band = visibleBand(page, Math.max(oldH, page.offsetHeight)), H = band.h;
   oldSnap.style.marginTop = -band.top + 'px';
   book.classList.add('turning');
   rustle();
 
   // jumping several chapters turns them as one sheet (loose blank leaves crossing each other looked broken), just quicker
-  const narrow = page.offsetWidth < 640, strips = narrow ? 4 : 6, dur = (narrow ? 520 : 650) * (steps > 1 ? .85 : 1);
+  const narrow = page.offsetWidth < 640, strips = narrow ? 3 : 4, dur = (narrow ? 520 : 650) * (steps > 1 ? .85 : 1);
   const geo = {top:page.offsetTop + band.top, left:page.offsetLeft, w:page.offsetWidth, h:H};
   const els = [], anims = [];
   const shadow = document.createElement('div'); shadow.className = 'castShadow';

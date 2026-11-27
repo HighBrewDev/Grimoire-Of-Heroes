@@ -3,7 +3,9 @@ import {clamp} from './util.js';
 // Traccia dei dadi appena tirati: la legge il layer 3D (effects/), che non sceglie nulla e riproduce i valori già tirati.
 const trace = [];
 const note = (s, v) => { trace.push({s, v, t:Date.now()}); if (trace.length > 60) trace.splice(0, 30); };
-export function takeTrace(){ const now = Date.now(), out = trace.filter(x => now - x.t < 4000).slice(0, 12); trace.length = 0; return out; }
+export const MAX_DICE = 12;
+// Restituisce al massimo MAX_DICE dadi; out.over = quanti sono stati lasciati fuori (il totale dell'app li conta tutti, cambia solo la scena 3D).
+export function takeTrace(){ const now = Date.now(), all = trace.filter(x => now - x.t < 4000), out = all.slice(0, MAX_DICE); out.over = all.length - out.length; trace.length = 0; return out; }
 export function rollExpr(expr){
   const src = String(expr).replace(/\s+/g, '').replace(/−/g, '-');
   const terms = src.match(/[+-]?[^+-]+/g) || [];
