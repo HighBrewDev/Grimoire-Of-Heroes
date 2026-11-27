@@ -13,9 +13,10 @@ const KEY = 'grimoire-heroes-v1', PREF = 'grimoire-prefs-v1';
 function freePort(){
   return new Promise(res => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
 }
+// GRIMOIRE_DIR=dist serve la build di Vite invece dei file sorgente (npm run test:build)
 async function startServer(){
   const port = await freePort();
-  const proc = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], {cwd:ROOT, stdio:'ignore'});
+  const proc = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], {cwd:process.env.GRIMOIRE_DIR ? path.resolve(ROOT, process.env.GRIMOIRE_DIR) : ROOT, stdio:'ignore'});
   const base = `http://localhost:${port}/`;
   for (let i = 0; i < 100; i++){
     try { const r = await fetch(base + 'manifest.webmanifest'); if (r.ok) break; } catch (e) {}
