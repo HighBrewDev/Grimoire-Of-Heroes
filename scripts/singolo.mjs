@@ -7,6 +7,7 @@ let html = readFileSync(`${IN}/index.html`, 'utf8');
 const leggi = f => readFileSync(`${IN}/${f}`, 'utf8');
 html = html
   .replace(/<link rel="stylesheet" href="([^"]+)">/g, (_, f) => `<style>${leggi(f)}</style>`)
+  .replace(/<script type="module"[^>]*\ssrc="([^"]+)"[^>]*><\/script>/g, (_, f) => `<script type="module">${leggi(f).replace(/<\/script/gi, '<\\/script')}</script>`)
   .replace(/<script src="([^"]+)"><\/script>/g, (_, f) => `<script>${leggi(f).replace(/<\/script/gi, '<\\/script')}</script>`);
 rmSync(OUT, {recursive: true, force: true});
 mkdirSync(OUT);
