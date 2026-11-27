@@ -3,7 +3,7 @@
 const CACHE = 'grimoire-ds1127d';
 
 
-const SHELL = ['./', 'index.html', 'style.css', 'srd.js', 'dnd.js', 'aspetto.js', 'effects/effects.css', 'effects/effects.js', 'effects/dice3d.js', 'src/main.js', 'src/app.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
+const SHELL = ['./', 'index.html', 'style.css', 'srd.js', 'dnd.js', 'aspetto.js', 'effects/effects.css', 'effects/effects.js', 'effects/dice3d.js', 'src/main.js', 'src/app.js', 'src/util.js', 'src/costanti.js', 'src/dadi.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache:'reload'}))))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

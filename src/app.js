@@ -1,33 +1,12 @@
+import {$, $$, esc, mod, fmt, profFor, uid, clamp, norm, title, reduceMotion, act, xref} from './util.js';
+import {ABIL, ABIL_ID, PORTRAITS, ALIGN, XP_TABLE, SPELL_AB, ICON_BOOK} from './costanti.js';
+import {rollExpr, d20} from './dadi.js';
+
 /* Grimoire of Heroes — app logic (fifth edition, 2024 rules) */
 (function(){
 'use strict';
 
 /* ================================================================== utils */
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const mod = score => Math.floor(((+score || 10) - 10) / 2);
-const fmt = m => (m >= 0 ? '+' : '') + m;
-const profFor = lvl => 2 + Math.floor((Math.max(1, lvl) - 1) / 4);
-const uid = () => 'c' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 15) : Math.random().toString(36).slice(2, 12) + Date.now().toString(36));
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const norm = s => String(s || '').toLowerCase().replace(/[’‘]/g, "'").replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-const title = s => String(s).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.effects === 'off';
-const act = (name, arg, label, cls = 'sb', extra = '') =>
-  `<button type="button" class="${cls}" data-act="${name}"${arg !== undefined ? ` data-arg="${esc(arg)}"` : ''} ${extra}>${label}</button>`;
-const xref = (name, label) => `<button type="button" class="xref" data-act="detail" data-arg="${esc(name)}">${esc(label || name)}</button>`;
-
-const ABIL = [
-  {id:'str', n:'Strength'}, {id:'dex', n:'Dexterity'}, {id:'con', n:'Constitution'},
-  {id:'int', n:'Intelligence'}, {id:'wis', n:'Wisdom'}, {id:'cha', n:'Charisma'}];
-const ABIL_ID = {str:'str',dex:'dex',con:'con',int:'int',wis:'wis',cha:'cha',strength:'str',dexterity:'dex',constitution:'con',intelligence:'int',wisdom:'wis',charisma:'cha'};
-const PORTRAITS = ['🧝','🧙','⚔️','🛡️','🏹','🗡️','🔥','🌙','🐉','🦉','🐺','🦊','👑','🧛','🧚','🤠','🧓','👩‍🦰','🧑‍🎤','🐻'];
-const ALIGN = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil','Unaligned'];
-const XP_TABLE = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
-const SPELL_AB = {Wizard:'int',Cleric:'wis',Druid:'wis',Bard:'cha',Sorcerer:'cha',Warlock:'cha',Paladin:'cha',Ranger:'wis',Fighter:'int',Rogue:'int'};
-const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5c-.8 0-1.5.7-1.5 1.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5.7 1.5 1.5zM4 20.5V5.5M20 20.5V5.5"/></svg>';
-
 /* ================================================================== data */
 const DND = window.DND || {};
 let SRD = {};
@@ -634,28 +613,6 @@ function benefitCard(c){
 }
 
 /* ================================================================== dice */
-function rollExpr(expr){
-  const src = String(expr).replace(/\s+/g, '').replace(/−/g, '-');
-  const terms = src.match(/[+-]?[^+-]+/g) || [];
-  let total = 0; const parts = [];
-  for (let t of terms){
-    const sign = t[0] === '-' ? -1 : 1; t = t.replace(/^[+-]/, '');
-    const m = t.match(/^(\d*)d(\d+)$/i);
-    if (m){
-      const n = clamp(+m[1] || 1, 1, 100), s = +m[2];
-      const rs = Array.from({length:n}, () => 1 + Math.floor(Math.random() * s));
-      total += sign * rs.reduce((a, b) => a + b, 0); parts.push((sign < 0 ? '−' : '') + '[' + rs.join('+') + ']');
-    } else if (/^\d+$/.test(t)){ total += sign * +t; parts.push((sign < 0 ? '−' : '+') + t); }
-  }
-  return {total, parts:parts.join(' ').replace(/^\+/, '')};
-}
-function d20(adv){
-  const a = 1 + Math.floor(Math.random() * 20);
-  if (!adv) return {nat:a, txt:`[${a}]`};
-  const b = 1 + Math.floor(Math.random() * 20);
-  const nat = adv > 0 ? Math.max(a, b) : Math.min(a, b);
-  return {nat, txt:`[${a}, ${b}]${adv > 0 ? ' adv' : ' dis'}`};
-}
 function logRoll(label, detail, total, kind){
   const line = `${label}: ${detail} = ${total}`;
   G.log.unshift({line, kind, t:Date.now()}); G.log = G.log.slice(0, 50);
