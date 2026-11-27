@@ -6,7 +6,9 @@ import {cpSync, existsSync, readdirSync, readFileSync, writeFileSync} from 'node
 
 // Tutti i file classici nella radice (srd.js, config.js, style.css, sw.js, aspetto.js, effetti.js, legal.html...)
 // entrano nella build senza elencarli; index.html lo gestisce Vite. Le cartelle statiche sono elencate.
-const NON_SITO = new Set(['node_modules', 'dist', 'dist-single', 'docs', 'tests', 'scripts', 'src', 'supabase']);
+// L'HTML singolo si costruisce in una seconda cartella (GRIMOIRE_OUT) con i moduli a richiesta dentro il bundle (GRIMOIRE_SINGLE): da disco non ci sono altri file da caricare.
+const OUT = process.env.GRIMOIRE_OUT || 'dist';
+const NON_SITO = new Set(['node_modules', 'dist', 'dist-s', 'dist-single', 'docs', 'tests', 'scripts', 'src', 'supabase']);
 const statici = () => [
   ...readdirSync('.').filter(f => f !== 'index.html' && /\.(js|css|html|webmanifest)$/.test(f)),
   '.nojekyll',
@@ -21,10 +23,10 @@ export default defineConfig({
   base: './',
   publicDir: false,
   build: {
-    outDir: 'dist',
+    outDir: OUT,
     emptyOutDir: true,
     assetsInlineLimit: 0,
-    rollupOptions: {output: {assetFileNames: '[name][extname]'}},
+    rollupOptions: {output: {assetFileNames: '[name][extname]', inlineDynamicImports: !!process.env.GRIMOIRE_SINGLE}},
   },
   plugins: [{
     // Per ora il sito è ancora quello di oggi: link e script classici restano com'è scritto nell'HTML
@@ -44,12 +46,12 @@ export default defineConfig({
   }, {
     name: 'copia-statici',
     closeBundle(){
-      for (const f of statici()) if (existsSync(f)) cpSync(f, 'dist/' + f, {recursive: true});
+      for (const f of statici()) if (existsSync(f)) cpSync(f, OUT + '/' + f, {recursive: true});
       // sw.js sorgente precacha src/main.js e src/app.js, che nella build non esistono (sono nel bundle assets/*.js):
       // nel dist sostituisco quelle voci con i file generati, altrimenti l'installazione del service worker fallisce.
-      const sw = 'dist/sw.js';
+      const sw = OUT + '/sw.js';
       if (existsSync(sw)) {
-        const generati = existsSync('dist/assets') ? readdirSync('dist/assets').map(f => 'assets/' + f) : [];
+        const generati = existsSync(OUT + '/assets') ? readdirSync(OUT + '/assets').map(f => 'assets/' + f) : [];
         const testo = readFileSync(sw, 'utf8');
         const nuovo = testo.replace(/const SHELL = \[([^\]]*)\];/, (m, voci) => {
           const lista = voci.split(',').map(v => v.trim()).filter(v => v && !/^'src\//.test(v));

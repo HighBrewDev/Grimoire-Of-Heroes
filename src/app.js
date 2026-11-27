@@ -1,6 +1,6 @@
 import {$, $$, esc, mod, fmt, profFor, uid, clamp, norm, title, reduceMotion, act, xref} from './util.js';
 import {ABIL, ABIL_ID, PORTRAITS, ALIGN, XP_TABLE, SPELL_AB, ICON_BOOK} from './costanti.js';
-import {rollExpr, d20} from './dadi.js';
+import {rollExpr, d20, takeTrace} from './dadi.js';
 
 /* Grimoire of Heroes — app logic (fifth edition, 2024 rules) */
 (function(){
@@ -618,6 +618,7 @@ function logRoll(label, detail, total, kind){
   G.log.unshift({line, kind, t:Date.now()}); G.log = G.log.slice(0, 50);
   const el = $('#diceLast'); if (el){ el.textContent = line; if (!reduceMotion()) el.animate([{transform:'translateX(-6px) rotate(-1deg)', opacity:.3}, {transform:'translateX(3px) rotate(.6deg)', opacity:1, offset:.45}, {transform:'none'}], {duration:420, easing:'ease-out'}); }
   toast('🎲 ' + line, kind);
+  window.Fx?.rollDice?.(takeTrace());   // dadi 3D sopra l'interfaccia (spenti se gli effetti sono spenti)
 }
 function testRoll(label, bonus){
   const c = active(); const r = d20(G.adv);
@@ -4076,7 +4077,7 @@ const ACT = {
   detailId(id){ $('#omniList').hidden = true; showEntry(byId(id)); },
   roll(expr, el){ const r = rollExpr(expr); logRoll(el?.closest('.modal')?.querySelector('h2')?.textContent || expr, `${expr} ${r.parts}`, r.total); },
   die(s){ const ex = num('diceMod'), r = rollExpr(`1d${s}`); const total = r.total + ex;
-    if (+s === 20) return testRoll('d20', ex);
+    if (+s === 20){ takeTrace(); return testRoll('d20', ex); }   // il d20 si tira in testRoll: scarta la traccia di questo tiro di prova
     logRoll('d' + s, r.parts + (ex ? ' ' + fmt(ex) : ''), total); },
   rollExpr(){ const ex = $('#diceExpr').value.trim(); if (!/\d*d\d+/.test(ex)) { toast('Type dice like 2d6+3'); return; } const r = rollExpr(ex); logRoll(ex, r.parts, r.total); },
   adv(v){ G.adv = G.adv === +v ? 0 : +v; save(); syncTray(); },

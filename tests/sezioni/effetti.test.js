@@ -5,7 +5,7 @@ const demo = async (ctx, fx, extra = '') => {
   page.setDefaultTimeout(8000); page.errs = [];
   page.on('pageerror', e => page.errs.push(e.message));
   await page.goto(`${ctx.base}effects/demo.html?fx=${fx}${extra}`);
-  await page.waitForFunction(() => window.__fx && window.__dice);
+  await page.waitForFunction(() => window.__fx);
   return page;
 };
 module.exports = {sezione:'effetti', test:[
@@ -29,11 +29,16 @@ module.exports = {sezione:'effetti', test:[
     await p.waitForFunction(() => !document.documentElement.dataset.fxVt);
     assert.deepStrictEqual(p.errs, []); await p.close();
   }],
-  ['dado 3D: d20 e d6 restituiscono il valore chiesto e valori random nel range', async ctx => {
+  ['dadi 3D: il lancio mostra i valori già tirati, anche d100 e più dadi insieme', async ctx => {
     const p = await demo(ctx, 'full');
-    const r = await p.evaluate(async () => { const d = window.__dice; const a = await d[20].roll(20), b = await d[6].roll(5), c = await d[20].roll(); return [a, b, c, d[20].faces, d[6].faces]; });
-    assert.deepStrictEqual(r.slice(0, 2), [20, 5]); assert.ok(r[2] >= 1 && r[2] <= 20, 'd20 fuori range: ' + r[2]);
-    assert.deepStrictEqual(r.slice(3), [20, 6]); assert.deepStrictEqual(p.errs, []); await p.close();
+    const r = await p.evaluate(async () => { await window.__fx.rollDice([{s:20, v:17}, {s:6, v:4}, {s:10, v:10}, {s:100, v:64}]);
+      return (await import('/effects/dice3d.js')).shown(); });
+    assert.deepStrictEqual(r, [17, 4, 10, 't6', 'u4']); assert.deepStrictEqual(p.errs, []); await p.close();
+  }],
+  ['dadi 3D: con effetti spenti non nasce nessun layer', async ctx => {
+    const p = await demo(ctx, 'off');
+    await p.evaluate(() => window.__fx.rollDice([{s:20, v:5}]));
+    assert.strictEqual(await p.locator('canvas').count(), 0); await p.close();
   }],
   ['misura frame time: restituisce mediana, p95 e frame lenti', async ctx => {
     const p = await demo(ctx, 'reduced');

@@ -1,5 +1,9 @@
 // Tiri di dado puri, senza stato né DOM (usciti da app.js).
 import {clamp} from './util.js';
+// Traccia dei dadi appena tirati: la legge il layer 3D (effects/), che non sceglie nulla e riproduce i valori già tirati.
+const trace = [];
+const note = (s, v) => { trace.push({s, v, t:Date.now()}); if (trace.length > 60) trace.splice(0, 30); };
+export function takeTrace(){ const now = Date.now(), out = trace.filter(x => now - x.t < 4000).slice(0, 12); trace.length = 0; return out; }
 export function rollExpr(expr){
   const src = String(expr).replace(/\s+/g, '').replace(/−/g, '-');
   const terms = src.match(/[+-]?[^+-]+/g) || [];
@@ -10,15 +14,16 @@ export function rollExpr(expr){
     if (m){
       const n = clamp(+m[1] || 1, 1, 100), s = +m[2];
       const rs = Array.from({length:n}, () => 1 + Math.floor(Math.random() * s));
+      rs.forEach(r => note(s, r));
       total += sign * rs.reduce((a, b) => a + b, 0); parts.push((sign < 0 ? '−' : '') + '[' + rs.join('+') + ']');
     } else if (/^\d+$/.test(t)){ total += sign * +t; parts.push((sign < 0 ? '−' : '+') + t); }
   }
   return {total, parts:parts.join(' ').replace(/^\+/, '')};
 }
 export function d20(adv){
-  const a = 1 + Math.floor(Math.random() * 20);
+  const a = 1 + Math.floor(Math.random() * 20); note(20, a);
   if (!adv) return {nat:a, txt:`[${a}]`};
-  const b = 1 + Math.floor(Math.random() * 20);
+  const b = 1 + Math.floor(Math.random() * 20); note(20, b);
   const nat = adv > 0 ? Math.max(a, b) : Math.min(a, b);
   return {nat, txt:`[${a}, ${b}]${adv > 0 ? ' adv' : ' dis'}`};
 }

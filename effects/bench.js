@@ -20,10 +20,10 @@ const VIEWS = [['1440', {viewport:{width:1440, height:900}}, 1], ['390', {viewpo
     // capitoli che cambiano e dado che rotola mentre si misura
     const trans = await p.evaluate(async () => { const m = window.__fx.measure(2500);
       for (let i = 0; i < 4; i++) { await new Promise(r => setTimeout(r, 450)); document.getElementById(i % 2 ? 'ch1' : 'ch2').click(); }
-      document.getElementById('d20').click(); return m; });
+      window.__roll([20]); return m; });
     await p.waitForTimeout(300); await p.screenshot({path:path.join(OUT, `capitolo-${lvl}-${vn}.png`)});
-    await p.evaluate(() => window.__dice[20].roll(20)); await p.waitForTimeout(1500);   // a dado fermo
-    await p.locator('#dice').scrollIntoViewIfNeeded(); await p.screenshot({path:path.join(OUT, `dado-${lvl}-${vn}.png`)});
+    await p.evaluate(() => window.__fx.rollDice([{s:20, v:20}, {s:6, v:3}])); await p.waitForTimeout(400);   // a dadi fermi
+    await p.screenshot({path:path.join(OUT, `dado-${lvl}-${vn}.png`)});
     rows.push({vista:vn, livello:lvl, copertina:cover, transizioniEDado:trans});
     await ctx.close();
   }

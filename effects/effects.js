@@ -87,6 +87,14 @@ function tilt(host){
   host.addEventListener('pointermove', on);
 }
 
+// Dadi 3D a tutto schermo con fisica. list = [{s:20, v:14}, ...] (facce e valore GIÀ tirato dall'app). Spento = niente; ridotto = leggero.
+export function rollDice(list, opts = {}){
+  const lv = level();
+  if (lv === 'off' || !list || !list.length) return Promise.resolve();
+  if (lv === 'reduced' && matchMedia('(prefers-reduced-motion:reduce)').matches) return Promise.resolve();
+  return import('./dice3d.js').then(m => m.rollDice(list, {low:lv === 'reduced', ...opts})).catch(err => { console.warn('dadi 3D non disponibili', err); });
+}
+
 let bound = new WeakSet();
 function bindCover(){
   const host = document.getElementById('coverBk');
@@ -104,4 +112,4 @@ export function init(){
   new MutationObserver(check).observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['hidden']});
   check();
 }
-export default {init, level, suggest, transition, measure};
+export default {init, level, suggest, transition, measure, rollDice};
