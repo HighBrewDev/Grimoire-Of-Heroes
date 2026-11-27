@@ -1,5 +1,8 @@
 # Diario del team
 
+## 2026-11-27 · test
+- **Suite su main ad6f31b**: 419/419, punteggio +419 ↑ (ieri +410). Nessuna sezione rossa: armi-incantesimi torna 6/6 dopo il fix del test di B-057. Più basse: beneficiClasse +3, import5etoolsClassi +4, armi-incantesimi +6 (poche prove, non problemi). Bug aperti: solo B-011 (bassa).
+
 ## 2026-11-26 · sviluppo
 - **Fatto**: B-057 (priorità 1 del piano). Causa: il test `armi-incantesimi` "picker di tiro salvezza…" aspettava solo `/Sphere/` nell'anteprima, ma quel testo compare già prima di riempire il campo testo; l'anteprima è ridisegnata in `requestAnimationFrame`, quindi il test a volte leggeva lo stato intermedio ("No effect text"). L'app è corretta (nessun valore perso dal modulo). Ho reso l'attesa del test più precisa (aspetta anche che "No effect text" sparisca): è una modifica del test annotata qui perché l'app non è sbagliata. `will-change` non toccato.
 - **Test**: prima 415/416 (e il test mirato passava 1 volta su 5); dopo 416/416, test mirato 6/6 ripetuto. Build `ds1126a` (CACHE alzata in sw.js e tag in index.html).

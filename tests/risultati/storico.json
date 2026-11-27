@@ -1050,6 +1050,124 @@
      "tot": 14
     }
    }
+  },
+  "2026-11-27": {
+   "commit": "ad6f31b",
+   "totale": 419,
+   "superati": 419,
+   "totali": 419,
+   "sezioni": {
+    "eroe": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "caratteristiche": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "combattimento": {
+     "punti": 41,
+     "sup": 41,
+     "tot": 41
+    },
+    "incontro": {
+     "punti": 17,
+     "sup": 17,
+     "tot": 17
+    },
+    "tratti": {
+     "punti": 19,
+     "sup": 19,
+     "tot": 19
+    },
+    "incantesimi": {
+     "punti": 24,
+     "sup": 24,
+     "tot": 24
+    },
+    "zaino": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "cronaca": {
+     "punti": 17,
+     "sup": 17,
+     "tot": 17
+    },
+    "biblioteca": {
+     "punti": 16,
+     "sup": 16,
+     "tot": 16
+    },
+    "workshop": {
+     "punti": 34,
+     "sup": 34,
+     "tot": 34
+    },
+    "levelup": {
+     "punti": 26,
+     "sup": 26,
+     "tot": 26
+    },
+    "importexport": {
+     "punti": 21,
+     "sup": 21,
+     "tot": 21
+    },
+    "telefono": {
+     "punti": 23,
+     "sup": 23,
+     "tot": 23
+    },
+    "robustezza": {
+     "punti": 31,
+     "sup": 31,
+     "tot": 31
+    },
+    "armi-incantesimi": {
+     "punti": 6,
+     "sup": 6,
+     "tot": 6
+    },
+    "beneficiClasse": {
+     "punti": 3,
+     "sup": 3,
+     "tot": 3
+    },
+    "equipaggiamento": {
+     "punti": 18,
+     "sup": 18,
+     "tot": 18
+    },
+    "import5etoolsClassi": {
+     "punti": 4,
+     "sup": 4,
+     "tot": 4
+    },
+    "import5etools": {
+     "punti": 13,
+     "sup": 13,
+     "tot": 13
+    },
+    "npc": {
+     "punti": 17,
+     "sup": 17,
+     "tot": 17
+    },
+    "sincronia": {
+     "punti": 12,
+     "sup": 12,
+     "tot": 12
+    },
+    "ticket": {
+     "punti": 14,
+     "sup": 14,
+     "tot": 14
+    }
+   }
   }
  },
  "bugContati": {
