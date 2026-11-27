@@ -21,14 +21,20 @@
   --r:10px;
   --shadow:0 24px 60px rgba(0,0,0,.55);
   --turn:900ms;
+  /* design tokens, the rest: desk glow, page edge, radii, borders, soft shadows (a theme overrides any of these) */
+  --deskGlow:#5a3a22; --deskShade:#0a0503;
+  --pageEdge1:#d9c18d; --pageEdge2:#c9ad72; --pageEdge3:#b89a5f;
+  --r-sm:6px; --r-lg:16px; --bw:1px; --bw-strong:2px;
+  --shadow-sm:0 2px 6px rgba(0,0,0,.28); --shadow-md:0 8px 22px rgba(0,0,0,.38);
+  --fx-grain:1; --fx-stain:1; --fx-motion:1;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{
   color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.45;
   background:
-    radial-gradient(1200px 600px at 50% -10%, #5a3a22 0%, transparent 60%),
-    radial-gradient(900px 500px at 50% 110%, #0a0503 0%, transparent 55%),
+    radial-gradient(1200px 600px at 50% -10%, var(--deskGlow) 0%, transparent 60%),
+    radial-gradient(900px 500px at 50% 110%, var(--deskShade) 0%, transparent 55%),
     linear-gradient(180deg,var(--desk2),var(--desk) 65%);
   background-color:var(--desk);
   min-height:100vh;
@@ -404,8 +410,9 @@ details.fold > .in{padding:0 12px 10px}
   --chip:#d6b447; --chipInk:#1b130a; --chipL:#3a2e1f; --head:#e9c86e;
   --paper:#2c2319; --paperHi:#3a2e20; --field:#15110d; --fieldScheme:dark;
   --surf:rgba(255,235,190,.045); --surfHi:rgba(255,235,190,.07); --surfLo:rgba(255,235,190,.025); --sheen:rgba(255,230,170,.06); --tabOn:#f6e2a0;
+  --pageEdge1:#3a2c1d; --pageEdge2:#2b2116; --pageEdge3:#21190f;
 }
-:root[data-book="night"] .page{box-shadow:inset 0 0 60px rgba(0,0,0,.55), 2px 0 0 #3a2c1d, 4px 1px 0 #2b2116}
+:root[data-book="night"] .page{box-shadow:inset 0 0 60px rgba(0,0,0,.55), 2px 0 0 var(--pageEdge1), 4px 1px 0 var(--pageEdge2)}
 :root[data-book="night"] .dot{color:#1b130a}
 .themeIco .moon{display:none}
 :root[data-book="night"] .themeIco .sun{display:none}
@@ -510,7 +517,7 @@ details.fold > .in{padding:0 12px 10px}
   --grainOp:.5; --stainOp:.75;
 }
 :root[data-book="night"]{ --grainOp:.85; --stainOp:.35 }
-body{background-image:var(--grain),radial-gradient(1200px 600px at 50% -10%, #5a3a22 0%, transparent 60%),radial-gradient(900px 500px at 50% 110%, #0a0503 0%, transparent 55%),linear-gradient(180deg,var(--desk2),var(--desk) 65%)}
+body{background-image:var(--grain),radial-gradient(1200px 600px at 50% -10%, var(--deskGlow) 0%, transparent 60%),radial-gradient(900px 500px at 50% 110%, var(--deskShade) 0%, transparent 55%),linear-gradient(180deg,var(--desk2),var(--desk) 65%)}
 
 /* the page: paper lives on a ragged layer of its own so typing never repaints it */
 .page{background:transparent;isolation:isolate}
@@ -527,8 +534,7 @@ body{background-image:var(--grain),radial-gradient(1200px 600px at 50% -10%, #5a
 .page::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:var(--stainOp);mix-blend-mode:multiply;
   background:var(--ring) no-repeat calc(100% - 6%) 70px / 150px 150px, var(--blotch) 0 0 / 900px 900px, var(--fibre) 0 0 / 520px 520px}
 :root[data-book="night"] .page::after{mix-blend-mode:soft-light}
-.page{box-shadow:2px 0 0 #d9c18d, 4px 1px 0 #c9ad72, 6px 3px 0 #b89a5f}
-:root[data-book="night"] .page{box-shadow:2px 0 0 #3a2c1d, 4px 1px 0 #2b2116, 6px 3px 0 #21190f}
+.page{box-shadow:2px 0 0 var(--pageEdge1), 4px 1px 0 var(--pageEdge2), 6px 3px 0 var(--pageEdge3)}
 
 /* curling strips */
 .strip{position:absolute;transform-origin:0 50%;transform-style:preserve-3d;pointer-events:none;will-change:transform;z-index:6}
@@ -896,3 +902,70 @@ details.fold[open] > .in{animation:unroll .38s var(--soft)}
   .npBox.dmOnly{display:none}
   .npPhoto .fr{box-shadow:none}
 }
+
+
+/* ================================================================== themes (data: only tokens change, never selectors)
+   A theme = one block of custom properties. data-book (day|night) is the tone and drives the few tone-specific rules above;
+   data-theme picks the palette on top of it. Metadata (names, swatches) lives in aspetto.js. Pergamena and Notte are the base :root blocks. */
+:root[data-theme="bosco"]{   /* day tone: sage paper, green leather */
+  color-scheme:dark;
+  --desk:#0d1510; --desk2:#1c2b21; --deskGlow:#35523f; --deskShade:#050a07;
+  --leather:#24402f; --leather2:#142419; --leather3:#3c6048;
+  --gold:#c3b25a; --gold2:#ecdf9a; --gold3:#76702f;
+  --parch:#e9eed6; --parch2:#d6e0bb; --parch3:#bccb98; --parchBack:#dde5c4;
+  --ink:#1c2a1d; --ink2:#3f5240; --ink3:#6b7f67;
+  --rubric:#8a2c1e; --verdigris:#2a6a50; --lapis:#2a5078;
+  --line:rgba(70,100,50,.4);
+  --chip:#1c2a1d; --chipInk:#eef3c8; --chipL:#d9e3b6; --onLeather:#eef3dc; --head:#264a2f;
+  --paper:#f6f9e6; --paperHi:#edf3cf; --field:#fbfdf0;
+  --pageEdge1:#c9d6a4; --pageEdge2:#b7c88b; --pageEdge3:#a3b873;
+}
+:root[data-theme="brace"]{   /* night tone: ember, charcoal and red leather */
+  --desk:#120807; --desk2:#2a100d; --deskGlow:#5c2118; --deskShade:#060202;
+  --leather:#4a1a14; --leather2:#2a0e0b; --leather3:#6d2a1e;
+  --gold:#e0a043; --gold2:#ffd28a; --gold3:#9a6a22;
+  --parch:#1f1715; --parch2:#17100f; --parch3:#0f0a09; --parchBack:#1c1412;
+  --ink:#f1dccb; --ink2:#d0b4a0; --ink3:#a28b7a;
+  --rubric:#ff9a7e; --verdigris:#8fd0b0; --lapis:#9dbcf0;
+  --line:rgba(224,160,67,.34);
+  --chip:#e0a043; --chipInk:#1c0f06; --chipL:#3a2620; --head:#ffbf6e;
+  --paper:#2b1f1b; --paperHi:#3a2a24; --field:#140d0b;
+  --pageEdge1:#3a2018; --pageEdge2:#2b1711; --pageEdge3:#20110c;
+}
+:root[data-theme="marea"]{   /* night tone: deep sea blue, silver ink */
+  --desk:#070d16; --desk2:#101c2e; --deskGlow:#1d3a5e; --deskShade:#02050a;
+  --leather:#16304f; --leather2:#0b1a2e; --leather3:#25507f;
+  --gold:#b9c6d6; --gold2:#e6eef8; --gold3:#6d83a0;
+  --parch:#15202e; --parch2:#0f1822; --parch3:#0a1119; --parchBack:#131d29;
+  --ink:#dfe9f4; --ink2:#b3c4d6; --ink3:#8296ac;
+  --rubric:#ff9d8a; --verdigris:#7fd3b4; --lapis:#8fb8f2;
+  --line:rgba(150,180,215,.32);
+  --chip:#b9c6d6; --chipInk:#0c1622; --chipL:#22324a; --head:#cfe0f5;
+  --paper:#1d2b3d; --paperHi:#27384e; --field:#0c141d;
+  --pageEdge1:#1f2e43; --pageEdge2:#16222f; --pageEdge3:#0f1823;
+}
+
+/* ================================================================== effects switch (html[data-effects] = full | reduced | off)
+   full: as designed. reduced: texture layers fainter, motion shortened, no endless loops. off: flat paper, no motion at all.
+   Other effects (cover, transitions, dice) hook into this selector and must also respect prefers-reduced-motion. */
+:root[data-effects="reduced"]{ --grainOp:.3; --stainOp:.3; --turn:450ms; --fx-grain:.4; --fx-stain:.4; --fx-motion:.5 }
+:root[data-effects="reduced"] *,:root[data-effects="reduced"] *::before,:root[data-effects="reduced"] *::after{animation-iteration-count:1!important}
+:root[data-effects="off"]{ --grainOp:0; --stainOp:0; --turn:1ms; --fx-grain:0; --fx-stain:0; --fx-motion:0 }
+:root[data-effects="off"] *,:root[data-effects="off"] *::before,:root[data-effects="off"] *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+:root[data-effects="off"] .page::after,:root[data-effects="off"] .btn::after,:root[data-effects="off"] .tab::after,:root[data-effects="off"] .hero::after,:root[data-effects="off"] .dbtn::after,:root[data-effects="off"] .cover::after{display:none}
+
+/* ================================================================== Aspetto (appearance screen) */
+.aspetto h2{margin:0}
+.aspetto .sub{margin:.2em 0 .6em;color:var(--ink2)}
+.aspetto fieldset{border:var(--bw) solid var(--line);border-radius:var(--r);margin:0 0 14px;padding:10px 12px 12px}
+.aspetto legend{font-family:var(--f-display);padding:0 6px;color:var(--head)}
+.themeGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.themeOpt{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;border:var(--bw-strong) solid var(--line);border-radius:var(--r);padding:9px;background:var(--surf);color:var(--ink);cursor:pointer;font-size:14px}
+.themeOpt[aria-checked="true"]{border-color:var(--gold3);box-shadow:0 0 0 2px var(--gold3)}
+.themeOpt b{font-family:var(--f-display);font-size:15px}
+.themeOpt small{color:var(--ink2);line-height:1.25}
+.themeSw{display:flex;height:34px;border-radius:var(--r-sm);overflow:hidden;border:var(--bw) solid rgba(0,0,0,.35)}
+.themeSw i{flex:1}
+.fxOpts{display:flex;flex-wrap:wrap;gap:8px}
+.fxOpts .themeOpt{flex:1 1 140px}
+@media (max-width:520px){ .themeGrid{grid-template-columns:1fr 1fr} }
