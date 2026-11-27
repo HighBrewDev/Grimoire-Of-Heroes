@@ -1,0 +1,43 @@
+/* Grimoire of Heroes · livello effetti. Tutto condizionato a html[data-effects]: "off" non cambia nulla. */
+
+/* copertina: luccichio sul titolo (ridotto e pieno), braci + inclinazione (pieno) */
+:root[data-effects="reduced"] .cover h1, :root[data-effects="full"] .cover h1{
+  background:linear-gradient(100deg,var(--gold2) 40%,#fff6d6 50%,var(--gold2) 60%) 0 0/250% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;
+  filter:drop-shadow(0 3px 0 #000);animation:fxShine 5.5s ease-in-out 1s infinite}
+@keyframes fxShine{0%,55%{background-position:100% 0}100%{background-position:-60% 0}}
+.fxEmbers{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.coverBk .cover{position:relative;z-index:1}
+:root[data-effects="full"] .coverBk:not(.opening) .cover{
+  transform:perspective(1400px) rotateY(var(--fxRy,0deg)) rotateX(var(--fxRx,0deg));transition:transform .25s ease-out;will-change:transform}
+:root[data-effects="full"] .cover .seal{animation:fxPulse 3.6s ease-in-out infinite}
+@keyframes fxPulse{50%{filter:drop-shadow(0 0 10px rgba(255,200,110,.7))}}
+
+/* transizioni fra capitoli (View Transitions): ridotto = dissolvenza breve, pieno = pagina che si gira */
+:root[data-fx-vt] #page{view-transition-name:fxpage}
+::view-transition-group(fxpage){animation-duration:.45s}
+:root[data-effects="reduced"]::view-transition-old(fxpage){animation:fxOut .18s ease both}
+:root[data-effects="reduced"]::view-transition-new(fxpage){animation:fxIn .22s ease both}
+:root[data-effects="full"]::view-transition-old(fxpage){animation:fxTurn .42s cubic-bezier(.5,0,.8,.4) both;transform-origin:0 50%}
+:root[data-effects="full"]::view-transition-new(fxpage){animation:fxRiseIn .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fxOut{to{opacity:0}} @keyframes fxIn{from{opacity:0}}
+@keyframes fxTurn{to{transform:perspective(1800px) rotateY(-70deg);opacity:0}}
+@keyframes fxRiseIn{from{opacity:0;transform:translateY(14px) scale(.985)}}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+
+/* scorrimento: le carte si alzano entrando (CSS scroll-driven, nessun JS) */
+@supports (animation-timeline:view()){
+  :root[data-effects="full"] #page .card{animation:fxCard linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
+}
+@keyframes fxCard{from{opacity:.35;transform:translateY(16px)}}
+
+/* dado 3D */
+.fxDieWrap{display:inline-block;width:var(--s,120px);height:var(--s,120px);margin:28px;perspective:700px;position:relative}
+.fxDie{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.fxFace{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;backface-visibility:hidden;
+  background:linear-gradient(145deg,#c4472f,#8c2616);color:var(--gold2,#f0d58c);font:700 26px/1 var(--f-display,serif);
+  box-shadow:inset 0 0 0 2px rgba(240,213,140,.55);border-radius:3px}
+.fxFace.tri{clip-path:polygon(50% 0,100% 100%,0 100%);border-radius:0;padding-top:30%;font-size:20px;
+  background:linear-gradient(160deg,#cf4f35,#85230f)}
+.fxDie.d20 .fxFace:nth-child(3n){filter:brightness(1.18)} .fxDie.d20 .fxFace:nth-child(3n+1){filter:brightness(.9)}
+@media (prefers-reduced-motion:reduce){ .fxEmbers{display:none} }
