@@ -9,7 +9,7 @@ Niente nuove feature finché Capo non le riapre. Compiti piccoli, suite verde a 
 
 ## Stato dell'app
 - Main `1b2afed` (live = main). Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, zero errori di pagina o console. Niente di rotto.
-- Punteggio **+419, tendenza ↑** (ieri +410). Test **419/419**. Nessuna sezione rossa; B-057 chiuso (era timing del test). Unico bug aperto: B-011 (bassa, decisione di Capo). Nessuna PR aperta.
+- Punteggio **+419, tendenza ↑** (ieri +410). Test **419/419**. Nessuna sezione rossa; B-057 chiuso (era timing del test). Nessun bug aperto (B-011 chiuso: l'app resta gratis, decisione di Capo). Nessuna PR aperta.
 - `index.html` è ancora un file unico (6738 righe): il refactoring vero non è partito, è il debito principale.
 
 ## Allocazione per sezione
@@ -34,7 +34,6 @@ Zone di index.html: **Sviluppo** lavora su misura e CSS; **Designer** non tocca 
 5. Codice morto, nomi doppi, avvisi in console.
 6. Selettori dei test più robusti (fold chiuse, attese a tempo fisso).
 7. Più test per beneficiClasse e armi-incantesimi (le sezioni con meno copertura).
-8. B-011: import homebrew e `FREE_BREW` (paywall spento; decide Capo).
 9. Prova di login e sync reali con Supabase (serve rete e il via di Capo).
 10. Rifinitura dei flussi npc e ticket.
 11. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile). Fermo finché non finisce il refactoring o Capo lo chiede.
@@ -49,4 +48,4 @@ Zone di index.html: **Sviluppo** lavora su misura e CSS; **Designer** non tocca 
 - Nessuna PR aperta al momento.
 - **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok; il progetto potrebbe doversi ripristinare da te.
 - Migrazioni in `supabase/migrations/`: se non le hai eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
-- Decisione facoltativa: B-011 e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.
+- Decisione facoltativa: apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.

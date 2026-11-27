@@ -1,5 +1,8 @@
 # Diario del team
 
+## 2026-11-27 · team leader (aggiunta)
+- Capo ha deciso: app tutta gratuita. B-011 chiuso come non applicabile (docs/bug-beta.md, piano aggiornato). Il codice del paywall (`FREE_BREW`, `plusOK()`) resta spento, nessuna rimozione. Sala non aggiornata: B-011 è da togliere dai bug aperti della pagina alla prossima occasione.
+
 ## 2026-11-27 · team leader
 - **Stato**: main 1b2afed, Chromium 1440x900 e 390x844 senza errori e senza overflow. Punteggio +419 ↑ (419/419), nessuna sezione rossa, nessuna PR aperta. B-057 già in Risolti, solo B-011 aperto (bassa). Registro coerente.
 - **Piano**: sviluppo su misura lag e CSS in `style.css` (PR), designer (venerdì) su bordo precalcolato e footer (PR), distruttore su level up e import/export. Tour guidato fermo. Sala non aggiornata (nessuno stato di bug, PR o compito è cambiato oltre al segnale).

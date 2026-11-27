@@ -5,14 +5,6 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 
 ## Aperti
 
-### B-011 [bassa · da verificare] L'import homebrew ignora il limite di 3 elementi gratuiti
-- Trovato da: distruttore · 2026-11-06
-- Dove: X Workshop → Import file
-- Passi: 1. Con il paywall attivo (oggi è spento in beta, `plusOK()` è vero), importa un file con 50 talenti homebrew.
-- Atteso: lo stesso limite di `FREE_BREW = 3` che vale per "Save" nel modulo.
-- Ottenuto (dal codice): `brewImport` (index.html:2092) non chiama `plusOK()`, quindi l'import aggiunge tutte le voci. Verificato solo che l'import di 50 voci riesce con il paywall spento. Da decidere se è voluto.
-- Console: nessun errore.
-
 <!-- Modello:
 ### [gravità] Titolo breve
 - Trovato da: distruttore | power user · data
@@ -23,6 +15,17 @@ Quando lo sviluppo lo corregge, sposta la voce in "Risolti" con il commit.
 -->
 
 ## Risolti
+
+### B-011 [bassa · chiuso: non applicabile] L'import homebrew ignora il limite di 3 elementi gratuiti
+- Trovato da: distruttore · 2026-11-06
+- Dove: X Workshop → Import file
+- Passi: 1. Con il paywall attivo (oggi è spento in beta, `plusOK()` è vero), importa un file con 50 talenti homebrew.
+- Atteso: lo stesso limite di `FREE_BREW = 3` che vale per "Save" nel modulo.
+- Ottenuto (dal codice): `brewImport` (index.html:2092) non chiama `plusOK()`, quindi l'import aggiunge tutte le voci. Verificato solo che l'import di 50 voci riesce con il paywall spento. Da decidere se è voluto.
+- Console: nessun errore.
+
+- Chiuso 2026-11-27 · team leader su decisione di Capo: l'app resta tutta gratuita, nessun limite sull'import. Nessun commit di codice.
+
 
 ### B-057 [bassa] Incantesimo homebrew: il test dell'anteprima falliva a intermittenza ("No effect text")
 - Risolto 2026-11-26 · sviluppo · commit su main. Non era un bug dell'app: l'anteprima si aggiorna con un `requestAnimationFrame` dopo l'ultimo campo e il risultato finale è corretto (verificato: 1,5 s dopo, testo, picker e riga di regole sono tutti presenti). Il test aspettava solo `/Sphere/`, già vero dopo i picker e prima del campo testo, quindi leggeva un'anteprima intermedia. Ora aspetta anche l'assenza di "No effect text" (stesso controllo, attesa più precisa). Prima 1 verde su 5 ripetizioni, dopo 6 su 6. `will-change` non toccato.
