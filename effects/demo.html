@@ -17,11 +17,10 @@
 <div class="bar">
   <label>Effetti <select id="lvl"><option value="off">spenti</option><option value="reduced">ridotti</option><option value="full">pieni</option></select></label>
   <button id="cover">Copertina</button><button id="ch1">Capitolo A</button><button id="ch2">Capitolo B</button>
-  <button id="d6">Lancia d6</button><button id="d20">Lancia d20</button><button id="meas">Misura frame time</button>
+  <button data-d="20">d20</button><button data-d="6">d6</button><button data-d="4,6,8,10,12,20">tutti</button><button data-d="100">d100</button><button data-d="20,20">vantaggio</button><button id="meas">Misura frame time</button>
 </div>
 <pre id="stat"></pre>
 <div id="page"></div>
-<div class="dice" id="dice"></div>
 
 <div class="coverBk" id="coverBk" hidden>
   <div class="cover">
@@ -35,7 +34,6 @@
 </div>
 <script type="module">
 import Fx from './effects.js';
-import {createDie} from './dice3d.js';
 const $ = s => document.querySelector(s), q = new URLSearchParams(location.search);
 const set = v => { document.documentElement.dataset.effects = v; $('#lvl').value = v; };
 set(q.get('fx') || Fx.suggest());
@@ -47,10 +45,11 @@ show('A');
 $('#ch1').onclick = () => show('A'); $('#ch2').onclick = () => show('B');
 $('#cover').onclick = () => { $('#coverBk').hidden = false; };
 $('#enter').onclick = () => { $('#coverBk').classList.add('opening'); setTimeout(() => { $('#coverBk').hidden = true; $('#coverBk').classList.remove('opening'); }, 1300); };
-const dice = {6:await createDie($('#dice'), {sides:6}), 20:await createDie($('#dice'), {sides:20, size:180})};
-for (const s of [6, 20]) $('#d' + s).onclick = async () => { $('#stat').textContent = 'd' + s + ' → ' + await dice[s].roll(); };
+const roll = list => { const L = list.map(s => ({s, v:1 + Math.floor(Math.random() * s)})); $('#stat').textContent = L.map(x => 'd' + x.s + '=' + x.v).join('  '); return Fx.rollDice(L); };
+document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => roll(b.dataset.d.split(',').map(Number)));
+window.__roll = roll;
 $('#meas').onclick = async () => { $('#stat').textContent = 'misuro 2 s…'; const r = await Fx.measure(2000); $('#stat').textContent = JSON.stringify(r); };
-window.__fx = Fx; window.__dice = dice;
+window.__fx = Fx;
 if (q.get('cover')) $('#coverBk').hidden = false;
 </script>
 </body></html>
