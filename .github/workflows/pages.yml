@@ -1,0 +1,61 @@
+# Build di Vite + pubblicazione su GitHub Pages.
+# - Ogni push sul branch di porting e ogni PR: typecheck + build, e il sito costruito resta scaricabile come
+#   artefatto "sito-<commit>" (anteprima: scarichi, scompatti, apri index.html da un server locale o usa "HTML singolo").
+# - Pubblicazione su Pages (job "deploy"): solo da main E solo se la variabile del repository PAGES_ACTIONS vale "true".
+#   Finché Capo non la imposta (e non cambia Settings > Pages > Source in "GitHub Actions") il job non gira mai,
+#   e Pages continua a servire main com'è oggi.
+name: Build e Pages
+
+on:
+  push:
+    branches: [main, claude/project-thread-8zl98g]
+  pull_request:
+    branches: [main, claude/project-thread-8zl98g]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build:single
+      - name: Il sito costruito è completo
+        run: test -f dist/index.html && test -f dist/sw.js && test -f dist/style.css && test -f dist-single/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sito-${{ github.sha }}
+          path: |
+            dist
+            dist-single
+          retention-days: 14
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && vars.PAGES_ACTIONS == 'true'
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && vars.PAGES_ACTIONS == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
