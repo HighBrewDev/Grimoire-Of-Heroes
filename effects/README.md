@@ -8,7 +8,7 @@ Modulo isolato, senza dipendenze e senza build: non conosce la logica dell'app e
 | `effects.js` | `init()` (braci e inclinazione sulla copertina `#coverBk`), `transition(fn)` (View Transitions), `measure(ms)` (frame time), `suggest()` (livello iniziale: telefono debole = `off`) |
 | `effects.css` | luccichio titolo, pagina che si gira fra capitoli, carte che entrano scorrendo (CSS scroll-driven), stile dado |
 | `dice3d.js` | `await createDie(host, {sides:6\|20})` → `{roll(valore?), el, destroy}`: dado WebGL con Three.js, caricato solo alla prima creazione (import dinamico) |
-| `vendor/` | Three.js 0.160.1 (MIT) in locale, funziona offline; `window.__THREE_URL__` permette di cambiare percorso (HTML singolo) |
+| `vendor/` | Three.js 0.160.1 (MIT) in locale, funziona offline; se `window.THREE` esiste già (HTML singolo) viene usato quello |
 | `demo.html` | pagina di prova con interruttore, capitoli finti, dadi e pulsante "Misura frame time" (da usare sul telefono) |
 | `bench.js` | `node effects/bench.js [cartella]`: misura e screenshot per livello (1440 e 390 con CPU 4x lenta) |
 

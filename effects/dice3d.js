@@ -2,7 +2,8 @@
 // Non conosce l'app: roll(valore?) mostra il valore chiesto (o ne sceglie uno) e lo restituisce; chi lo usa decide cosa farne.
 // I numeri del d20 hanno opposti che sommano 21 (come i dadi veri); la disposizione completa non è quella dei dadi commerciali.
 let T = null;
-const load = () => T || (T = import(window.__THREE_URL__ || './vendor/three.module.min.js'));
+// window.THREE già presente (pagina singola autonoma) oppure import dinamico del modulo locale
+const load = () => window.THREE ? Promise.resolve(window.THREE) : T || (T = import('./vendor/three.module.min.js'));
 
 function atlas(THREE, n, cols, cw, ch, draw){
   const rows = Math.ceil(n / cols), cv = document.createElement('canvas'); cv.width = cols * cw; cv.height = rows * ch;
