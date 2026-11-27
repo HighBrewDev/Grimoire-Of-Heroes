@@ -16,6 +16,7 @@
 <meta name="description" content="Interactive character tome for fifth edition (2024) tabletop rules, with the SRD 5.2.1 built in. Works offline.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="style.css">
+<script src="aspetto.js"></script>
 <script src="config.js"></script>
 </head>
 <body>
@@ -40,6 +41,9 @@
       <button type="button" class="iconBtn themeIco" id="themeBtn" data-act="theme" aria-pressed="false" aria-label="Night pages" title="Night pages">
         <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
         <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.8A8 8 0 019.2 4.5a8 8 0 1010.3 10.3z"/></svg>
+      </button>
+      <button type="button" class="iconBtn" id="aspettoBtn" data-act="aspetto" aria-label="Appearance" title="Appearance: theme and effects">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.4 0 2-.9 2-1.8 0-1.2-1-1.6-1-2.7 0-1 .8-1.6 1.8-1.6H17a4 4 0 004-4c0-4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10" cy="7.2" r="1.1"/><circle cx="14.5" cy="7.2" r="1.1"/></svg>
       </button>
       <button type="button" class="btn ghost" data-act="wizard">＋ New hero</button>
       <button type="button" class="btn ghost" data-act="go" data-arg="library">Library</button>
@@ -124,7 +128,7 @@ const uid = () => 'c' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const norm = s => String(s || '').toLowerCase().replace(/[’‘]/g, "'").replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
 const title = s => String(s).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.effects === 'off';
 const act = (name, arg, label, cls = 'sb', extra = '') =>
   `<button type="button" class="${cls}" data-act="${name}"${arg !== undefined ? ` data-arg="${esc(arg)}"` : ''} ${extra}>${label}</button>`;
 const xref = (name, label) => `<button type="button" class="xref" data-act="detail" data-arg="${esc(name)}">${esc(label || name)}</button>`;
@@ -4163,7 +4167,7 @@ function printSheet(){
 }
 
 /* ================================================================== theme */
-function applyTheme(){ document.documentElement.dataset.book = G.theme === 'night' ? 'night' : 'day'; const b = $('#themeBtn'); if (b){ b.setAttribute('aria-pressed', String(G.theme === 'night')); b.title = G.theme === 'night' ? 'Parchment pages' : 'Night pages'; } }
+function applyTheme(){ document.documentElement.dataset.book = G.theme === 'night' ? 'night' : 'day'; const b = $('#themeBtn'); if (b){ b.setAttribute('aria-pressed', String(G.theme === 'night')); b.title = G.theme === 'night' ? 'Parchment pages' : 'Night pages'; } window.Aspetto?.sync(G.theme === 'night' ? 'night' : 'day'); }
 
 /* ================================================================== cover */
 function fillCover(){
@@ -4182,6 +4186,7 @@ const ACT_EXTRA = {
   luRoll(){ const c = active(), r = rollExpr('1d' + hdSize(asClass(c, luTarget(c)))); G.lu.roll = r.total; $('#luRolled').textContent = `rolled ${r.total}`; const rb = $('input[name="lu_hp"][value="roll"]'); if (rb) rb.checked = true; },
   luApply(){ applyLevelUp(); },
   print(){ if (!plusOK()) return plusModal('pdf'); printSheet(); },
+  aspetto(){ window.Aspetto?.open(); },
   theme(){ if (G.theme !== 'night' && !plusOK()) return plusModal('themes'); G.theme = G.theme === 'night' ? 'day' : 'night'; save(); applyTheme(); },
   encAddHero(id){ if (G.enc.list.some(r => r.hero === id)){ G.enc.list = G.enc.list.filter(r => r.hero !== id); } else { const h = G.chars.find(c => c.id === id); G.enc.list.push({id:uid(), hero:id, init:null, dex:mod(h.abilities.dex)}); } saveEnc(); renderPage(); },
   encAddMon(){ const n = $('#enc_m').value.trim(), e = find(n, 'monsters'); if (!e){ toast('Pick a creature from the list.'); return; }
@@ -5133,7 +5138,7 @@ Object.assign(ACT, ACT_TICKETS);
 
 /* ---- read-only heroes: party members' sheets can be read and rolled, never changed ---- */
 const READ_SAFE = new Set(['spellF','spellBrowse','spellMore','pick','go','prev','next','close','detail','detailId','roll','die','rollExpr','adv','log','sound','rollAb','rollSave','rollSkill','rollInit','rollSpellAtk','attack','gearAttack',
-  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','retrySave',
+  'readItem','invCat','addTab','libCat','libPick','importUrl','delPack','wizard','doWizard','duplicate','export','exportAll','copyExport','downloadChar','import','doImport','enter','print','theme','aspetto','retrySave',
   ...Object.keys(ACT_CLOUD)]);
 const blockedFor = (name) => { const c = active(); return c && !isMine(c) && !READ_SAFE.has(name) && !/^(enc|brew|np[A-Z]|tk[A-Z]|ticket$)/.test(name) && !$('#modalBk .acct'); };
 function roBanner(c){
@@ -5827,6 +5832,7 @@ async function boot(){
   await loadPacks();
   buildIndex();
   if (!CHAPTERS.some(c => c.id === G.chapter)) G.chapter = 'hero';
+  window.Aspetto?.attach({modal, closeBtn, plusOK, plusModal, setTone:t => { G.theme = t; save(); applyTheme(); }});
   applyTheme(); wire(); npWire(); render(); syncTray(); cloudBoot(); damagedWarn();
   if (!G.showCover && G.coverOnStart === false){ $('#coverBk')?.remove(); welcome(); }
   else { fillCover(); $('#coverBk').hidden = false; }
