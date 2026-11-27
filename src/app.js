@@ -1,6 +1,7 @@
 import {$, $$, esc, mod, fmt, profFor, uid, clamp, norm, title, reduceMotion, act, xref} from './util.js';
 import {ABIL, ABIL_ID, PORTRAITS, ALIGN, XP_TABLE, SPELL_AB, ICON_BOOK} from './costanti.js';
 import {rollExpr, d20, takeTrace} from './dadi.js';
+import {curlLeaf} from './curl.js';
 
 /* Grimoire of Heroes — app logic (fifth edition, 2024 rules) */
 (function(){
@@ -798,56 +799,7 @@ function visibleBand(page, H = page.offsetHeight){
   const r = page.getBoundingClientRect(), top = clamp(-r.top, 0, H - 1);
   return {top, h:clamp(innerHeight - r.top, top + 1, H) - top};
 }
-// A turning page is cut into vertical strips laid edge to edge in the x–z plane, so the sheet can bend.
-// Each frame the spine angle and a curl term are integrated along the strips: the free edge leads while the
-// page lifts, trails as it falls, and the whole sheet lands flat.
-const smooth = t => t * t * t * (t * (t * 6 - 15) + 10);
-const curlAt = (t, K) => -K * Math.sin(2 * Math.PI * t) * (1 - .35 * t) - K * .45 * Math.sin(Math.PI * t);
-function curlLeaf(book, geo, content, {strips, delay = 0, dur = 1000, back = false, curl = 64, order = 0} = {}){
-  const {top, left, w, h} = geo, sw = w / strips, els = [], segs = [];
-  const put = (el, k, v) => { if (el['_' + k] !== v){ el['_' + k] = v; el.style[k] = v; } };
-  for (let i = 0; i < strips; i++){
-    const s = document.createElement('div'); s.className = 'strip';
-    s.style.cssText = `top:${top}px;left:${left}px;width:${Math.ceil(sw) + 1}px;height:${h}px`;
-    const f = document.createElement('div'); f.className = 'face front';
-    if (content){ const c = i ? content.cloneNode(true) : content; c.style.width = w + 'px'; c.style.marginLeft = (-i * sw) + 'px'; f.appendChild(c); }
-    else f.classList.add('blank');
-    const shF = document.createElement('div'); shF.className = 'shade'; f.appendChild(shF);
-    const b = document.createElement('div'); b.className = 'face back';
-    b.style.backgroundPosition = `${-(strips - 1 - i) * sw}px 0`; b.style.backgroundSize = `${w}px ${h}px`;
-    const shB = document.createElement('div'); shB.className = 'shade'; b.appendChild(shB);
-    s.append(f, b); book.appendChild(s); els.push(s); segs.push({s, f, b, shF, shB});
-  }
-  const wts = segs.map((_, i) => i ? Math.pow(i / (strips - 1), 1.35) - Math.pow((i - 1) / (strips - 1), 1.35) : 0);
-  let raf = 0, t0 = 0, done, cancelled = false;
-  const finished = new Promise(r => done = r);
-  const frame = now => {
-    if (cancelled) return;
-    if (!t0) t0 = now;
-    let t = clamp((now - t0 - delay) / dur, 0, 1);
-    const p = back ? 1 - t : t, e = smooth(p), c = curlAt(p, curl);
-    // a leaf lying flat on the left (forward, landed) or not yet lifted from it (backward) is out of sight;
-    // while it flies, the stacking follows the side it is on, so earlier and later sheets never cross wrongly
-    const hidden = back ? t <= 0 : t >= 1, right = e < .5;
-    const zi = String(20 + (right === !back ? -order : order));
-    let A = -180 * e, x = 0, z = 0;
-    for (let i = 0; i < strips; i++){
-      if (i){ const pa = A * Math.PI / 180; x += sw * Math.cos(pa); z += -sw * Math.sin(pa); A += c * wts[i]; }
-      A = Math.max(-180, Math.min(0, A));
-      const g = segs[i], ar = -A * Math.PI / 180;
-      put(g.s, 'visibility', hidden ? 'hidden' : 'visible'); put(g.s, 'zIndex', zi);
-      g.s.style.transform = `translate3d(${x.toFixed(1)}px,0,${(z + .5).toFixed(1)}px) rotateY(${A.toFixed(2)}deg)`;
-      // there is no left-hand page in this book: a sheet fades as it sinks towards the left, so it never lies over the tabs
-      const lit = Math.sin(ar), fade = clamp((A + 172) / 60, 0, 1).toFixed(3);
-      put(g.f, 'opacity', fade); put(g.b, 'opacity', fade);
-      put(g.shF, 'opacity', (A > -90 ? lit * .62 : 1).toFixed(2));
-      put(g.shB, 'opacity', (A < -90 ? lit * .45 : 1).toFixed(2));
-    }
-    if (t < 1) raf = requestAnimationFrame(frame); else done();
-  };
-  raf = requestAnimationFrame(frame);
-  return {els, finished, cancel(){ cancelled = true; cancelAnimationFrame(raf); done(); }};
-}
+// The turning leaf (strips, baked keyframes on the compositor) lives in curl.js.
 function turnTo(id){
   if (id === G.chapter){ return; }
   finishTurn();
