@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="it" data-effects="off">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grimoire · prova effetti</title>
+<link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="effects.css">
+<style>
+ .coverBk[hidden]{display:none}
+ body{margin:0;padding:12px;min-height:100vh}
+ .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+ .bar button,.bar select{min-height:44px;padding:0 12px;font:inherit}
+ #stat{font:13px/1.3 monospace;white-space:pre-wrap}
+ .dice{display:flex;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<div class="bar">
+  <label>Effetti <select id="lvl"><option value="off">spenti</option><option value="reduced">ridotti</option><option value="full">pieni</option></select></label>
+  <button id="cover">Copertina</button><button id="ch1">Capitolo A</button><button id="ch2">Capitolo B</button>
+  <button id="d6">Lancia d6</button><button id="d20">Lancia d20</button><button id="meas">Misura frame time</button>
+</div>
+<pre id="stat"></pre>
+<div id="page"></div>
+<div class="dice" id="dice"></div>
+
+<div class="coverBk" id="coverBk" hidden>
+  <div class="cover">
+    <div class="eyebrow">✦ FIFTH EDITION · 2024 ✦</div>
+    <h1>Grimoire<br>of Heroes</h1>
+    <div class="seal"></div>
+    <p><i>An interactive character tome for fifth edition fantasy roleplaying (2024 rules).</i></p>
+    <p class="stats">3 sample heroes · 339 spells · 341 creatures</p>
+    <button type="button" class="btn" id="enter" style="font-size:18px;padding:12px 26px;margin-top:8px">Open the Grimoire</button>
+  </div>
+</div>
+<script type="module">
+import Fx from './effects.js';
+import {createDie} from './dice3d.js';
+const $ = s => document.querySelector(s), q = new URLSearchParams(location.search);
+const set = v => { document.documentElement.dataset.effects = v; $('#lvl').value = v; };
+set(q.get('fx') || Fx.suggest());
+$('#lvl').onchange = e => set(e.target.value);
+Fx.init();
+const mk = n => Array.from({length:12}, (_, i) => `<div class="card"><h3>${n} · scheda ${i + 1}</h3><p>Testo di prova per vedere le carte che entrano scorrendo.</p></div>`).join('');
+const show = c => Fx.transition(() => { $('#page').innerHTML = `<h2>Capitolo ${c}</h2>` + mk(c); });
+show('A');
+$('#ch1').onclick = () => show('A'); $('#ch2').onclick = () => show('B');
+$('#cover').onclick = () => { $('#coverBk').hidden = false; };
+$('#enter').onclick = () => { $('#coverBk').classList.add('opening'); setTimeout(() => { $('#coverBk').hidden = true; $('#coverBk').classList.remove('opening'); }, 1300); };
+const dice = {6:createDie($('#dice'), {sides:6}), 20:createDie($('#dice'), {sides:20, size:150})};
+for (const s of [6, 20]) $('#d' + s).onclick = async () => { $('#stat').textContent = 'd' + s + ' → ' + await dice[s].roll(); };
+$('#meas').onclick = async () => { $('#stat').textContent = 'misuro 2 s…'; const r = await Fx.measure(2000); $('#stat').textContent = JSON.stringify(r); };
+window.__fx = Fx; window.__dice = dice;
+if (q.get('cover')) $('#coverBk').hidden = false;
+</script>
+</body></html>
