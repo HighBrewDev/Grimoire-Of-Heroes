@@ -48,4 +48,14 @@ module.exports = {sezione:'aspetto', test:[
     await app.click('aspetto'); await app.page.click('[data-aspetto-theme="marea"]');
     assert.strictEqual(JSON.stringify((await app.store()).chars.map(c => c.id + c.name)), a);
   }],
+  ['Aspetto: linguette, scaffale e vassoio dadi seguono il tema', async ({open}) => {
+    const app = await open();
+    const look = () => app.page.evaluate(() => [['.tab', 'backgroundImage'], ['.shelf', 'backgroundImage'], ['.tray', 'backgroundImage'], ['.dbtn', 'backgroundColor']]
+      .map(([q, p]) => getComputedStyle(document.querySelector(q))[p]).join('|'));
+    const base = await look();
+    await app.click('aspetto'); await app.page.click('[data-aspetto-theme="marea"]');
+    await app.page.waitForTimeout(300); const tide = await look();
+    assert.notStrictEqual(tide, base);
+    for (const [a, b] of base.split('|').map((x, i) => [x, tide.split('|')[i]])) assert.notStrictEqual(a, b);
+  }],
 ]};
