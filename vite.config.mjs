@@ -6,9 +6,12 @@ import {cpSync, existsSync, readdirSync} from 'node:fs';
 
 // Tutti i file classici nella radice (srd.js, config.js, style.css, sw.js, aspetto.js, effetti.js, legal.html...)
 // entrano nella build senza elencarli; index.html lo gestisce Vite. Le cartelle statiche sono elencate.
+const NON_SITO = new Set(['node_modules', 'dist', 'dist-single', 'docs', 'tests', 'scripts', 'src', 'supabase']);
 const statici = () => [
   ...readdirSync('.').filter(f => f !== 'index.html' && /\.(js|css|html|webmanifest)$/.test(f)),
-  'icons', '.nojekyll',
+  '.nojekyll',
+  // cartelle del sito (icons, effects...): tutte tranne quelle di sviluppo
+  ...readdirSync('.', {withFileTypes: true}).filter(d => d.isDirectory() && !NON_SITO.has(d.name) && !d.name.startsWith('.')).map(d => d.name),
 ];
 
 const salvati = [];
