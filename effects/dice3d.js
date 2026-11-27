@@ -36,6 +36,10 @@ function facing(f){
   return mul(Z, R);
 }
 
+function randRot(){
+  const ax = norm([Math.random() - .5, Math.random() - .5, Math.random() - .5]), t = Math.random() * 2.4 + .6, c = Math.cos(t), s = Math.sin(t), k = 1 - c, [x, y, w] = ax;
+  return [[c + x * x * k, x * y * k - w * s, x * w * k + y * s], [y * x * k + w * s, c + y * y * k, y * w * k - x * s], [w * x * k - y * s, w * y * k + x * s, c + w * w * k]];
+}
 export function createDie(host, {sides = 20, size = 120} = {}){
   const faces = sides === 6 ? cube() : icosa(), edge = sides === 6 ? size * .72 : size * .66;
   const scale = edge, wrap = document.createElement('div'), die = document.createElement('div');
@@ -56,8 +60,10 @@ export function createDie(host, {sides = 20, size = 120} = {}){
     if (rolling) return Promise.resolve(null);
     const f = value ? faces.find(x => x.value === value) : faces[Math.floor(Math.random() * faces.length)];
     rolling = true; const end = to(f);
-    const a = [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1].join(','), still = matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const spin = die.animate([{transform:cur}, {transform:`rotate3d(${a},${540 + Math.random() * 360}deg)`, offset:.6}, {transform:end}],
+    const still = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    // il capitombolo passa per rotazioni casuali (tutte matrix3d: così l'interpolazione resta una rotazione pura)
+    const mids = [.25, .5, .75].map(o => ({transform:css(randRot()), offset:o}));
+    const spin = die.animate([{transform:cur}, ...mids, {transform:end}],
       {duration:still ? 1 : 1150, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards'});
     wrap.animate([{transform:'translateY(0)'}, {transform:`translateY(${-size * .55}px)`, offset:.35}, {transform:'translateY(0)', offset:.7}, {transform:`translateY(${-size * .12}px)`, offset:.85}, {transform:'translateY(0)'}],
       {duration:still ? 1 : 1150, easing:'ease-out'});
