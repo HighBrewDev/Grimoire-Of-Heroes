@@ -1,5 +1,10 @@
 # Diario del team
 
+## 2026-11-27 · sviluppo (capocantiere del porting, branch claude/project-thread-8zl98g)
+- **Fatto**: CSS in `style.css` (PR #54, già in main); SRD in `srd.js`, DND in `dnd.js`; tutto il JS dell'app fuori da `index.html` in `src/app.js` (modulo ES, un solo tag `src/main.js`), `index.html` da 1,68 MB a 9 KB; primi moduli `src/util.js`, `costanti.js`, `dadi.js`. Dentro il branch dai thread: temi (#56), effetti (#55), dado 3D (#58), token 2 (#59), build Vite (#60). `build:single` ora inserisce anche il bundle modulo (provato da file://).
+- **Test**: suite intera 431/431 a ogni passo (419 + 12 nuovi dei thread). Main non toccato: il live resta com'è finché Capo non dà il merge finale.
+- **Resta**: spezzare `app.js` per area (regole pure, stato, pagine...), prova `test:build` sulla build, workflow Actions per Pages, merge finale su main (solo PR). Sala non aggiornata.
+
 ## 2026-11-27 · sviluppo
 - **Fatto**: backlog 1 e 2. (1) Misura del lag di digitazione (note, cronaca, `#bw_x`, 1440 e 390): mediana 33,3 ms = due frame, nessun lag riproducibile; numeri in docs/design/lag-digitazione-2026-11-27.md, script `tests/misura-lag.js`. (2) CSS estratto da `index.html` in `style.css` (898 righe; index.html 6738 → 5839), `<link rel="stylesheet">`, precache in `sw.js` (anche la regola `.css` nel fetch), `CACHE` e build label ds1126a → ds1127a.
 - **Test**: 419/419 prima, 419/419 dopo. Nessun test modificato. Solo PR (spezza index.html), non pubblicata su main.
