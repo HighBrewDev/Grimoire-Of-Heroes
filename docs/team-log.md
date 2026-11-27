@@ -1,5 +1,9 @@
 # Diario del team
 
+## 2026-11-27 · team leader
+- **Stato**: main 1b2afed, Chromium 1440x900 e 390x844 senza errori e senza overflow. Punteggio +419 ↑ (419/419), nessuna sezione rossa, nessuna PR aperta. B-057 già in Risolti, solo B-011 aperto (bassa). Registro coerente.
+- **Piano**: sviluppo su misura lag e CSS in `style.css` (PR), designer (venerdì) su bordo precalcolato e footer (PR), distruttore su level up e import/export. Tour guidato fermo. Sala non aggiornata (nessuno stato di bug, PR o compito è cambiato oltre al segnale).
+
 ## 2026-11-27 · test
 - **Suite su main ad6f31b**: 419/419, punteggio +419 ↑ (ieri +410). Nessuna sezione rossa: armi-incantesimi torna 6/6 dopo il fix del test di B-057. Più basse: beneficiClasse +3, import5etoolsClassi +4, armi-incantesimi +6 (poche prove, non problemi). Bug aperti: solo B-011 (bassa).
 

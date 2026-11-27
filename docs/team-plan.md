@@ -1,4 +1,4 @@
-# Piano del team · giovedì 26 novembre 2026
+# Piano del team · venerdì 27 novembre 2026
 
 ## Regole di squadra
 Segnale alla Sala: all'avvio e a fine lavoro scrivi `live/<tuo id>` come in docs/sala-segnali.md (vedi anche CLAUDE.md).
@@ -8,36 +8,35 @@ Chi chiude o cambia qualcosa aggiorna da sé le proprie voci, senza aspettare il
 Niente nuove feature finché Capo non le riapre. Compiti piccoli, suite verde a ogni passo, nessun cambio di stack, un passo = una PR piccola se tocca dati utente o spezza `index.html`. Ritmo ridotto dal 24/11: sviluppo in UNA sessione al giorno.
 
 ## Stato dell'app
-- Main `e1238a7` (live = main). Controllo Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, nessun errore di pagina. Niente di rotto dall'esterno.
-- Punteggio **+410, tendenza ↑** (ieri +373). Test **415/416**. B-055 e B-056 chiusi: combattimento, telefono, beneficiClasse non sono più rossi.
-- **Una sezione rossa: armi-incantesimi**, regressione di ieri. Il test "incantesimo homebrew: picker di tiro salvezza, dadi, area e scaling" fallisce in modo deterministico: l'anteprima dice "No effect text" anche se il campo testo è stato riempito. Verificato a bisezione: passa su `3bd9ee7^` e `201ad77`, fallisce da `3bd9ee7` (Designer, tolto `will-change` da `.page::before/::after`) e su main. Sospetto: gara tra il ridisegno del modulo e `fill` (campi che perdono il valore digitando in fretta) = possibile bug reale di digitazione, non solo test. Test non toccato.
-- `index.html` è ancora un file unico da 6677 righe. PR #51 (sync NPC) unita oggi.
+- Main `1b2afed` (live = main). Chromium a 1440x900 e 390x844: carica, scrollWidth uguale alla finestra, zero errori di pagina o console. Niente di rotto.
+- Punteggio **+419, tendenza ↑** (ieri +410). Test **419/419**. Nessuna sezione rossa; B-057 chiuso (era timing del test). Unico bug aperto: B-011 (bassa, decisione di Capo). Nessuna PR aperta.
+- `index.html` è ancora un file unico (6738 righe): il refactoring vero non è partito, è il debito principale.
 
 ## Allocazione per sezione
 | Sezione | Stato | Carico | Responsabile | Perché |
 |---|---|---|---|---|
-| armi-incantesimi | 🔴 ROSSO | ALTO | frontend | regressione B-057 (sotto) |
-| Combattimento, Telefono, Robustezza, equipaggiamento, beneficiClasse, import5etools(+Classi) | 🟡 GIALLO | MEDIO | tester/backend | pochi giorni di verde |
-| Le altre 15 sezioni | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
+| beneficiClasse, armi-incantesimi, import5etoolsClassi | 🟡/🟢 | MEDIO | tester/frontend | i più bassi (3-6 test), pochi controlli |
+| Combattimento, Telefono | 🟡 GIALLO | MEDIO | frontend | da verde da pochi giorni |
+| Le altre 17 sezioni | 🟢 VERDE | BASSO | tester | solo controlli leggeri |
 
 ## Oggi
-Zone di index.html: **Sviluppo** possiede il modulo Workshop/homebrew (`bw_*`, anteprima `#bwPreview`, riga ~3329) e `sw.js` solo per `CACHE`. Nessuno esce dalla propria zona. **Designer: non è un suo giorno** (lun/mer/ven).
-
-- **Sviluppo 10:23 · B-057 (frontend, priorità 1)**: capire perché, dopo il commit `3bd9ee7`, l'anteprima dell'incantesimo homebrew segnala "No effect text" e "no class list" nel test `armi-incantesimi` "picker di tiro salvezza…". Riprodurre a mano in Chromium (scrivere in fretta nel campo testo `#bw_x` dopo aver cambiato i picker `#bw_fx_*`) e guardare se il modulo si ridisegna e perde il valore (`bwPreview`, handler `input`/`change` del modulo). Se è un bug dell'app, correggere l'app (non ripristinare `will-change`, che era una buona ottimizzazione); se è solo timing del test, rendere il test robusto (attendere il testo, non una costante) e dirlo nel diario. *Fatto* = `armi-incantesimi` 6/6, suite completa 416/416, B-057 in "Risolti" con commit, `CACHE` alzata, Sala aggiornata. Se avanza tempo: misura del lag di digitazione (backlog 1), solo misura.
-- **Power user 21:37 · Workshop e Spellbook**: creare 3 incantesimi homebrew compilando i picker, aggiungerli a un eroe, controllare i preparati con il nuovo limite. *Fatto* = diario, bug nuovi con passi e test.
-- **Test e punteggio (domani 8:47)**: confermare B-057 chiuso e armi-incantesimi verde.
+Zone di index.html: **Sviluppo** lavora su misura e CSS; **Designer** non tocca index.html oltre i suoi file di design.
+- **Sviluppo 10:23 · backlog 2 e 3 (frontend, suite verde)**: (a) misura del lag di digitazione in Chromium (note, cronaca, campo testo del Workshop `#bw_x`): trace prima/dopo, scrivere i numeri in docs/design/. (b) Estrarre il CSS di `index.html` in `style.css` con precache in `sw.js` e `CACHE` alzata: **solo PR**, suite identica 419/419 a 1440 e 390. *Fatto* = misura nel diario; PR aperta con suite verde.
+- **Designer 14:13 (venerdì)**: bordo irregolare con maschera precalcolata al posto di `feTurbulence`, poi link legali del footer e dadi del vassoio a 390. **Solo PR**; screenshot prima/dopo a 1440 e 390. *Fatto* = PR con misura di scroll e digitazione.
+- **Distruttore 21:07 (giorno dispari)**: Level up/multiclasse e Import/export: importare file strani (JSON troncati, eroi con campi mancanti), risalire di livello oltre 20, multiclasse con incantatori misti. *Fatto* = diario, bug con passi e test.
+- **Test e punteggio (domani 8:47)**: confermare 419/419 e che la PR del CSS non cambi i risultati.
 
 ## Backlog (ordinato)
-1. B-057 (oggi, sviluppo).
-2. Misurare il lag di digitazione (campi lunghi, note, cronaca): trace prima di toccare qualcosa. (frontend)
-3. Spezzare `index.html`, passo 1: estrarre il CSS in `style.css`, aggiornare precache in `sw.js`, suite identica. Solo PR. (frontend)
-4. Spezzare `index.html`, passo 2: estrarre il JS in moduli per area (dati SRD, combattimento, spellbook, homebrew). Solo PR, un'area per volta.
-5. Designer (venerdì): bordo irregolare con maschera precalcolata al posto di `feTurbulence`, link legali del footer e dadi del vassoio a 390. Solo PR.
-6. B-011: l'import homebrew deve rispettare `FREE_BREW`? (oggi paywall spento; decisione di Capo se serve)
-7. Codice morto, nomi doppi, avvisi in console (backend/frontend).
-8. Selettori dei test più robusti dove dipendono da fold chiuse o da attese a tempo fisso.
+1. Misurare il lag di digitazione (frontend).
+2. Spezzare `index.html`, passo 1: CSS in `style.css`. Solo PR.
+3. Spezzare `index.html`, passo 2: JS in moduli per area (dati SRD, combattimento, spellbook, homebrew). Solo PR, un'area per volta.
+4. Designer: bordo irregolare precalcolato, link legali del footer, dadi del vassoio a 390. Solo PR.
+5. Codice morto, nomi doppi, avvisi in console.
+6. Selettori dei test più robusti (fold chiuse, attese a tempo fisso).
+7. Più test per beneficiClasse e armi-incantesimi (le sezioni con meno copertura).
+8. B-011: import homebrew e `FREE_BREW` (paywall spento; decide Capo).
 9. Prova di login e sync reali con Supabase (serve rete e il via di Capo).
-10. Rifinitura dei flussi npc e ticket dopo le prove del power user.
+10. Rifinitura dei flussi npc e ticket.
 11. **Richiesta di Capo, priorità bassa** · Tour guidato facoltativo (indicatori sui pulsanti principali, avvio dal menu, saltabile). Fermo finché non finisce il refactoring o Capo lo chiede.
 
 ## Regole per tutti
@@ -47,7 +46,7 @@ Zone di index.html: **Sviluppo** possiede il modulo Workshop/homebrew (`bw_*`, a
 - Ogni rilascio alza `CACHE` in sw.js. Ogni agente lascia una voce in docs/team-log.md.
 
 ## In attesa di Capo
-- **PR #51** (sync NPC) è stata unita su main: chiudi e riapri il sito una volta per il service worker.
-- **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok per chiuderlo.
-- Migrazioni Supabase in `supabase/migrations/`: se non le hai ancora eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
-- Decisione facoltativa: B-011 (limite di 3 elementi gratuiti nell'import) e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.
+- Nessuna PR aperta al momento.
+- **Keep-alive Supabase**: workflow `supabase-keepalive.yml` su main, da provare in GitHub → Actions → "supabase-keepalive" → Run workflow (deve dare 2xx). Serve il tuo ok; il progetto potrebbe doversi ripristinare da te.
+- Migrazioni in `supabase/migrations/`: se non le hai eseguite, vanno nell'editor SQL; finché mancano l'app resta locale senza errori.
+- Decisione facoltativa: B-011 e apertura dell'host Supabase nella rete dell'ambiente per provare login e sync.
