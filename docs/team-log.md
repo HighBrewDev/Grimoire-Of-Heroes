@@ -4,7 +4,7 @@
 - **Fatto**: backlog 1 e 2. (1) Misura del lag di digitazione (note, cronaca, `#bw_x`, 1440 e 390): mediana 33,3 ms = due frame, nessun lag riproducibile; numeri in docs/design/lag-digitazione-2026-11-27.md, script `tests/misura-lag.js`. (2) CSS estratto da `index.html` in `style.css` (898 righe; index.html 6738 → 5839), `<link rel="stylesheet">`, precache in `sw.js` (anche la regola `.css` nel fetch), `CACHE` e build label ds1126a → ds1127a.
 - **Test**: 419/419 prima, 419/419 dopo. Nessun test modificato. Solo PR (spezza index.html), non pubblicata su main.
 - **Rischio / annullo**: se `style.css` non si carica la pagina è senza stile; annullare = revert della PR. Dopo il merge: chiudi e riapri il sito per il service worker.
-- **Resta**: provare a mano a telefono vero dopo il merge; backlog 3 (JS in moduli, un'area per volta). Sala: nessun cambio di stato oltre alla PR, da aggiungere dopo l'apertura.
+- **Resta**: provare a mano a telefono vero dopo il merge; backlog 3 (JS in moduli, un'area per volta). PR #54. Sala non aggiornata (nessun bug chiuso; la PR è in attesa di Capo).
 
 ## 2026-11-27 · team leader (aggiunta)
 - Capo ha deciso: app tutta gratuita. B-011 chiuso come non applicabile (docs/bug-beta.md, piano aggiornato). Il codice del paywall (`FREE_BREW`, `plusOK()`) resta spento, nessuna rimozione. Sala non aggiornata: B-011 è da togliere dai bug aperti della pagina alla prossima occasione.
