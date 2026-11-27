@@ -47,7 +47,7 @@ show('A');
 $('#ch1').onclick = () => show('A'); $('#ch2').onclick = () => show('B');
 $('#cover').onclick = () => { $('#coverBk').hidden = false; };
 $('#enter').onclick = () => { $('#coverBk').classList.add('opening'); setTimeout(() => { $('#coverBk').hidden = true; $('#coverBk').classList.remove('opening'); }, 1300); };
-const dice = {6:createDie($('#dice'), {sides:6}), 20:createDie($('#dice'), {sides:20, size:150})};
+const dice = {6:await createDie($('#dice'), {sides:6}), 20:await createDie($('#dice'), {sides:20, size:180})};
 for (const s of [6, 20]) $('#d' + s).onclick = async () => { $('#stat').textContent = 'd' + s + ' → ' + await dice[s].roll(); };
 $('#meas').onclick = async () => { $('#stat').textContent = 'misuro 2 s…'; const r = await Fx.measure(2000); $('#stat').textContent = JSON.stringify(r); };
 window.__fx = Fx; window.__dice = dice;
